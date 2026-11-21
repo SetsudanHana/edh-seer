@@ -20,10 +20,28 @@ describe("the maker of the second create is you", () => {
     expect(emits("Tempting Contract", "create-token").map((e) => e.subject.subtype).sort()).toEqual(["treasure", "treasure"]);
     expect(controls("Tempting Contract", "enters").sort()).toEqual(["opp", "you"]);
   });
-  test("Tempt with Reflections / Vengeance: 'For each opponent who does, create ...' is yours (the opponent's own stays opp); the leading imperative create still reads any -- KNOWN GAP #1728", () => {
-    for (const n of ["Tempt with Reflections", "Tempt with Vengeance"]) expect(controls(n, "create-token"), n).toEqual(["any", "opp", "you"]);
+  // #1728: the LEADING imperative create ("Create a token that's a copy ...", "Draw a card and create a 1/1 ...") names no player and is yours; the clause stores three creates, which `actorFor` and the one-create default refused.
+  test("Tempt with Reflections / Vengeance: the leading imperative create is yours, the opponent's own stays opp, the trailing one is yours", () => {
+    for (const n of ["Tempt with Reflections", "Tempt with Vengeance"]) expect(controls(n, "create-token"), n).toEqual(["you", "opp", "you"]);
   });
-  test("Tempt with Bunnies: the opponent's create opp, the trailing one you; the leading imperative create still reads any -- KNOWN GAP #1728", () => expect(controls("Tempt with Bunnies", "create-token")).toEqual(["any", "opp", "you"]));
+  test("Tempt with Bunnies: the leading imperative create is yours, the opponent's opp, the trailing one yours", () => expect(controls("Tempt with Bunnies", "create-token")).toEqual(["you", "opp", "you"]));
+  test("the enters emits follow their create", () => {
+    for (const n of ["Tempt with Reflections", "Tempt with Vengeance", "Tempt with Bunnies"]) expect(controls(n, "enters"), n).toEqual(["you", "opp", "you"]);
+  });
+});
+
+describe("#1728: a clause that stores several creates reads each imperative one as yours", () => {
+  test("Misfortune Teller: 'create a 2/2 Rogue' and 'create a Treasure' (two sentences, no player named) are both yours", () => {
+    // Two triggers (enters, deals combat damage), each with the same two creates.
+    for (const v of ["create-token", "enters"]) expect(new Set(controls("Misfortune Teller", v)), v).toEqual(new Set(["you"]));
+    expect(controls("Misfortune Teller", "create-token").length).toBeGreaterThanOrEqual(4);
+  });
+  // CONTROLS: a player is named, so `any` (or a condition's opponent) stands.
+  test("Master of Ceremonies / Sylvan Offering: 'you and that player each create' is both of you, not yours alone", () => {
+    for (const n of ["Master of Ceremonies", "Sylvan Offering"]) expect(new Set(controls(n, "create-token")), n).toEqual(new Set(["any"]));
+  });
+  test("Beza: an opponent named in the create's own sentence ('if an opponent controls more ...') keeps the refusal, the sentence-local reading of the single-create default", () => expect(controls("Beza, the Bounding Spring", "create-token")).toEqual(["any", "any"]));
+  test("Research // Development: 'unless any opponent has you draw' names a player in the create's sentence", () => expect(new Set(controls("Research // Development", "create-token"))).toEqual(new Set(["any"])));
 });
 
 describe("controls: only the opponent acts, or only you act, stays as it was", () => {

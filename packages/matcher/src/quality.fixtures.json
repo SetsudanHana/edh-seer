@@ -63,7 +63,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 567,
+   "deriveVersion": 568,
    "manaLines": [
     {
      "amount": {
@@ -277,7 +277,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 567,
+   "deriveVersion": 568,
    "model": "derived",
    "normalizeVersion": 12,
    "oracleId": "7735eeba-693b-47e2-bd51-414379cf1016",
@@ -441,7 +441,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 567,
+   "deriveVersion": 568,
    "manaLines": [
     {
      "amount": {
@@ -785,7 +785,7 @@
     ]
    },
    "clauseSource": "model",
-   "deriveVersion": 567,
+   "deriveVersion": 568,
    "manaLines": [
     {
      "amount": {
@@ -897,7 +897,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 567,
+   "deriveVersion": 568,
    "model": "derived",
    "normalizeVersion": 14,
    "oracleId": "7d00fb28-ea6c-49a9-b4af-ffb38860a9a7",
@@ -975,7 +975,7 @@
     ]
    },
    "clauseSource": "model",
-   "deriveVersion": 567,
+   "deriveVersion": 568,
    "model": "derived",
    "normalizeVersion": 12,
    "oracleId": "07a0cba9-8768-4fd9-a3d5-b0f83b4bf8e8",
@@ -1061,7 +1061,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 567,
+   "deriveVersion": 568,
    "model": "derived",
    "normalizeVersion": 13,
    "oracleId": "cc187110-1148-4090-bbb8-e205694a39f5",
@@ -1646,7 +1646,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 567,
+   "deriveVersion": 568,
    "model": "derived",
    "normalizeVersion": 12,
    "oracleId": "2987c385-011a-4032-a516-a46d1e9dc9e8",
@@ -1774,7 +1774,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 567,
+   "deriveVersion": 568,
    "landFetch": {
     "kind": "spell",
     "reach": [
@@ -1960,7 +1960,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 567,
+   "deriveVersion": 568,
    "model": "derived",
    "normalizeVersion": 14,
    "oracleId": "d75b9c82-1b49-4c3e-a1b5-aeef57d6644b",
@@ -2058,7 +2058,7 @@
     ]
    },
    "clauseSource": "model",
-   "deriveVersion": 567,
+   "deriveVersion": 568,
    "model": "derived",
    "normalizeVersion": 14,
    "oracleId": "aa7714b0-2bfb-458a-8ebf-37ec2c53383e",
@@ -2134,7 +2134,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 567,
+   "deriveVersion": 568,
    "model": "derived",
    "normalizeVersion": 12,
    "oracleId": "ca204b66-8d0c-431a-8d34-282f7c2d17da",
@@ -2227,7 +2227,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 567,
+   "deriveVersion": 568,
    "manaLines": [
     {
      "amount": {
@@ -2426,7 +2426,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 567,
+   "deriveVersion": 568,
    "manaLines": [
     {
      "amount": {
@@ -2615,7 +2615,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 567,
+   "deriveVersion": 568,
    "model": "derived",
    "normalizeVersion": 12,
    "oracleId": "d683d985-9888-4d21-8b5f-69e69ce4a03b",
@@ -2811,7 +2811,7 @@
     ]
    },
    "clauseSource": "model",
-   "deriveVersion": 567,
+   "deriveVersion": 568,
    "manaLines": [
     {
      "amount": {
@@ -2977,7 +2977,7 @@
     ]
    },
    "clauseSource": "model",
-   "deriveVersion": 567,
+   "deriveVersion": 568,
    "manaLines": [
     {
      "amount": {
@@ -3138,7 +3138,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 567,
+   "deriveVersion": 568,
    "model": "derived",
    "normalizeVersion": 12,
    "oracleId": "b1544f21-7e98-461b-aed5-e748b0168c52",
@@ -3269,7 +3269,7 @@
     ]
    },
    "clauseSource": "model",
-   "deriveVersion": 567,
+   "deriveVersion": 568,
    "model": "derived",
    "normalizeVersion": 14,
    "oracleId": "0d4ecdb1-ec90-497f-a7a4-1c68092b8757",
@@ -3362,7 +3362,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 567,
+   "deriveVersion": 568,
    "model": "derived",
    "normalizeVersion": 13,
    "oracleId": "3567c3c8-b3c7-45b7-935b-b1fdbc973720",
@@ -3556,7 +3556,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 567,
+   "deriveVersion": 568,
    "model": "derived",
    "normalizeVersion": 12,
    "oracleId": "4b515bb0-f275-4400-8032-3173b799ab40",
@@ -3766,7 +3766,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 567,
+   "deriveVersion": 568,
    "landFetch": {
     "kind": "permanent",
     "reach": [
@@ -3904,7 +3904,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 567,
+   "deriveVersion": 568,
    "model": "derived",
    "normalizeVersion": 14,
    "oracleId": "34515b16-c9a4-4f98-8c77-416a7a523407",
