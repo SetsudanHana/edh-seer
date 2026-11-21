@@ -68,6 +68,12 @@ function parseOwnership(t: string): { owner?: "you" | "opp"; control?: Control }
  *  subjects) are any player's attackers. Cut before `parseControl` reads "your opponents" as the controller. CEILING: only "attacking" + an opponent phrase. */
 const ATTACKED_OPPONENT = /\battacking\s+(?:(?:one|each|any|a|an) of )?(?:your opponents?|an opponent|each opponent|target opponent)\b/gi;
 
+/** A CHOOSER NAMED IN THE OBJECT IS NOT THE CONTROLLER OF WHAT IT CHOOSES (#1713): "the two cards chosen by an opponent" (Realms Uncharted, put into YOUR graveyard), "one of those cards chosen by an opponent" (Emergent Ultimatum, Ecological
+ *  Appreciation: shuffled into YOUR library), "the pile an opponent chose" (Hostile Negotiations). The player picks; the card keeps whoever has it. Cut before `parseControl` reads "opponent" as the
+ *  controller. "chosen by" takes a player phrase only: "chosen by you", "chosen by their controller" never matched. CEILING: the two phrase shapes ("chosen/picked/selected by <player>" and "<player> chose/picked/selected") only; a chooser worded any other way still reads as the controller. */
+const CHOOSER_PLAYER = String.raw`(?:(?:an?|each|any|target|that|the|your|their)\s+)?(?:other\s+)?(?:opponents?|players?)`;
+const CHOSEN_BY_PLAYER = new RegExp(String.raw`\b(?:chosen|picked|selected) by ${CHOOSER_PLAYER}\b|(?<=\b(?:card|cards|creature|creatures|permanent|permanents|pile|piles|land|lands|spell|spells|one|ones|them|those) )${CHOOSER_PLAYER} (?:chose|picked|selected)\b`, "g");
+
 function parseControl(t: string): Control {
   // A PLAYER NAMED ONLY INSIDE A COUNT IS NOT THE ACTOR. Cut there first, so the branches below read
   // the sentence's HEAD. A subject that really is opponent-facing keeps its cue, because that cue
@@ -82,7 +88,7 @@ function parseControl(t: string): Control {
   // Negation first: "you don't control" must not fall through to the "you control" branch below.
   if (/\byou (?:don'?t|do not|don’t) control\b/.test(t)) return "opp";
   if (PERMANENT_NOUN.test(t)) t = t.replace(OF_YOUR_CHOICE, " ");
-  t = t.replace(NOT_A_CONTROLLER, " ").replace(ATTACKED_OPPONENT, "attacking");
+  t = t.replace(NOT_A_CONTROLLER, " ").replace(ATTACKED_OPPONENT, "attacking").replace(CHOSEN_BY_PLAYER, " ");
   // COMBAT NAMES THE OPPONENT WITHOUT SAYING "OPPONENT". Measured over the derived corpus: 12 clause
   // actions say "defending player" and all 12 mean an opponent (11 sit on an `attacks` trigger the
   // card's controller owns; the 12th, Elturel Survivors, is a characteristic-defining "+X/+0 where X

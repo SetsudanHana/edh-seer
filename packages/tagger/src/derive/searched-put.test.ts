@@ -38,10 +38,10 @@ describe("a put with no stored origin after a search of your library", () => {
     expect(c.length).toBeGreaterThan(0);
     for (const x of c) expect(x).toBe("you");
   });
-  // Not this rule's: the model's object "the two cards chosen by an opponent" reads `opp` today (the rule only ever replaces `any`), so it is left as it is (follow-up).
-  test("Realms Uncharted keeps its own reading", () => {
+  // The model's object "the two cards chosen by an opponent" read `opp` (the rule only ever replaces `any`) until #1713: a chooser is no controller (`parseControl`), so the object reads `any` and this rule makes it `you`, as for its twin above.
+  test("Realms Uncharted: the chosen cards go into your graveyard (#1713)", () => {
     const c = rowOf("Realms Uncharted").tags.abilities.flatMap((a) => a.emits ?? []).filter((e) => e.verb === "enters-graveyard").map((e) => e.subject.control);
-    expect(c).toEqual(["opp"]);
+    expect(c).toEqual(["you"]);
   });
 });
 
