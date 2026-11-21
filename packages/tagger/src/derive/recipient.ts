@@ -244,6 +244,26 @@ export function sentenceNamesAPlayer(clauseText: string, verb: string): boolean 
   return (holding.length ? holding : sentences).some((s) => PLAYER_WORD.test(s));
 }
 
+/** WHICH OF A CLAUSE'S SEVERAL CREATES NAME NO PLAYER (#1728). A tempting offer opens with an imperative create ("Create a token that's a copy of that creature. Each opponent may create ... For each opponent who does, create ...";
+ *  "Draw a card and create a 1/1 ... Then each opponent may draw a card and create ...") and the clause stores three creates, so the one-create controller default refused all of them and the caster's own read `any`. Misfortune
+ *  Teller ("If it was a creature card, create a 2/2 ... If it was a land card, create a Treasure token.") is the same refusal with no player in sight.
+ *  The k-th create is paired with the k-th printed "create"/"creates" and answered by ITS OWN sentence, with the same two tests the single-create default makes (`sentenceNamesAPlayer`, `pronounActs`) -- so a sentence with a player word
+ *  ("Each opponent may create", "unless any opponent has you draw") is never the caster's. Answers `null` unless the printed creates are exactly as many as the stored ones: a model that stored a create twice for one printed (Fertile
+ *  Imagination) or a clause that prints "create" in a sentence of its own count is not guessed at.
+ *  CEILING: the verb "create" only; draw, discard, search, sacrifice and the rest are left on the one-action default because every census case of them with a repeated verb names a player ("each player draws", "target player
+ *  discards two cards ... that player discards"), so there is no unstated actor to fill (2026-11-21 census, #1728). The sentence split is the one `sentenceNamesAPlayer` uses. */
+export function unstatedCreates(clauseText: string, storedCreates: number): boolean[] | null {
+  const sentences = clauseText.split(/(?<=[.!?])\s+/);
+  const makers: boolean[] = [];
+  for (const s of sentences) {
+    const n = s.match(/\bcreates?\b/gi)?.length ?? 0;
+    // One printed create per sentence; two in one sentence ("create X, then create Y") are not told apart.
+    if (n > 1) return null;
+    if (n === 1) makers.push(!sentenceNamesAPlayer(s, "create") && !pronounActs(s, "create"));
+  }
+  return makers.length === storedCreates ? makers : null;
+}
+
 /** ANOTHER PLAYER, NAMED BY A PRONOUN, DOES IT (#1591): "Its controller mills that many cards ... THEY MAY CAST that card" (Tibalt's Trickery), "they may cast it" (Audacious Swap), "Choose target player ... Then THEY DRAW a card"
  *  (Mishra's Command), "they discard" (Stinging Vitriol). "They" is never the controller, and the sentence holds no player word, so the controller default (`ACTOR_DEFAULTS_TO_YOU`, derive.ts) made it yours. Derive leaves the
  *  control as parsed (`any`) instead. Not when "you <verb>" is printed too: the default is then right for that one. */
