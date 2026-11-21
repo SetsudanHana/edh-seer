@@ -1,0 +1,1504 @@
+{
+ "Chatterfang, Squirrel General": {
+  "source": {
+   "name": "Chatterfang, Squirrel General",
+   "typeLine": "Legendary Creature — Squirrel Warrior",
+   "oracleText": "Forestwalk (This creature can't be blocked as long as defending player controls a Forest.)\nIf one or more tokens would be created under your control, those tokens plus that many 1/1 green Squirrel creature tokens are created instead.\n{B}, Sacrifice X Squirrels: Target creature gets +X/-X until end of turn.",
+   "keywords": [
+    "Landwalk",
+    "Forestwalk"
+   ],
+   "colors": [
+    "G"
+   ],
+   "manaValue": 3,
+   "colorIdentity": [
+    "B",
+    "G"
+   ],
+   "power": "3",
+   "toughness": "3",
+   "tags": {
+    "produces": [
+     "tribe:squirrel",
+     "tribe-nontoken:squirrel",
+     "tribe:warrior",
+     "tribe-nontoken:warrior"
+    ],
+    "cares": []
+   },
+   "searchNames": [
+    "chatterfang squirrel general"
+   ],
+   "edhrecRank": 1075,
+   "manaCost": "{2}{G}",
+   "layout": "normal",
+   "legalities": {
+    "standard": "not_legal",
+    "future": "not_legal",
+    "historic": "legal",
+    "timeless": "legal",
+    "gladiator": "legal",
+    "pioneer": "not_legal",
+    "modern": "legal",
+    "legacy": "legal",
+    "pauper": "not_legal",
+    "vintage": "legal",
+    "penny": "legal",
+    "commander": "legal",
+    "oathbreaker": "legal",
+    "standardbrawl": "not_legal",
+    "brawl": "legal",
+    "competitivebrawl": "legal",
+    "alchemy": "not_legal",
+    "paupercommander": "not_legal",
+    "duel": "legal",
+    "oldschool": "not_legal",
+    "premodern": "not_legal",
+    "predh": "not_legal",
+    "tlr": "legal"
+   },
+   "releasedAt": "2021-06-18",
+   "gameChanger": false,
+   "reserved": false,
+   "allParts": [
+    {
+     "component": "token",
+     "name": "Squirrel",
+     "typeLine": "Token Creature — Squirrel",
+     "printingId": "977ddd05-1aae-46fc-95ce-866710d1c5c6"
+    },
+    {
+     "component": "combo_piece",
+     "name": "Chatterfang, Squirrel General",
+     "typeLine": "Legendary Creature — Squirrel Warrior",
+     "printingId": "47ba5ac8-e8fa-4979-9ef9-c3d75ee7f982"
+    }
+   ],
+   "artCrop": "https://cards.scryfall.io/art_crop/front/1/7/1785cf85-1ac0-4246-9b89-1a8221a8e1b2.jpg?1783926835",
+   "oracleId": "f15b3b76-d38a-48db-bb44-3296183c8641"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Forestwalk",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "create",
+      "object": "1/1 green Squirrel creature tokens",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "X plus that many",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "sacrifice",
+      "object": "X Squirrels",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "modify-pt",
+      "object": "target creature",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "+X/-X",
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "084c3d5e348a13d7839e9b7628d0cadfaa79365557f8e3b248d76bf5262a8c87"
+ },
+ "Mondrak, Glory Dominus": {
+  "source": {
+   "name": "Mondrak, Glory Dominus",
+   "typeLine": "Legendary Creature — Phyrexian Horror",
+   "oracleText": "If one or more tokens would be created under your control, twice that many of those tokens are created instead.\n{1}{W/P}{W/P}, Sacrifice two other artifacts and/or creatures: Put an indestructible counter on Mondrak. ({W/P} can be paid with either {W} or 2 life.)",
+   "keywords": [],
+   "colors": [
+    "W"
+   ],
+   "manaValue": 4,
+   "colorIdentity": [
+    "W"
+   ],
+   "power": "4",
+   "toughness": "4",
+   "tags": {
+    "produces": [
+     "tribe:phyrexian",
+     "tribe-nontoken:phyrexian",
+     "tribe:horror",
+     "tribe-nontoken:horror"
+    ],
+    "cares": [
+     "token"
+    ]
+   },
+   "searchNames": [
+    "mondrak glory dominus"
+   ],
+   "edhrecRank": 439,
+   "manaCost": "{2}{W}{W}",
+   "layout": "normal",
+   "legalities": {
+    "standard": "not_legal",
+    "future": "not_legal",
+    "historic": "legal",
+    "timeless": "legal",
+    "gladiator": "legal",
+    "pioneer": "legal",
+    "modern": "legal",
+    "legacy": "legal",
+    "pauper": "not_legal",
+    "vintage": "legal",
+    "penny": "not_legal",
+    "commander": "legal",
+    "oathbreaker": "legal",
+    "standardbrawl": "not_legal",
+    "brawl": "legal",
+    "competitivebrawl": "legal",
+    "alchemy": "not_legal",
+    "paupercommander": "not_legal",
+    "duel": "legal",
+    "oldschool": "not_legal",
+    "premodern": "not_legal",
+    "predh": "not_legal",
+    "tlr": "not_legal"
+   },
+   "releasedAt": "2023-02-10",
+   "gameChanger": false,
+   "reserved": false,
+   "artCrop": "https://cards.scryfall.io/art_crop/front/8/2/8296a455-21d5-498e-9029-2bdf0da855a8.jpg?1783918077",
+   "oracleId": "fe83087d-c6c1-40be-9295-baaa1c6b2db1"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "create",
+      "object": "twice that many of those tokens",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "sacrifice",
+      "object": "two other artifacts and/or creatures",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "add-counter",
+      "object": "indestructible",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "05f348b7ce7a7e869d5390c8a9cdb56ea3dea4ed44a07126198b6c9b88d215e4"
+ },
+ "Jinnie Fay, Jetmir's Second": {
+  "source": {
+   "name": "Jinnie Fay, Jetmir's Second",
+   "typeLine": "Legendary Creature — Elf Druid",
+   "oracleText": "If you would create one or more tokens, you may instead create that many 2/2 green Cat creature tokens with haste or that many 3/1 green Dog creature tokens with vigilance.",
+   "keywords": [],
+   "colors": [
+    "G",
+    "R",
+    "W"
+   ],
+   "manaValue": 3,
+   "colorIdentity": [
+    "G",
+    "R",
+    "W"
+   ],
+   "power": "3",
+   "toughness": "3",
+   "tags": {
+    "produces": [
+     "token",
+     "creature-etb",
+     "sacrifice-fodder",
+     "tribe:elf",
+     "tribe-nontoken:elf",
+     "tribe:druid",
+     "tribe-nontoken:druid",
+     "tribe:cat",
+     "tribe:dog"
+    ],
+    "cares": []
+   },
+   "searchNames": [
+    "jinnie fay jetmirs second"
+   ],
+   "edhrecRank": 4429,
+   "manaCost": "{R/G}{G}{G/W}",
+   "layout": "normal",
+   "legalities": {
+    "standard": "not_legal",
+    "future": "not_legal",
+    "historic": "legal",
+    "timeless": "legal",
+    "gladiator": "legal",
+    "pioneer": "legal",
+    "modern": "legal",
+    "legacy": "legal",
+    "pauper": "not_legal",
+    "vintage": "legal",
+    "penny": "legal",
+    "commander": "legal",
+    "oathbreaker": "legal",
+    "standardbrawl": "not_legal",
+    "brawl": "legal",
+    "competitivebrawl": "legal",
+    "alchemy": "not_legal",
+    "paupercommander": "not_legal",
+    "duel": "legal",
+    "oldschool": "not_legal",
+    "premodern": "not_legal",
+    "predh": "not_legal",
+    "tlr": "legal"
+   },
+   "releasedAt": "2022-04-29",
+   "gameChanger": false,
+   "reserved": false,
+   "allParts": [
+    {
+     "component": "combo_piece",
+     "name": "Jinnie Fay, Jetmir's Second",
+     "typeLine": "Legendary Creature — Elf Druid",
+     "printingId": "5915902a-25b4-4e87-939a-2f9ba7552091"
+    },
+    {
+     "component": "token",
+     "name": "Dog",
+     "typeLine": "Token Creature — Dog",
+     "printingId": "6736fe71-bd55-4602-b0aa-ece6193048a9"
+    },
+    {
+     "component": "token",
+     "name": "Cat",
+     "typeLine": "Token Creature — Cat",
+     "printingId": "57bd0b29-0860-4ee3-832a-f62ba7bf4aac"
+    }
+   ],
+   "artCrop": "https://cards.scryfall.io/art_crop/front/c/5/c5f9326a-2a41-45b3-97c3-548f0bdc0882.jpg?1783923082",
+   "oracleId": "61fbaaf2-4286-4e9a-b9cb-aa31262b596a"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "create",
+      "object": "that many 2/2 green Cat creature tokens with haste",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     },
+     {
+      "verb": "create",
+      "object": "that many 3/1 green Dog creature tokens with vigilance",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     }
+    ]
+   }
+  ],
+  "segmentHash": "ff900f61562c340c04926fe40c1864b02367a49053c1f24e228af3bd9ed49896"
+ },
+ "Divine Visitation": {
+  "source": {
+   "name": "Divine Visitation",
+   "typeLine": "Enchantment",
+   "oracleText": "If one or more creature tokens would be created under your control, that many 4/4 white Angel creature tokens with flying and vigilance are created instead.",
+   "keywords": [],
+   "colors": [
+    "W"
+   ],
+   "manaValue": 5,
+   "colorIdentity": [
+    "W"
+   ],
+   "power": null,
+   "toughness": null,
+   "tags": {
+    "produces": [
+     "enchantment"
+    ],
+    "cares": []
+   },
+   "searchNames": [
+    "divine visitation"
+   ],
+   "edhrecRank": 1883,
+   "manaCost": "{3}{W}{W}",
+   "layout": "normal",
+   "legalities": {
+    "standard": "not_legal",
+    "future": "not_legal",
+    "historic": "legal",
+    "timeless": "legal",
+    "gladiator": "legal",
+    "pioneer": "legal",
+    "modern": "legal",
+    "legacy": "legal",
+    "pauper": "not_legal",
+    "vintage": "legal",
+    "penny": "legal",
+    "commander": "legal",
+    "oathbreaker": "legal",
+    "standardbrawl": "not_legal",
+    "brawl": "legal",
+    "competitivebrawl": "legal",
+    "alchemy": "not_legal",
+    "paupercommander": "not_legal",
+    "duel": "legal",
+    "oldschool": "not_legal",
+    "premodern": "not_legal",
+    "predh": "not_legal",
+    "tlr": "not_legal"
+   },
+   "releasedAt": "2026-06-26",
+   "gameChanger": false,
+   "reserved": false,
+   "allParts": [
+    {
+     "component": "token",
+     "name": "Angel",
+     "typeLine": "Token Creature — Angel",
+     "printingId": "9864812a-b3b1-4e12-8737-0795cdff994c"
+    },
+    {
+     "component": "combo_piece",
+     "name": "Divine Visitation",
+     "typeLine": "Enchantment",
+     "printingId": "aff6a7f9-9258-4247-9d17-09c9c2cf0c2e"
+    }
+   ],
+   "artCrop": "https://cards.scryfall.io/art_crop/front/d/a/dabd95db-b4ca-446b-bb68-6f52cec9ed2a.jpg?1783903248",
+   "oracleId": "5917216f-5b42-41fa-8976-401bdbeb782e"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "create",
+      "object": "a 4/4 white Angel creature token with flying and vigilance",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "that many",
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "2c4df9764c3f9c41564cfd5a4d0db1cc6f1b92546fd769bbcb3d4bec5b713465"
+ },
+ "Primal Vigor": {
+  "source": {
+   "name": "Primal Vigor",
+   "typeLine": "Enchantment",
+   "oracleText": "If one or more tokens would be created, twice that many of those tokens are created instead.\nIf one or more +1/+1 counters would be put on a creature, twice that many +1/+1 counters are put on that creature instead.",
+   "keywords": [],
+   "colors": [
+    "G"
+   ],
+   "manaValue": 5,
+   "colorIdentity": [
+    "G"
+   ],
+   "power": null,
+   "toughness": null,
+   "tags": {
+    "produces": [
+     "counter:+1/+1",
+     "enchantment"
+    ],
+    "cares": [
+     "token"
+    ]
+   },
+   "searchNames": [
+    "primal vigor",
+    "basts blessing"
+   ],
+   "edhrecRank": 1253,
+   "manaCost": "{4}{G}",
+   "layout": "normal",
+   "legalities": {
+    "standard": "not_legal",
+    "future": "not_legal",
+    "historic": "legal",
+    "timeless": "legal",
+    "gladiator": "legal",
+    "pioneer": "not_legal",
+    "modern": "not_legal",
+    "legacy": "legal",
+    "pauper": "not_legal",
+    "vintage": "legal",
+    "penny": "legal",
+    "commander": "legal",
+    "oathbreaker": "legal",
+    "standardbrawl": "not_legal",
+    "brawl": "legal",
+    "competitivebrawl": "legal",
+    "alchemy": "not_legal",
+    "paupercommander": "not_legal",
+    "duel": "legal",
+    "oldschool": "not_legal",
+    "premodern": "not_legal",
+    "predh": "not_legal",
+    "tlr": "not_legal"
+   },
+   "releasedAt": "2013-11-01",
+   "gameChanger": false,
+   "reserved": false,
+   "artCrop": "https://cards.scryfall.io/art_crop/front/d/a/dafea0d1-6986-46b3-affc-1337ef564947.jpg?1783939657",
+   "oracleId": "c665544f-557b-4631-a1dc-39571470ca2e"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "create",
+      "object": "twice that many of those tokens",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "add-counter",
+      "object": "+1/+1",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "twice that many",
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "c82eae44b5526eb7bd4e3b55370eaf3fe08565b6d1d1715d636e53d1529fe258"
+ },
+ "Holo-Engineer": {
+  "source": {
+   "name": "Holo-Engineer",
+   "typeLine": "Creature — Human Artificer",
+   "oracleText": "When this creature enters, create a 3/3 colorless Illusion artifact creature token.\nIf one or more tokens would be created under your control, that many 3/3 colorless Illusion artifact creature tokens are created instead.",
+   "keywords": [],
+   "colors": [
+    "G"
+   ],
+   "manaValue": 4,
+   "colorIdentity": [
+    "G"
+   ],
+   "power": "3",
+   "toughness": "3",
+   "tags": {
+    "produces": [
+     "token",
+     "creature-etb",
+     "sacrifice-fodder",
+     "tribe:human",
+     "tribe-nontoken:human",
+     "tribe:artificer",
+     "tribe-nontoken:artificer"
+    ],
+    "cares": []
+   },
+   "searchNames": [
+    "holoengineer"
+   ],
+   "edhrecRank": 31473,
+   "manaCost": "{2}{G}{G}",
+   "layout": "normal",
+   "legalities": {
+    "standard": "legal",
+    "future": "legal",
+    "historic": "legal",
+    "timeless": "legal",
+    "gladiator": "legal",
+    "pioneer": "legal",
+    "modern": "legal",
+    "legacy": "legal",
+    "pauper": "not_legal",
+    "vintage": "legal",
+    "penny": "not_legal",
+    "commander": "legal",
+    "oathbreaker": "legal",
+    "standardbrawl": "legal",
+    "brawl": "legal",
+    "competitivebrawl": "legal",
+    "alchemy": "not_legal",
+    "paupercommander": "not_legal",
+    "duel": "legal",
+    "oldschool": "not_legal",
+    "premodern": "not_legal",
+    "predh": "not_legal",
+    "tlr": "not_legal"
+   },
+   "releasedAt": "2026-11-13",
+   "gameChanger": false,
+   "reserved": false,
+   "allParts": [
+    {
+     "component": "combo_piece",
+     "name": "Holo-Engineer",
+     "typeLine": "Creature — Human Artificer",
+     "printingId": "e8a8f6cc-1b50-4ee2-b2b2-6f4b0760b9b3"
+    },
+    {
+     "component": "token",
+     "name": "Illusion",
+     "typeLine": "Token Artifact Creature — Illusion",
+     "printingId": "d760eee8-e49a-4662-8bfc-fcf8ed2ad2d8"
+    }
+   ],
+   "artCrop": "https://cards.scryfall.io/art_crop/front/a/c/acfaf5f3-a4f5-418a-a29a-211b33bf18ee.jpg?1793100831",
+   "oracleId": "0d830d0c-3339-49cc-8527-4f4edf787925"
+  }
+ },
+ "Kaya, Geist Hunter": {
+  "source": {
+   "name": "Kaya, Geist Hunter",
+   "typeLine": "Legendary Planeswalker — Kaya",
+   "oracleText": "+1: Creatures you control gain deathtouch until end of turn. Put a +1/+1 counter on up to one target creature token you control.\n−2: Until end of turn, if one or more tokens would be created under your control, twice that many of those tokens are created instead.\n−6: Exile all cards from all graveyards, then create a 1/1 white Spirit creature token with flying for each card exiled this way.",
+   "keywords": [],
+   "colors": [
+    "B",
+    "W"
+   ],
+   "manaValue": 3,
+   "colorIdentity": [
+    "B",
+    "W"
+   ],
+   "power": null,
+   "toughness": null,
+   "tags": {
+    "produces": [
+     "token",
+     "creature-etb",
+     "sacrifice-fodder",
+     "counter:+1/+1",
+     "tribe:spirit"
+    ],
+    "cares": [
+     "token"
+    ]
+   },
+   "searchNames": [
+    "kaya geist hunter"
+   ],
+   "edhrecRank": 4508,
+   "manaCost": "{1}{W}{B}",
+   "layout": "normal",
+   "legalities": {
+    "standard": "not_legal",
+    "future": "not_legal",
+    "historic": "legal",
+    "timeless": "legal",
+    "gladiator": "legal",
+    "pioneer": "legal",
+    "modern": "legal",
+    "legacy": "legal",
+    "pauper": "not_legal",
+    "vintage": "legal",
+    "penny": "legal",
+    "commander": "legal",
+    "oathbreaker": "legal",
+    "standardbrawl": "not_legal",
+    "brawl": "legal",
+    "competitivebrawl": "legal",
+    "alchemy": "not_legal",
+    "paupercommander": "not_legal",
+    "duel": "legal",
+    "oldschool": "not_legal",
+    "premodern": "not_legal",
+    "predh": "not_legal",
+    "tlr": "legal"
+   },
+   "releasedAt": "2025-04-11",
+   "gameChanger": false,
+   "reserved": false,
+   "allParts": [
+    {
+     "component": "token",
+     "name": "Spirit",
+     "typeLine": "Token Creature — Spirit",
+     "printingId": "639b70ba-a421-47aa-b356-3b261444e79a"
+    }
+   ],
+   "artCrop": "https://cards.scryfall.io/art_crop/front/5/2/52faa78e-252e-465b-91b5-6f64d828da81.jpg?1783907026",
+   "loyalty": "3",
+   "oracleId": "e0edb2fc-2533-407c-85e5-4337f4233f05"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "grant-ability",
+      "object": "deathtouch",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     },
+     {
+      "verb": "add-counter",
+      "object": "+1/+1",
+      "optional": true,
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "double",
+      "object": "tokens created",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "exile",
+      "object": "all cards from all graveyards",
+      "fromZone": "graveyard",
+      "toZone": "exile",
+      "optional": false
+     },
+     {
+      "verb": "create",
+      "object": "1/1 white Spirit creature token with flying",
+      "amount": "1 for each card exiled this way",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   }
+  ],
+  "segmentHash": "ee30bf6c49c04fa682061255d4f1e9c838641fac13d3049a5b583f6e9fea9650"
+ },
+ "Doubling Season": {
+  "source": {
+   "name": "Doubling Season",
+   "typeLine": "Enchantment",
+   "oracleText": "If an effect would create one or more tokens under your control, it creates twice that many of those tokens instead.\nIf an effect would put one or more counters on a permanent you control, it puts twice that many of those counters on that permanent instead.",
+   "keywords": [],
+   "colors": [
+    "G"
+   ],
+   "manaValue": 5,
+   "colorIdentity": [
+    "G"
+   ],
+   "power": null,
+   "toughness": null,
+   "tags": {
+    "produces": [
+     "enchantment"
+    ],
+    "cares": [
+     "token"
+    ]
+   },
+   "searchNames": [
+    "doubling season"
+   ],
+   "edhrecRank": 186,
+   "manaCost": "{4}{G}",
+   "layout": "normal",
+   "legalities": {
+    "standard": "legal",
+    "future": "legal",
+    "historic": "legal",
+    "timeless": "legal",
+    "gladiator": "legal",
+    "pioneer": "legal",
+    "modern": "legal",
+    "legacy": "legal",
+    "pauper": "not_legal",
+    "vintage": "legal",
+    "penny": "legal",
+    "commander": "legal",
+    "oathbreaker": "legal",
+    "standardbrawl": "legal",
+    "brawl": "legal",
+    "competitivebrawl": "legal",
+    "alchemy": "legal",
+    "paupercommander": "not_legal",
+    "duel": "legal",
+    "oldschool": "not_legal",
+    "premodern": "not_legal",
+    "predh": "legal",
+    "tlr": "not_legal"
+   },
+   "releasedAt": "2024-11-15",
+   "gameChanger": false,
+   "reserved": false,
+   "artCrop": "https://cards.scryfall.io/art_crop/front/f/2/f2c4f80e-84a0-463b-82c3-5c6503809351.jpg?1783909062",
+   "oracleId": "01546b7d-a233-4176-8843-d732074dc5b6"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "create",
+      "object": "twice that many tokens",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "add-counter",
+      "object": "twice that many counters",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "11ef24e7248aa33dd58cd7801e06f80317b64db956f23f9f3f2d41f0dd2b1e83"
+ },
+ "Fisher's Talent": {
+  "source": {
+   "name": "Fisher's Talent",
+   "typeLine": "Enchantment — Class",
+   "oracleText": "(Gain the next level as a sorcery to add its ability.)\nAt the beginning of your upkeep, look at the top card of your library. You may reveal it if it's a land card. Create a 1/1 blue Fish creature token if you revealed it this way. Then draw a card.\n{G}{U}: Level 2\nIf you would create a Fish token, create a 3/3 blue Shark creature token instead.\n{2}{G}{U}: Level 3\nIf you would create a Shark token, create an 8/8 blue Octopus creature token instead.",
+   "keywords": [],
+   "colors": [
+    "G",
+    "U"
+   ],
+   "manaValue": 4,
+   "colorIdentity": [
+    "G",
+    "U"
+   ],
+   "power": null,
+   "toughness": null,
+   "tags": {
+    "produces": [
+     "token",
+     "creature-etb",
+     "sacrifice-fodder",
+     "card-draw",
+     "enchantment"
+    ],
+    "cares": []
+   },
+   "searchNames": [
+    "fishers talent"
+   ],
+   "edhrecRank": 9026,
+   "manaCost": "{2}{G}{U}",
+   "layout": "class",
+   "legalities": {
+    "standard": "not_legal",
+    "future": "not_legal",
+    "historic": "not_legal",
+    "timeless": "not_legal",
+    "gladiator": "not_legal",
+    "pioneer": "not_legal",
+    "modern": "not_legal",
+    "legacy": "legal",
+    "pauper": "not_legal",
+    "vintage": "legal",
+    "penny": "not_legal",
+    "commander": "legal",
+    "oathbreaker": "legal",
+    "standardbrawl": "not_legal",
+    "brawl": "not_legal",
+    "competitivebrawl": "not_legal",
+    "alchemy": "not_legal",
+    "paupercommander": "not_legal",
+    "duel": "legal",
+    "oldschool": "not_legal",
+    "premodern": "not_legal",
+    "predh": "not_legal",
+    "tlr": "not_legal"
+   },
+   "releasedAt": "2024-08-02",
+   "gameChanger": false,
+   "reserved": false,
+   "allParts": [
+    {
+     "component": "token",
+     "name": "Octopus",
+     "typeLine": "Token Creature — Octopus",
+     "printingId": "9fc10475-5eaf-47ea-a45c-3948a632f365"
+    },
+    {
+     "component": "token",
+     "name": "Shark",
+     "typeLine": "Token Creature — Shark",
+     "printingId": "f9424ef2-d271-4929-83e0-12775420bac3"
+    },
+    {
+     "component": "token",
+     "name": "Fish",
+     "typeLine": "Token Creature — Fish",
+     "printingId": "de0d6700-49f0-4233-97ba-cef7821c30ed"
+    }
+   ],
+   "artCrop": "https://cards.scryfall.io/art_crop/front/4/7/47f0e0b9-d137-46ac-a6e4-13a529e30bb5.jpg?1783910727",
+   "oracleId": "44ba2aa5-2bf5-4267-ae82-f0daf8f5e3e8"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "(Gain the next level as a sorcery to add its ability.)",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "upkeep",
+     "subject": "you",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "create",
+      "object": "a 1/1 blue Fish creature token",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "draw",
+      "object": "a card",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 4,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "create",
+      "object": "a 3/3 blue Shark creature token",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 5,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 6,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "create",
+      "object": "an 8/8 blue Octopus creature token",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "97c7327dd65949a517f2fa1e8a651f1ae0ce620d931cee62adf19a8c17041234"
+ },
+ "Xorn": {
+  "source": {
+   "name": "Xorn",
+   "typeLine": "Creature — Elemental",
+   "oracleText": "If you would create one or more Treasure tokens, instead create those tokens plus an additional Treasure token.",
+   "keywords": [
+    "Treasure"
+   ],
+   "colors": [
+    "R"
+   ],
+   "manaValue": 3,
+   "colorIdentity": [
+    "R"
+   ],
+   "power": "3",
+   "toughness": "2",
+   "tags": {
+    "produces": [
+     "artifact",
+     "treasure",
+     "token",
+     "mana",
+     "sacrifice-fodder",
+     "tribe:elemental",
+     "tribe-nontoken:elemental"
+    ],
+    "cares": []
+   },
+   "searchNames": [
+    "xorn"
+   ],
+   "edhrecRank": 876,
+   "manaCost": "{2}{R}",
+   "layout": "normal",
+   "legalities": {
+    "standard": "not_legal",
+    "future": "not_legal",
+    "historic": "legal",
+    "timeless": "legal",
+    "gladiator": "legal",
+    "pioneer": "legal",
+    "modern": "legal",
+    "legacy": "legal",
+    "pauper": "not_legal",
+    "vintage": "legal",
+    "penny": "legal",
+    "commander": "legal",
+    "oathbreaker": "legal",
+    "standardbrawl": "not_legal",
+    "brawl": "legal",
+    "competitivebrawl": "legal",
+    "alchemy": "not_legal",
+    "paupercommander": "not_legal",
+    "duel": "legal",
+    "oldschool": "not_legal",
+    "premodern": "not_legal",
+    "predh": "not_legal",
+    "tlr": "legal"
+   },
+   "releasedAt": "2021-07-23",
+   "gameChanger": false,
+   "reserved": false,
+   "allParts": [
+    {
+     "component": "combo_piece",
+     "name": "Xorn",
+     "typeLine": "Creature — Elemental",
+     "printingId": "713a6502-5239-449a-b04a-c82d525f9916"
+    },
+    {
+     "component": "token",
+     "name": "Treasure",
+     "typeLine": "Token Artifact — Treasure",
+     "printingId": "a3a684b7-27e0-4d9e-a064-9e03c6e50c89"
+    }
+   ],
+   "artCrop": "https://cards.scryfall.io/art_crop/front/f/7/f73fdf76-e3a6-49d0-bfb0-4b7cdbd4271e.jpg?1783926470",
+   "oracleId": "11d8fab8-93af-4291-80bd-cf9436e99f4b"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "create",
+      "object": "Treasure tokens",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "those tokens plus an additional Treasure token",
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "f2a3797f1ef4bae17fe5093784c7a99009611510e331de7b0b823b7333b36478"
+ },
+ "Stridehangar Automaton": {
+  "source": {
+   "name": "Stridehangar Automaton",
+   "typeLine": "Artifact Creature — Construct",
+   "oracleText": "Thopters you control get +1/+1.\nIf one or more artifact tokens would be created under your control, those tokens plus an additional 1/1 colorless Thopter artifact creature token with flying are created instead.",
+   "keywords": [],
+   "colors": [],
+   "manaValue": 3,
+   "colorIdentity": [],
+   "power": "1",
+   "toughness": "4",
+   "tags": {
+    "produces": [
+     "tribe:construct",
+     "tribe-nontoken:construct"
+    ],
+    "cares": []
+   },
+   "searchNames": [
+    "stridehangar automaton"
+   ],
+   "edhrecRank": 1474,
+   "manaCost": "{3}",
+   "layout": "normal",
+   "legalities": {
+    "standard": "not_legal",
+    "future": "not_legal",
+    "historic": "not_legal",
+    "timeless": "not_legal",
+    "gladiator": "not_legal",
+    "pioneer": "not_legal",
+    "modern": "not_legal",
+    "legacy": "legal",
+    "pauper": "not_legal",
+    "vintage": "legal",
+    "penny": "not_legal",
+    "commander": "legal",
+    "oathbreaker": "legal",
+    "standardbrawl": "not_legal",
+    "brawl": "not_legal",
+    "competitivebrawl": "not_legal",
+    "alchemy": "not_legal",
+    "paupercommander": "not_legal",
+    "duel": "legal",
+    "oldschool": "not_legal",
+    "premodern": "not_legal",
+    "predh": "not_legal",
+    "tlr": "legal"
+   },
+   "releasedAt": "2025-02-14",
+   "gameChanger": false,
+   "reserved": false,
+   "allParts": [
+    {
+     "component": "token",
+     "name": "Thopter",
+     "typeLine": "Token Artifact Creature — Thopter",
+     "printingId": "78e52380-13a1-44fe-b762-e71261cac3d0"
+    },
+    {
+     "component": "combo_piece",
+     "name": "Stridehangar Automaton",
+     "typeLine": "Artifact Creature — Construct",
+     "printingId": "f87adc0a-813e-4afe-9e4e-c2d2202c3256"
+    }
+   ],
+   "artCrop": "https://cards.scryfall.io/art_crop/front/4/c/4c398d11-a2fc-43e2-96e9-7f3383e1a43c.jpg?1783907749",
+   "oracleId": "9070c98b-fd01-4eeb-a4ec-fc464946c7c0"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "modify-pt",
+      "object": "Thopters you control",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "+1/+1",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "create",
+      "object": "those tokens plus an additional 1/1 colorless Thopter artifact creature token with flying",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "8cead65983f0e02889b80ab6f20109830c434711754015c7a85cb17d6fa9e9f5"
+ },
+ "Academy Manufactor": {
+  "source": {
+   "name": "Academy Manufactor",
+   "typeLine": "Artifact Creature — Assembly-Worker",
+   "oracleText": "If you would create a Clue, Food, or Treasure token, instead create one of each.",
+   "keywords": [
+    "Treasure",
+    "Food"
+   ],
+   "colors": [],
+   "manaValue": 3,
+   "colorIdentity": [],
+   "power": "1",
+   "toughness": "3",
+   "tags": {
+    "produces": [
+     "artifact",
+     "treasure",
+     "token",
+     "mana",
+     "sacrifice-fodder",
+     "lifegain",
+     "tribe:assembly-worker",
+     "tribe-nontoken:assembly-worker"
+    ],
+    "cares": []
+   },
+   "searchNames": [
+    "academy manufactor",
+    "krobus"
+   ],
+   "edhrecRank": 264,
+   "manaCost": "{3}",
+   "layout": "normal",
+   "legalities": {
+    "standard": "not_legal",
+    "future": "not_legal",
+    "historic": "legal",
+    "timeless": "legal",
+    "gladiator": "legal",
+    "pioneer": "not_legal",
+    "modern": "legal",
+    "legacy": "legal",
+    "pauper": "not_legal",
+    "vintage": "legal",
+    "penny": "legal",
+    "commander": "legal",
+    "oathbreaker": "legal",
+    "standardbrawl": "not_legal",
+    "brawl": "legal",
+    "competitivebrawl": "legal",
+    "alchemy": "not_legal",
+    "paupercommander": "not_legal",
+    "duel": "legal",
+    "oldschool": "not_legal",
+    "premodern": "not_legal",
+    "predh": "not_legal",
+    "tlr": "legal"
+   },
+   "releasedAt": "2024-04-19",
+   "gameChanger": false,
+   "reserved": false,
+   "allParts": [
+    {
+     "component": "token",
+     "name": "Treasure",
+     "typeLine": "Token Artifact — Treasure",
+     "printingId": "7ec6f053-96f7-4e57-b2eb-4e7699a40a4f"
+    },
+    {
+     "component": "token",
+     "name": "Clue",
+     "typeLine": "Token Artifact — Clue",
+     "printingId": "764a906c-8b27-4ffa-bdc3-7825c6919d3e"
+    },
+    {
+     "component": "token",
+     "name": "Food",
+     "typeLine": "Token Artifact — Food",
+     "printingId": "600d5d22-62a0-49c9-b050-90a2566e8caf"
+    }
+   ],
+   "artCrop": "https://cards.scryfall.io/art_crop/front/7/6/76480f4d-ad6d-4ed6-82c6-fa12abc22557.jpg?1783911891",
+   "oracleId": "f36d1d8b-8303-44a9-ab56-531931641ea2"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "create",
+      "object": "a Clue token",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "create",
+      "object": "a Food token",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "create",
+      "object": "a Treasure token",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "0abd7ea3fb69905458356c6d4e722c33d872ce0b54021a88700092739f2eca8d"
+ },
+ "Bilbo, Fellow Conspirator": {
+  "source": {
+   "name": "Bilbo, Fellow Conspirator",
+   "typeLine": "Legendary Creature — Halfling Citizen",
+   "oracleText": "If you would create a Food token, instead create a Food token and a Treasure token.",
+   "keywords": [
+    "Treasure",
+    "Food"
+   ],
+   "colors": [
+    "G"
+   ],
+   "manaValue": 3,
+   "colorIdentity": [
+    "G"
+   ],
+   "power": "2",
+   "toughness": "3",
+   "tags": {
+    "produces": [
+     "artifact",
+     "treasure",
+     "token",
+     "mana",
+     "sacrifice-fodder",
+     "lifegain",
+     "tribe:halfling",
+     "tribe-nontoken:halfling",
+     "tribe:citizen",
+     "tribe-nontoken:citizen"
+    ],
+    "cares": []
+   },
+   "searchNames": [
+    "bilbo fellow conspirator"
+   ],
+   "edhrecRank": 8531,
+   "manaCost": "{2}{G}",
+   "layout": "normal",
+   "legalities": {
+    "standard": "not_legal",
+    "future": "not_legal",
+    "historic": "legal",
+    "timeless": "legal",
+    "gladiator": "legal",
+    "pioneer": "not_legal",
+    "modern": "not_legal",
+    "legacy": "legal",
+    "pauper": "not_legal",
+    "vintage": "legal",
+    "penny": "not_legal",
+    "commander": "legal",
+    "oathbreaker": "legal",
+    "standardbrawl": "not_legal",
+    "brawl": "legal",
+    "competitivebrawl": "legal",
+    "alchemy": "not_legal",
+    "paupercommander": "not_legal",
+    "duel": "legal",
+    "oldschool": "not_legal",
+    "premodern": "not_legal",
+    "predh": "not_legal",
+    "tlr": "legal"
+   },
+   "releasedAt": "2026-08-14",
+   "gameChanger": false,
+   "reserved": false,
+   "artCrop": "https://cards.scryfall.io/art_crop/front/8/4/84a95ac5-e2f6-4cf5-bc5e-ac4410168c06.jpg?1784377196",
+   "oracleId": "d273f87d-1271-49d2-a628-2d1bd888f56c"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "create",
+      "object": "a Food token",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     },
+     {
+      "verb": "create",
+      "object": "a Treasure token",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   }
+  ],
+  "segmentHash": "ccb44d17449ae2e0b2147ce708fd2186cec683def2c558f000b70213c8b6e036"
+ },
+ "Flitwing, Lyev Detective": {
+  "source": {
+   "name": "Flitwing, Lyev Detective",
+   "typeLine": "Legendary Creature — Faerie Detective",
+   "oracleText": "Flying\nIf you would create one or more tokens, you may create that many Clue tokens instead. (They're artifacts with \"{2}, Sacrifice this token: Draw a card.\")",
+   "keywords": [
+    "Flying"
+   ],
+   "colors": [
+    "U"
+   ],
+   "manaValue": 3,
+   "colorIdentity": [
+    "U"
+   ],
+   "power": "1",
+   "toughness": "1",
+   "tags": {
+    "produces": [
+     "card-draw",
+     "tribe:faerie",
+     "tribe-nontoken:faerie",
+     "tribe:detective",
+     "tribe-nontoken:detective"
+    ],
+    "cares": []
+   },
+   "searchNames": [
+    "flitwing lyev detective"
+   ],
+   "edhrecRank": 28210,
+   "manaCost": "{2}{U}",
+   "layout": "normal",
+   "legalities": {
+    "standard": "not_legal",
+    "future": "not_legal",
+    "historic": "not_legal",
+    "timeless": "not_legal",
+    "gladiator": "not_legal",
+    "pioneer": "not_legal",
+    "modern": "not_legal",
+    "legacy": "not_legal",
+    "pauper": "not_legal",
+    "vintage": "not_legal",
+    "penny": "not_legal",
+    "commander": "legal",
+    "oathbreaker": "not_legal",
+    "standardbrawl": "not_legal",
+    "brawl": "not_legal",
+    "competitivebrawl": "not_legal",
+    "alchemy": "not_legal",
+    "paupercommander": "not_legal",
+    "duel": "not_legal",
+    "oldschool": "not_legal",
+    "premodern": "not_legal",
+    "predh": "not_legal",
+    "tlr": "legal"
+   },
+   "releasedAt": "2026-10-19",
+   "gameChanger": false,
+   "reserved": false,
+   "allParts": [
+    {
+     "component": "token",
+     "name": "Clue",
+     "typeLine": "Token Artifact — Clue",
+     "printingId": "24c80ef6-747d-47b7-8e1f-148f5dfacc32"
+    }
+   ],
+   "artCrop": "https://cards.scryfall.io/art_crop/front/8/2/82f58bb5-5838-4862-a3a3-69c6f05a0cd8.jpg?1792739723",
+   "oracleId": "e8a9dddd-4527-46cd-8b7e-4f83c5b51e48"
+  }
+ }
+}
