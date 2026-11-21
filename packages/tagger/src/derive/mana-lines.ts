@@ -942,8 +942,8 @@ export function deriveMana(input: ManaInput): ManaResult {
       const afterCost = antecedentCost(clauseText, /\bsearch\b/i, cost, selfNames);
       const colours = reachOf({ ...found, ...subject, subtype: subject.subtype ?? found?.subtype } as SubjectFilter);
       // CEILING: a search for a non-basic type alone (Desert, Gate, Cave) reaches nothing here, and a fetch with no reach is not
-      // emitted at all. A creature-or-land search (Archdruid's Charm) puts the land only conditionally and is not read.
-      if (colours.length === 0 || (Array.isArray(subject.type) ? subject.type : [subject.type]).includes("creature")) continue;
+      // emitted at all. A creature-or-land search (Archdruid's Charm) puts the land only conditionally and is not read: its landing emit is typed `land` from its "if it's a land card" (#1718), so the SEARCH's own creature type is read too.
+      if (colours.length === 0 || [subject.type, found?.type].flat().includes("creature")) continue;
       lines.push({
         face, source: "fetch", repeats: a.repeats ?? null, cost, colours, colourless: 0, anyColour: null, unread: false,
         amount: { fixed: lands, scales: null }, net: lands - cost.mana, gate: typedGate(afterCost ?? (laterGate !== undefined ? laterGate : fetchGate(clauseText))), restriction: null, timing: "now", producesToken: null, trigger: null,
