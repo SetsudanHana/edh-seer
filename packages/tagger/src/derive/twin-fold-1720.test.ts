@@ -34,6 +34,15 @@ describe("a drain is read for each event its sentence names", () => {
   });
 });
 
+describe("where the twin stays, the per-event drain does not read its event a second time (#1720 review)", () => {
+  // Both twins differ from the cover in another field (Fell Beast: an X amount; Psychomancer: the self half) and stay, carrying their own drain: the cover's per-event copy would double it.
+  test.each(["Fell Beast of Mordor", "Psychomancer"])("%s: each event drains once", (name) => {
+    const verbs = abilities(name).filter((a) => a.effect.kind === "drain").map((a) => JSON.stringify(a.trigger));
+    expect(verbs.length).toBeGreaterThan(0);
+    expect(verbs.length).toBe(new Set(verbs).size);
+  });
+});
+
 describe("a twin more specific only in whose is merged onto its cover, not kept beside it", () => {
   test("Search for Dagger: searches YOUR library on both events, one ability each", () => {
     const s = abilities("Search for Dagger").filter((a) => a.effect.kind === "search");
