@@ -1,0 +1,295 @@
+{
+ "Tempting Contract": {
+  "source": {
+   "name": "Tempting Contract",
+   "typeLine": "Artifact",
+   "oracleText": "At the beginning of your upkeep, each opponent may create a Treasure token. For each opponent who does, you create a Treasure token.",
+   "keywords": [
+    "Treasure"
+   ],
+   "colors": [],
+   "manaValue": 4,
+   "colorIdentity": [],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{4}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "upkeep",
+     "subject": "you",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "create",
+      "object": "a Treasure token",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "b38d75a3a8482c8b3847f4d2a7b0167855c6ce25d28f6ab07010723847bd8352"
+ },
+ "Academy Manufactor": {
+  "source": {
+   "name": "Academy Manufactor",
+   "typeLine": "Artifact Creature \u2014 Assembly-Worker",
+   "oracleText": "If you would create a Clue, Food, or Treasure token, instead create one of each.",
+   "keywords": [
+    "Treasure",
+    "Food"
+   ],
+   "colors": [],
+   "manaValue": 3,
+   "colorIdentity": [],
+   "power": "1",
+   "toughness": "3",
+   "manaCost": "{3}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "create",
+      "object": "a Clue token",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "create",
+      "object": "a Food token",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "create",
+      "object": "a Treasure token",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "0abd7ea3fb69905458356c6d4e722c33d872ce0b54021a88700092739f2eca8d"
+ },
+ "Xorn": {
+  "source": {
+   "name": "Xorn",
+   "typeLine": "Creature \u2014 Elemental",
+   "oracleText": "If you would create one or more Treasure tokens, instead create those tokens plus an additional Treasure token.",
+   "keywords": [
+    "Treasure"
+   ],
+   "colors": [
+    "R"
+   ],
+   "manaValue": 3,
+   "colorIdentity": [
+    "R"
+   ],
+   "power": "3",
+   "toughness": "2",
+   "manaCost": "{2}{R}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "create",
+      "object": "Treasure tokens",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "those tokens plus an additional Treasure token",
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "f2a3797f1ef4bae17fe5093784c7a99009611510e331de7b0b823b7333b36478"
+ },
+ "Chatterfang, Squirrel General": {
+  "source": {
+   "name": "Chatterfang, Squirrel General",
+   "typeLine": "Legendary Creature \u2014 Squirrel Warrior",
+   "oracleText": "Forestwalk (This creature can't be blocked as long as defending player controls a Forest.)\nIf one or more tokens would be created under your control, those tokens plus that many 1/1 green Squirrel creature tokens are created instead.\n{B}, Sacrifice X Squirrels: Target creature gets +X/-X until end of turn.",
+   "keywords": [
+    "Landwalk",
+    "Forestwalk"
+   ],
+   "colors": [
+    "G"
+   ],
+   "manaValue": 3,
+   "colorIdentity": [
+    "B",
+    "G"
+   ],
+   "power": "3",
+   "toughness": "3",
+   "manaCost": "{2}{G}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Forestwalk",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "create",
+      "object": "1/1 green Squirrel creature tokens",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "X plus that many",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "sacrifice",
+      "object": "X Squirrels",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "modify-pt",
+      "object": "target creature",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "+X/-X",
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "084c3d5e348a13d7839e9b7628d0cadfaa79365557f8e3b248d76bf5262a8c87"
+ },
+ "Clackbridge Troll": {
+  "source": {
+   "name": "Clackbridge Troll",
+   "typeLine": "Creature \u2014 Troll",
+   "oracleText": "Trample, haste\nWhen this creature enters, target opponent creates three 0/1 white Goat creature tokens.\nAt the beginning of combat on your turn, any opponent may sacrifice a creature of their choice. If a player does, tap this creature, you gain 3 life, and you draw a card.",
+   "keywords": [
+    "Haste",
+    "Trample"
+   ],
+   "colors": [
+    "B"
+   ],
+   "manaValue": 5,
+   "colorIdentity": [
+    "B"
+   ],
+   "power": "8",
+   "toughness": "8",
+   "manaCost": "{3}{B}{B}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Trample, haste",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "this creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "create",
+      "object": "three 0/1 white Goat creature tokens",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "begin-combat",
+     "subject": "you",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "tap",
+      "object": "this creature",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "gain-life",
+      "object": "you",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "3",
+      "optional": false
+     },
+     {
+      "verb": "draw",
+      "object": "you",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "370da65e587e9a0b8054bfb0668db7573d078d17962a406f9d7f16bc5da8bcb0"
+ }
+}

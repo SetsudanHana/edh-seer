@@ -1,0 +1,700 @@
+{
+ "Tempting Contract": {
+  "source": {
+   "name": "Tempting Contract",
+   "typeLine": "Artifact",
+   "oracleText": "At the beginning of your upkeep, each opponent may create a Treasure token. For each opponent who does, you create a Treasure token.",
+   "keywords": [
+    "Treasure"
+   ],
+   "colors": [],
+   "manaValue": 4,
+   "colorIdentity": [],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{4}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "upkeep",
+     "subject": "you",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "create",
+      "object": "a Treasure token",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "b38d75a3a8482c8b3847f4d2a7b0167855c6ce25d28f6ab07010723847bd8352"
+ },
+ "Tempt with Reflections": {
+  "source": {
+   "name": "Tempt with Reflections",
+   "typeLine": "Sorcery",
+   "oracleText": "Tempting offer \u2014 Choose target creature you control. Create a token that's a copy of that creature. Each opponent may create a token that's a copy of that creature. For each opponent who does, create a token that's a copy of that creature.",
+   "keywords": [
+    "Tempting offer"
+   ],
+   "colors": [
+    "U"
+   ],
+   "manaValue": 4,
+   "colorIdentity": [
+    "U"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{3}{U}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "create",
+      "object": "a token that's a copy of target creature you control",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     },
+     {
+      "verb": "create",
+      "object": "a token that's a copy of that creature",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     },
+     {
+      "verb": "create",
+      "object": "a token that's a copy of that creature",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "22252fe4545b1f62fb817b67c0b00109305d7c105d67b9c1f2ca25f22b8392c9"
+ },
+ "Tempt with Vengeance": {
+  "source": {
+   "name": "Tempt with Vengeance",
+   "typeLine": "Sorcery",
+   "oracleText": "Tempting offer \u2014 Create X 1/1 red Elemental creature tokens with haste. Each opponent may create X 1/1 red Elemental creature tokens with haste. For each opponent who does, create X 1/1 red Elemental creature tokens with haste.",
+   "keywords": [
+    "Tempting offer"
+   ],
+   "colors": [
+    "R"
+   ],
+   "manaValue": 1,
+   "colorIdentity": [
+    "R"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{X}{R}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "create",
+      "object": "X 1/1 red Elemental creature tokens with haste",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "X",
+      "optional": false
+     },
+     {
+      "verb": "create",
+      "object": "X 1/1 red Elemental creature tokens with haste",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "X",
+      "optional": true
+     },
+     {
+      "verb": "create",
+      "object": "X 1/1 red Elemental creature tokens with haste",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "X",
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "378c813adaf13136b6caa37a8c62219af58a226d2978f2418ec47a30dac49277"
+ },
+ "Tempt with Bunnies": {
+  "source": {
+   "name": "Tempt with Bunnies",
+   "typeLine": "Sorcery",
+   "oracleText": "Tempting Offer \u2014 Draw a card and create a 1/1 white Rabbit creature token. Then each opponent may draw a card and create a 1/1 white Rabbit creature token. For each opponent who does, you draw a card and you create a 1/1 white Rabbit creature token.",
+   "keywords": [
+    "Tempting offer"
+   ],
+   "colors": [
+    "W"
+   ],
+   "manaValue": 3,
+   "colorIdentity": [
+    "W"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{2}{W}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "draw",
+      "object": "a card",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "create",
+      "object": "a 1/1 white Rabbit creature token",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "draw",
+      "object": "a card",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     },
+     {
+      "verb": "create",
+      "object": "a 1/1 white Rabbit creature token",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     },
+     {
+      "verb": "draw",
+      "object": "a card",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "create",
+      "object": "a 1/1 white Rabbit creature token",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "cec3038d75f64bd5ec8dec813266d74fde82ff854eb60eef7393492da0f1d3e7"
+ },
+ "Clackbridge Troll": {
+  "source": {
+   "name": "Clackbridge Troll",
+   "typeLine": "Creature \u2014 Troll",
+   "oracleText": "Trample, haste\nWhen this creature enters, target opponent creates three 0/1 white Goat creature tokens.\nAt the beginning of combat on your turn, any opponent may sacrifice a creature of their choice. If a player does, tap this creature, you gain 3 life, and you draw a card.",
+   "keywords": [
+    "Haste",
+    "Trample"
+   ],
+   "colors": [
+    "B"
+   ],
+   "manaValue": 5,
+   "colorIdentity": [
+    "B"
+   ],
+   "power": "8",
+   "toughness": "8",
+   "manaCost": "{3}{B}{B}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Trample, haste",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "this creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "create",
+      "object": "three 0/1 white Goat creature tokens",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "begin-combat",
+     "subject": "you",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "tap",
+      "object": "this creature",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "gain-life",
+      "object": "you",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "3",
+      "optional": false
+     },
+     {
+      "verb": "draw",
+      "object": "you",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "370da65e587e9a0b8054bfb0668db7573d078d17962a406f9d7f16bc5da8bcb0"
+ },
+ "Gisa's Favorite Shovel": {
+  "source": {
+   "name": "Gisa's Favorite Shovel",
+   "typeLine": "Legendary Artifact \u2014 Equipment",
+   "oracleText": "Equipped creature gets +2/+0 and has menace.\nWhenever equipped creature attacks, defending player sacrifices a creature of their choice. If they do, you create a Walker token.\nEquip {4}",
+   "keywords": [
+    "Equip"
+   ],
+   "colors": [
+    "B"
+   ],
+   "manaValue": 2,
+   "colorIdentity": [
+    "B"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{1}{B}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "modify-pt",
+      "object": "equipped creature",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "+2/+0",
+      "optional": false
+     },
+     {
+      "verb": "grant-ability",
+      "object": "equipped creature",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "attacks",
+     "subject": "equipped creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "sacrifice",
+      "object": "a creature of their choice",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "create",
+      "object": "a Walker token",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": true
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Equip {4}",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   }
+  ],
+  "segmentHash": "cb9481048c7f8b72c5163890a62b6e7066c6425bafadc716da826427a4a47e43"
+ },
+ "Charismatic Conqueror": {
+  "source": {
+   "name": "Charismatic Conqueror",
+   "typeLine": "Creature \u2014 Vampire Soldier",
+   "oracleText": "Vigilance\nWhenever an artifact or creature an opponent controls enters untapped, they may tap that permanent. If they don't, you create a 1/1 white Vampire creature token with lifelink.",
+   "keywords": [
+    "Vigilance"
+   ],
+   "colors": [
+    "W"
+   ],
+   "manaValue": 2,
+   "colorIdentity": [
+    "W"
+   ],
+   "power": "2",
+   "toughness": "2",
+   "manaCost": "{1}{W}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Vigilance",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "an artifact or creature an opponent controls",
+     "control": "opponent"
+    },
+    "actions": [
+     {
+      "verb": "tap",
+      "object": "that permanent",
+      "optional": true,
+      "fromZone": null,
+      "toZone": null
+     },
+     {
+      "verb": "create",
+      "object": "a 1/1 white Vampire creature token with lifelink",
+      "optional": true,
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   }
+  ],
+  "segmentHash": "16cf2b08ab18afedb5c06ad6cdc9dba4870275a201554e94cbf5d03d76b9c8e3"
+ },
+ "Divert Disaster": {
+  "source": {
+   "name": "Divert Disaster",
+   "typeLine": "Instant",
+   "oracleText": "Counter target spell unless its controller pays {2}. If they do, you create a Lander token. (It's an artifact with \"{2}, {T}, Sacrifice this token: Search your library for a basic land card, put it onto the battlefield tapped, then shuffle.\")",
+   "keywords": [],
+   "colors": [
+    "U"
+   ],
+   "manaValue": 2,
+   "colorIdentity": [
+    "U"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{1}{U}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "counter-spell",
+      "object": "target spell",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false,
+      "unless": {
+       "cost": "{2}",
+       "payer": "controller"
+      }
+     },
+     {
+      "verb": "create",
+      "object": "a Lander token",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "34ed0f329ad972d94bdae3542c0d4193d18f6110ec0713831ccee3c8e3016f9e"
+ },
+ "Balefang the Unslayable": {
+  "source": {
+   "name": "Balefang the Unslayable",
+   "typeLine": "Legendary Creature \u2014 Demon Dragon",
+   "oracleText": "Flying, trample, protection from Angels and from Archons\nPlayers can't gain life.\nWhen Balefang enters, target opponent creates a tapped Baneslayer Angel token. The token is goaded for the rest of the game. (It's a {3}{W}{W} 5/5 Angel creature with flying, first strike, lifelink, and protection from Demons and from Dragons.)",
+   "keywords": [
+    "Flying",
+    "Goad",
+    "Protection",
+    "Trample"
+   ],
+   "colors": [
+    "R"
+   ],
+   "manaValue": 5,
+   "colorIdentity": [
+    "R"
+   ],
+   "power": "5",
+   "toughness": "5",
+   "manaCost": "{3}{R}{R}",
+   "layout": "normal"
+  },
+  "canonical": []
+ },
+ "Academy Manufactor": {
+  "source": {
+   "name": "Academy Manufactor",
+   "typeLine": "Artifact Creature \u2014 Assembly-Worker",
+   "oracleText": "If you would create a Clue, Food, or Treasure token, instead create one of each.",
+   "keywords": [
+    "Treasure",
+    "Food"
+   ],
+   "colors": [],
+   "manaValue": 3,
+   "colorIdentity": [],
+   "power": "1",
+   "toughness": "3",
+   "manaCost": "{3}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "create",
+      "object": "a Clue token",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "create",
+      "object": "a Food token",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "create",
+      "object": "a Treasure token",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "0abd7ea3fb69905458356c6d4e722c33d872ce0b54021a88700092739f2eca8d"
+ },
+ "Xorn": {
+  "source": {
+   "name": "Xorn",
+   "typeLine": "Creature \u2014 Elemental",
+   "oracleText": "If you would create one or more Treasure tokens, instead create those tokens plus an additional Treasure token.",
+   "keywords": [
+    "Treasure"
+   ],
+   "colors": [
+    "R"
+   ],
+   "manaValue": 3,
+   "colorIdentity": [
+    "R"
+   ],
+   "power": "3",
+   "toughness": "2",
+   "manaCost": "{2}{R}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "create",
+      "object": "Treasure tokens",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "those tokens plus an additional Treasure token",
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "f2a3797f1ef4bae17fe5093784c7a99009611510e331de7b0b823b7333b36478"
+ },
+ "Chatterfang, Squirrel General": {
+  "source": {
+   "name": "Chatterfang, Squirrel General",
+   "typeLine": "Legendary Creature \u2014 Squirrel Warrior",
+   "oracleText": "Forestwalk (This creature can't be blocked as long as defending player controls a Forest.)\nIf one or more tokens would be created under your control, those tokens plus that many 1/1 green Squirrel creature tokens are created instead.\n{B}, Sacrifice X Squirrels: Target creature gets +X/-X until end of turn.",
+   "keywords": [
+    "Landwalk",
+    "Forestwalk"
+   ],
+   "colors": [
+    "G"
+   ],
+   "manaValue": 3,
+   "colorIdentity": [
+    "B",
+    "G"
+   ],
+   "power": "3",
+   "toughness": "3",
+   "manaCost": "{2}{G}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Forestwalk",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "create",
+      "object": "1/1 green Squirrel creature tokens",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "X plus that many",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "sacrifice",
+      "object": "X Squirrels",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "modify-pt",
+      "object": "target creature",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "+X/-X",
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "084c3d5e348a13d7839e9b7628d0cadfaa79365557f8e3b248d76bf5262a8c87"
+ }
+}
