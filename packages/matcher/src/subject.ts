@@ -433,9 +433,64 @@ function namesNoClass(s: SubjectFilter): boolean {
   return arr(s.type).length === 0 && arr(s.subtype).length === 0 && !(s.anyOf ?? []).some((b) => arr(b.type).length > 0 || arr(b.subtype).length > 0);
 }
 
+/** Keywords the corpus prints on NO creature card (every card with the keyword, 2026-11-21: "creature" absent from each type line): Awaken 15 cards, Entwine 33, Overload 27, Escalate, Strive, Cipher, Casualty, Epic and so on. A chosen creature cannot carry
+ *  one, so a recursion that asks for it ("target card with awaken": Halimar Tidecaller) is outside a creature fill's class. The CR keyword abilities only; the Un-set and Universes Beyond one-offs are not listed.
+ *  CEILING: a hand-kept list, not read from the corpus at run time; a keyword printed on creatures later, or a new spell-only one, is judged as a creature keyword until it is added. */
+const NONCREATURE_KEYWORDS: ReadonlySet<string> = new Set([
+  "entwine", "awaken", "spree", "compleated", "harmonize", "overload", "station", "aftermath", "fuse", "living weapon", "conspire", "retrace", "cleave", "hidden agenda", "double agenda", "demonstrate",
+  "read ahead", "casualty", "epic", "cipher", "strive", "escalate", "umbra armor", "gravestorm", "jump-start", "fortify", "undaunted", "tiered", "solved", "job select", "for mirrodin!",
+]);
+// CEILING: a SECOND TYPE beside a creature fill's own (an artifact creature, an enchantment creature) is not reached: a bare "artifact card" / "enchantment card" demand is met by a chosen creature only if the deck holds such a creature, and
+// reading it for every creature fill was 52% of each fill's gains (107 of 316 consumers for Buried Alive, 2026-11-21). A reach gated on the deck's own cards is #1731 (it would bring back Ultron the Annihilator and Ultron's Auxiliary for Jarad's Orders).
+const BASIC_LAND_TYPES = ["plains", "island", "swamp", "mountain", "forest"];
+const PERMANENT_TYPES = ["creature", "artifact", "enchantment", "land", "planeswalker", "battle"];
+
+/** A CHOSEN FILL MEETS EVERY NARROWING INSIDE ITS CLASS (#1726). A tutor put into a graveyard ("search your library for up to three creature cards, put them into your graveyard": Buried Alive, Jarad's Orders, Fork in the Road, Realms
+ *  Uncharted) is a card the player PICKED, so any card of its class can be the one: a Lhurgoyf, a legendary creature, a mana value 1, a creature with infect, a green card. The untyped Entomb already meets all of them (`graveyardFillMatches`
+ *  wildcards a fill that names no class); this gives the typed fill the same reach INSIDE its class and no further. Subtype, colour, mana value, keyword, legendary/historic/snow/basic and "different names" are dropped from the demand when the
+ *  class can carry them; a demand outside the class still goes to `subjectMatches` and fails.
+ *  What marks the fill chosen is `fromZone: library` on a non-self `enters-graveyard` (derive stamps it on every searched put): a mill is a `mill` verb, and `impliedGraveyardEvents` gives it no origin on the subject and no type.
+ *  CEILING: a fill that already names a subtype keeps strict subtype matching (a chosen Spirit is not offered to a Zombie demand); a subtype of a type beside the fill's (an Equipment for a creature fill) is not reached; a land fill's colour and
+ *  mana value demands stay strict; keywords are reached only on a creature class; a land is never offered to a creature or artifact demand (Dryad Arbor, the artifact lands). */
+function chosenFillMatches(producer: SubjectFilter, consumer: SubjectFilter, h: Hierarchy): boolean {
+  // "this card" is the card itself, which another card's fill is not
+  if (consumer.self === true) return subjectMatches(producer, consumer, h);
+  if (consumer.anyOf !== undefined && consumer.anyOf.length > 0) {
+    const { anyOf, ...shared } = consumer;
+    return anyOf.some((b) => chosenFillMatches(producer, { ...shared, ...b }, h));
+  }
+  // A FILL THAT NAMES A SUBTYPE IS THAT SUBTYPE'S TYPE: Scion's "Dragon permanent card" is a creature (SUBTYPE_TYPES), not the permanent umbrella that includes a land
+  const named = arr(producer.subtype).flatMap((st) => SUBTYPE_TYPES[st.toLowerCase()] ?? []);
+  const cls = named.length > 0 ? new Set(named) : expandTypes(arr(producer.type), arr(producer.subtype), h);
+  const landOnly = cls.has("land") && !cls.has("creature");
+  const c: SubjectFilter = { ...consumer };
+  const p: SubjectFilter = { ...producer };
+  if (named.length > 0) p.type = [...cls];
+  // a recursion of "different names" is a count across the cards it returns, not a card property; "the same name as" names a card the fill is not
+  if (c.nameRelation === "different") delete c.nameRelation;
+  if (!landOnly) { delete c.colors; delete c.colorCount; delete c.allColors; delete c.chosenColor; delete c.stats; }
+  if (cls.has("creature")) {
+    if (!arr(c.keyword).some((k) => NONCREATURE_KEYWORDS.has(k.toLowerCase()))) delete c.keyword;
+    delete c.outlaw;
+  }
+  // a BASIC land is never legendary or historic and holds only the five basic land types; it can be snow
+  if (PERMANENT_TYPES.some((t) => cls.has(t))) {
+    if (c.legendary === true && producer.basic !== true) delete c.legendary;
+    if (c.historic === true && producer.basic !== true) delete c.historic;
+    if (c.snow === true) delete c.snow;
+  }
+  if (cls.has("land") && c.basic === true) delete c.basic;
+  // a subtype of the fill's own type: the chosen card can be one
+  if (arr(c.subtype).length > 0 && arr(producer.subtype).length === 0) {
+    const reachable = arr(c.subtype).filter((st) => (SUBTYPE_TYPES[st.toLowerCase()] ?? []).some((t) => cls.has(t)) && (producer.basic !== true || BASIC_LAND_TYPES.includes(st.toLowerCase())));
+    if (reachable.length > 0) p.subtype = reachable;
+  }
+  return subjectMatches(p, c, h);
+}
+
 export function graveyardFillMatches(producer: SubjectFilter, consumer: SubjectFilter, h: Hierarchy): boolean {
   const untyped = namesNoClass(producer);
-  if (!untyped) return subjectMatches(producer, consumer, h);
+  if (!untyped) return (producer.fromZone === "library" && producer.self !== true ? chosenFillMatches : subjectMatches)(producer, consumer, h);
   if (sharedTypeRefuses(producer, consumer)) return false;
   if (consumer.control !== "any" && producer.control !== "any" && consumer.control !== producer.control) return false;
   if (consumer.token !== null && producer.token !== null && consumer.token !== producer.token) return false;
