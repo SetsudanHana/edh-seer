@@ -2428,6 +2428,10 @@ function readActions(effect: string, type: string | null, cost: string | undefin
     // CEILING: the repetition is the amount's scaling and no more; "a copy of it" is a copy of what the card names, not one copy per counted object (as the eachCopy reading above).
     // The count must be a PLAIN CLASS (`countIsPlainClass`): one the filter grammar reads whole and derive's subject reading agrees with. A count that carries a qualifier derive's class drops (Sovereign Okinec Ahau's
     // "with power greater than that creature's base power", La Forge's "that you've put a counter on this turn", Rite of Ascension's "you attacked this turn"), or names what an earlier action or choice did, or a self-reference, is refused.
+    // #1715: "For each opponent who does, create a token that's a copy of that creature" (Tempt with Reflections, Vengeance): the creator is YOU, the opponents being the ones who already did ("..., you create ..." reads so as printed).
+    // CEILING: only a create, only straight after the "who does" lead, and only when an earlier sentence of this effect had an opponent create (a "who does" with nothing before it to refer back to stays unread, #1673); the per-opponent repetition is not carried (as for the eachLead below).
+    const whoDoesCreate = /^for each (?:opponent|player) who does, (create .+)$/i.exec(s);
+    if (whoDoesCreate && out.some((a) => a.verb === "create" && a.actor?.control === "opp")) s = `you ${whoDoesCreate[1]!}`;
     const eachLead = /^for each ([^,]+), ((?:create|draw|you gain|gain) .+|put .+ counters? on .+)$/i.exec(s);
     if (eachLead && countIsPlainClass(eachLead[1]!) && !/\bthat (?:player|opponent)\b/i.test(eachLead[2]!) && phrases(eachLead[2]!).length === 1) s = `${eachLead[2]!} for each ${eachLead[1]!}`;
     // "You may pay {1}. If you do, <effect>" (Wooden Sphere, Marooned): the payment records no action, as the store has it, and the first action after "If you do" carries
