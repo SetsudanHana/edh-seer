@@ -1748,7 +1748,9 @@ const strip = (s: Partial<SubjectFilter>): Partial<SubjectFilter> => {
  *
  *  CEILING (`CEILING:` -- read before trusting a claim): Coiling Rebirth's copy is conditioned on "that creature
  *  isn't legendary" -- an intervening-if the engine has refused generally, not the literal word
- *  `notLegendary` catches. A single card. The clone-permanent pass ("enters as a copy of a creature an opponent controls") still ignores control. */
+ *  `notLegendary` catches. A single card.
+ *  The clone-permanent pass reads `opponentsOnly` too (#1689): "enters as a copy of a creature an opponent controls" (Malleable Impostor, Mocking Doppelganger) links to no deck-mate.
+ *  CEILING: `opponentsOnly` is read off the FIRST typed branch only; a card whose opponent-only branch is not first (a modal copy) keeps the deck-mate link. */
 function copySubject(
   p: DeckCard,
 ): { subject: SubjectFilter; enters: boolean; notLegendary: boolean; opponentsOnly: boolean } | undefined {
@@ -4684,7 +4686,7 @@ function copyFamilyEdges({ p, c, h, reasons }: PairScope): void {
   // Not a card with itself (a creature clone is a creature), and not twice: a TYPAL clone static is
   // already claimed by `staticEdges` under the same tag (review).
   const typalClone = (p.tags?.abilities ?? []).some((a) => a.kind === "static" && a.effect.kind === "clone" && a.effect.subject?.subtype !== undefined);
-  if (copy?.enters && !typalClone && p.card.name !== c.card.name
+  if (copy?.enters && !copy.opponentsOnly && !typalClone && p.card.name !== c.card.name
     && ENTERS_AS_COPY_CUE.test(p.card.oracleText ?? "") && !c.isToken
     && !ENTERS_AS_COPY_CUE.test(c.card.oracleText ?? "")
     && !(copy.notLegendary && c.tags.characteristics.types.includes("legendary"))

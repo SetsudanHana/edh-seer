@@ -1,0 +1,594 @@
+{
+ "Malleable Impostor": {
+  "card": {
+   "name": "Malleable Impostor",
+   "typeLine": "Creature — Faerie Shapeshifter",
+   "oracleText": "Flash\nFlying\nYou may have this creature enter as a copy of a creature an opponent controls, except it's a Faerie Shapeshifter in addition to its other types and it has flying.",
+   "keywords": [
+    "Flying",
+    "Flash"
+   ],
+   "colors": [
+    "U"
+   ],
+   "manaValue": 4,
+   "colorIdentity": [
+    "U"
+   ],
+   "power": "0",
+   "toughness": "0",
+   "layout": "normal",
+   "manaCost": "{3}{U}",
+   "gameChanger": false
+  },
+  "tags": {
+   "oracleId": "acd209d1-37e9-4713-b320-ee52854790bb",
+   "schemaVersion": 1,
+   "promptVersion": 0,
+   "model": "derived",
+   "characteristics": {
+    "types": [
+     "creature"
+    ],
+    "subtypes": [
+     "faerie",
+     "shapeshifter"
+    ],
+    "layout": "normal",
+    "colors": [
+     "U"
+    ],
+    "identity": [
+     "U"
+    ],
+    "cmc": 4,
+    "power": "0",
+    "toughness": "0",
+    "token": false,
+    "keywords": [
+     "flying",
+     "flash"
+    ]
+   },
+   "abilities": [
+    {
+     "kind": "static",
+     "effect": {
+      "kind": "clone"
+     },
+     "amount": "1",
+     "emits": [
+      {
+       "verb": "copy",
+       "subject": {
+        "control": "opp",
+        "token": null,
+        "type": "creature"
+       }
+      }
+     ],
+     "clause": 3,
+     "repeats": "continuous",
+     "count": {
+      "floor": 1,
+      "ceiling": 1
+     }
+    },
+    {
+     "kind": "static",
+     "effect": {
+      "kind": "keyword-grant"
+     },
+     "clause": 3,
+     "repeats": "continuous",
+     "grants": [
+      "flying"
+     ]
+    }
+   ],
+   "deriveVersion": 558,
+   "normalizeVersion": 12,
+   "segmentHash": "7deb26bdec9633f3ff31f3151a5644e15b5cf6b4bdbf8575488b8a253ef2fb91",
+   "clauseSource": "model"
+  }
+ },
+ "Mocking Doppelganger": {
+  "card": {
+   "name": "Mocking Doppelganger",
+   "typeLine": "Creature — Shapeshifter",
+   "oracleText": "Flash\nYou may have this creature enter as a copy of a creature an opponent controls, except it has \"Other creatures with the same name as this creature are goaded.\" (They attack each combat if able and attack a player other than you if able.)",
+   "keywords": [
+    "Goad",
+    "Flash"
+   ],
+   "colors": [
+    "U"
+   ],
+   "manaValue": 4,
+   "colorIdentity": [
+    "U"
+   ],
+   "power": "0",
+   "toughness": "0",
+   "layout": "normal",
+   "manaCost": "{3}{U}",
+   "gameChanger": false
+  },
+  "tags": {
+   "oracleId": "3b8eb602-01e8-432e-8dfc-8fdb62c3aa43",
+   "schemaVersion": 1,
+   "promptVersion": 0,
+   "model": "derived",
+   "characteristics": {
+    "types": [
+     "creature"
+    ],
+    "subtypes": [
+     "shapeshifter"
+    ],
+    "layout": "normal",
+    "colors": [
+     "U"
+    ],
+    "identity": [
+     "U"
+    ],
+    "cmc": 4,
+    "power": "0",
+    "toughness": "0",
+    "token": false,
+    "keywords": [
+     "goad",
+     "flash"
+    ]
+   },
+   "abilities": [
+    {
+     "kind": "static",
+     "effect": {
+      "kind": "clone"
+     },
+     "amount": "1",
+     "emits": [
+      {
+       "verb": "copy",
+       "subject": {
+        "control": "opp",
+        "token": null,
+        "type": "creature"
+       }
+      }
+     ],
+     "clause": 2,
+     "repeats": "continuous",
+     "count": {
+      "floor": 1,
+      "ceiling": 1
+     }
+    },
+    {
+     "kind": "static",
+     "effect": {
+      "kind": "keyword-grant"
+     },
+     "clause": 2,
+     "repeats": "continuous"
+    }
+   ],
+   "deriveVersion": 558,
+   "normalizeVersion": 12,
+   "segmentHash": "db0ff17e439b7eef2a0670e5009045b2cb396af6f4eb220c4be5393ea77d729a",
+   "clauseSource": "grammar"
+  }
+ },
+ "Imposter Mech": {
+  "card": {
+   "name": "Imposter Mech",
+   "typeLine": "Artifact — Vehicle",
+   "oracleText": "You may have this Vehicle enter as a copy of a creature an opponent controls, except it's a Vehicle artifact with crew 3 and it loses all other card types.\nCrew 3",
+   "keywords": [
+    "Crew"
+   ],
+   "colors": [
+    "U"
+   ],
+   "manaValue": 2,
+   "colorIdentity": [
+    "U"
+   ],
+   "power": "3",
+   "toughness": "1",
+   "layout": "normal",
+   "manaCost": "{1}{U}",
+   "gameChanger": false
+  },
+  "tags": {
+   "oracleId": "f434e266-d9d6-4058-96ff-a1bd4029d8dc",
+   "schemaVersion": 1,
+   "promptVersion": 0,
+   "model": "derived",
+   "characteristics": {
+    "types": [
+     "artifact"
+    ],
+    "subtypes": [
+     "vehicle"
+    ],
+    "layout": "normal",
+    "colors": [
+     "U"
+    ],
+    "identity": [
+     "U"
+    ],
+    "cmc": 2,
+    "power": "3",
+    "toughness": "1",
+    "token": false,
+    "keywords": [
+     "crew"
+    ]
+   },
+   "abilities": [
+    {
+     "kind": "static",
+     "effect": {
+      "kind": "clone"
+     },
+     "amount": "1",
+     "emits": [
+      {
+       "verb": "copy",
+       "subject": {
+        "control": "opp",
+        "token": null,
+        "type": "creature"
+       }
+      }
+     ],
+     "clause": 1,
+     "repeats": "continuous",
+     "count": {
+      "floor": 1,
+      "ceiling": 1
+     }
+    }
+   ],
+   "deriveVersion": 558,
+   "normalizeVersion": 12,
+   "segmentHash": "182d8195fd8b038dea102cc5b7478702d48336a8a1708e7b7cf88fdac84b660d",
+   "clauseSource": "model"
+  }
+ },
+ "Clone": {
+  "card": {
+   "name": "Clone",
+   "typeLine": "Creature — Shapeshifter",
+   "oracleText": "You may have this creature enter as a copy of any creature on the battlefield.",
+   "keywords": [],
+   "colors": [
+    "U"
+   ],
+   "manaValue": 4,
+   "colorIdentity": [
+    "U"
+   ],
+   "power": "0",
+   "toughness": "0",
+   "layout": "normal",
+   "manaCost": "{3}{U}",
+   "gameChanger": false
+  },
+  "tags": {
+   "oracleId": "42226b87-0746-4ebf-9fd0-108d508462af",
+   "schemaVersion": 1,
+   "promptVersion": 0,
+   "model": "derived",
+   "characteristics": {
+    "types": [
+     "creature"
+    ],
+    "subtypes": [
+     "shapeshifter"
+    ],
+    "layout": "normal",
+    "colors": [
+     "U"
+    ],
+    "identity": [
+     "U"
+    ],
+    "cmc": 4,
+    "power": "0",
+    "toughness": "0",
+    "token": false,
+    "keywords": []
+   },
+   "abilities": [
+    {
+     "kind": "static",
+     "effect": {
+      "kind": "clone"
+     },
+     "emits": [
+      {
+       "verb": "copy",
+       "subject": {
+        "control": "any",
+        "token": null,
+        "type": "creature"
+       }
+      }
+     ],
+     "clause": 1,
+     "repeats": "continuous"
+    }
+   ],
+   "deriveVersion": 558,
+   "normalizeVersion": 12,
+   "segmentHash": "ee414ff3a7597ca4dc21470d0090f177b400ee233250c005ab8cfc75b12dcba7",
+   "clauseSource": "grammar"
+  }
+ },
+ "Phantasmal Image": {
+  "card": {
+   "name": "Phantasmal Image",
+   "typeLine": "Creature — Illusion",
+   "oracleText": "You may have this creature enter as a copy of any creature on the battlefield, except it's an Illusion in addition to its other types and it has \"When this creature becomes the target of a spell or ability, sacrifice it.\"",
+   "keywords": [],
+   "colors": [
+    "U"
+   ],
+   "manaValue": 2,
+   "colorIdentity": [
+    "U"
+   ],
+   "power": "0",
+   "toughness": "0",
+   "layout": "normal",
+   "manaCost": "{1}{U}",
+   "gameChanger": false
+  },
+  "tags": {
+   "oracleId": "bde94af8-faea-41ff-8eed-ba642eac9968",
+   "schemaVersion": 1,
+   "promptVersion": 0,
+   "model": "derived",
+   "characteristics": {
+    "types": [
+     "creature"
+    ],
+    "subtypes": [
+     "illusion"
+    ],
+    "layout": "normal",
+    "colors": [
+     "U"
+    ],
+    "identity": [
+     "U"
+    ],
+    "cmc": 2,
+    "power": "0",
+    "toughness": "0",
+    "token": false,
+    "keywords": []
+   },
+   "abilities": [
+    {
+     "kind": "static",
+     "effect": {
+      "kind": "clone"
+     },
+     "emits": [
+      {
+       "verb": "copy",
+       "subject": {
+        "control": "any",
+        "token": null,
+        "type": "creature"
+       }
+      }
+     ],
+     "clause": 1,
+     "repeats": "continuous"
+    },
+    {
+     "kind": "static",
+     "effect": {
+      "kind": "keyword-grant"
+     },
+     "clause": 1,
+     "repeats": "continuous"
+    },
+    {
+     "kind": "triggered",
+     "effect": {
+      "kind": ""
+     },
+     "amount": "1",
+     "emits": [
+      {
+       "verb": "sacrifice",
+       "subject": {
+        "control": "you",
+        "token": null,
+        "type": "creature",
+        "self": true
+       }
+      },
+      {
+       "verb": "dies",
+       "subject": {
+        "control": "you",
+        "token": null,
+        "type": "creature",
+        "self": true
+       }
+      }
+     ],
+     "clause": 2,
+     "count": {
+      "floor": 1,
+      "ceiling": 1
+     },
+     "grantedBy": 1
+    }
+   ],
+   "unknownTriggers": [
+    "becomes-target"
+   ],
+   "deriveVersion": 558,
+   "normalizeVersion": 12,
+   "segmentHash": "209abd8c37a49b36d0922f8690d6751664fb881c2acdfb740b1095ac955d3569",
+   "clauseSource": "model"
+  }
+ },
+ "Mulldrifter": {
+  "card": {
+   "name": "Mulldrifter",
+   "typeLine": "Creature — Elemental",
+   "oracleText": "Flying\nWhen this creature enters, draw two cards.\nEvoke {2}{U} (You may cast this spell for its evoke cost. If you do, it's sacrificed when it enters.)",
+   "keywords": [
+    "Flying",
+    "Evoke"
+   ],
+   "colors": [
+    "U"
+   ],
+   "manaValue": 5,
+   "colorIdentity": [
+    "U"
+   ],
+   "power": "2",
+   "toughness": "2",
+   "layout": "normal",
+   "manaCost": "{4}{U}",
+   "gameChanger": false
+  },
+  "tags": {
+   "oracleId": "24d0f5e7-0d9e-4b76-900e-a7274e80312d",
+   "schemaVersion": 1,
+   "promptVersion": 0,
+   "model": "derived",
+   "characteristics": {
+    "types": [
+     "creature"
+    ],
+    "subtypes": [
+     "elemental"
+    ],
+    "layout": "normal",
+    "colors": [
+     "U"
+    ],
+    "identity": [
+     "U"
+    ],
+    "cmc": 5,
+    "power": "2",
+    "toughness": "2",
+    "token": false,
+    "keywords": [
+     "flying",
+     "evoke"
+    ]
+   },
+   "abilities": [
+    {
+     "kind": "triggered",
+     "effect": {
+      "kind": "draw-card",
+      "subject": {
+       "control": "you",
+       "token": null
+      }
+     },
+     "trigger": {
+      "verbs": [
+       "enters"
+      ],
+      "subject": {
+       "control": "you",
+       "token": null,
+       "type": "creature",
+       "self": true
+      }
+     },
+     "amount": "2",
+     "emits": [
+      {
+       "verb": "draw",
+       "subject": {
+        "control": "you",
+        "token": null
+       }
+      }
+     ],
+     "clause": 2,
+     "repeats": "once",
+     "count": {
+      "floor": 2,
+      "ceiling": 2
+     }
+    }
+   ],
+   "deriveVersion": 558,
+   "normalizeVersion": 12,
+   "segmentHash": "119bd750c71730f916321dd89b9e5b15842a5ad2b8712e266889daac544e0b8b",
+   "clauseSource": "grammar"
+  }
+ },
+ "Grizzly Bears": {
+  "card": {
+   "name": "Grizzly Bears",
+   "typeLine": "Creature — Bear",
+   "oracleText": "",
+   "keywords": [],
+   "colors": [
+    "G"
+   ],
+   "manaValue": 2,
+   "colorIdentity": [
+    "G"
+   ],
+   "power": "2",
+   "toughness": "2",
+   "layout": "normal",
+   "manaCost": "{1}{G}",
+   "gameChanger": false
+  },
+  "tags": {
+   "oracleId": "14c8f55d-d177-4c25-a931-ebeb9e6062a0",
+   "schemaVersion": 1,
+   "promptVersion": 0,
+   "model": "derived",
+   "characteristics": {
+    "types": [
+     "creature"
+    ],
+    "subtypes": [
+     "bear"
+    ],
+    "layout": "normal",
+    "colors": [
+     "G"
+    ],
+    "identity": [
+     "G"
+    ],
+    "cmc": 2,
+    "power": "2",
+    "toughness": "2",
+    "token": false,
+    "keywords": [],
+    "noAbilities": true
+   },
+   "abilities": [],
+   "deriveVersion": 558,
+   "normalizeVersion": 14,
+   "segmentHash": "a7c34c316e1d30cdda67651d89c73d82e41861b1471e9f29455a27965f797e4c",
+   "clauseSource": "grammar"
+  }
+ }
+}
