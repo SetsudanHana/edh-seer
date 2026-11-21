@@ -1063,7 +1063,7 @@ function exilesOnlyBlockCounterparts(oracleText: string | undefined): boolean {
  *  Only when no OTHER sentence returns / casts from a graveyard: Wrenn and Realmbreaker mills for -2 and plays permanents from the graveyard under -7, so an outside fill still feeds it.
  *  CEILING: read per card, not per ability (the card-scoped shape of the cues below): a card whose self-milled return and whose graveyard return are two abilities is left paired, never refused, and a card that returns the milled set AND a card of its own choosing in one sentence is not read. The destination (hand, battlefield, library) separates a return from a counter put per milled card (The Wise Mothman). */
 function recursionReadsOnlyItsOwnMill(oracleText: string | undefined): boolean {
-  const sentences = (oracleText ?? "").replace(/\([^)]*\)/g, "").split(/[.\n]/);
+  const sentences = (oracleText ?? "").replace(/\([^()]*\)/g, "").split(/[.\n]/);
   const own = (x: string): boolean => /\b(?:returns?|puts?)\b[^.]{0,200}\b(?:milled this way|from among the milled cards)\b/i.test(x) && /\b(?:hand|battlefield|library)\b/i.test(x);
   if (!sentences.some(own)) return false;
   return !sentences.some((x) => !own(x) && /\b(?:returns?|puts?|cast|play)\b[^.]{0,80}\b(?:from|in) [^.]{0,30}\bgraveyard/i.test(x));
