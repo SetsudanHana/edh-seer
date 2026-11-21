@@ -30,8 +30,7 @@ const fills = (p: string, c: string): string[] => pair(p, c).filter((x) => FILL.
 
 describe("a chosen typed fill reaches a consumer that narrows inside its class", () => {
   test.each([
-    ["Jarad's Orders", "Abiding Grace"], ["Jarad's Orders", "Disa the Restless"], ["Jarad's Orders", "Corpse Cur"], ["Jarad's Orders", "Ultron's Auxiliary"],
-    ["Jarad's Orders", "Revive"], ["Jarad's Orders", "Ultron the Annihilator"],
+    ["Jarad's Orders", "Abiding Grace"], ["Jarad's Orders", "Disa the Restless"], ["Jarad's Orders", "Corpse Cur"], ["Jarad's Orders", "Revive"], ["Jarad's Orders", "Charred Graverobber"],
     ["Fork in the Road", "Titania, Nature's Force"], ["Fork in the Road", "Jorn, God of Winter // Kaldring, the Rimestaff"],
     ["Buried Alive", "Goryo's Vengeance"], ["Buried Alive", "Abiding Grace"], ["Buried Alive", "Corpse Cur"],
     ["Realms Uncharted", "Lodestone Bauble"], ["Realms Uncharted", "Planar Birth"]
@@ -58,6 +57,11 @@ describe("derive marks every searched put as from the library", () => {
 
 describe("it never reaches a consumer outside its class", () => {
   test.each([
+    // A BARE "artifact card" demand is outside a creature's class: it is met only if the chosen creature is also an artifact, which only a deck that holds one can say. Deck-gated reach: #1731.
+    ["Jarad's Orders", "Ultron's Auxiliary"], ["Jarad's Orders", "Ultron the Annihilator"], ["Buried Alive", "Ultron's Auxiliary"],
+    // a keyword no creature carries (awaken is on spells only); an origin that is not the battlefield; a Dragon is a creature, never a land
+    ["Buried Alive", "Halimar Tidecaller"], ["Buried Alive", "Yomiji, Who Bars the Way"], ["Entomb", "Yomiji, Who Bars the Way"], ["Jarad's Orders", "Yomiji, Who Bars the Way"],
+    ["Scion of the Ur-Dragon", "Planar Birth"], ["Scion of the Ur-Dragon", "Groundskeeper"], ["Scion of the Ur-Dragon", "The Eighth Doctor"],
     ["Fork in the Road", "Abiding Grace"], ["Fork in the Road", "Raise Dead"], ["Fork in the Road", "Goryo's Vengeance"], ["Realms Uncharted", "Raise Dead"],
     ["Jarad's Orders", "Practiced Scrollsmith"], ["Buried Alive", "Practiced Scrollsmith"], ["Jarad's Orders", "Titania, Nature's Force"], ["Buried Alive", "Planar Birth"], ["Jarad's Orders", "Salvaging Station"],
   ])("%s -> %s stays unpaired", (p, c) => {
@@ -66,6 +70,9 @@ describe("it never reaches a consumer outside its class", () => {
 });
 
 describe("CONTROLS: the untyped Entomb and a random mill are as before", () => {
+  test("Corpse Cur (infect) still pairs: creatures carry infect", () => {
+    expect(fills("Buried Alive", "Corpse Cur")).not.toEqual([]);
+  });
   test.each(["Abiding Grace", "Goryo's Vengeance", "Titania, Nature's Force"])("Entomb -> %s still pairs (untyped wildcard)", (c) => {
     expect(fills("Entomb", c)).not.toEqual([]);
   });
@@ -100,7 +107,11 @@ describe("what a chosen fill cannot be, read at the seam (consumer subjects as d
   });
   test("a creature fill: inside-class narrowings, an artifact beside it, never 'noncreature', 'basic' or a land", () => {
     expect(meets({ type: "creature" }, { type: "creature", legendary: true, subtype: "lhurgoyf", colors: ["G"], keyword: ["infect"], stats: [{ metric: "mana-value", op: "eq", value: 1 }] })).toBe(true);
-    expect(meets({ type: "creature" }, { type: "artifact" })).toBe(true);
+    // a bare second type is outside the class (#1731 reads it deck-gated)
+    expect(meets({ type: "creature" }, { type: "artifact" })).toBe(false);
+    expect(meets({ type: "creature" }, { type: "creature", outlaw: true })).toBe(true);
+    expect(meets({ type: "creature" }, { keyword: ["awaken"] })).toBe(false);
+    expect(meets({ type: "creature" }, { keyword: ["flying"] })).toBe(true);
     expect(meets({ type: "creature" }, { type: ["artifact", "enchantment", "planeswalker"], notType: ["creature"] })).toBe(false);
     expect(meets({ type: "creature" }, { type: "land", basic: true })).toBe(false);
     expect(meets({ type: "creature" }, { subtype: "forest" })).toBe(false);
@@ -108,5 +119,21 @@ describe("what a chosen fill cannot be, read at the seam (consumer subjects as d
   test("a card's own recursion ('this card') is not a chosen card, and 'the same name as' is not a property of the fill", () => {
     expect(meets({ type: "creature" }, { type: "enchantment", self: true })).toBe(false);
     expect(meets({ type: "creature" }, { nameRelation: "same" })).toBe(false);
+  });
+});
+
+describe("what keeps a fill off the chosen path, and what narrows a permanent+subtype fill", () => {
+  test("a card exiled with this, put into its graveyard (Currency Converter), is no choice from a library: 'legendary artifact' stays refused", () => {
+    expect(fillOf("Currency Converter").fromZone).toBe("exile");
+    expect(graveyardFillMatches(entered("Currency Converter"), recursionOf("Lara Croft, Tomb Raider"), H)).toBe(false);
+  });
+  test("...while a library artifact fill (Goblin Engineer) meets it", () => {
+    expect(graveyardFillMatches(entered("Goblin Engineer"), recursionOf("Lara Croft, Tomb Raider"), H)).toBe(true);
+  });
+  test("Scion's 'Dragon permanent card' is a Dragon, a creature type: no land, no basic, no historic land", () => {
+    const f = entered("Scion of the Ur-Dragon");
+    expect(f.subtype).toBe("dragon");
+    expect(graveyardFillMatches(f, recursionOf("Groundskeeper"), H)).toBe(false);
+    expect(graveyardFillMatches(f, recursionOf("Lara Croft, Tomb Raider"), H)).toBe(false);
   });
 });
