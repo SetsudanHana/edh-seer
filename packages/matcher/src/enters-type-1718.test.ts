@@ -59,7 +59,8 @@ describe("controls", () => {
   test("a land put stays a land: Thrasios / Wild Evocation / Unexpected Results do not pair with Mulldrifter", () => {
     for (const p of ["Thrasios, Triton Hero", "Wild Evocation", "Unexpected Results"]) expect(enters(p, "Mulldrifter"), p).toEqual([]);
   });
-  test("a basic-land fetch keeps its (separate) untyped put: Kodama's Reach is untouched", () => expect(entersTypes("Kodama's Reach")).toEqual([undefined]));
+  // CEILING pin (#1713): a searched-share put ("put one onto the battlefield") is still untyped; this goes red when #1713's searched-share CEILING is lifted, which is the fix.
+  test("CEILING #1713: Kodama's Reach's searched-share put is not typed by this change (still a defect)", () => expect(entersTypes("Kodama's Reach")).toEqual([undefined]));
   test("a token create is unchanged: Raise the Alarm's Soldiers stay creature tokens", () => expect(entersTypes("Raise the Alarm")).toEqual(["creature"]));
   test("a flicker with a typed antecedent in its own clause is unchanged (Ghostly Flicker)", () => expect(entersTypes("Ghostly Flicker")).toEqual([["creature", "artifact", "land"]]));
   test("a negated condition is not read (Impromptu Raid stays untyped)", () => expect(entersTypes("Impromptu Raid")).toEqual([undefined]));
