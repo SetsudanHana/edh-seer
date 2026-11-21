@@ -4703,7 +4703,7 @@
       {
        "instantSpeed": true,
        "subject": {
-        "control": "any",
+        "control": "you",
         "token": null,
         "type": "land"
        },

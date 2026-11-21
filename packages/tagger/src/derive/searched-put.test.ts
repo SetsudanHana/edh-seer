@@ -31,6 +31,20 @@ describe("a search of your library that puts into your graveyard is yours", () =
   });
 });
 
+// The model writes the put after a search with NO origin of its own (`fromZone: null`): "put it into your graveyard", "Put the chosen cards into your graveyard". It is still the searched library's card.
+describe("a put with no stored origin after a search of your library", () => {
+  test.each(["Carnivorous Cultivator // Enroot", "Elemental Teachings"])("%s", (name) => {
+    const c = rowOf(name).tags.abilities.flatMap((a) => a.emits ?? []).filter((e) => e.verb === "enters-graveyard").map((e) => e.subject.control);
+    expect(c.length).toBeGreaterThan(0);
+    for (const x of c) expect(x).toBe("you");
+  });
+  // Not this rule's: the model's object "the two cards chosen by an opponent" reads `opp` today (the rule only ever replaces `any`), so it is left as it is (follow-up).
+  test("Realms Uncharted keeps its own reading", () => {
+    const c = rowOf("Realms Uncharted").tags.abilities.flatMap((a) => a.emits ?? []).filter((e) => e.verb === "enters-graveyard").map((e) => e.subject.control);
+    expect(c).toEqual(["opp"]);
+  });
+});
+
 describe("another player's library", () => {
   test("target opponent's library into their graveyard is theirs (Life's Finale)", () => expect(puts("Life's Finale")).toEqual(["opp"]));
   test("target player's library stays any player's (Quiet Speculation)", () => expect(puts("Quiet Speculation")).toEqual(["any"]));
