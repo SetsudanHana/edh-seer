@@ -50,6 +50,20 @@ export const PRONOUN_SOURCE = /^(?:your |their |a |an )?librar(?:y|ies)(?: for)?
 export const PRONOUN_OBJECT =
   /^(?:(?:the |that |those )?(?:searched|exiled|chosen) cards?|that cards?|those cards|it|them|her|him|herself|himself|the cards?|one|one of those cards|the copy|that copy)$/i;
 
+/** "PUTS ALL CARDS THEY EXILED THIS WAY ONTO THE BATTLEFIELD" IS THE CLASS THE EARLIER EXILE NAMED (#1698): Living Death and Living End exile "all creature cards from their graveyard", Scrap Mastery "all artifact cards", and the put that follows read
+ *  "all cards they exiled this way" with no type, so its `enters` emit met every typeless self-enters demand and, once a named-self trigger carried its own type, none. The class is the nearest earlier exile's "all <type> cards".
+ *  CEILING: a one-word type head ("all creature cards") of the nearest earlier exile; "all nonland cards", "all cards" and a hand or library exile name no type and stay as they were. 3 corpus cards (Living Death, Living End, Scrap Mastery). */
+const EXILED_THIS_WAY_SET = /^all cards (?:they|you) exiled this way$/i;
+const ALL_TYPE_CARDS = /^(all (?:creature|artifact|enchantment|land|planeswalker) cards)\b/i;
+export function exiledThisWayClass(actions: readonly Action[], idx: number): string | undefined {
+  if (!EXILED_THIS_WAY_SET.test((actions[idx]?.object ?? "").trim())) return undefined;
+  for (let i = idx - 1; i >= 0; i--) {
+    if (actions[i]!.verb !== "exile") continue;
+    return ALL_TYPE_CARDS.exec((actions[i]!.object ?? "").trim())?.[1];
+  }
+  return undefined;
+}
+
 /** A reference to the card an imprint exiled: "the exiled card", "a card exiled with this artifact".
  *  PLURAL TOO (#896 task 4): Petradon's leaves trigger returns "the exiled cards" its enters trigger
  *  exiled, and read as its own trigger's "this creature" the flicker claimed a creature. */

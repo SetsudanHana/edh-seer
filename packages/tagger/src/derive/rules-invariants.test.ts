@@ -68,6 +68,7 @@ const TESTED: Record<string, string> = {
   "702.18": "derive.test.ts — shroud's scoped printed form is `targeting-ban` with no source restriction (Ground Seal's cards in graveyards, #1423)",
   "115.7": "derive.test.ts — an effect that changes the target(s) of / chooses new targets for a TARGET spell or ability is `retarget`; your own copy's new targets are not (#1266, #491)",
   "115.1": "grammar/filter.test.ts — what a spell targets is `targets` (#896)",
+  "205.2": "derive/self-enters-type.test.ts — a named-self enters trigger carries the card's own permanent types, read on the ability's own face (#1698)",
   "205.4c": "grammar/filter.test.ts — nonbasic is `basic: false` (#896)",
   "118.8": "grammar/clause-record.test.ts — 'behold a Jace or pay {1}' is an additional cost with a choice: the behold is optional and the mana payment records no action (Countersculpt, #1349)",
   "701.4a": "grammar/clause-record.test.ts — behold reveals a card or chooses a permanent and pays nothing, so 'as this land enters, you may behold a Jace' reads as an optional behold (Theorist's Sanctum, #1349)",
