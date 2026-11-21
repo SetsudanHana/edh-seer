@@ -22,6 +22,8 @@
  */
 
 export interface ScryfallTokenFace {
+  oracle_id?: string;
+  colors?: string[];
   image_uris?: Record<string, string>;
   oracle_text?: string;
   power?: string;
@@ -78,18 +80,29 @@ function imagesOf(t: ScryfallToken): { image?: string; artCrop?: string } {
 }
 
 export function tokenDoc(t: ScryfallToken): TokenDoc | null {
+  // A `reversible_card` token (Secret Lair Mechtitan) has NO top-level oracle_id, type line, text,
+  // P/T or colours: they live on `card_faces`, and both faces name the same token. Top level wins
+  // where present; face 0 is the fallback for every characteristic, so such a printing id joins its
+  // token's doc through `mergeTokenDocs` instead of being dropped (#1709 review).
+  const f0 = t.card_faces?.[0];
+  const oracleId = t.oracle_id ?? f0?.oracle_id;
   // No oracle id means no stable key. Scryfall gives every token one; a payload without it is
   // malformed rather than interesting.
-  if (!t.oracle_id) return null;
+  if (!oracleId) return null;
+  const typeLine = t.type_line ?? f0?.type_line;
+  const oracleText = t.oracle_text ?? f0?.oracle_text;
+  const power = t.power ?? f0?.power;
+  const toughness = t.toughness ?? f0?.toughness;
+  const colors = t.colors?.length ? t.colors : f0?.colors;
   return {
-    _id: t.oracle_id,
+    _id: oracleId,
     name: t.name,
     printingIds: t.id ? [t.id] : [],
-    ...(t.type_line !== undefined ? { typeLine: t.type_line } : {}),
-    ...(t.oracle_text ? { oracleText: t.oracle_text } : {}),
-    ...(t.power !== undefined ? { power: t.power } : {}),
-    ...(t.toughness !== undefined ? { toughness: t.toughness } : {}),
-    ...(t.colors?.length ? { colors: t.colors } : {}),
+    ...(typeLine !== undefined ? { typeLine } : {}),
+    ...(oracleText ? { oracleText } : {}),
+    ...(power !== undefined ? { power } : {}),
+    ...(toughness !== undefined ? { toughness } : {}),
+    ...(colors?.length ? { colors } : {}),
     ...(t.color_identity?.length ? { colorIdentity: t.color_identity } : {}),
     ...(t.keywords?.length ? { keywords: t.keywords } : {}),
     ...(t.layout !== undefined ? { layout: t.layout } : {}),
@@ -140,7 +153,8 @@ export function unresolvedPrintingIds(
   const known = new Set(docs.flatMap((d) => d.printingIds));
   const out = new Set<string>();
   for (const p of parts) {
-    const isToken = p.component === "token" || (p.component === "combo_piece" && /^Emblem/.test(p.typeLine ?? ""));
+    // Mirrors packages/tagger/src/emblem.ts `isEmblemPart`, copied because data cannot import tagger.
+    const isToken = p.component === "token" || (p.component === "combo_piece" && /^Emblem\b/.test(p.typeLine ?? ""));
     if (isToken && p.printingId !== undefined && !known.has(p.printingId)) out.add(p.printingId);
   }
   return [...out];

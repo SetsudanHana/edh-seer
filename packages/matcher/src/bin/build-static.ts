@@ -85,6 +85,18 @@ if (stale.length > 0) {
   await store.close();
   process.exit(1);
 }
+// Loaded here, not later, so a refusal does not waste the card pass.
+const tokens = await store.db.collection<{ _id: string; artCrop?: string; oracleText?: string; printingIds: string[] }>(
+  "tokens",
+).find({}).toArray();
+// A SHIPPED BUILD WITH SILENTLY MISSING TOKEN NODES IS A SILENT WRONG ANSWER (#1709): a card whose all_parts
+// names a token printing no `tokens` row holds gets no token node. Refuse, like the stale-rows gate above.
+const tokenGap = tokenGapMessage(unresolvedTokenMakers(cards as never, tokens));
+if (tokenGap) {
+  console.error(`build-static refused: ${tokenGap}`);
+  await store.close();
+  process.exit(1);
+}
 const tagsByOracle = new Map(derivedRows.map((r) => [r.oracleId, shippedTags(r) as CardTags]));
 const combos = await store.combos.find().toArray();
 const combosByAnchor = comboIndex(combos.map((c) => ({ cards: c.cards, result: c.result, ...(c.requires?.length ? { requires: c.requires } : {}) })));
@@ -136,16 +148,6 @@ for (const [name] of collisions) {
 }
 
 const resolveToken = await loadTokenTags(store.db);
-const tokens = await store.db.collection<{ _id: string; artCrop?: string; oracleText?: string; printingIds: string[] }>(
-  "tokens",
-).find({}).toArray();
-// A SHIPPED BUILD WITH SILENTLY MISSING TOKEN NODES IS A SILENT WRONG ANSWER (#1709): a card whose all_parts
-// names a token printing no `tokens` row holds gets no token node. Refuse, like the stale-rows gate above.
-const tokenGap = tokenGapMessage(unresolvedTokenMakers(cards as never, tokens));
-if (tokenGap) {
-  console.error(`build-static refused: ${tokenGap}`);
-  process.exit(1);
-}
 const tokenTags = shippedTokenTags(tokens.flatMap((t) => t.printingIds), (pid) => resolveToken({ name: "", typeLine: "", printingId: pid }));
 writeFileSync(join(stagingDir, "token-tags.json"), JSON.stringify(tokenTags));
 
