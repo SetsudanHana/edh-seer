@@ -1035,6 +1035,14 @@ const hasAdditionalCost = (tags: CardTags | undefined): boolean =>
 const isLandOnly = (tags: CardTags): boolean =>
   tags.characteristics.types.length > 0 && tags.characteristics.types.every((t) => t === "land");
 
+/** FLASH GIVEN TO AN INSTANT GIVES IT NOTHING (CR 702.8a: "You may play this card any time you could cast an instant"; #1708). Drops `flash` from a grant when the receiving card's types are
+ *  instant only; a split, modal or Adventure card with any other face type keeps it (the union lists every face's types). */
+const withoutNoopFlash = (grants: readonly string[] | undefined, tags: CardTags | undefined): string[] | undefined => {
+  const types = tags?.characteristics?.types ?? [];
+  const instantOnly = types.length > 0 && types.every((t) => t.toLowerCase() === "instant");
+  return instantOnly ? grants?.filter((k) => k !== "flash") : grants?.slice();
+};
+
 /** Does this card return only cards IT exiled, and only ever exile an opponent's?
  *
  *  Two printed facts, both needed. "Exiled with <name>" says the returned set is one the engine
@@ -2792,7 +2800,7 @@ function eventEdges({ p, c, h, opts, pEvents, reasons, replacementOnly, cAbiliti
         const toProducer = a.effect.kind === "keyword-grant" && a.effect.subject?.ref === "trigger"
           && (origin === undefined || e.subject.self === true);
         const has = p.tags?.characteristics.keywords ?? [];
-        const keywords = toProducer ? a.grants?.filter((k) => !(REDUNDANT_KEYWORDS.has(k) && has.includes(k))) : a.grants;
+        const keywords = toProducer ? withoutNoopFlash(a.grants, p.tags)?.filter((k) => !(REDUNDANT_KEYWORDS.has(k) && has.includes(k))) : a.grants;
         if (a.grants?.length && !keywords?.length) continue;
         reasons.push({
           tag: eventReasonTag(key, t.verb, a),
@@ -3736,7 +3744,7 @@ function staticEdges({ p, c, h, reasons }: PairScope): void {
     const granted = a.grants ?? (a.effect.kind === "speed-increase"
       ? [/as though (?:it|they) had flash/i.test(p.card.oracleText ?? "") ? "flash" : "haste"] : undefined);
     const has = c.tags.characteristics.keywords;
-    const grants = granted?.filter((k) => !(REDUNDANT_KEYWORDS.has(k) && has.includes(k)));
+    const grants = withoutNoopFlash(granted, c.tags)?.filter((k) => !(REDUNDANT_KEYWORDS.has(k) && has.includes(k)));
     if (granted?.length && !grants?.length) return undefined;
     if (a.effect.kind === "cost-reduction") {
       // A SELF REDUCTION'S SUBJECT IS WHAT MEASURES IT, NOT WHAT IT DISCOUNTS — see `reducesItself`.

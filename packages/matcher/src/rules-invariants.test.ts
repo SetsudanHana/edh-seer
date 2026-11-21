@@ -21,6 +21,7 @@ const TESTED: Record<string, string> = {
   "108.4": "type-grant-class.test.ts — a card in a library or graveyard has no controller, so a grant over 'artifacts you control' is used only by battlefield readers of the type (#1568)",
   "702.37": "edges.test.ts — a card with morph can be face down: it meets 'a face-down creature you control' (#896 task 3)",
   "702.168": "edges.test.ts — a card with disguise can be face down, as morph (#896 task 3)",
+  "702.8a": "block-grants-1708.test.ts — flash granted to an instant is a no-op: no keyword-grant pair onto an instant-only card (#1708)",
   "702.74a": "implied.test.ts — evoke sacrifices the creature as it enters",
   "702.66": "implied.test.ts — delve is a graveyard demand (the descend tags, no edge)",
   "704.5m": "edges.test.ts — a producer removing what an Aura enchants supplies the Aura's own dies trigger",
