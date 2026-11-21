@@ -1,0 +1,773 @@
+{
+ "Cabal Conditioning": {
+  "source": {
+   "name": "Cabal Conditioning",
+   "typeLine": "Sorcery",
+   "oracleText": "Any number of target players each discard a number of cards equal to the greatest mana value among permanents you control.",
+   "keywords": [],
+   "colors": [
+    "B"
+   ],
+   "manaValue": 7,
+   "colorIdentity": [
+    "B"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{6}{B}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "discard",
+      "object": "a number of cards equal to the greatest mana value among permanents you control",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   }
+  ],
+  "segmentHash": "99f5bcc0d13267481082196516950b66d65c42d2c43eff9235b2295cdd7477c4"
+ },
+ "Rottenmouth Viper": {
+  "source": {
+   "name": "Rottenmouth Viper",
+   "typeLine": "Creature — Elemental Snake",
+   "oracleText": "As an additional cost to cast this spell, you may sacrifice any number of nonland permanents. This spell costs {1} less to cast for each permanent sacrificed this way.\nWhenever this creature enters or attacks, put a blight counter on it. Then for each blight counter on it, each opponent loses 4 life unless that player sacrifices a nonland permanent of their choice or discards a card.",
+   "keywords": [],
+   "colors": [
+    "B"
+   ],
+   "manaValue": 6,
+   "colorIdentity": [
+    "B"
+   ],
+   "power": "6",
+   "toughness": "6",
+   "manaCost": "{5}{B}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "sacrifice",
+      "object": "any number of nonland permanents",
+      "optional": true,
+      "fromZone": null,
+      "toZone": null
+     },
+     {
+      "verb": "cost-modify",
+      "object": "{1} less to cast for each permanent sacrificed this way",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "this creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "add-counter",
+      "object": "blight",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     },
+     {
+      "verb": "lose-life",
+      "object": "each opponent",
+      "amount": "4",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     },
+     {
+      "verb": "sacrifice",
+      "object": "a nonland permanent of their choice",
+      "optional": true,
+      "fromZone": null,
+      "toZone": null
+     },
+     {
+      "verb": "discard",
+      "object": "a card",
+      "optional": true,
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "attacks",
+     "subject": "this creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "add-counter",
+      "object": "blight",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     },
+     {
+      "verb": "lose-life",
+      "object": "each opponent",
+      "amount": "4",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     },
+     {
+      "verb": "sacrifice",
+      "object": "a nonland permanent of their choice",
+      "optional": true,
+      "fromZone": null,
+      "toZone": null
+     },
+     {
+      "verb": "discard",
+      "object": "a card",
+      "optional": true,
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   }
+  ],
+  "segmentHash": "0610f41b5ad9d3fe5fb620b34087203b7cbed82bd47bfb36d24d4082834f92d0"
+ },
+ "Mind Rot": {
+  "source": {
+   "name": "Mind Rot",
+   "typeLine": "Sorcery",
+   "oracleText": "Target player discards two cards.",
+   "keywords": [],
+   "colors": [
+    "B"
+   ],
+   "manaValue": 3,
+   "colorIdentity": [
+    "B"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{2}{B}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "discard",
+      "object": "two cards",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "2",
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "145d55f2c61315746c59c7fe4c611f5df024457c5e174c19f8481e33e9df3a4e"
+ },
+ "Faithless Looting": {
+  "source": {
+   "name": "Faithless Looting",
+   "typeLine": "Sorcery",
+   "oracleText": "Draw two cards, then discard two cards.\nFlashback {2}{R} (You may cast this card from your graveyard for its flashback cost. Then exile it.)",
+   "keywords": [
+    "Flashback"
+   ],
+   "colors": [
+    "R"
+   ],
+   "manaValue": 1,
+   "colorIdentity": [
+    "R"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{R}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "draw",
+      "object": "two cards",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "2",
+      "optional": false
+     },
+     {
+      "verb": "discard",
+      "object": "two cards",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "2",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Flashback {2}{R}",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   }
+  ],
+  "segmentHash": "fa6b28cdfa38658234f18af90fa8611b99e8993f29f0a3ff087214b8d122f996"
+ },
+ "Wandering Champion": {
+  "source": {
+   "name": "Wandering Champion",
+   "typeLine": "Creature — Human Monk",
+   "oracleText": "Whenever this creature deals combat damage to a player, if you control a blue or red permanent, you may discard a card. If you do, draw a card.",
+   "keywords": [],
+   "colors": [
+    "W"
+   ],
+   "manaValue": 2,
+   "colorIdentity": [
+    "W"
+   ],
+   "power": "3",
+   "toughness": "1",
+   "manaCost": "{1}{W}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "damage-dealt",
+     "subject": "this creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "discard",
+      "object": "a card",
+      "optional": true,
+      "fromZone": null,
+      "toZone": null
+     },
+     {
+      "verb": "draw",
+      "object": "a card",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   }
+  ],
+  "segmentHash": "4ba646b90d82dcd78e9ef4089c4ef139cdbc1bf586afd0031d72162044f06d78"
+ },
+ "Zabaz, the Glimmerwasp": {
+  "source": {
+   "name": "Zabaz, the Glimmerwasp",
+   "typeLine": "Legendary Artifact Creature — Insect",
+   "oracleText": "Modular 1\nIf a modular triggered ability would put one or more +1/+1 counters on a creature you control, that many plus one +1/+1 counters are put on it instead.\n{R}: Destroy target artifact you control.\n{W}: Zabaz gains flying until end of turn.",
+   "keywords": [
+    "Modular"
+   ],
+   "colors": [],
+   "manaValue": 1,
+   "colorIdentity": [
+    "R",
+    "W"
+   ],
+   "power": "0",
+   "toughness": "0",
+   "manaCost": "{1}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Modular 1",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "add-counter",
+      "object": "+1/+1",
+      "amount": "that many plus one",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "destroy",
+      "object": "target artifact you control",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 4,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "grant-ability",
+      "object": "flying until end of turn",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   }
+  ],
+  "segmentHash": "d78cb33ae8565fc9957c2c4f096a332a64368280cb6596b1ce6d64dc01ca6092"
+ },
+ "Polymorph": {
+  "source": {
+   "name": "Polymorph",
+   "typeLine": "Sorcery",
+   "oracleText": "Destroy target creature. It can't be regenerated. Its controller reveals cards from the top of their library until they reveal a creature card. The player puts that card onto the battlefield, then shuffles all other cards revealed this way into their library.",
+   "keywords": [],
+   "colors": [
+    "U"
+   ],
+   "manaValue": 4,
+   "colorIdentity": [
+    "U"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{3}{U}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "destroy",
+      "object": "target creature",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "cant",
+      "object": "be regenerated",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "put",
+      "object": "that creature card",
+      "fromZone": "library",
+      "toZone": "battlefield",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "shuffle",
+      "object": "all other cards revealed this way into their library",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "d6609dcab67bc214d087fa1b5c20d567e76dc9459bab01057b7d6d2ad1f71ee2"
+ },
+ "Wight of Precinct Six": {
+  "source": {
+   "name": "Wight of Precinct Six",
+   "typeLine": "Creature — Zombie",
+   "oracleText": "This creature gets +1/+1 for each creature card in your opponents' graveyards.",
+   "keywords": [],
+   "colors": [
+    "B"
+   ],
+   "manaValue": 2,
+   "colorIdentity": [
+    "B"
+   ],
+   "power": "1",
+   "toughness": "1",
+   "manaCost": "{1}{B}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "modify-pt",
+      "object": "this creature",
+      "amount": "+1/+1 for each creature card in your opponents' graveyards",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   }
+  ],
+  "segmentHash": "6d512f7932cb19cbf39b23840341ed244b8dc68e14a387e0c0189ea7baaf8f71"
+ },
+ "Detritivore": {
+  "source": {
+   "name": "Detritivore",
+   "typeLine": "Creature — Lhurgoyf",
+   "oracleText": "Detritivore's power and toughness are each equal to the number of nonbasic land cards in your opponents' graveyards.\nSuspend X—{X}{3}{R}. X can't be 0. (Rather than cast this card from your hand, you may pay {X}{3}{R} and exile it with X time counters on it. At the beginning of your upkeep, remove a time counter. When the last is removed, you may cast it without paying its mana cost. It has haste.)\nWhenever a time counter is removed from this card while it's exiled, destroy target nonbasic land.",
+   "keywords": [
+    "Suspend"
+   ],
+   "colors": [
+    "R"
+   ],
+   "manaValue": 4,
+   "colorIdentity": [
+    "R"
+   ],
+   "power": "*",
+   "toughness": "*",
+   "manaCost": "{2}{R}{R}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "modify-pt",
+      "object": "this",
+      "amount": "the number of nonbasic land cards in your opponents' graveyards",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "none"
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "level-up",
+     "subject": "a time counter",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "destroy",
+      "object": "target nonbasic land",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "becd1c8dd46ec04c208a83124d1fd761428792d1681eab386d3b92ee01a4ee83"
+ },
+ "Bitter Triumph": {
+  "source": {
+   "name": "Bitter Triumph",
+   "typeLine": "Instant",
+   "oracleText": "As an additional cost to cast this spell, discard a card or pay 3 life.\nDestroy target creature or planeswalker.",
+   "keywords": [],
+   "colors": [
+    "B"
+   ],
+   "manaValue": 2,
+   "colorIdentity": [
+    "B"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{1}{B}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "discard",
+      "object": "a card",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "destroy",
+      "object": "target creature or planeswalker",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "d897dbff774cfd4a9f7cb37489ef08fa5eef2d957430112caf92c7729c75a549"
+ },
+ "Bone Shards": {
+  "source": {
+   "name": "Bone Shards",
+   "typeLine": "Sorcery",
+   "oracleText": "As an additional cost to cast this spell, sacrifice a creature or discard a card.\nDestroy target creature or planeswalker.",
+   "keywords": [],
+   "colors": [
+    "B"
+   ],
+   "manaValue": 1,
+   "colorIdentity": [
+    "B"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{B}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "sacrifice",
+      "object": "a creature",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     },
+     {
+      "verb": "discard",
+      "object": "a card",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "destroy",
+      "object": "target creature or planeswalker",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   }
+  ],
+  "segmentHash": "89e6cb0392ecf18279ce7ea944ee99135f54ffed6aaee32ab38f045bc6b2959e"
+ },
+ "Deadly Visit": {
+  "source": {
+   "name": "Deadly Visit",
+   "typeLine": "Sorcery",
+   "oracleText": "Destroy target creature.\nSurveil 2. (Look at the top two cards of your library, then put any number of them into your graveyard and the rest on top of your library in any order.)",
+   "keywords": [
+    "Surveil"
+   ],
+   "colors": [
+    "B"
+   ],
+   "manaValue": 5,
+   "colorIdentity": [
+    "B"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{3}{B}{B}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "destroy",
+      "object": "target creature",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "surveil",
+      "object": "2",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "e9cbea45a1c27ec4626ea5659b87cc8461c966ee285436a144647d4c784e0148"
+ },
+ "Dusk Mangler": {
+  "source": {
+   "name": "Dusk Mangler",
+   "typeLine": "Creature — Horror",
+   "oracleText": "As an additional cost to cast this spell, sacrifice a creature, discard a card, or pay 4 life.\nWhen this creature enters, each opponent sacrifices a creature of their choice, discards a card, and loses 4 life.",
+   "keywords": [],
+   "colors": [
+    "B"
+   ],
+   "manaValue": 7,
+   "colorIdentity": [
+    "B"
+   ],
+   "power": "5",
+   "toughness": "4",
+   "manaCost": "{5}{B}{B}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "sacrifice",
+      "object": "a creature",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     },
+     {
+      "verb": "discard",
+      "object": "a card",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "this creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "sacrifice",
+      "object": "a creature of their choice",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "discard",
+      "object": "a card",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "lose-life",
+      "object": "each opponent",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "4",
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "48dda2b62be5b517979ece3f8ef55030740d670e052f37666242f0d63ce1af8b"
+ }
+}
