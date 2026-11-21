@@ -148,6 +148,9 @@ export function antecedentSource(actions: readonly Action[], idx: number, trigge
     // A GRANT's object is the ability granted ("haste"), never a thing (#896 task 6): "That creature
     // gains haste. Sacrifice it" (Incandescent Soulstoke) means the creature put before the grant.
     if (actions[i]?.verb === "grant-ability") continue;
+    // A COUNTER REMOVED IS NO THING A PRONOUN MEANS (#1718): Magnanimous Magistrate's "remove that many reprieve counters from this creature. If you do, return THAT CARD" reads "reprieve" as the card, so the return of the dead creature named a counter kind and no class.
+    // CEILING: only for a return / put onto the battlefield (a `play` of "that card" after a counter cost, Djinn of Wishes, reads as it did); a remove-counter action is skipped, whose object is the counter kind; the permanent it is removed from is named elsewhere, never in this object.
+    if (actions[i]?.verb === "remove-counter" && (actions[idx]?.verb === "return" || actions[idx]?.verb === "put") && actions[idx]?.toZone === "battlefield") continue;
     // "THE EXILED CARD" is never what a COST tapped ("Tap two untapped creatures you control: ... becomes a
     // copy of the exiled card", Dermotaxi).
     if (verb === "exile" && (actions[i]?.verb === "tap" || actions[i]?.verb === "untap")) continue;
@@ -388,4 +391,56 @@ export function searchedShareClass(actions: readonly Action[], idx: number): str
   const search = actions.slice(0, idx).find((x) => x.verb === "search" && x.fromZone === "library");
   const object = (search?.object ?? "").trim();
   return object === "" ? undefined : object;
+}
+
+/** WHAT A DEMONSTRATIVE ENTRY NAMES WHEN ITS THING WAS NAMED IN AN EARLIER CLAUSE OR SENTENCE (#1718). "Exile target creature. At the beginning of the next end step, return THAT CARD to the battlefield" (Otherworldly Journey, Long Road Home, Vanish into Memory, Koya, Lae'zel's Acrobatics, Semester's End, Planar Guide)
+ *  and "Return target creature card from your graveyard to your hand. Threshold -- Return THAT CARD from your graveyard to the battlefield instead" (Stitch Together) are two clauses, so the in-clause walk (`antecedentSource`) finds nothing and the entry's `enters` emit carried no type: a wildcard that
+ *  every typed self "this creature enters" trigger (#1698) misses. The class is the nearest earlier clause's exile (`lastExiled`, from the exile's own object) for a card coming from exile, or its graveyard-card target (`lastRecalled`) for a card coming from a graveyard; with no stored origin (the grammar's records), the one of the two a card has.
+ *  Only TYPE and SUBTYPE words are taken (never the count or the "target" scope: "up to one other target creature" is one card, not every creature), and not from an object with a selection tail ("enchanted creature and all Auras attached to it", Flickerform).
+ *  CEILING: the walk is only taken when the entry's own clause names nothing (`source.to === "none"`), for the pronouns below with a stored origin zone of exile or graveyard; the nearest earlier clause's exile or graveyard target is the antecedent whatever sits between (Dubious Challenge, Thieves' Auction put "one of the exiled cards" in the clause that exiled them and are not read here). */
+const ENTRY_DEMONSTRATIVE = /^(?:that cards?|those cards|each of them|them|it)$/i;
+export function entryClassAcross(action: Action | undefined, source: Source, lastExiled: string | undefined, lastRecalled: string | undefined): string | undefined {
+  if (action === undefined || (action.verb !== "return" && action.verb !== "put") || action.toZone !== "battlefield" || source.to !== "none") return undefined;
+  if (!ENTRY_DEMONSTRATIVE.test((action.object ?? "").trim())) return undefined;
+  if (action.fromZone === "exile") return lastExiled;
+  if (action.fromZone === "graveyard") return lastRecalled;
+  // The grammar's own records carry no origin on a return (Venser, Visionary Traveler): with exactly one earlier source it is that one.
+  return action.fromZone === null || action.fromZone === undefined ? (lastExiled === undefined ? lastRecalled : lastRecalled === undefined ? lastExiled : undefined) : undefined;
+}
+
+/** A graveyard card an earlier clause TARGETS or takes whole: "Return target creature card from your graveyard to your hand" -> "target creature card", "Return all creature cards in your graveyard that were put there this turn to your hand" -> the same (`entryClassAcross`'s `lastRecalled`; Revivify's "those cards"). Only a stored graveyard origin and a "target / all / each ... card(s)" object. */
+export function recalledTarget(clause: ClauseRecord, last: string | undefined): string | undefined {
+  for (const a of clause.actions ?? []) {
+    const o = (a.object ?? "").trim();
+    if (a.fromZone === "graveyard" && /^(?:(?:up to \w+ )?(?:other )?target|all|each) [^,]*\bcards?\b/i.test(o)) last = o;
+  }
+  return last;
+}
+
+/** "IF IT'S A <CLASS> CARD, PUT IT ONTO THE BATTLEFIELD" IS A PUT OF THAT CLASS (#1718): Primal Surge ("If it's a permanent card, you may put it onto the battlefield"), Summoner's Egg and Clone Shell ("If it's a creature card, put it onto the battlefield"), Thrasios and Lantern of Revealing
+ *  (land), Fishing Gear (permanent), Grenzo (creature), Archdruid's Charm ("Put it onto the battlefield tapped if it's a land card"), Unexpected Results ("If it's a land card, you may put it onto the battlefield"; its "nonland card" is cast, not put, and is another sentence). The put's `it` names no thing the walk can reach
+ *  (a scry's "1", an imprint exile's "a card from your hand"), so its emit carried no type. The class is the printed condition of the SAME SENTENCE as the put: a "<type> card" phrase, which `parseSubject` reads as it reads every card class.
+ *  CEILING: "it's" / "it is" in the put's own sentence, before or after the put; a negated condition ("if it isn't a creature card ... Otherwise, put that card onto the battlefield", Impromptu Raid) is not read; "that card is" and a comma-less "an artifact, creature, or land card" only as far as the first "card". */
+const PUT_OBJECT_IT = /^(?:(?:it|that card)(?: onto the battlefield(?: tapped)?(?: under your control)?)?|the top card of (?:your|that player's|their) library)$/i;
+const ENTERS_SENTENCE = /\b(?:puts?|returns?) (?:it|that card) (?:onto|to) the battlefield\b/i;
+const IF_ITS_CLASS = /\bif (?:it's|it is) (an? [a-z',-]+(?: [a-z',-]+){0,6}? card)\b/i;
+export function conditionClass(action: Action | undefined, clauseText: string | undefined): string | undefined {
+  if (action === undefined || (action.verb !== "put" && action.verb !== "return") || action.toZone !== "battlefield" || !PUT_OBJECT_IT.test((action.object ?? "").trim())) return undefined;
+  for (const sentence of (clauseText ?? "").split(/(?<=[.!?])\s+/)) {
+    if (!ENTERS_SENTENCE.test(sentence)) continue;
+    const m = IF_ITS_CLASS.exec(sentence);
+    if (m) return m[1];
+  }
+  return undefined;
+}
+
+/** "BOTH CARDS" PUT AFTER AN EXILE AND A SEARCH ARE A CARD OF EACH CLASS (#1718, Sword of Hearth and Home: "exile up to one target creature you own, then search your library for a basic land card. Put both cards onto the battlefield"). Returns the two objects, exile first.
+ *  CEILING: the clause's first exile and first library search, the put's whole object "both cards"; a Sword of Hearth and Home shape only (1 corpus card). */
+export function bothCardsClasses(actions: readonly Action[], idx: number): [string, string] | undefined {
+  const a = actions[idx];
+  if (a?.verb !== "put" || (a.object ?? "").trim().toLowerCase() !== "both cards" || a.toZone !== "battlefield") return undefined;
+  const before = actions.slice(0, idx);
+  const exile = before.find((x) => x.verb === "exile");
+  const search = before.find((x) => x.verb === "search" && x.fromZone === "library");
+  return exile?.object && search?.object ? [exile.object, search.object] : undefined;
 }

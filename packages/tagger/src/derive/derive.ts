@@ -56,7 +56,7 @@ import { eventAmountFor } from "./event-amount.js";
 import { SUBTYPES } from "./subtypes.js";
 import { isSelfSubject, SELF_REFERENCE, selfAndTail, withoutArticle } from "./self-reference.js";
 import { exileIsCastOnly, neverEntersUncast, stampActsOnHost, stampCastOnly } from "./cast-only.js";
-import { antecedentIsSelf as selfAntecedent, antecedentSource, antecedentText, boundedByEnchantLine, exiledAcrossClauses, exiledThisWayClass, forEachClass, permanentAnaphorsResolved, PLURAL_BACKREF, pluralAntecedent, searchedShareClass, pluralIsDelayed, PRONOUN_OBJECT, selfAntecedentText, withoutCombatRole, zoneAfterEvent } from "./references.js";
+import { antecedentIsSelf as selfAntecedent, antecedentSource, antecedentText, bothCardsClasses, boundedByEnchantLine, conditionClass, entryClassAcross, exiledAcrossClauses, recalledTarget, exiledThisWayClass, forEachClass, permanentAnaphorsResolved, PLURAL_BACKREF, pluralAntecedent, searchedShareClass, pluralIsDelayed, PRONOUN_OBJECT, PRONOUN_SOURCE, selfAntecedentText, withoutCombatRole, zoneAfterEvent } from "./references.js";
 import { triggerHasCue } from "../clause-store.js";
 import { emblemRecipient } from "../emblem.js";
 import { chosenColorOf } from "./chosen-color.js";
@@ -754,7 +754,8 @@ import { castClassFromPrint, castIsOnlyACondition, castsYourOwnCard } from "./ca
 // 568: #1728 -- A tempting offer's leading imperative create (Tempt with Reflections, Vengeance, Bunnies) and Misfortune Teller's two imperative creates read control any: the clause stores several creates, which actorFor and the one-create controller default refuse. Each create is now paired with its own printed 'create' and answered by that sentence (unstatedCreates): no player word, no pronoun actor -> you. Census 2026-11-21 (cardTagsDerived create-token emit control any: 366 rows; 9 with a clause storing >1 create): 4 fixed (Tempt x3, Misfortune Teller), 2 genuine any-player (Master of Ceremonies, Sylvan Offering: you and that player each create), 3 refused (Beza, Research // Development: a player is named in the create's own sentence; Fertile Imagination: one printed create stored twice). Other verbs with a repeated verb all name a player; unchanged.
 // 569: #1726 -- a searched put into a graveyard says fromZone library whether or not the model stored the origin (Realms Uncharted, Elemental Teachings, Carnivorous Cultivator), so the matcher can read the fill as CHOSEN
 // 570: #1722 -- A discard names its player: "any number of target players each discard" (Cabal Conditioning, read `you` off the count's "permanents you control", now `any`) and a discard joined to an earlier verb of the same player, "each opponent loses 3 life unless that player sacrifices a nonland permanent or discards a card" (Rottenmouth Viper, Forbidden Ritual, Nicol Bolas the Deceiver, Perforating Artist, Starseer Mentor, Thornplate Intimidator x2, Torment of Hailfire, Torment of Venom: `you`/`any` -> `opp`), "that player reveals their hand and discards all cards of that color" (Crosis, the Purger: `any` -> `opp`). One cue in recipient.ts. CENSUS (Mongo, DERIVE 569): 32 cards whose text names a player or controller before "discard(s)" derive a `you` discard, 3 of them wrong and read here (Cabal Conditioning, Rottenmouth Viper, Torment of Venom); Minamo's Meddling ("that spell's controller reveals their hand, then discards", a comma join) is the one wrong left, the other 28 are cost or optional discards of yours. Of the issue's six families only this one was a derive defect: Jace, Telepath Unbound's emblem mill IS derived on the emblem's own row (`mill {opp, target}`, token row eadc6752) and pairs with Wight and Detritivore at deck level; Polymorph's `you` is owner ruling 2026-10-02 (#962); Bitter Triumph, Bone Shards and Deadly Visit already pair with Wight (a creature card) and cannot pair with Detritivore (nonbasic land cards); damage removal derives no `dies` fill by design and is its own issue. MEASURED (derive-impact vs 5d751885, --pair-sample 0): rows 33,068 same / 11 changed (10 cards) / 0 added / 0 removed, grammar complete 29,282 unchanged; pair reasons of the 11: membership +104 / -10,607, magnitude-only 16, attributes 0; role-ratchet 0 / 0, dropped-clauses 4,796 unchanged. Lost 10,607 are consumers of YOUR graveyard or YOUR discard that an opponent's discard never reached (graveyard-recursion -7,728, scales -1,089, threshold -1,037, discard -600 "when you discard", enters-graveyard -192); gained 104: opponent-graveyard and opponent-discard watchers (Wight, Detritivore, Megrim, Waste Not, Bloodchief Ascension, Compost, Dauthi Voidwalker, the opponent-has-eight-cards threshold creatures).
-export const DERIVE_VERSION = 570;
+// 571: #1718 -- A put that names its thing only across a clause boundary, or in its own 'if it's a <class> card', is typed (references.ts entryClassAcross / conditionClass / bothCardsClasses / recalledTarget; also antecedentSource skips a remove-counter object, Magnanimous Magistrate). CENSUS (Mongo cards x cardTagsDerived, DERIVE 570; untyped non-self non-token enters emits): 325 emits on 299 cards (196 emits on 181 cards with no subtype / anyOf / named / basic / stats either). After: 293 emits on 269 cards (164 on 151 strict); 30 cards typed, 32 emits. Fixed: delayed return after an earlier exile, typed from the exile's type words only (Otherworldly Journey, Long Road Home, Vanish into Memory, Koya, Lae'zel's Acrobatics, Semester's End creature+planeswalker, Planar Guide, Mystifying Maze, Morningtide's Light, Legion's Initiative, Phelia nonland permanent, Venser permanent); 'if it's a <class> card' put (Primal Surge and Fishing Gear permanent, Clone Shell and Summoner's Egg and Grenzo creature, Archdruid's Charm and Thrasios and Lantern of Revealing and Wild Evocation and Unexpected Results land, Arbiter of the Ideal, Kenessos subtype, Treasure Chest artifact, Rona land); 'that card' / 'those cards' from a graveyard (Stitch Together, Revivify creature, Magnanimous Magistrate via the trigger's creature); Sword of Hearth and Home both cards = creature + land. Left, 151 cards: 56 manifest / cloak (a face-down 2/2 creature, no type stated), 23 searched-share and fetch puts (#1713 CEILING), 13 self return on death (ref trigger), 17 exile 'all cards exiled with it' / pile puts (Flickerform selection tail, Helvault, Thieves' Auction, Dubious Challenge), 6 graveyard (Lifeline 'the first card', Krovikan Vampire), 9 library digs, 3 hand, 3 battlefield (commander), 21 other. 'permanent card' types as the corpus' own 'permanent'. Impromptu Raid 'if it isn't a creature card, ... Otherwise' not read.
+export const DERIVE_VERSION = 571;
 
 /** "a nonland card from target opponent's graveyard or hand" (#1592): the object of a stored hand-or-graveyard pick. */
 const GRAVEYARD_OR_HAND_PICK = /\bfrom (?:target opponent|target player|that player|that opponent|an opponent)'s (?:graveyard or hand|hand or graveyard)$/i;
@@ -3295,6 +3296,8 @@ export function deriveAbilities(
 
   /** What an earlier clause exiled, for "the exiled card" in a later one (#860). */
   let lastExiled: string | undefined;
+  /** The graveyard card an earlier clause targeted, for "that card" in a later one (#1718). */
+  let lastRecalled: string | undefined;
   let lastTarget: string | undefined;
   /** Per clause text, the trigger verbs a record has already read off it (see `misplaced`). */
   const grammarCovered = new Map<string, Map<string, number | string>>();
@@ -3316,7 +3319,10 @@ export function deriveAbilities(
     clauseId = clause.id;
     const refusedBefore = unknownTriggers.length;
     // "THE EXILED CARD" IS WHAT AN EARLIER CLAUSE EXILED (#860): see `exiledAcrossClauses`.
+    const exiledBefore = lastExiled;
+    const recalledBefore = lastRecalled;
     ({ clause, lastExiled } = exiledAcrossClauses(clause, lastExiled, cardName));
+    lastRecalled = recalledTarget(clause, lastRecalled);
     // "THAT PERMANENT" / "A PERMANENT DEALT DAMAGE BY ~" IS THE EARLIER TARGET (#1570).
     ({ clause, lastTarget } = permanentAnaphorsResolved(clause, lastTarget));
     // The whole clause goes, not just its trigger. What is quoted on a created token is a complete
@@ -4478,6 +4484,29 @@ export function deriveAbilities(
           if (/^the (?:rest|others?)\b/i.test(action.object ?? "")) { delete e.subject.other; delete e.subject.scope; }
           if (cls.subtype !== undefined && e.subject.subtype === undefined) e.subject.subtype = cls.subtype;
           if (cls.basic !== undefined && e.subject.basic === undefined) e.subject.basic = cls.basic;
+        }
+      }
+      // A PUT THAT NAMES ITS THING ONLY IN AN EARLIER CLAUSE OR IN ITS OWN "IF IT'S A <CLASS> CARD" IS OF THAT CLASS (#1718, `entryClassAcross` / `conditionClass` / `bothCardsClasses`): Otherworldly Journey's "return that card", Primal Surge's "if it's a permanent card, put it onto the
+      // battlefield", Sword of Hearth and Home's "put both cards" carried no type, which no typed self "this creature enters" trigger (#1698) hears. Only the class words (type, subtype) are taken, never the count or the target scope.
+      const entryAt = clauseActions.indexOf(action);
+      const entryClass = entryClassAcross(action, sourceOf(entryAt), exiledBefore, recalledBefore) ?? conditionClass(action, text);
+      const both = bothCardsClasses(clauseActions, entryAt);
+      const untypedEnter = (e: NonNullable<Ability["emits"]>[number]): boolean => e.verb === "enters" && e.subject.self !== true && e.subject.token !== true && e.subject.type === undefined && e.subject.subtype === undefined && e.subject.anyOf === undefined;
+      if (entryClass !== undefined) {
+        const cls = parseSubject(entryClass);
+        for (const e of emits) if (untypedEnter(e) && cls.selection === undefined) {
+          if (cls.type !== undefined) e.subject.type = cls.type;
+          if (cls.subtype !== undefined) e.subject.subtype = cls.subtype;
+        }
+      }
+      // "BOTH CARDS" IS TWO ENTRIES, ONE OF EACH CLASS (Sword of Hearth and Home): the exiled creature (from exile) and the searched basic land (from the library), so the land keeps its fetch and ramp reading and the creature alone is a creature ETB.
+      const bothAt = emits.findIndex(untypedEnter);
+      if (both !== undefined && bothAt >= 0) {
+        const [exiled, searched] = [parseSubject(both[0]), parseSubject(both[1].replace(PRONOUN_SOURCE, ""))];
+        if (exiled.type !== undefined && searched.type !== undefined && exiled.selection === undefined) {
+          const land = { ...emits[bothAt]!, subject: { ...emits[bothAt]!.subject, type: searched.type, fromZone: "library" as const, ...(searched.basic === true ? { basic: true } : {}) } };
+          emits[bothAt]!.subject = { ...emits[bothAt]!.subject, type: exiled.type, fromZone: "exile" };
+          emits.splice(bothAt + 1, 0, land);
         }
       }
       if (searchedPutOwner) {
