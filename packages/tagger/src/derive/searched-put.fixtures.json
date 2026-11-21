@@ -1,0 +1,763 @@
+{
+ "Entomb": {
+  "source": {
+   "name": "Entomb",
+   "typeLine": "Instant",
+   "oracleText": "Search your library for a card, put that card into your graveyard, then shuffle.",
+   "keywords": [],
+   "colors": [
+    "B"
+   ],
+   "manaValue": 1,
+   "colorIdentity": [
+    "B"
+   ],
+   "power": null,
+   "toughness": null,
+   "layout": "normal"
+  }
+ },
+ "Unmarked Grave": {
+  "source": {
+   "name": "Unmarked Grave",
+   "typeLine": "Sorcery",
+   "oracleText": "Search your library for a nonlegendary card, put that card into your graveyard, then shuffle.",
+   "keywords": [],
+   "colors": [
+    "B"
+   ],
+   "manaValue": 2,
+   "colorIdentity": [
+    "B"
+   ],
+   "power": null,
+   "toughness": null,
+   "layout": "normal"
+  }
+ },
+ "Fork in the Road": {
+  "source": {
+   "name": "Fork in the Road",
+   "typeLine": "Sorcery",
+   "oracleText": "Search your library for up to two basic land cards and reveal them. Put one into your hand and the other into your graveyard. Then shuffle.",
+   "keywords": [],
+   "colors": [
+    "G"
+   ],
+   "manaValue": 2,
+   "colorIdentity": [
+    "G"
+   ],
+   "power": null,
+   "toughness": null,
+   "layout": "normal"
+  }
+ },
+ "Jarad's Orders": {
+  "source": {
+   "name": "Jarad's Orders",
+   "typeLine": "Sorcery",
+   "oracleText": "Search your library for up to two creature cards and reveal them. Put one into your hand and the other into your graveyard. Then shuffle.",
+   "keywords": [],
+   "colors": [
+    "B",
+    "G"
+   ],
+   "manaValue": 4,
+   "colorIdentity": [
+    "B",
+    "G"
+   ],
+   "power": null,
+   "toughness": null,
+   "layout": "normal"
+  }
+ },
+ "Final Parting": {
+  "source": {
+   "name": "Final Parting",
+   "typeLine": "Sorcery",
+   "oracleText": "Search your library for two cards. Put one into your hand and the other into your graveyard. Then shuffle.",
+   "keywords": [],
+   "colors": [
+    "B"
+   ],
+   "manaValue": 5,
+   "colorIdentity": [
+    "B"
+   ],
+   "power": null,
+   "toughness": null,
+   "layout": "normal"
+  }
+ },
+ "Life's Finale": {
+  "source": {
+   "name": "Life's Finale",
+   "typeLine": "Sorcery",
+   "oracleText": "Destroy all creatures, then search target opponent's library for up to three creature cards and put them into their graveyard. Then that player shuffles.",
+   "keywords": [],
+   "colors": [
+    "B"
+   ],
+   "manaValue": 6,
+   "colorIdentity": [
+    "B"
+   ],
+   "power": null,
+   "toughness": null,
+   "layout": "normal"
+  }
+ },
+ "Quiet Speculation": {
+  "source": {
+   "name": "Quiet Speculation",
+   "typeLine": "Sorcery",
+   "oracleText": "Search target player's library for up to three cards with flashback and put them into that player's graveyard. Then the player shuffles.",
+   "keywords": [],
+   "colors": [
+    "U"
+   ],
+   "manaValue": 2,
+   "colorIdentity": [
+    "U"
+   ],
+   "power": null,
+   "toughness": null,
+   "layout": "normal"
+  }
+ },
+ "Dina's Guidance": {
+  "source": {
+   "name": "Dina's Guidance",
+   "typeLine": "Instant",
+   "oracleText": "Search your library for a creature card, reveal it, put it into your hand or graveyard, then shuffle.",
+   "keywords": [],
+   "colors": [
+    "B",
+    "G"
+   ],
+   "manaValue": 3,
+   "colorIdentity": [
+    "B",
+    "G"
+   ],
+   "power": null,
+   "toughness": null,
+   "layout": "normal"
+  }
+ },
+ "Vile Entomber": {
+  "source": {
+   "name": "Vile Entomber",
+   "typeLine": "Creature — Zombie Warlock",
+   "oracleText": "Deathtouch (Any amount of damage this deals to a creature is enough to destroy it.)\nWhen this creature enters, search your library for a card, put that card into your graveyard, then shuffle.",
+   "keywords": [
+    "Deathtouch"
+   ],
+   "colors": [
+    "B"
+   ],
+   "manaValue": 4,
+   "colorIdentity": [
+    "B"
+   ],
+   "power": "2",
+   "toughness": "2",
+   "layout": "normal"
+  }
+ },
+ "Scion of the Ur-Dragon": {
+  "source": {
+   "name": "Scion of the Ur-Dragon",
+   "typeLine": "Legendary Creature — Dragon Avatar",
+   "oracleText": "Flying\n{2}: Search your library for a Dragon permanent card and put it into your graveyard. If you do, Scion of the Ur-Dragon becomes a copy of that card until end of turn. Then shuffle.",
+   "keywords": [
+    "Flying"
+   ],
+   "colors": [
+    "B",
+    "G",
+    "R",
+    "U",
+    "W"
+   ],
+   "manaValue": 5,
+   "colorIdentity": [
+    "B",
+    "G",
+    "R",
+    "U",
+    "W"
+   ],
+   "power": "4",
+   "toughness": "4",
+   "layout": "normal"
+  }
+ },
+ "Buried Alive": {
+  "source": {
+   "name": "Buried Alive",
+   "typeLine": "Sorcery",
+   "oracleText": "Search your library for up to three creature cards, put them into your graveyard, then shuffle.",
+   "keywords": [],
+   "colors": [
+    "B"
+   ],
+   "manaValue": 3,
+   "colorIdentity": [
+    "B"
+   ],
+   "power": null,
+   "toughness": null,
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "search",
+      "object": "up to three creature cards",
+      "fromZone": "library",
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "put",
+      "object": "up to three creature cards",
+      "fromZone": "library",
+      "toZone": "graveyard",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "shuffle",
+      "object": "your library",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "3e86d4a5c9ef0b81abd91d6dca49a9551f5807649673de6cd59f42b0ecc9078e"
+ },
+ "Intuition": {
+  "source": {
+   "name": "Intuition",
+   "typeLine": "Instant",
+   "oracleText": "Search your library for three cards and reveal them. Target opponent chooses one. Put that card into your hand and the rest into your graveyard. Then shuffle.",
+   "keywords": [],
+   "colors": [
+    "U"
+   ],
+   "manaValue": 3,
+   "colorIdentity": [
+    "U"
+   ],
+   "power": null,
+   "toughness": null,
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "search",
+      "object": "three cards",
+      "fromZone": "library",
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "put",
+      "object": "one card",
+      "fromZone": "library",
+      "toZone": "hand",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "put",
+      "object": "the rest",
+      "fromZone": "library",
+      "toZone": "graveyard",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "shuffle",
+      "object": "your library",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "a12133be6a0535bd8d2b8ab8e89817890b6a184d9d3cfe6466f79722f17d7ad6"
+ },
+ "Gifts Ungiven": {
+  "source": {
+   "name": "Gifts Ungiven",
+   "typeLine": "Instant",
+   "oracleText": "Search your library for up to four cards with different names and reveal them. Target opponent chooses two of those cards. Put the chosen cards into your graveyard and the rest into your hand. Then shuffle.",
+   "keywords": [],
+   "colors": [
+    "U"
+   ],
+   "manaValue": 4,
+   "colorIdentity": [
+    "U"
+   ],
+   "power": null,
+   "toughness": null,
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "search",
+      "object": "up to four cards with different names",
+      "fromZone": "library",
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "put",
+      "object": "the chosen cards",
+      "fromZone": "library",
+      "toZone": "graveyard",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "put",
+      "object": "the rest",
+      "fromZone": "library",
+      "toZone": "hand",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "shuffle",
+      "object": "library",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "30bab932bedfc4633cc943d6feaca32078556f50bde90d940417b37a45c31019"
+ },
+ "Burning-Rune Demon": {
+  "source": {
+   "name": "Burning-Rune Demon",
+   "typeLine": "Creature — Demon Berserker",
+   "oracleText": "Flying\nWhen this creature enters, you may search your library for exactly two cards not named Burning-Rune Demon that have different names. If you do, reveal those cards. An opponent chooses one of them. Put the chosen card into your hand and the other into your graveyard, then shuffle.",
+   "keywords": [
+    "Flying"
+   ],
+   "colors": [
+    "B"
+   ],
+   "manaValue": 6,
+   "colorIdentity": [
+    "B"
+   ],
+   "power": "6",
+   "toughness": "6",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Flying",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "this creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "search",
+      "object": "your library for exactly two cards not named Burning-Rune Demon that have different names",
+      "fromZone": "library",
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     },
+     {
+      "verb": "put",
+      "object": "the chosen card",
+      "fromZone": "library",
+      "toZone": "hand",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "put",
+      "object": "the other",
+      "fromZone": "library",
+      "toZone": "graveyard",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "shuffle",
+      "object": "your library",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "fcdcebba80dd1e422af37c4855b62a1aeac6ba6162cfd3cbf8ece5f62cdf9ca7"
+ },
+ "Transmute Artifact": {
+  "source": {
+   "name": "Transmute Artifact",
+   "typeLine": "Sorcery",
+   "oracleText": "Sacrifice an artifact. If you do, search your library for an artifact card. If that card's mana value is less than or equal to the sacrificed artifact's mana value, put it onto the battlefield. If it's greater, you may pay {X}, where X is the difference. If you do, put it onto the battlefield. If you don't, put it into its owner's graveyard. Then shuffle.",
+   "keywords": [],
+   "colors": [
+    "U"
+   ],
+   "manaValue": 2,
+   "colorIdentity": [
+    "U"
+   ],
+   "power": null,
+   "toughness": null,
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "sacrifice",
+      "object": "an artifact",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "search",
+      "object": "your library for an artifact card",
+      "fromZone": "library",
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "put",
+      "object": "it",
+      "fromZone": "library",
+      "toZone": "battlefield",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "put",
+      "object": "it",
+      "fromZone": "library",
+      "toZone": "battlefield",
+      "amount": null,
+      "optional": true
+     },
+     {
+      "verb": "put",
+      "object": "it",
+      "fromZone": "library",
+      "toZone": "graveyard",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "shuffle",
+      "object": "your library",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "b376c6015bc19c162147efd2fcb42bb941d4e5a4732e054d6797b5bffdc7eceb"
+ },
+ "Carnivorous Cultivator // Enroot": {
+  "source": {
+   "name": "Carnivorous Cultivator // Enroot",
+   "typeLine": "Creature — Elf Warlock // Sorcery",
+   "oracleText": "Deathtouch\nThis creature enters prepared.\nWhenever this creature deals combat damage to a player, return target land card from your graveyard to your hand.\n//\nSearch your library for a land card, put it into your graveyard, then shuffle.",
+   "keywords": [
+    "Prepared",
+    "Deathtouch"
+   ],
+   "colors": [
+    "G"
+   ],
+   "manaValue": 2,
+   "colorIdentity": [
+    "G"
+   ],
+   "power": "2",
+   "toughness": "3",
+   "layout": "prepare",
+   "faces": [
+    {
+     "name": "Carnivorous Cultivator",
+     "typeLine": "Creature — Elf Warlock",
+     "oracleText": "Deathtouch\nThis creature enters prepared.\nWhenever this creature deals combat damage to a player, return target land card from your graveyard to your hand.",
+     "colors": [],
+     "manaCost": "{1}{G}",
+     "power": "2",
+     "toughness": "3"
+    },
+    {
+     "name": "Enroot",
+     "typeLine": "Sorcery",
+     "oracleText": "Search your library for a land card, put it into your graveyard, then shuffle.",
+     "colors": [],
+     "manaCost": "{G}"
+    }
+   ]
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Deathtouch",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "prepare",
+      "object": "this",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "damage-dealt",
+     "subject": "this creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "return",
+      "object": "target land card",
+      "fromZone": "graveyard",
+      "toZone": "hand",
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 4,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "search",
+      "object": "a land card",
+      "fromZone": "library",
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "put",
+      "object": "it",
+      "fromZone": null,
+      "toZone": "graveyard",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "shuffle",
+      "object": "your library",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "8a275977449451892131587b617eebcb8786daf3a474e961fad4c325a71d3cf2"
+ },
+ "Elemental Teachings": {
+  "source": {
+   "name": "Elemental Teachings",
+   "typeLine": "Instant — Lesson",
+   "oracleText": "Search your library for up to four land cards with different names and reveal them. An opponent chooses two of those cards. Put the chosen cards into your graveyard and the rest onto the battlefield tapped, then shuffle.",
+   "keywords": [],
+   "colors": [
+    "G"
+   ],
+   "manaValue": 5,
+   "colorIdentity": [
+    "G"
+   ],
+   "power": null,
+   "toughness": null,
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "search",
+      "object": "up to four land cards with different names",
+      "fromZone": "library",
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "put",
+      "object": "the chosen cards",
+      "fromZone": null,
+      "toZone": "graveyard",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "put",
+      "object": "the rest",
+      "fromZone": null,
+      "toZone": "battlefield",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "tap",
+      "object": "the rest",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "shuffle",
+      "object": "your library",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "676d55ed58c2531e3f60fe139876cdc29fd6219f5d7217d3a088291d7929852d"
+ },
+ "Realms Uncharted": {
+  "source": {
+   "name": "Realms Uncharted",
+   "typeLine": "Instant",
+   "oracleText": "Search your library for up to four land cards with different names and reveal them. An opponent chooses two of those cards. Put the chosen cards into your graveyard and the rest into your hand. Then shuffle.",
+   "keywords": [],
+   "colors": [
+    "G"
+   ],
+   "manaValue": 3,
+   "colorIdentity": [
+    "G"
+   ],
+   "power": null,
+   "toughness": null,
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "search",
+      "object": "up to four land cards with different names",
+      "fromZone": "library",
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "put",
+      "object": "the two cards chosen by an opponent",
+      "fromZone": null,
+      "toZone": "graveyard",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "put",
+      "object": "the rest",
+      "fromZone": null,
+      "toZone": "hand",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "shuffle",
+      "object": "your library",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "daf335d92b4aad4018e8625ef7b58ac9434dd491a714f917c9a3f92f83095a40"
+ }
+}
