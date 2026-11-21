@@ -83,3 +83,16 @@ export function librarySearchOwner(action: Action, clauseText: string, nth = 0):
   if (named === "yours") return searcherIsYou(clauseText, nth) ? "yours" : "other";
   return searcherIsYou(clauseText, nth) ? "yours" : "other";
 }
+
+/** WHO OWNS THE LIBRARY A CLAUSE SEARCHES, for the put that follows it (#1694): "you" for your own, "opp" for "target opponent's library" / "an opponent's library", undefined for anyone else's ("target player's library",
+ *  "that player's") and for a clause that searches no library. Reads the first `search` action's own reading through `librarySearchOwner`. */
+export function searchedLibraryOwner(actions: Action[], clauseText: string): "you" | "opp" | undefined {
+  const at = actions.findIndex((a) => a.verb === "search");
+  if (at < 0 || !printsSearch(clauseText)) return undefined;
+  const search = actions[at]!;
+  const owner = librarySearchOwner(search, clauseText, 0);
+  if (owner === "yours") return "you";
+  // The stored search object is the cards ("up to three creature cards"); the owner is in the printed words after the verb.
+  if (owner === "other" && /\bsearch(?:es)? (?:target opponent's|an opponent's) library\b/i.test(clauseText)) return "opp";
+  return undefined;
+}

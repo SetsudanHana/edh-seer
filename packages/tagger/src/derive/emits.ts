@@ -1106,9 +1106,6 @@ export function actionEmits(action: Action, clauseText?: string, opts: { self?: 
       if (typed.allTypes !== undefined) subject.allTypes = typed.allTypes;
     }
   }
-  // THE CARD "put it into your hand or graveyard" PUTS IS FROM AND TO YOUR OWN ZONES (Hela // Dark Tutor, Dina's Guidance, #1677 review): an any-controller graveyard put made false edges into every "a card is put into an opponent's graveyard" trigger.
-  // CEILING: only that printed either-or ("put it into your hand or graveyard"); a plain tutor to the graveyard (Entomb, Buried Alive) keeps its any-controller reading.
-  if (action.verb === "put" && action.toZone === "graveyard" && action.optional === true && /\bput (?:it|that card) into your (?:hand or graveyard|graveyard or hand)\b/i.test(clauseText ?? "")) subject.control = "you";
   // ...and alternatives are read AFTER the counter kinds left the subtype (#1575): "gold counters" is no Gold subtype for the grammar's alternatives to be offered instead.
   if (listed === undefined && playerOnly === undefined) subject = withAlternatives(subjectText, subject);
   // A MASS REMOVAL KEEPS THE CONDITION THE NOUNS DO NOT SAY (#1586): "with mana value X or less", "that entered this turn", "with the same name as", "that's not historic", "Artifacts ... you control gain indestructible. Destroy all nonland permanents" (sweep-narrowing.ts).
