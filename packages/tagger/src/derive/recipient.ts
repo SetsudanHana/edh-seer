@@ -83,6 +83,11 @@ const CUES: [string, RegExp][] = [
   // verb: "puts a creature card ... onto the battlefield under your control" (Visions of Dread) is
   // the opponent acting and YOUR permanent entering, and the object text already says so.
   ["put", new RegExp(`\\b(${WHO})\\s+${ADVERB}puts?\\b`, "i")],
+  // "THAT OPPONENT MAY CAST THE EXILED CARD" (#1691, CR 601.2a: the player who proposes the cast becomes the spell's controller): Allure of the Unknown, Swindler's Scheme. A stored `cast` action has no actor field, so a
+  // model-normalized row names its caster only in the clause text; the grammar's reading carries its own (`Action.actor`, Itazura, Cmdr. Troi). "That opponent" is read here and not in `WHO`: the other verbs' cues never needed it.
+  // CEILING: the printed phrase only. "They may cast" after "its controller" / "that player" (Tibalt's Trickery, Transforming Flourish, Audacious Swap) and "its owner may cast" (Release to the Wind, Aerial Extortionist) name
+  // a player who may be you, so `any` stands; a pronoun whose antecedent is an opponent no word of the clause says ("destroy target creature you don't control. ... its controller ... they may cast") is not followed back.
+  ["cast", new RegExp(`\\b(${WHO}|that opponent)\\s+${ADVERB}casts?\\b`, "i")],
 ];
 
 /** "THAT PLAYER'S GRAVEYARD" IN A COMBAT-DAMAGE TRIGGER IS THE DAMAGED PLAYER (#1250, Tinybones): when the
@@ -199,7 +204,7 @@ function controlOf(phrase: string, text: string, at: number, ctx: ActorContext, 
   // ...EXCEPT WHEN THEY ARE GIVEN SOMETHING (review of #1581): "The source's controller draws cards equal to the damage prevented" (Swans of Bryn Argoll) pays your own Niv-Mizzet's damage out to YOU, and "that spell's controller may draw a card"
   // (Vex) can be your own spell. A benefit to an untyped outside source's controller is `any`; a source or spell "an opponent controls" stays `opp` whatever the verb.
   if (OUTSIDE_SOURCE_RE.test(p)) return OUTSIDE_BENEFITS.has(verb) && !/\bopponents?\b/i.test(text.slice(0, at)) ? "any" : "opp";
-  if (p === "target opponent" || p === "each opponent" || p === "each other player" || p === "defending player" || p === "attacking player") return "opp";
+  if (p === "target opponent" || p === "that opponent" || p === "each opponent" || p === "each other player" || p === "defending player" || p === "attacking player") return "opp";
   // "that player" points back at whoever the clause already named. The antecedent is in the same
   // clause, so this one needs no judgment: Massacre Wurm's "a creature an opponent controls dies,
   // that player..." is an opponent, while "choose target player. That player..." is not.
@@ -262,6 +267,13 @@ export function actionRecipients(clauseText: string, ctx: ActorContext = {}): Re
     // draw emits at `any` had the same shape. The printed "you" outranks a player word elsewhere in
     // the sentence; it yields only to an opponent cue written BEFORE it on the same verb.
     const stem = STEMS[verb];
+    // A CAST SPEAKS ONLY WHEN IT NAMES AN OPPONENT (#1691): "you may cast" is left to the object's own reading (a stated `you` here changed the cast's scope and owner, Lady Loki, Covetous Urge), and a player who may be
+    // you stays `any`. Not when "you cast" is printed first: that is the one cast of a clause that names two.
+    if (verb === "cast") {
+      const yoursCast = new RegExp(`\\byou\\s+${ADVERB}cast`, "i").exec(clauseText);
+      if (m && !(yoursCast && yoursCast.index < m.index) && controlOf(m[1]!, clauseText, m.index, ctx, verb) === "opp") out[verb] = "opp";
+      continue;
+    }
     const yours = stem ? new RegExp(`\\byou\\s+${ADVERB}${stem}`, "i").exec(clauseText) : null;
     // Contested -- yours first, then an opponent's on the same verb (Braids) -- stays unstated.
     if (yours && m && yours.index < m.index) continue;
