@@ -755,7 +755,8 @@ import { castClassFromPrint, castIsOnlyACondition, castsYourOwnCard } from "./ca
 // 569: #1726 -- a searched put into a graveyard says fromZone library whether or not the model stored the origin (Realms Uncharted, Elemental Teachings, Carnivorous Cultivator), so the matcher can read the fill as CHOSEN
 // 570: #1722 -- A discard names its player: "any number of target players each discard" (Cabal Conditioning, read `you` off the count's "permanents you control", now `any`) and a discard joined to an earlier verb of the same player, "each opponent loses 3 life unless that player sacrifices a nonland permanent or discards a card" (Rottenmouth Viper, Forbidden Ritual, Nicol Bolas the Deceiver, Perforating Artist, Starseer Mentor, Thornplate Intimidator x2, Torment of Hailfire, Torment of Venom: `you`/`any` -> `opp`), "that player reveals their hand and discards all cards of that color" (Crosis, the Purger: `any` -> `opp`). One cue in recipient.ts. CENSUS (Mongo, DERIVE 569): 32 cards whose text names a player or controller before "discard(s)" derive a `you` discard, 3 of them wrong and read here (Cabal Conditioning, Rottenmouth Viper, Torment of Venom); Minamo's Meddling ("that spell's controller reveals their hand, then discards", a comma join) is the one wrong left, the other 28 are cost or optional discards of yours. Of the issue's six families only this one was a derive defect: Jace, Telepath Unbound's emblem mill IS derived on the emblem's own row (`mill {opp, target}`, token row eadc6752) and pairs with Wight and Detritivore at deck level; Polymorph's `you` is owner ruling 2026-10-02 (#962); Bitter Triumph, Bone Shards and Deadly Visit already pair with Wight (a creature card) and cannot pair with Detritivore (nonbasic land cards); damage removal derives no `dies` fill by design and is its own issue. MEASURED (derive-impact vs 5d751885, --pair-sample 0): rows 33,068 same / 11 changed (10 cards) / 0 added / 0 removed, grammar complete 29,282 unchanged; pair reasons of the 11: membership +104 / -10,607, magnitude-only 16, attributes 0; role-ratchet 0 / 0, dropped-clauses 4,796 unchanged. Lost 10,607 are consumers of YOUR graveyard or YOUR discard that an opponent's discard never reached (graveyard-recursion -7,728, scales -1,089, threshold -1,037, discard -600 "when you discard", enters-graveyard -192); gained 104: opponent-graveyard and opponent-discard watchers (Wight, Detritivore, Megrim, Waste Not, Bloodchief Ascension, Compost, Dauthi Voidwalker, the opponent-has-eight-cards threshold creatures).
 // 571: #1718 -- A put that names its thing only across a clause boundary, or in its own 'if it's a <class> card', is typed (references.ts entryClassAcross / conditionClass / bothCardsClasses / recalledTarget; also antecedentSource skips a remove-counter object, Magnanimous Magistrate). CENSUS (Mongo cards x cardTagsDerived, DERIVE 570; untyped non-self non-token enters emits): 325 emits on 299 cards (196 emits on 181 cards with no subtype / anyOf / named / basic / stats either). After: 293 emits on 269 cards (164 on 151 strict); 30 cards typed, 32 emits. Fixed: delayed return after an earlier exile, typed from the exile's type words only (Otherworldly Journey, Long Road Home, Vanish into Memory, Koya, Lae'zel's Acrobatics, Semester's End creature+planeswalker, Planar Guide, Mystifying Maze, Morningtide's Light, Legion's Initiative, Phelia nonland permanent, Venser permanent); 'if it's a <class> card' put (Primal Surge and Fishing Gear permanent, Clone Shell and Summoner's Egg and Grenzo creature, Archdruid's Charm and Thrasios and Lantern of Revealing and Wild Evocation and Unexpected Results land, Arbiter of the Ideal, Kenessos subtype, Treasure Chest artifact, Rona land); 'that card' / 'those cards' from a graveyard (Stitch Together, Revivify creature, Magnanimous Magistrate via the trigger's creature); Sword of Hearth and Home both cards = creature + land. Left, 151 cards: 56 manifest / cloak (a face-down 2/2 creature, no type stated), 23 searched-share and fetch puts (#1713 CEILING), 13 self return on death (ref trigger), 17 exile 'all cards exiled with it' / pile puts (Flickerform selection tail, Helvault, Thieves' Auction, Dubious Challenge), 6 graveyard (Lifeline 'the first card', Krovikan Vampire), 9 library digs, 3 hand, 3 battlefield (commander), 21 other. 'permanent card' types as the corpus' own 'permanent'. Impromptu Raid 'if it isn't a creature card, ... Otherwise' not read.
-export const DERIVE_VERSION = 571;
+// 572: #1720 -- TEXTLESS OVERFLOW TWINS, SECOND ROUND. CENSUS (instrumented the fold, final-reading only, DERIVE 571): 54 twins on 53 cards kept beside their cover (the issue's ~71 counted the model path's candidate readings too: Hei Bai, Jhoira, Titan of Littjara, Blight Titan, Aragorn and Arwen, Spider-Man Miles Morales read from the grammar and have no twin left); 20 have NO COUNTERPART (the twin's event is one the cover has no ability for: Sigarda's Vanguard, Elder Gargaroth, Appa, Galadriel, Shape Stealer, Talruum Champion, Orzhov Pontiff ...; each event is its own ability, correct, stay) and 34 have one. FIXED, 15 twins on 14 cards, 39 remain: (1) the DRAIN was pushed once, with the first event's trigger, so the second event's drain lived on the twin alone: Shroudstomper, Archon of Cruelty, Professor Onyx, Blind Hunter, Witherbloom Apprentice, Sludge Strider, Graveyard Trespasser (both faces) fold, 8 twins on 7 cards; (2) a twin more specific only in WHOSE (control you/opp where the cover says any) is merged onto the cover and folded: Search for Dagger, Quandrix Apprentice (only `you` is merged: Mage Hunter's `opp` twin folded too in a first round, then the card switched to the grammar's any reading and lost 7 real opponent-life-loss scales pairs, so it keeps its twin: CEILING); (3) Kratos: the clause's one-or-more belongs to the attack limb only, the dies limb in a second whenever is no longer batched, so its twin folds; (4) a trigger-only twin (effect kind empty) beside the cover's effect for the same event folds: God-Eternal Kefnet, God-Eternal Bontu, Ilharg, Ashnod's Intervention. MEASURED (derive-impact vs 1eb07ef8, --pair-sample 0): rows 33,051 same / 28 changed / 0 added / 0 removed, source flips 0, grammar complete 29,282 -> 29,282; pair reasons of the 28 changed rows: membership +0 gained / -0 lost, magnitude-only 1 (Kratos' `dies:god` pair loses its batched count, `{1,1,batched}` -> none: 'whenever a God dies' fires per God), attributes 0; loss-classify 0 cards, LOST->CLASS 0, GAINED->SELF 0. Ratchets: role-ratchet gained 0 / lost 0 (33,519); dropped-clauses 4,796 -> 4,807 (new 15 `spliced`, the folded twins, the standing silent-by-design class; fixed 4: the empty `exiled` twins' `put exile>library` / `return exile>hand` partials of God-Eternal Bontu, God-Eternal Kefnet, Ilharg, Ashnod's Intervention); repeats-refused 2,857 -> 2,854 (the three empty `exiled` twins of Bontu, Kefnet, Ilharg); panel precision 100.0% retention 98.4% (428 held, 7 lost; ratchet ok), eval-pairs 94/94; CEILING markers 124 -> 126 (Kratos' limb rule, the you-only merge). LEFT (follow-ups): counts (Dwalin, Fire Lord Zuko: twin scalesWith the recipients vs a fixed 1), Fell Beast, Storvald (modes), Wildfire Devils (cover reads 'copy that card' as self), Tombstone Stairwell and Orcish Mine (repeats), Psychomancer and Slagstone Refinery (the cover lacks the second event's self half), mutually richer twins (Sludge Monster, Seven-Tail Mentor, Ruthless Sniper, Cryptid Inspector, March from the Black Gate, Cirdan) and misnumbered sentences (The War Doctor, Obsessive Pursuit, Athreos).
+export const DERIVE_VERSION = 572;
 
 /** "a nonland card from target opponent's graveyard or hand" (#1592): the object of a stored hand-or-graveyard pick. */
 const GRAVEYARD_OR_HAND_PICK = /\bfrom (?:target opponent|target player|that player|that opponent|an opponent)'s (?:graveyard or hand|hand or graveyard)$/i;
@@ -1236,6 +1237,8 @@ export function abilityIsCoveredBy(mine: Record<string, unknown>, theirs: Record
   const covered = (x: unknown, y: unknown, key: string): boolean => {
     if (x === undefined || x === null) return true;
     if (key === "control" && x === "any") return true;
+    // An effect kind of "" is a trigger with no effect of its own (#1720): it claims nothing, the cover's effect is the reading (God-Eternal Kefnet's textless `exiled` beside the covering "dies or is put into exile").
+    if (key === "kind" && x === "") return true;
     if (y === undefined || y === null) return false;
     if (Array.isArray(x)) return Array.isArray(y) && (key === "emits" ? x.every((e) => y.some((f) => covered(e, f, ""))) : x.length === y.length && x.every((e, i) => covered(e, y[i], "")));
     if (typeof x === "object") return typeof y === "object" && !Array.isArray(y) && TWO_WAY_FLAGS.every((k) => (k in (x as object)) || !(k in (y as object)) || (y as Record<string, unknown>)[k] === undefined)
@@ -5157,7 +5160,23 @@ export function deriveAbilities(
     }
 
     const drain = drainAbility(clause, kind, trigger, cost);
-    if (drain) { if (face) drain.face = face; abilities.push(drain); }
+    if (drain) {
+      if (face) drain.face = face;
+      abilities.push(drain);
+      // THE DRAIN IS READ FOR EACH EVENT THE SENTENCE NAMES, like the loss and the gain it merges (#1720). "Whenever this creature enters or attacks, each opponent loses 2 life. You gain 2 life" makes a loss and a gain per event, but the drain was
+      // pushed once, with the first event's trigger: the second event's drain existed only on the textless overflow twin, which then differed from its cover (a drain the cover lacked) and was never folded, so the attack trigger fired twice
+      // (Shroudstomper, Archon of Cruelty, Professor Onyx's "cast or copy", Blind Hunter, Sludge Strider). A trigger counts when a loss AND a gain of this clause both carry it.
+      const triggerKey = (t: Ability["trigger"]): string => JSON.stringify(t);
+      const lossTriggers = new Set(abilities.slice(before).filter((a) => a.effect.kind === "player-life-loss" && a.trigger).map((a) => triggerKey(a.trigger)));
+      const made = new Set([triggerKey(drain.trigger)]);
+      for (const g of abilities.slice(before)) {
+        if (g.effect.kind !== "lifegain" || !g.trigger) continue;
+        const k = triggerKey(g.trigger);
+        if (made.has(k) || !lossTriggers.has(k)) continue;
+        made.add(k);
+        abilities.push({ ...drain, trigger: g.trigger });
+      }
+    }
     // THE MODAL HEADER SUPPLIES THE EVENT ITSELF (`derive/modal.ts`): "you face a dilemma as you choose one or more modes for a spell or ability" is no verb a clause
     // instructs, so it is pushed here with the header's own kind, trigger and cost, and the labelling below stamps its clause, repeats and count like any other. A spell's
     // header carries no ability type of its own (static, or none), and a modal spell is cast: on-cast. A triggered header whose trigger was REFUSED derives no trigger
@@ -5326,7 +5345,11 @@ export function deriveAbilities(
       // AN ALTERNATIVE OR FREE CAST DERIVES AS A REDUCTION (#1266; CR 118.9): Aluren, As Foretold, Fires of Invention pay nothing for the spell, which discounts no mana and is no ramp.
       if (abilities[i].effect?.kind === "cost-reduction" && ALTERNATIVE_COST.test(text ?? "") && !PRINTED_DISCOUNT.test(text ?? "")) abilities[i] = { ...abilities[i], altCost: true };
       // A becomes-blocked trigger's stored subject can be the BLOCKER (Ogre Leadfoot: "an artifact creature"), so a trigger with a `blocker` has its `batched` read off the printed "by ...", never off the stored subject (#1381). A plain "one or more creatures you control become blocked" (Hezrou) keeps it.
-      if (abilities[i].trigger && !abilities[i].trigger!.blocker && BATCHED.test(clause.trigger?.subject ?? "")) {
+      // ...AND A SEPARATE "WHENEVER" LIMB IS NOT BATCHED BY THE FIRST'S "ONE OR MORE" (#1720): Kratos' "Whenever you attack with one or more Gods and whenever a God dies" has the clause's stored subject "one or more Gods", which belongs to the attack half only; the `dies`
+      // limb is an extra event of the same record and fires once per God. A limb of another event than the clause's own, in a sentence that opens a second "whenever" whose own subject is not "one or more" (The War Doctor's "... and whenever one or more other cards are put into exile" is), is read unbatched.
+      // CEILING: a limb is told apart by its verb against the clause's event and a second "whenever" in the clause text; a joint subject ("whenever one or more creatures die or are exiled", one "whenever") keeps batching every limb.
+      const otherLimb = clause.trigger?.event !== undefined && !(abilities[i].trigger?.verbs ?? []).includes(normalizeTriggerVerb(clause.trigger.event) as Verb) && (text?.match(/\bwhenever\b/gi) ?? []).length > 1 && !BATCHED.test((text ?? "").slice((text ?? "").toLowerCase().lastIndexOf("whenever")));
+      if (abilities[i].trigger && !abilities[i].trigger!.blocker && !otherLimb && BATCHED.test(clause.trigger?.subject ?? "")) {
         abilities[i] = { ...abilities[i], trigger: { ...abilities[i].trigger!, batched: true } };
       }
       // A REFLEXIVE SACRIFICE TRIGGER (CR 603.12, #1565): "you may sacrifice it. When you do, ..." is numbered `sacrificed` by the store's convention, but it follows only THIS card's own
@@ -5482,10 +5505,50 @@ export function deriveAbilities(
     const saysNoMoreThan = (a: Ability, b: Ability): boolean => abilityIsCoveredBy(a as unknown as Record<string, unknown>, b as unknown as Record<string, unknown>);
     // ALL OR NOTHING PER CLAUSE (#1373 review): a textless clause is folded only when EVERY one of its abilities has an exact match among its covering clause's, so a fold is
     // always a pure removal. A per-ability fold dropped Velukan Dragon's identical dice-rolled copy while its pump (read without the covering clause's comma) stayed.
+    // A TWIN MORE SPECIFIC ONLY IN WHOSE (#1720). The twin's model reading said who ("you" searches its own library), the sentence's own reading left `control: any`; the printed text settles it, and it is the twin's: Search for Dagger
+    // and Quandrix Apprentice look at YOUR library. Such a twin is covered once the specific `control` is merged onto the covering ability (and onto the sentence's other events' abilities, which are
+    // the same ability apart from the trigger): nothing is lost, the cover's `any` was the poorer reading. Only `control` under `effect` / `emits`, only where the cover says `any`, and only when everything else the twin says is the cover's already.
+    // CEILING: only `you` is merged, never `opp`. Mage Hunter's twin says `opp` ("they lose 1 life" is the opponent who cast), but with the twin folded the card switches to the grammar's reading (`any` on both events) and loses its `opp` life-loss emit (7 real scales pairs, Archfiend of Despair, Neheb the Eternal ...): Mage Hunter keeps its twin until the grammar reads "they" as the triggering opponent.
+    const specificControl = (a: Ability, b: Ability): { path: (string | number)[]; value: string }[] | null => {
+      const found: { path: (string | number)[]; value: string }[] = [];
+      const walk = (x: unknown, y: unknown, path: (string | number)[]): unknown => {
+        if (Array.isArray(x)) return Array.isArray(y) && y.length === x.length ? x.map((e, i) => walk(e, y[i], [...path, i])) : x;
+        if (x === null || typeof x !== "object" || y === null || typeof y !== "object" || Array.isArray(y)) return x;
+        const out: Record<string, unknown> = {};
+        for (const [k, v] of Object.entries(x as Record<string, unknown>)) {
+          const w = (y as Record<string, unknown>)[k];
+          if (k === "control" && w === "any" && v === "you") { found.push({ path: [...path, k], value: v }); out[k] = "any"; }
+          else out[k] = walk(v, w, [...path, k]);
+        }
+        return out;
+      };
+      const widened: Record<string, unknown> = { ...(a as unknown as Record<string, unknown>) };
+      for (const k of ["effect", "emits"] as const) if (widened[k] !== undefined) widened[k] = walk(widened[k], (b as unknown as Record<string, unknown>)[k], [k]);
+      return found.length > 0 && abilityIsCoveredBy(widened, b as unknown as Record<string, unknown>) ? found : null;
+    };
+    const withoutEvent = (x: Ability): string => JSON.stringify({ ...x, trigger: undefined, repeats: undefined, clause: undefined });
     for (const [twin, covering] of identicalTwinOf) {
       const mine = abilities.filter((a) => a.clause === twin);
       const theirs = abilities.filter((b) => b.clause === covering);
-      if (mine.length === 0 || !mine.every((a) => theirs.some((b) => sameAbility(a, b) || saysNoMoreThan(a, b)))) continue;
+      const merges: { into: Ability; paths: { path: (string | number)[]; value: string }[] }[] = [];
+      const coveredBy = (a: Ability): boolean => theirs.some((b) => {
+        if (sameAbility(a, b) || saysNoMoreThan(a, b)) return true;
+        const paths = specificControl(a, b);
+        if (!paths) return false;
+        merges.push({ into: b, paths });
+        return true;
+      });
+      if (mine.length === 0 || !mine.every(coveredBy)) continue;
+      for (const { into, paths } of merges) {
+        for (const c of theirs) {
+          if (c !== into && withoutEvent(c) !== withoutEvent(into)) continue;
+          for (const { path, value } of paths) {
+            let at: any = c;
+            for (const k of path.slice(0, -1)) at = at?.[k];
+            if (at && typeof at === "object") at[path[path.length - 1]!] = value;
+          }
+        }
+      }
       for (let i = abilities.length - 1; i >= 0; i--) if (abilities[i]!.clause === twin) abilities.splice(i, 1);
       spliced.add(twin);
       folded.set(twin, covering);
