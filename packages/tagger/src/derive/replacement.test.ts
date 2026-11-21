@@ -164,3 +164,9 @@ test("a damage replacement says how it changes the damage", () => {
   expect(how("If a source would deal 4 or more damage to a permanent or player, that source deals 3 damage to that permanent or player instead.")).toBeUndefined();
   expect(how("")).toBeUndefined();
 });
+
+test("#1696: only a printed 'If YOU would create' reads your tokens; another creator is not you", () => {
+  expect(replacementOf("If an opponent would create one or more tokens, they create that many tokens minus one instead.")?.subjectText).toBe("one or more tokens");
+  expect(replacementOf("If a player would create one or more tokens, that player creates twice that many instead.")?.subjectText).toBe("one or more tokens");
+  expect(replacementOf("If you would create one or more tokens under an opponent's control, create that many plus one instead.")?.subjectText).toBe("one or more tokens under an opponent's control");
+});
