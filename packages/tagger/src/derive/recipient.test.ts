@@ -240,3 +240,11 @@ test("another player named by a pronoun acts: 'they may cast', 'then they draw'"
   // "you <verb>" printed beside the pronoun's: the controller default is right for yours, so the pronoun does not stop it.
   expect(pronounActs("They draw two cards and you draw one.", "draw")).toBe(false);
 });
+
+test("#1691: a cast speaks only for an opponent named as its caster, and never after a printed 'you cast'", () => {
+  expect(actionRecipients("That opponent may cast the exiled card without paying its mana cost.").cast).toBe("opp");
+  // "you cast" printed first is the clause's own cast: the opponent's later cast does not take it over.
+  expect(actionRecipients("Whenever you cast a spell, that opponent may cast the exiled card.")).not.toHaveProperty("cast");
+  // An opponent acts, then YOU cast (Fevered Suspicion's shape): no opponent cast.
+  expect(actionRecipients("Each opponent exiles the top card of their library. You may cast spells from among those cards.")).not.toHaveProperty("cast");
+});

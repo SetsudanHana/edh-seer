@@ -21,8 +21,9 @@ describe("an opponent named as the caster is the cast's control", () => {
     expect(s.length).toBeGreaterThan(0);
     for (const x of s) expect(x.control).toBe("opp");
   });
-  test("an opponent's cast keeps no owner it was never told (Allure: the exiled card is the opponent's own pick from YOUR library)", () => {
-    for (const x of casts("Allure of the Unknown")) expect(x.owner).toBeUndefined();
+  // The card is from YOUR library, so the true owner is `you`; it is left unset today (an under-claim: castsYourOwnCard is gated on a cast that is not opp). Pin only that it is never read as the caster's own card.
+  test("an opponent's cast of a card from YOUR library is never the opponent's own card (Allure of the Unknown)", () => {
+    for (const x of casts("Allure of the Unknown")) expect(x.owner).not.toBe("opp");
   });
 });
 

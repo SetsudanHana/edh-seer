@@ -85,8 +85,8 @@ const CUES: [string, RegExp][] = [
   ["put", new RegExp(`\\b(${WHO})\\s+${ADVERB}puts?\\b`, "i")],
   // "THAT OPPONENT MAY CAST THE EXILED CARD" (#1691, CR 601.2a: the player who proposes the cast becomes the spell's controller): Allure of the Unknown, Swindler's Scheme. A stored `cast` action has no actor field, so a
   // model-normalized row names its caster only in the clause text; the grammar's reading carries its own (`Action.actor`, Itazura, Cmdr. Troi). "That opponent" is read here and not in `WHO`: the other verbs' cues never needed it.
-  // CEILING: the printed phrase only. "They may cast" after "its controller" / "that player" (Tibalt's Trickery, Transforming Flourish, Audacious Swap) and "its owner may cast" (Release to the Wind, Aerial Extortionist) name
-  // a player who may be you, so `any` stands; a pronoun whose antecedent is an opponent no word of the clause says ("destroy target creature you don't control. ... its controller ... they may cast") is not followed back.
+  // CEILING: the printed phrase only. "They may cast" after "its controller" / "that player" (Tibalt's Trickery, Audacious Swap) and "its owner may cast" (Release to the Wind, Aerial Extortionist) name a player who may be
+  // you, so `any` stands; and "they may cast" is not linked back to the "its controller" before it even where that controller is stated as an opponent (Transforming Flourish: "target artifact or creature you don't control").
   ["cast", new RegExp(`\\b(${WHO}|that opponent)\\s+${ADVERB}casts?\\b`, "i")],
 ];
 
