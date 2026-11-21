@@ -22,6 +22,7 @@ describe("the opponent who CHOOSES the cards does not control them", () => {
   });
   test("Fork in the Road / Jarad's Orders: 'the other' into the graveyard is a card of the searched class", () => {
     expect(emitTypes("Fork in the Road", "enters-graveyard")).toEqual(["land"]);
+    expect(rowOf("Fork in the Road").tags.abilities.flatMap((a) => a.emits ?? []).filter((x) => x.verb === "enters-graveyard").map((e) => e.subject.basic)).toEqual([true]);
     expect(emitTypes("Jarad's Orders", "enters-graveyard")).toEqual(["creature"]);
     // ...and it is one card of that class, not "another card, every one of a class", which fed no recursion consumer of its own class.
     for (const n of ["Fork in the Road", "Jarad's Orders"]) for (const e of rowOf(n).tags.abilities.flatMap((a) => a.emits ?? []).filter((x) => x.verb === "enters-graveyard")) expect([e.subject.other, e.subject.scope]).toEqual([undefined, undefined]);
@@ -31,7 +32,7 @@ describe("the opponent who CHOOSES the cards does not control them", () => {
   test("Ecological Appreciation: the chosen cards are shuffled into YOUR library", () => expect(emitControls("Ecological Appreciation", "shuffle")).not.toContain("opp"));
 });
 
-describe("controls: a real opponent-controlled subject stays opp", () => {
+describe("controls: a chooser control reads you; a real opponent subject (no chooser phrase) stays opp", () => {
   test("Rejoin the Fight: the card chosen by each opponent is in YOUR graveyard and returns under YOUR control", () => {
     expect(emitControls("Rejoin the Fight", "enters")).toEqual(["you"]);
   });
