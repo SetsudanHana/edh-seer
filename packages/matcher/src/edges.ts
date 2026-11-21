@@ -1057,11 +1057,23 @@ function exilesOnlyBlockCounterparts(oracleText: string | undefined): boolean {
   return exiles.length > 0 && exiles.every((x) => x.includes("blocking or blocked by") || x.includes("blocked by"));
 }
 
+/** A recursion that returns only what the card ITSELF milled (#1732): "Mill four cards. Then put an instant, sorcery, or Faerie card from among the milled cards into your hand" (Free the Fae), "puts each Goblin card milled this way into their hand" (Grub's Command),
+ *  "return a creature or planeswalker card milled this way to your hand" (Garruk's Lost Wolf). The verb must be a return / put in the same sentence as the self-set cue: a bare "milled this way" also counts ("gain 1 life for each creature card milled this way",
+ *  Gorging Vulture) or triggers ("exile target ... from an opponent's graveyard", Saruman), and those are not a recursion from that set.
+ *  Only when no OTHER sentence returns / casts from a graveyard: Wrenn and Realmbreaker mills for -2 and plays permanents from the graveyard under -7, so an outside fill still feeds it.
+ *  CEILING: read per card, not per ability (the card-scoped shape of the cues below): a card whose self-milled return and whose graveyard return are two abilities is left paired, never refused, and a card that returns the milled set AND a card of its own choosing in one sentence is not read. The destination (hand, battlefield, library) separates a return from a counter put per milled card (The Wise Mothman). */
+function recursionReadsOnlyItsOwnMill(oracleText: string | undefined): boolean {
+  const sentences = (oracleText ?? "").replace(/\([^)]*\)/g, "").split(/[.\n]/);
+  const own = (x: string): boolean => /\b(?:returns?|puts?)\b[^.]{0,200}\b(?:milled this way|from among the milled cards)\b/i.test(x) && /\b(?:hand|battlefield|library)\b/i.test(x);
+  if (!sentences.some(own)) return false;
+  return !sentences.some((x) => !own(x) && /\b(?:returns?|puts?|cast|play)\b[^.]{0,80}\b(?:from|in) [^.]{0,30}\bgraveyard/i.test(x));
+}
+
 /** A recursion restricted to cards the consumer's OWN earlier action put in the graveyard. "From among the cards milled this way" (Szarekh, the Silent King: it takes an artifact creature card of ITS mill; 10 corpus cards print that shape, #1577) is the same set.
  *  So is "For each creature that died this way, put a creature card from the graveyard of the player who controlled that creature ... onto the battlefield" (Glyph of Reincarnation, #1586): its "target Wall" is the BLOCKER that names the creatures it destroys, never a Wall it recurs, so derive's `graveyard-recursion:wall` was a demand no fill can meet (2,628 producers paired with it, census at 486).
  *  CEILING: the oracle returns "a creature card" from that graveyard, which any fill of it could supply, not only the destroyed creature; the cue refuses every fill, as for the other "this way" shapes, and the missing `graveyard-recursion:creature` demand is the derive defect behind it (not fixed here). */
 const recursionIsSelfSupplied = (oracleText: string | undefined): boolean =>
-  /\bfrom among (?:those|them)\b|\bfrom among the cards [a-z ]{0,20}this way\b|\bamong (?:the )?cards? (?:milled|discarded|revealed|exiled) this way\b|\bput into (?:a|your|their|its owner's) graveyard this way\b|\bput there [^.]{0,30}this turn\b|\bfrom the battlefield this turn\b|\bfor each creatures? (?:that )?(?:died|was destroyed) this way\b/i
+  recursionReadsOnlyItsOwnMill(oracleText) || /\bfrom among (?:those|them)\b|\bfrom among the cards [a-z ]{0,20}this way\b|\bamong (?:the )?cards? (?:milled|discarded|revealed|exiled) this way\b|\bput into (?:a|your|their|its owner's) graveyard this way\b|\bput there [^.]{0,30}this turn\b|\bfrom the battlefield this turn\b|\bfor each creatures? (?:that )?(?:died|was destroyed) this way\b/i
     .test(oracleText ?? "");
 
 /** An UNTYPED recursion on an ability that carries its own graveyard-entry trigger: it returns the
