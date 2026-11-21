@@ -81,8 +81,9 @@ const CUES: [string, RegExp][] = [
   // OPPONENT's graveyard (Wight of Precinct Six, Detritivore). The joined form stops at a period or semicolon, and a "you discard" between is no match (the `yours` test in `actionRecipients`).
   // ...AND ", THEN" JOINS THE SAME PLAYER'S NEXT VERB (#1735): "that spell's controller reveals their hand, THEN DISCARDS each card with the same name" (Minamo's Meddling) stored `discard {control: you}`; "defending player discards all the cards in their hand, THEN DRAWS that many cards"
   // (Robber Fly) read `any` for a draw that is the opponent's. The draw cue joins the same way. CEILING: the joined form reads the player before an "and"/"or"/", then" within 100 characters with no other actor (you, each, target, that player, its/their controller) between; a comma list
-  // ("each opponent sacrifices a creature, discards a card, and loses 4 life", Dusk Mangler) is not joined by this cue (its discard is read `opp` off the object's "each"), and a ", then" join is read for discard and draw only: mill, search, create and exile after ", then" derive the
-  // answer they already had (the sentence names a player, so `any` stands), and sacrifice has its own repeated-verb machinery (`oneSacrificer`) that the join does not feed.
+  // ("each opponent sacrifices a creature, discards a card, and loses 4 life", Dusk Mangler) is not joined by this cue (its discard is read `opp` off the object's "each"), and a ", then" join is read for discard and draw only: mill, search and exile after ", then" derive the
+  // answer they already had (the sentence names a player, so `any` stands); create is left wrong on Necromentia ("That player shuffles, then creates ... tokens" stays `any`) because JOINED on the create cue falsely joins Smuggler's Share,
+  // Giant Space Amoeba and Tempt with Bunnies; sacrifice has its own repeated-verb machinery (`oneSacrificer`) that the join does not feed (Magus of the Balance, Archfiend of Depravity). Both filed as #1740.
   ["discard", new RegExp(`\\b(${WHO}|(?:any number of )?target players)\\s+(?:each\\s+)?${ADVERB}${JOINED}discards?\\b`, "i")],
   // Mind Funeral: "Target opponent reveals cards ... That player puts all cards revealed this way
   // into their graveyard" -- a mill written as a put, and the only verb the actor table did not
