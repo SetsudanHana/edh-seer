@@ -58,3 +58,18 @@ describe("an ordinary put is unchanged", () => {
     expect(entersTags("Reanimate", consumer)).not.toEqual([]);
   });
 });
+
+/** Yedora's put is "return it to the battlefield face down ... It's a Forest land. (It has no other types or abilities.)": a face-down LAND, so a "face-down creature enters" consumer (Kadena) never hears it, while a "face-down permanent enters" one does. */
+describe("a face-down put that is a land is no face-down creature", () => {
+  test("Yedora's put is a Forest land, face-down", () => {
+    const puts = putEmits("Yedora, Grave Gardener");
+    expect(puts.length).toBeGreaterThan(0);
+    for (const s of puts) { expect(s.type).toBe("land"); expect(s.subtype).toBe("forest"); expect(s.status).toContain("face-down"); }
+  });
+  test("Yedora -> Kadena: no enters reason", () => {
+    expect(entersTags("Yedora, Grave Gardener", "Kadena, Slinking Sorcerer")).toEqual([]);
+  });
+  test.each(["Cryptid Inspector", "Threats Around Every Corner"])("Yedora -> %s (a face-down permanent): still heard", (consumer) => {
+    expect(entersTags("Yedora, Grave Gardener", consumer)).not.toEqual([]);
+  });
+});
