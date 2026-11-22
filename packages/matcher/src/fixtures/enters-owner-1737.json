@@ -968,5 +968,93 @@
    }
   ],
   "segmentHash": "8c901d33695ce1234c2884f6f5d422c403a549d44adc94ed87fb4c7991449cef"
+ },
+ "Raise the Alarm": {
+  "source": {
+   "_id": "5b2364d7-a811-4595-a1b4-224c70555ffa",
+   "name": "Raise the Alarm",
+   "typeLine": "Instant",
+   "oracleText": "Create two 1/1 white Soldier creature tokens.",
+   "keywords": [],
+   "colors": [
+    "W"
+   ],
+   "manaValue": 2,
+   "colorIdentity": [
+    "W"
+   ],
+   "power": null,
+   "toughness": null,
+   "tags": {
+    "produces": [
+     "token",
+     "creature-etb",
+     "sacrifice-fodder",
+     "tribe:soldier",
+     "cast:instant"
+    ],
+    "cares": []
+   },
+   "searchNames": [
+    "raise the alarm"
+   ],
+   "edhrecRank": 4490,
+   "manaCost": "{1}{W}",
+   "layout": "normal",
+   "legalities": {
+    "standard": "not_legal",
+    "future": "not_legal",
+    "historic": "legal",
+    "timeless": "legal",
+    "gladiator": "legal",
+    "pioneer": "legal",
+    "modern": "legal",
+    "legacy": "legal",
+    "pauper": "legal",
+    "vintage": "legal",
+    "penny": "legal",
+    "commander": "legal",
+    "oathbreaker": "legal",
+    "standardbrawl": "not_legal",
+    "brawl": "legal",
+    "competitivebrawl": "legal",
+    "alchemy": "not_legal",
+    "paupercommander": "legal",
+    "duel": "legal",
+    "oldschool": "not_legal",
+    "premodern": "not_legal",
+    "predh": "legal",
+    "tlr": "legal"
+   },
+   "releasedAt": "2024-11-15",
+   "gameChanger": false,
+   "reserved": false,
+   "allParts": [
+    {
+     "component": "token",
+     "name": "Soldier",
+     "typeLine": "Token Creature — Soldier",
+     "printingId": "d093322e-a717-4e2d-8199-fa560792bcf6"
+    }
+   ],
+   "artCrop": "https://cards.scryfall.io/art_crop/front/8/1/81d3e5c5-6531-48e7-9dd6-2db519dd61b1.jpg?1783908838"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "create",
+      "object": "two 1/1 white Soldier creature tokens",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "2",
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "a80cf06c4d460700b4a18e21e381b5dc30877e34b481d663829ab802c66aab4b"
  }
 }
