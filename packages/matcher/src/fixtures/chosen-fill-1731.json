@@ -992,5 +992,93 @@
    }
   ],
   "segmentHash": "9168174035b791265042b7dbde58f273762b5c14ff2d96fee88f0209f192cbf4"
+ },
+ "Monk Idealist": {
+  "source": {
+   "_id": "1f47ff5a-dd93-46de-a1ca-b412631218bf",
+   "name": "Monk Idealist",
+   "typeLine": "Creature — Human Monk Cleric",
+   "oracleText": "When this creature enters, return target enchantment card from your graveyard to your hand.",
+   "keywords": [],
+   "colors": [
+    "W"
+   ],
+   "manaValue": 3,
+   "colorIdentity": [
+    "W"
+   ],
+   "power": "2",
+   "toughness": "2",
+   "tags": {
+    "produces": [
+     "tribe:human",
+     "tribe-nontoken:human",
+     "tribe:monk",
+     "tribe-nontoken:monk",
+     "tribe:cleric",
+     "tribe-nontoken:cleric"
+    ],
+    "cares": [
+     "graveyard"
+    ]
+   },
+   "searchNames": [
+    "monk idealist"
+   ],
+   "edhrecRank": 17874,
+   "manaCost": "{2}{W}",
+   "layout": "normal",
+   "legalities": {
+    "standard": "not_legal",
+    "future": "not_legal",
+    "historic": "not_legal",
+    "timeless": "not_legal",
+    "gladiator": "not_legal",
+    "pioneer": "not_legal",
+    "modern": "not_legal",
+    "legacy": "legal",
+    "pauper": "legal",
+    "vintage": "legal",
+    "penny": "legal",
+    "commander": "legal",
+    "oathbreaker": "legal",
+    "standardbrawl": "not_legal",
+    "brawl": "not_legal",
+    "competitivebrawl": "not_legal",
+    "alchemy": "not_legal",
+    "paupercommander": "legal",
+    "duel": "legal",
+    "oldschool": "not_legal",
+    "premodern": "legal",
+    "predh": "legal",
+    "tlr": "legal"
+   },
+   "releasedAt": "2016-06-10",
+   "gameChanger": false,
+   "reserved": false,
+   "artCrop": "https://cards.scryfall.io/art_crop/front/3/1/31c729e2-4e55-4a14-a288-9c3473e58b88.jpg?1783937628"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "this creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "return",
+      "object": "target enchantment card from your graveyard",
+      "fromZone": "graveyard",
+      "toZone": "hand",
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "aaff83d4d4b933674ee2cfc01e8b55488c452ec8c41b740245f7ec8c67022a93"
  }
 }

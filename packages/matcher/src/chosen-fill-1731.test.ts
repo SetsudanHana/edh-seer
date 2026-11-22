@@ -51,6 +51,11 @@ describe("a creature fill is an artifact card only in a deck that holds an artif
   test("a NONCREATURE artifact demand is never met by a chosen creature, whatever the deck holds (Salvaging Station)", () => {
     for (const p of ["Buried Alive", "Jarad's Orders"]) expect(fills(p, "Salvaging Station", [p, "Salvaging Station", "Solemn Simulacrum"])).toEqual([]);
   });
+  test("an enchantment creature in the deck (Eidolon of Countless Battles) lets a chosen creature meet a bare enchantment-card demand (Monk Idealist)", () => {
+    expect(fills("Buried Alive", "Monk Idealist", ["Buried Alive", "Monk Idealist", "Eidolon of Countless Battles"])).not.toEqual([]);
+    expect(fills("Buried Alive", "Monk Idealist", ["Buried Alive", "Monk Idealist", "Solemn Simulacrum"])).toEqual([]);
+    expect(fills("Buried Alive", "Monk Idealist")).toEqual([]);
+  });
   test("the co-types are those of non-token creature cards only", () => {
     expect([...creatureCoTypes(["Sol Ring", "Llanowar Elves"].map(dc)).keys()]).toEqual([]);
     expect([...creatureCoTypes(["Dryad Arbor", "Solemn Simulacrum"].map(dc)).keys()].sort()).toEqual(["artifact", "land"]);
