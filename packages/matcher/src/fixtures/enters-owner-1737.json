@@ -1,0 +1,859 @@
+{
+ "Brainstealer Dragon": {
+  "source": {
+   "name": "Brainstealer Dragon",
+   "typeLine": "Creature — Dragon Horror",
+   "oracleText": "Flying\nAt the beginning of your end step, exile the top card of each opponent's library. You may play those cards for as long as they remain exiled. If you cast a spell this way, you may spend mana as though it were mana of any color to cast it.\nWhenever a nonland permanent an opponent owns enters the battlefield under your control, they lose life equal to its mana value.",
+   "keywords": [
+    "Flying"
+   ],
+   "colors": [
+    "B"
+   ],
+   "manaValue": 7,
+   "colorIdentity": [
+    "B"
+   ],
+   "power": "6",
+   "toughness": "6",
+   "manaCost": "{5}{B}{B}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Flying",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "end-step",
+     "subject": "you",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "exile",
+      "object": "the top card of each opponent's library",
+      "fromZone": "library",
+      "toZone": "exile",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "play",
+      "object": "those cards",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     },
+     {
+      "verb": "cost-modify",
+      "object": "mana as though it were mana of any color to cast a spell this way",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "a nonland permanent an opponent owns",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "lose-life",
+      "object": "opponent",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "equal to its mana value",
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "398817112d44eda50d9c4d9487b83e4ea22543d6e29f5ac8ac361f455873a18b"
+ },
+ "Primal Surge": {
+  "source": {
+   "name": "Primal Surge",
+   "typeLine": "Sorcery",
+   "oracleText": "Exile the top card of your library. If it's a permanent card, you may put it onto the battlefield. If you do, repeat this process.",
+   "keywords": [],
+   "colors": [
+    "G"
+   ],
+   "manaValue": 10,
+   "colorIdentity": [
+    "G"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{8}{G}{G}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "exile",
+      "object": "the top card of your library",
+      "fromZone": "library",
+      "toZone": "exile",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "put",
+      "object": "it",
+      "fromZone": "exile",
+      "toZone": "battlefield",
+      "amount": null,
+      "optional": true
+     },
+     {
+      "verb": "trigger-again",
+      "object": "this process",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "5d91c3a3373b3a151ae29474d27ddad2154dbd2e9d0ff70856982a898ce56205"
+ },
+ "Stitch Together": {
+  "source": {
+   "name": "Stitch Together",
+   "typeLine": "Sorcery",
+   "oracleText": "Return target creature card from your graveyard to your hand.\nThreshold — Return that card from your graveyard to the battlefield instead if there are seven or more cards in your graveyard.",
+   "keywords": [
+    "Threshold"
+   ],
+   "colors": [
+    "B"
+   ],
+   "manaValue": 2,
+   "colorIdentity": [
+    "B"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{B}{B}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "return",
+      "object": "target creature card",
+      "fromZone": "graveyard",
+      "toZone": "hand",
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "return",
+      "object": "that card",
+      "fromZone": "graveyard",
+      "toZone": "battlefield",
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "4be0f7a7764a0c234f17b044c5351493f731038e0676351d2560b35bfde45a52"
+ },
+ "Revivify": {
+  "source": {
+   "name": "Revivify",
+   "typeLine": "Instant",
+   "oracleText": "Roll a d20 and add the number of creature cards in your graveyard that were put there from the battlefield this turn.\n1—14 | Return all creature cards in your graveyard that were put there from the battlefield this turn to your hand.\n15+ | Return those cards from your graveyard to the battlefield.",
+   "keywords": [],
+   "colors": [
+    "W"
+   ],
+   "manaValue": 3,
+   "colorIdentity": [
+    "W"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{2}{W}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "roll-dice",
+      "object": "a d20 and add the number of creature cards in your graveyard that were put there from the battlefield this turn",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "return",
+      "object": "all creature cards in your graveyard that were put there from the battlefield this turn",
+      "fromZone": "graveyard",
+      "toZone": "hand",
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "return",
+      "object": "those cards",
+      "fromZone": "graveyard",
+      "toZone": "battlefield",
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "b455dc64c254a001b057e959a68b7ff6469ac1ab3a73d5e1ef1aadb9ea5efdee"
+ },
+ "Gruesome Encore": {
+  "source": {
+   "name": "Gruesome Encore",
+   "typeLine": "Sorcery",
+   "oracleText": "Put target creature card from an opponent's graveyard onto the battlefield under your control. It gains haste. Exile it at the beginning of the next end step. If that creature would leave the battlefield, exile it instead of putting it anywhere else.",
+   "keywords": [],
+   "colors": [
+    "B"
+   ],
+   "manaValue": 3,
+   "colorIdentity": [
+    "B"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{2}{B}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "exile",
+      "object": "target creature card from an opponent's graveyard",
+      "fromZone": "graveyard",
+      "toZone": "battlefield",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "grant-ability",
+      "object": "haste",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "exile",
+      "object": "it",
+      "fromZone": "battlefield",
+      "toZone": "exile",
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "37988be9686b25665f4acc615999f198f24b2d14e8017459c1fecaa3a7105827"
+ },
+ "Animate Dead": {
+  "source": {
+   "name": "Animate Dead",
+   "typeLine": "Enchantment — Aura",
+   "oracleText": "Enchant creature card in a graveyard\nWhen this Aura enters, if it's on the battlefield, it loses \"enchant creature card in a graveyard\" and gains \"enchant creature put onto the battlefield with this Aura.\" Return enchanted creature card to the battlefield under your control and attach this Aura to it. When this Aura leaves the battlefield, that creature's controller sacrifices it.\nEnchanted creature gets -1/-0.",
+   "keywords": [
+    "Enchant"
+   ],
+   "colors": [
+    "B"
+   ],
+   "manaValue": 2,
+   "colorIdentity": [
+    "B"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{1}{B}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Enchant creature card in a graveyard",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "this Aura",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "return",
+      "object": "enchanted creature card",
+      "fromZone": "graveyard",
+      "toZone": "battlefield",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "attach",
+      "object": "this Aura",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "leaves",
+     "subject": "this Aura",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "sacrifice",
+      "object": "that creature",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 4,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "modify-pt",
+      "object": "enchanted creature",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "-1/-0",
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "6fb619300fb8786178e36a598c9afa188613d9e17586f13240a227466a012b0f"
+ },
+ "Reanimate": {
+  "source": {
+   "name": "Reanimate",
+   "typeLine": "Sorcery",
+   "oracleText": "Put target creature card from a graveyard onto the battlefield under your control. You lose life equal to that card's mana value.",
+   "keywords": [],
+   "colors": [
+    "B"
+   ],
+   "manaValue": 1,
+   "colorIdentity": [
+    "B"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{B}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "put",
+      "object": "target creature card from a graveyard",
+      "fromZone": "graveyard",
+      "toZone": "battlefield",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "lose-life",
+      "object": "you",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "that card's mana value",
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "e8ab336796096a8555d57f1874a81855878b6f46c4230f751a03e7f387f2baad"
+ },
+ "Bribery": {
+  "source": {
+   "name": "Bribery",
+   "typeLine": "Sorcery",
+   "oracleText": "Search target opponent's library for a creature card and put that card onto the battlefield under your control. Then that player shuffles.",
+   "keywords": [],
+   "colors": [
+    "U"
+   ],
+   "manaValue": 5,
+   "colorIdentity": [
+    "U"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{3}{U}{U}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "search",
+      "object": "target opponent's library for a creature card",
+      "fromZone": "library",
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "put",
+      "object": "that card",
+      "fromZone": "library",
+      "toZone": "battlefield",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "shuffle",
+      "object": "that player's library",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "005a084757cd1809be61e6b8bf4015a5485e2dc9bb4a92515844a7a6cad1ec1e"
+ },
+ "Sneak Attack": {
+  "source": {
+   "name": "Sneak Attack",
+   "typeLine": "Enchantment",
+   "oracleText": "{R}: You may put a creature card from your hand onto the battlefield. That creature gains haste. Sacrifice the creature at the beginning of the next end step.",
+   "keywords": [],
+   "colors": [
+    "R"
+   ],
+   "manaValue": 4,
+   "colorIdentity": [
+    "R"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{3}{R}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "put",
+      "object": "a creature card",
+      "fromZone": "hand",
+      "toZone": "battlefield",
+      "amount": null,
+      "optional": true
+     },
+     {
+      "verb": "grant-ability",
+      "object": "haste",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "sacrifice",
+      "object": "the creature",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "f15680307c96bc4c90722af721e66888ab7393b6c76e03b23eb24d92654ac9f0"
+ },
+ "Green Sun's Zenith": {
+  "source": {
+   "name": "Green Sun's Zenith",
+   "typeLine": "Sorcery",
+   "oracleText": "Search your library for a green creature card with mana value X or less, put it onto the battlefield, then shuffle. Shuffle Green Sun's Zenith into its owner's library.",
+   "keywords": [],
+   "colors": [
+    "G"
+   ],
+   "manaValue": 1,
+   "colorIdentity": [
+    "G"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{X}{G}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "search",
+      "object": "your library for a green creature card with mana value X or less",
+      "fromZone": "library",
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "put",
+      "object": "a green creature card with mana value X or less",
+      "fromZone": "library",
+      "toZone": "battlefield",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "shuffle",
+      "object": "your library",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "shuffle",
+      "object": "Green Sun's Zenith into its owner's library",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "f98ed36da20cbe67c809297e4249b4c6339184220bc07916bc8d986fe7572d54"
+ },
+ "Long Road Home": {
+  "source": {
+   "name": "Long Road Home",
+   "typeLine": "Instant",
+   "oracleText": "Exile target creature. At the beginning of the next end step, return that card to the battlefield under its owner's control with a +1/+1 counter on it.",
+   "keywords": [],
+   "colors": [
+    "W"
+   ],
+   "manaValue": 2,
+   "colorIdentity": [
+    "W"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{1}{W}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "exile",
+      "object": "target creature",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "end-step",
+     "subject": "the next end step",
+     "control": "any"
+    },
+    "actions": [
+     {
+      "verb": "return",
+      "object": "that card",
+      "fromZone": "exile",
+      "toZone": "battlefield",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "add-counter",
+      "object": "+1/+1",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "a812d7b638940c90c1a311f09f5b239453f36634199dfe3940448ead9e045da3"
+ },
+ "Otherworldly Journey": {
+  "source": {
+   "name": "Otherworldly Journey",
+   "typeLine": "Instant — Arcane",
+   "oracleText": "Exile target creature. At the beginning of the next end step, return that card to the battlefield under its owner's control with a +1/+1 counter on it.",
+   "keywords": [],
+   "colors": [
+    "W"
+   ],
+   "manaValue": 2,
+   "colorIdentity": [
+    "W"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{1}{W}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "exile",
+      "object": "target creature",
+      "fromZone": "battlefield",
+      "toZone": "exile",
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "end-step",
+     "subject": "the next end step",
+     "control": "any"
+    },
+    "actions": [
+     {
+      "verb": "return",
+      "object": "that card",
+      "fromZone": "exile",
+      "toZone": "battlefield",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "add-counter",
+      "object": "+1/+1",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "01da93a2b0d8c06982944078cf2bd460645a06950815b89272162e3c8d8d4d82"
+ },
+ "Wall of Omens": {
+  "source": {
+   "name": "Wall of Omens",
+   "typeLine": "Creature — Wall",
+   "oracleText": "Defender\nWhen this creature enters, draw a card.",
+   "keywords": [
+    "Defender"
+   ],
+   "colors": [
+    "W"
+   ],
+   "manaValue": 2,
+   "colorIdentity": [
+    "W"
+   ],
+   "power": "0",
+   "toughness": "4",
+   "manaCost": "{1}{W}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Defender",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "this creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "draw",
+      "object": "a card",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "c0456d3ddfb7f1a28df00e9dd63d1c27359ed3d392132bf6fce5a75defc1d382"
+ },
+ "Natural Order": {
+  "source": {
+   "name": "Natural Order",
+   "typeLine": "Sorcery",
+   "oracleText": "As an additional cost to cast this spell, sacrifice a green creature.\nSearch your library for a green creature card, put it onto the battlefield, then shuffle.",
+   "keywords": [],
+   "colors": [
+    "G"
+   ],
+   "manaValue": 4,
+   "colorIdentity": [
+    "G"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{2}{G}{G}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "sacrifice",
+      "object": "a green creature",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "search",
+      "object": "a green creature card",
+      "fromZone": "library",
+      "toZone": null,
+      "optional": false
+     },
+     {
+      "verb": "put",
+      "object": "it",
+      "fromZone": "library",
+      "toZone": "battlefield",
+      "optional": false
+     },
+     {
+      "verb": "shuffle",
+      "object": "your library",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   }
+  ],
+  "segmentHash": "225b414bc25910de793fa38204f7bfb076360531fb3806fd689bdc6700ff9c72"
+ }
+}
