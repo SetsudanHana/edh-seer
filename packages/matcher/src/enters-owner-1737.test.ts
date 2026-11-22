@@ -93,3 +93,22 @@ describe("an opponent-owned card entering under your control is heard (#1750)", 
     expect(heardBy("Primal Surge")).toEqual([]);
   });
 });
+
+/** #1750 review: the cast bridge reads a cast as an enter only when the card cast can be a permanent. Memory Plunder, Taster of Wares and Tasha's -3 cast instants and sorceries only; Supper for Spiders' cards enter as Food ARTIFACTS, not creatures (CR 611.2e). */
+describe("a cast that can only be an instant or sorcery is no enter (#1750 review)", () => {
+  test.each(["Memory Plunder", "Taster of Wares", "Tasha, the Witch Queen"])("%s: not heard by Brainstealer Dragon", (producer) => {
+    expect(heardBy(producer)).toEqual([]);
+  });
+  test("Taster of Wares' and Tasha's casts are typed instant or sorcery", () => {
+    for (const n of ["Taster of Wares", "Tasha, the Witch Queen"]) {
+      const casts = (dc(n).tags?.abilities ?? []).flatMap((a) => a.emits ?? []).filter((e) => e.verb === "cast" && e.subject.owner === "opp").map((e) => e.subject.type);
+      expect(casts.length).toBeGreaterThan(0);
+      for (const t of casts) expect(t).toEqual(["instant", "sorcery"]);
+    }
+  });
+  test("Supper for Spiders: the put cards enter as Food artifacts, still the opponent's, still heard; a creature-enters consumer does not hear them", () => {
+    const puts = putEmits("Supper for Spiders");
+    expect(puts.map((s) => [s.type, s.subtype, s.control, s.owner])).toEqual([["artifact", "food", "you", "opp"]]);
+    expect(heardBy("Supper for Spiders")).not.toEqual([]);
+  });
+});

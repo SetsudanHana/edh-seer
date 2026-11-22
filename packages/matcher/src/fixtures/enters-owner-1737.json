@@ -1664,5 +1664,259 @@
    }
   ],
   "segmentHash": "e9849c05c323ef340c2124a52e11c1b1f000e0fed1d17f1790e2886c5223be6d"
+ },
+ "Memory Plunder": {
+  "source": {
+   "name": "Memory Plunder",
+   "typeLine": "Instant",
+   "oracleText": "You may cast target instant or sorcery card from an opponent's graveyard without paying its mana cost.",
+   "keywords": [],
+   "colors": [
+    "B",
+    "U"
+   ],
+   "manaValue": 4,
+   "colorIdentity": [
+    "B",
+    "U"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{U/B}{U/B}{U/B}{U/B}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "cast",
+      "object": "target instant or sorcery card from an opponent's graveyard",
+      "fromZone": "graveyard",
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     }
+    ]
+   }
+  ],
+  "segmentHash": "e1399f01f2cf2eaa3f336f344413b97483e25404536e4ac2d6a56e56b66ff3d0"
+ },
+ "Taster of Wares": {
+  "source": {
+   "name": "Taster of Wares",
+   "typeLine": "Creature — Goblin Warlock",
+   "oracleText": "When this creature enters, target opponent reveals X cards from their hand, where X is the number of Goblins you control. You choose one of those cards. That player exiles it. If an instant or sorcery card is exiled this way, you may cast it for as long as you control this creature, and mana of any type can be spent to cast that spell.",
+   "keywords": [],
+   "colors": [
+    "B"
+   ],
+   "manaValue": 3,
+   "colorIdentity": [
+    "B"
+   ],
+   "power": "3",
+   "toughness": "2",
+   "manaCost": "{2}{B}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "this creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "exile",
+      "object": "one of those cards",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "cast",
+      "object": "that card, for as long as you control this creature, and mana of any type can be spent to cast that spell",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     }
+    ]
+   }
+  ],
+  "segmentHash": "223beefd79893ddbb7b4b19a7260b8585e5e15157e8401630793ccbdabdecac6"
+ },
+ "Supper for Spiders": {
+  "source": {
+   "name": "Supper for Spiders",
+   "typeLine": "Instant",
+   "oracleText": "Put onto the battlefield under your control all creature cards in your opponents' graveyards that were put there from the battlefield this turn. They are Food artifacts with \"{2}, {T}, Sacrifice this artifact: You gain 3 life.\" (They lose all other types and subtypes.)",
+   "keywords": [],
+   "colors": [
+    "B"
+   ],
+   "manaValue": 2,
+   "colorIdentity": [
+    "B"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{1}{B}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "put",
+      "object": "all creature cards in your opponents' graveyards that were put there from the battlefield this turn",
+      "fromZone": "graveyard",
+      "toZone": "battlefield",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "grant-ability",
+      "object": "they are Food artifacts",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "sacrifice",
+      "object": "this artifact",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "gain-life",
+      "object": "you",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "3",
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "cb8f5002c3893014b8826d30248e9daedb3dce6ab8a3e1cf1c16f8a8c0103104"
+ },
+ "Tasha, the Witch Queen": {
+  "source": {
+   "name": "Tasha, the Witch Queen",
+   "typeLine": "Legendary Planeswalker — Tasha",
+   "oracleText": "Whenever you cast a spell you don't own, create a 3/3 black Demon creature token.\n+1: Draw a card. For each opponent, exile up to one target instant or sorcery card from that player's graveyard and put a page counter on it.\n−3: You may cast a spell from among cards in exile with page counters on them without paying its mana cost.\nTasha, the Witch Queen can be your commander.",
+   "keywords": [],
+   "colors": [
+    "B",
+    "U"
+   ],
+   "manaValue": 5,
+   "colorIdentity": [
+    "B",
+    "U"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{3}{U}{B}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "cast",
+     "subject": "a spell you don't own",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "create",
+      "object": "a 3/3 black Demon creature token",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "draw",
+      "object": "a card",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     },
+     {
+      "verb": "exile",
+      "object": "up to one target instant or sorcery card from that player's graveyard",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     },
+     {
+      "verb": "add-counter",
+      "object": "page",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "cast",
+      "object": "a spell from among cards in exile with page counters on them",
+      "fromZone": "exile",
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     }
+    ]
+   },
+   {
+    "id": 4,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "other",
+      "object": "Tasha, the Witch Queen can be your commander",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "d408c41802e67eaf98b6409ce4e0b4b87a46849d7680d494099706208ffe9b27"
  }
 }

@@ -1193,12 +1193,12 @@ export const COMBAT_VERBS: ReadonlySet<string> = new Set(["attacks", "blocks", "
 /** YOUR CAST OF A CARD AN OPPONENT OWNS ENTERS UNDER YOUR CONTROL, OWNED BY THEM (#1750; CR 400.3, CR 108.3, CR 608.3: a permanent spell becomes a permanent as it resolves). "Whenever a nonland permanent an opponent owns enters under your
  *  control" (Brainstealer Dragon, `owner: opp`) is heard by Gonti, Thief of Sanity, Opposition Agent, Nightveil Specter, which cast a card their cast emit says is theirs (`owner: opp`). Derive emits no enter beside such a cast, and one would meet every
  *  "whenever a creature enters under your control" consumer on a card that may be an instant, so the bridge is read HERE and only for a demand that STATES `owner: opp` (`eventMatches` drops the demand's `zone`: the cast is on the stack).
- *  CEILING: a cast whose type is named and is not a permanent type (an instant or sorcery) is refused; a cast of "a spell" (type `spell`, untyped) could be an instant and is still read as possibly a permanent. A cast that states no owner (Hostage Taker's
+ *  The cast's TYPE is judged by the ordinary subject match after this (an `instant` / `sorcery` cast is no "nonland permanent": Memory Plunder, Taster of Wares, Tasha's -3 are refused there, pinned in enters-owner-1737.test.ts; removing a type clause here changed no pair, so none is kept).
+ *  CEILING: a cast of "a spell" (type `spell`) or an untyped one could be an instant and is still read as possibly a permanent. A cast that states no owner (Hostage Taker's
  *  "another target creature or artifact": the card can be yours) is not read, and no enter is stated to a consumer that names no owner ("whenever a creature enters under your control" does not hear Gonti's stolen creature). */
 function castEntersOpponentsCard(producer: GameEvent, consumer: GameEvent): boolean {
   if (consumer.verb !== "enters" || producer.verb !== "cast" || consumer.subject.owner !== "opp" || producer.subject.owner !== "opp" || producer.subject.control !== "you" || producer.implied === true) return false;
-  const types = list(producer.subject.type);
-  return types.length === 0 || types.includes("spell") || types.some((t) => ["creature", "artifact", "enchantment", "planeswalker", "battle", "permanent"].includes(t));
+  return true;
 }
 /** Does the producer's event come from where the consumer's trigger demands?
  *

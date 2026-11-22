@@ -151,6 +151,7 @@ const TESTED: Record<string, string> = {
   "602.5": "threshold.test.ts — 'activate only if' gates the whole ability, the one later sentence that is not a rider",
   "611.3a": "threshold.test.ts / derive.test.ts — a static's 'as long as' count is a threshold on the ability",
   "611.2a": "animate-result.test.ts — an animate lasts unless its clause states a duration that ends it (Effect.becomesLasts)",
+  "611.2e": "matcher/src/enters-owner-1737.test.ts — a nontoken permanent a resolving spell puts onto the battlefield with 'They are Food artifacts' enters as that, not as the card type it was (Supper for Spiders, #1750)",
   "702.5a": "characteristics.test.ts — an Aura's Enchant line is carried as `characteristics.enchants`",
   "301.5b": "damaged-player-graveyard.test.ts (matcher) — equip attaches to a creature you control, so the player it damages is an opponent (#1250)",
   "511.2": "matcher leaves-without-dying.test.ts — an 'at end of combat' destroy triggers as the step begins, so it still kills an attacker (Goblin Sappers -> Kardur)",
