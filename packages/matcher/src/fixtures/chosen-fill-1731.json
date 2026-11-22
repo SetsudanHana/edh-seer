@@ -898,5 +898,99 @@
    }
   ],
   "segmentHash": "5aa4696639a34db37ce67bb94ffe212b6afbe60e4fbd68bcbb4dfc8cc6d37711"
+ },
+ "Salvaging Station": {
+  "source": {
+   "_id": "3501ed98-473c-4a17-8b5f-1e0c00ee75da",
+   "name": "Salvaging Station",
+   "typeLine": "Artifact",
+   "oracleText": "{T}: Return target noncreature artifact card with mana value 1 or less from your graveyard to the battlefield.\nWhenever a creature dies, you may untap this artifact.",
+   "keywords": [],
+   "colors": [],
+   "manaValue": 6,
+   "colorIdentity": [],
+   "power": null,
+   "toughness": null,
+   "tags": {
+    "produces": [],
+    "cares": [
+     "creature-death",
+     "sacrifice-event",
+     "graveyard",
+     "ramp"
+    ]
+   },
+   "searchNames": [
+    "salvaging station"
+   ],
+   "edhrecRank": 12552,
+   "manaCost": "{6}",
+   "layout": "normal",
+   "legalities": {
+    "standard": "not_legal",
+    "future": "not_legal",
+    "historic": "not_legal",
+    "timeless": "not_legal",
+    "gladiator": "not_legal",
+    "pioneer": "not_legal",
+    "modern": "legal",
+    "legacy": "legal",
+    "pauper": "not_legal",
+    "vintage": "legal",
+    "penny": "legal",
+    "commander": "legal",
+    "oathbreaker": "legal",
+    "standardbrawl": "not_legal",
+    "brawl": "not_legal",
+    "competitivebrawl": "not_legal",
+    "alchemy": "not_legal",
+    "paupercommander": "not_legal",
+    "duel": "legal",
+    "oldschool": "not_legal",
+    "premodern": "not_legal",
+    "predh": "legal",
+    "tlr": "not_legal"
+   },
+   "releasedAt": "2004-06-04",
+   "gameChanger": false,
+   "reserved": false,
+   "artCrop": "https://cards.scryfall.io/art_crop/front/f/0/f0336e07-8eaf-4b90-af54-4764e5ba50f2.jpg?1783944375"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "return",
+      "object": "target noncreature artifact card with mana value 1 or less",
+      "fromZone": "graveyard",
+      "toZone": "battlefield",
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "dies",
+     "subject": "a creature",
+     "control": "any"
+    },
+    "actions": [
+     {
+      "verb": "untap",
+      "object": "this artifact",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     }
+    ]
+   }
+  ],
+  "segmentHash": "9168174035b791265042b7dbde58f273762b5c14ff2d96fee88f0209f192cbf4"
  }
 }

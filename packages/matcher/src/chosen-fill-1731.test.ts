@@ -43,10 +43,13 @@ describe("a creature fill is an artifact card only in a deck that holds an artif
   test.each([["Buried Alive", "Ultron's Auxiliary"], ["Jarad's Orders", "Trading Post"]])("%s -> %s: no deck options (card page, compass) is unchanged: no reach", (p, c) => {
     expect(fills(p, c)).toEqual([]);
   });
-  test("an enchantment creature in the deck reaches an enchantment demand, not an artifact one", () => {
+  test("enchantment-creature evidence does not reach an artifact demand", () => {
     const deck = ["Buried Alive", "Eidolon of Countless Battles"];
     expect([...creatureCoTypes(deck.map(dc)).keys()]).toEqual(["enchantment"]);
     expect(fills("Buried Alive", "Ultron's Auxiliary", { coTypes: ["enchantment"] })).toEqual([]);
+  });
+  test("a NONCREATURE artifact demand is never met by a chosen creature, whatever the deck holds (Salvaging Station)", () => {
+    for (const p of ["Buried Alive", "Jarad's Orders"]) expect(fills(p, "Salvaging Station", [p, "Salvaging Station", "Solemn Simulacrum"])).toEqual([]);
   });
   test("the co-types are those of non-token creature cards only", () => {
     expect([...creatureCoTypes(["Sol Ring", "Llanowar Elves"].map(dc)).keys()]).toEqual([]);

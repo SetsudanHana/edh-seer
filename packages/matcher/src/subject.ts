@@ -488,7 +488,9 @@ function chosenFillMatches(producer: SubjectFilter, consumer: SubjectFilter, h: 
   if (subjectMatches(p, c, h)) return true;
   // the chosen creature may also be an artifact / enchantment / land card the deck holds: a bare demand for that type alone (no subtype: an Equipment is not reached) is met as that type
   const own = arr(c.type);
-  if (coTypes === undefined || !cls.has("creature") || named.length > 0 || arr(producer.subtype).length > 0 || own.length !== 1 || arr(c.subtype).length > 0 || !coTypes.includes(own[0]!.toLowerCase())) return false;
+  if (coTypes === undefined || !cls.has("creature") || named.length > 0 || arr(producer.subtype).length > 0 || own.length !== 1 || arr(c.subtype).length > 0 || !coTypes.includes(own[0]!.toLowerCase())
+    // ...and the card stays a creature: a NONCREATURE artifact demand (Salvaging Station: "target noncreature artifact card") is never a chosen creature (#1731 review)
+    || (c.notType ?? []).some((t) => t.toLowerCase() === "creature")) return false;
   return subjectMatches({ ...p, type: [own[0]!] }, c, h);
 }
 

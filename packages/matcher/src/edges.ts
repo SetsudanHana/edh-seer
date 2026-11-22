@@ -1272,7 +1272,9 @@ const REMOVAL_VERBS: ReadonlySet<string> = new Set(["dies", "leaves", "exiled", 
  *  plus the subject test the verb calls for -- graveyard fills and counter adds have their own
  *  matchers, everything else is plain subsumption. Shared by `directedReasons` and the event
  *  census so the two cannot drift: a census that counted supply differently from the matcher
- *  would report holes the engine does not actually have. */
+ *  would report holes the engine does not actually have.
+ *  CEILING: the census (`buildCensus`) and lines (`detectLines`) call it without `coTypes` (#1731), so a chosen creature fill's deck-gated reach to a bare artifact / enchantment card demand is drawn as an edge but not
+ *  counted as that demand's supply; the evidence creature itself usually supplies it, so no hole is reported for it in practice. */
 export function eventMatches(producer: GameEvent, consumer: GameEvent, h: Hierarchy, coTypes?: readonly string[]): boolean {
   if (!verbSatisfies(producer, consumer)) return false;
   // A TRIGGER ON THE MILL ACTION HEARS ONLY A MILL (#1444, CR 701.17a; owner 2026-11-06): "whenever a player mills" (Zellix, Glowing One) is not met by "look at the top card ... put it into your graveyard"
