@@ -1418,6 +1418,9 @@ export interface Ability {
   actsOnHost?: true;
   /** WHICH ACTIONS A `restriction` ABILITY FORBIDS (#1315): `attack`, `block`, or both ("can't attack or block"). Only on an ability of effect kind `restriction`. */
   restricts?: ("attack" | "block")[];
+  /** THE `restriction` IS THE CARD'S OWN (#1685): "This creature can't block", "Grakk can't attack or block" (CR 508.1c, 509.1b), not a class's ("Creatures your opponents control with counters on them can't attack or block") nor an Aura's host.
+   *  Static only. Read once, by the matcher's `producerEvents`: such a card supplies no implied `attacks` (or `blocks`) event for the actions `restricts` names. ABSENT means not said. */
+  selfRestricts?: true;
   /** WHAT A `prevention` ABILITY PREVENTS (#1469; CR 615). See `Prevention`. ABSENT on every other ability. */
   prevention?: Prevention;
   /** WHAT A `targeting-ban` ABILITY KEEPS FROM TARGETING IT, AND WHOSE (#1423; CR 115.1, hexproof CR 702.11, shroud CR 702.18). `by` is `spell`, `ability`, both ("spells or abilities"), or `activated-ability`

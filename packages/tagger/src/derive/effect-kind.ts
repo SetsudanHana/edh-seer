@@ -13,6 +13,7 @@ import { readToHand, type ToHandRead } from "./to-hand.js";
 import { damageReplacementOf, preventionOf } from "./prevention.js";
 import { counterImmunityOf, graveyardLockOf, playerLockOf, targetingBanOf, triggerSuppressionOf, untapDenialFor } from "./cant-kinds.js";
 import { SUBTYPE_TYPES } from "./subtypes.js";
+import { isSelfSubject } from "./self-reference.js";
 
 /** Zone-sensitive rules, checked before the plain lookup. Order matters within this list.
  *  `from`/`to` omitted means "don't care"; `from: null` means the clause STATED NO ORIGIN.
@@ -222,6 +223,25 @@ export function restrictedActions(object: string, clauseText = "", occurrence = 
   }
   const out = [m[1]!.toLowerCase(), ...(m[2] ? [m[2].toLowerCase()] : [])] as ("attack" | "block")[];
   return [...new Set(out)];
+}
+
+/** THE CARD'S OWN RESTRICTION (#1685): "This creature can't block", "Grakk can't attack or block", as against "Creatures your opponents control with counters on them can't attack or block" (Kulrath Knight), whose stored object
+ *  is the same bare "attack or block" and whose class the model drops. A card that cannot attack (CR 508.1c) or block (CR 509.1b) is no attacker / blocker, and the matcher reads this mark to stop supplying the implied event. The
+ *  subject is the printed words ahead of the n-th "can't attack|block" (the same occurrence `restrictedActions` picks), cut at its first "can't", "gets", "has" or "gains": it must be the card itself (`isSelfSubject`).
+ *  CEILING: only a STATIC reads (a triggered or activated "this creature can't block" is a one-shot, `restrictedActions` already refuses its conditions but not its duration), and a restriction that lasts "this turn" or "until"
+ *  is no permanent fact. Pass the same `restricts` result so a refused restriction is never marked. Linear: one scan of the clause. */
+export function selfRestrictionOf(clauseText: string, occurrence: number, cardName: string | undefined): boolean {
+  const hits = [...clauseText.matchAll(/\b(?:can['\u2019]t|cannot) (?:attack|block)\b/gi)];
+  const hit = hits[Math.min(occurrence, hits.length - 1)];
+  if (!hit) return false;
+  const sentenceStart = Math.max(clauseText.lastIndexOf(". ", hit.index), clauseText.lastIndexOf("\n", hit.index));
+  const head = clauseText.slice(sentenceStart < 0 ? 0 : sentenceStart + 1, hit.index).trim();
+  const stop = head.search(/\b(?:can['\u2019]t|cannot|gets?|has|gains?)\b/i);
+  const subject = (stop < 0 ? head : head.slice(0, stop)).trim();
+  if (subject === "" || !isSelfSubject(subject, cardName)) return false;
+  const after = clauseText.slice(hit.index + hit[0].length);
+  const sentence = after.split(/\.\s|\n/, 1)[0]!;
+  return !/\b(?:this turn|until)\b/i.test(sentence);
 }
 
 function retargetPhrase(text: string): string | undefined {
