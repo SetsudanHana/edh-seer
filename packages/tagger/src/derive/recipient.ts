@@ -53,6 +53,12 @@ const WHO = `its controller|their controller|${OUTSIDE_SOURCE}|target opponent|e
 const ADVERB = "(?:(?:may|also|then|instead)\\s+)*";
 /** A later verb joined to an earlier one of the SAME player (#1722, #1735): "and"/"or", or ", then" ("that spell's controller reveals their hand, then discards"). No other actor may sit between (the guard); stops at a period or semicolon. */
 const JOINED = `(?:(?:(?!\\b(?:you|each|target|that player|its controller|their controller)\\b)[^.;]){0,100}?(?:\\s(?:and|or)\\s+|,\\s+then\\s+)${ADVERB})?`;
+/** A CHOOSER'S SACRIFICE (#1740): the player chooses what to keep, ", then sacrifices the rest". Bounded, one period-free sentence. */
+const CHOOSES_THEN = `(?:chooses?\\b[^.;]{0,200}?,\\s+then\\s+${ADVERB})?`;
+/** A LATER CREATE JOINED TO THE SAME PLAYER'S EARLIER VERB (#1740): "That player shuffles, then creates a 2/2 ... token" (Necromentia). Narrower than `JOINED`: the player STARTS its clause (after a sentence end, a comma, "then", "and" or "if") and is the SUBJECT of
+ *  the earlier verb, whose word is not "who"/"controls" -- so "each opponent who drew ..., then create" (Smuggler's Share), "target creature defending player controls gets -3/-0 ..., then create" (Giant Space Amoeba) and "each opponent may draw a card and create"
+ *  (Tempt with Bunnies, three creates) are not joined (`actionRecipients` also requires exactly one printed create). CEILING: one create per clause and the player is the subject of the earlier verb; "target creature's controller sacrifices it, then creates" (Mercy Killing) names its player by a phrase `WHO` does not hold. */
+const CREATE_JOINED = new RegExp(`(?<=^|[.;:,]\\s*|\\b(?:then|and|if)\\s)(${WHO})\\s+${ADVERB}(?!(?:who|whose|controls?)\\b)\\w+(?=[\\s,])(?:(?!\\b(?:you|each|target|that player|its controller|their controller)\\b)[^.;]){0,100}?(?:\\s(?:and|or)\\s+|,\\s+then\\s+)${ADVERB}creates?\\b`, "i");
 const CUES: [string, RegExp][] = [
   ["create", new RegExp(`\\b(${WHO})\\s+${ADVERB}creates?\\b`, "i")],
   ["draw", new RegExp(`\\b(${WHO}|${GIVEN_TO})\\s+${ADVERB}${JOINED}draws?\\b`, "i")],
@@ -75,15 +81,15 @@ const CUES: [string, RegExp][] = [
   // Dictate of Erebos, Szat's Will: "each opponent SACRIFICES a creature of their choice". The
   // object is the opponent's creature, but it parses to `any` -- "of their choice" names no
   // controller the vocabulary knows -- and `any` matched every payoff for YOUR creatures dying.
-  ["sacrifice", new RegExp(`\\b(${WHO})\\s+${ADVERB}sacrifices?\\b`, "i")],
+  // ...AND A CHOOSER'S ", THEN SACRIFICES THE REST" (#1740): "Each player chooses ... , then sacrifices the rest" (Magus of the Balance, Balancing Act), "that player chooses up to two creatures they control, then sacrifices the rest" (Archfiend of Depravity).
+  ["sacrifice", new RegExp(`\\b(${WHO})\\s+${ADVERB}${CHOOSES_THEN}sacrifices?\\b`, "i")],
   // THE DISCARDER IS NAMED BEFORE ITS VERB, NOT ALWAYS AGAINST IT (#1722): "Any number of target players EACH discard ..." (Cabal Conditioning: the players, any of them you) and a verb joined to an earlier one of the same player, "each opponent loses 4 life unless that
   // player sacrifices a nonland permanent of their choice OR DISCARDS a card" (Rottenmouth Viper), "target opponent loses 2 life AND discards a card". Unread, the discard fell to the object's "you control" or the controller default and was yours, which fed no counter of cards in an
   // OPPONENT's graveyard (Wight of Precinct Six, Detritivore). The joined form stops at a period or semicolon, and a "you discard" between is no match (the `yours` test in `actionRecipients`).
   // ...AND ", THEN" JOINS THE SAME PLAYER'S NEXT VERB (#1735): "that spell's controller reveals their hand, THEN DISCARDS each card with the same name" (Minamo's Meddling) stored `discard {control: you}`; "defending player discards all the cards in their hand, THEN DRAWS that many cards"
   // (Robber Fly) read `any` for a draw that is the opponent's. The draw cue joins the same way. CEILING: the joined form reads the player before an "and"/"or"/", then" within 100 characters with no other actor (you, each, target, that player, its/their controller) between; a comma list
   // ("each opponent sacrifices a creature, discards a card, and loses 4 life", Dusk Mangler) is not joined by this cue (its discard is read `opp` off the object's "each"), and a ", then" join is read for discard and draw only: mill, search and exile after ", then" derive the
-  // answer they already had (the sentence names a player, so `any` stands); create is left wrong on Necromentia ("That player shuffles, then creates ... tokens" stays `any`) because JOINED on the create cue falsely joins Smuggler's Share,
-  // Giant Space Amoeba and Tempt with Bunnies; sacrifice has its own repeated-verb machinery (`oneSacrificer`) that the join does not feed (Magus of the Balance, Archfiend of Depravity). Both filed as #1740.
+  // answer they already had (the sentence names a player, so `any` stands); create has its own narrower join (`CREATE_JOINED`, #1740: Necromentia) because JOINED on the create cue falsely joins Smuggler's Share, Giant Space Amoeba and Tempt with Bunnies; sacrifice reads a chooser's ", then sacrifices" (`CHOOSES_THEN`, Magus of the Balance, Archfiend of Depravity).
   ["discard", new RegExp(`\\b(${WHO}|(?:any number of )?target players)\\s+(?:each\\s+)?${ADVERB}${JOINED}discards?\\b`, "i")],
   // Mind Funeral: "Target opponent reveals cards ... That player puts all cards revealed this way
   // into their graveyard" -- a mill written as a put, and the only verb the actor table did not
@@ -289,7 +295,7 @@ export interface ActorContext { triggerIsSelf?: boolean; cardName?: string }
 export function actionRecipients(clauseText: string, ctx: ActorContext = {}): Record<string, Control> {
   const out: Record<string, Control> = {};
   for (const [verb, re] of CUES) {
-    const m = re.exec(clauseText);
+    const m = re.exec(clauseText) ?? (verb === "create" && (clauseText.match(/\bcreates?\b/gi)?.length ?? 0) === 1 ? CREATE_JOINED.exec(clauseText) : null);
     // "YOU DRAW" IS A STATED ACTOR, NOT AN UNSTATED ONE (owner-reported 2026-09-17, Scrawling
     // Crawler <- Y'shtola, Night's Blessed): "if a player lost 4 or more life this turn, you draw a
     // card" names a player in the condition, so the controller default below refused to fill `you`
@@ -324,8 +330,20 @@ export function actionRecipients(clauseText: string, ctx: ActorContext = {}): Re
  *  CEILING: the cue's WHO decides the control as for a single sacrifice ("target player" stays `any`); a repeat with the SAME verb count but another actor between ("each opponent sacrifices X, then you sacrifice Y") is refused by the "you sacrifice" test only. */
 export function oneSacrificer(clauseText: string): boolean {
   const verbs = clauseText.match(/\bsacrifices?\b/gi)?.length ?? 0;
-  const cued = clauseText.match(new RegExp(`\\b(?:${WHO})\\s+${ADVERB}sacrifices?\\b`, "gi"))?.length ?? 0;
+  const cued = clauseText.match(new RegExp(`\\b(?:${WHO})\\s+${ADVERB}${CHOOSES_THEN}sacrifices?\\b`, "gi"))?.length ?? 0;
   return cued > 0 && cued === verbs && !/\byou\s+sacrifice\b/i.test(clauseText);
+}
+
+/** EVERY PLAYER CHOOSES, THEN EVERY PLAYER SACRIFICES THE REST (#1740): "Each player chooses a number of lands they control equal to ..., then sacrifices the rest. Players discard cards and sacrifice creatures the same way." (Magus of the Balance, after its own
+ *  "Sacrifice this creature" cost). The stored object says "lands you control" and the several sacrifices refuse the cue (`actorFor`), so the sacrifice read `you`: the cue's `any` stands for this shape. The chooser printed is "each player" and the repeats are "players ... the same way".
+ *  CEILING: the one chain shape, read over the printed words; the cost's own sacrifice is the one verb that is not the chooser's, and a clause with another sacrifice verb is refused. */
+export function everyPlayerChoosesThenSacrifices(clauseText: string): boolean {
+  if (!/\b(?:each|every) player chooses?\b[^.;]{0,200}?, then sacrifices?\b/i.test(clauseText)) return false;
+  const rest = clauseText.replace(/^[^:]{0,80}\bsacrifice\b[^:]{0,80}:\s*/i, "");
+  const verbs = rest.match(/\bsacrifices?\b/gi)?.length ?? 0;
+  const chooser = rest.match(/\b(?:each|every) player chooses?\b[^.;]{0,200}?, then sacrifices?\b/gi)?.length ?? 0;
+  const same = rest.match(/\bplayers\b[^.;]{0,80}?\bsacrifice\b[^.;]{0,60}?\bthe same way\b/gi)?.length ?? 0;
+  return chooser > 0 && chooser + same === verbs;
 }
 
 /** THE PLAYER IS THE TARGET, NOT THE CREATURE (#1295): "Target player sacrifices a creature of their choice" (Diabolic

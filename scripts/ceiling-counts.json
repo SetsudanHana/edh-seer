@@ -108,7 +108,7 @@
   "packages/tagger/src/derive/own-entry.ts": 1,
   "packages/tagger/src/derive/own-name.ts": 1,
   "packages/tagger/src/derive/prevention.ts": 4,
-  "packages/tagger/src/derive/recipient.ts": 10,
+  "packages/tagger/src/derive/recipient.ts": 12,
   "packages/tagger/src/derive/reduction.ts": 1,
   "packages/tagger/src/derive/references.ts": 13,
   "packages/tagger/src/derive/repeats.ts": 2,
