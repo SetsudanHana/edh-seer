@@ -227,6 +227,8 @@ test("defender (CR 702.3b, #1753): flagged from the keyword line, per face, and 
   const wall = { ...inalla, typeLine: "Creature — Wall", oracleText: "Defender (This creature can't attack.)", keywords: ["Defender"] };
   expect(extractCharacteristics(wall).defender).toBe(true);
   expect(extractCharacteristics({ ...wall, oracleText: "Defender, flying, vigilance" }).defender).toBe(true);
+  expect(extractCharacteristics({ ...wall, oracleText: "Defender; reach" }).defender).toBe(true);
+  expect(extractCharacteristics({ ...wall, oracleText: "Defender\nAs long as you control a creature with defender, this gets +1/+1." }).defender).toBe(true);
   expect(extractCharacteristics({ ...wall, oracleText: "Defender\n{W}: This creature can attack this turn as though it didn't have defender." }).defender).toBeUndefined();
   expect(extractCharacteristics({ ...wall, oracleText: "Defender\n{1}: Until end of turn, this creature loses defender." }).defender).toBeUndefined();
   expect(extractCharacteristics({ ...inalla, oracleText: "Flying", keywords: ["Flying"] }).defender).toBeUndefined();

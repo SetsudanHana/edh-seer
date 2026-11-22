@@ -3,6 +3,7 @@ import { deriveCardTags, deriveInputOf } from "@edh-seer/tagger";
 import type { CardTags, ClauseRecord } from "@edh-seer/tagger";
 import { loadHierarchy, pairReasons } from "./index.js";
 import { faceDeckCards } from "./faces.js";
+import { impliedEvents } from "./implied.js";
 import type { DeckCard } from "./types.js";
 import fixtures from "./fixtures/defender-1753.json" with { type: "json" };
 
@@ -16,7 +17,6 @@ const dc = (name: string): DeckCard => ({
 const H = loadHierarchy();
 const hellrider = dc("Hellrider"); // "Whenever a creature you control attacks, ..."
 const noble = dc("Noble Stand"); // "Whenever a creature you control blocks, you gain 2 life."
-const moria = dc("Moria Marauder"); // "Whenever a Goblin or Orc you control deals combat damage to a player, ..."
 const arcades = dc("Arcades, the Strategist"); // "Whenever a creature you control with defender enters, draw a card."
 const captain = dc("Perimeter Captain"); // "Whenever a creature you control with defender blocks, ..."
 const heard = (producer: string, consumer: DeckCard, verb: string) => pairReasons(dc(producer), consumer, H).map((r) => r.tag).filter((t) => t.startsWith(verb + ":"));
@@ -24,6 +24,12 @@ const heard = (producer: string, consumer: DeckCard, verb: string) => pairReason
 describe("a creature with defender supplies no attacks", () => {
   test.each(["Wall of Limbs", "Glacial Wall"])("%s: no attacks:creature to an attack payoff", (p) => {
     expect(heard(p, hellrider, "attacks")).toEqual([]);
+  });
+  test("Aether Membrane ('Defender; reach') supplies no attacks", () => {
+    expect(heard("Aether Membrane", hellrider, "attacks")).toEqual([]);
+  });
+  test("Perimeter Captain only counts creatures with defender: no attacks either", () => {
+    expect(heard("Perimeter Captain", hellrider, "attacks")).toEqual([]);
   });
   test("a non-defender creature is unchanged", () => {
     expect(heard("Grizzly Bears", hellrider, "attacks")).not.toEqual([]);
@@ -38,13 +44,16 @@ describe("a defender still blocks and deals combat damage", () => {
   test("Perimeter Captain ('with defender' blocks) is still fed by a defender", () => {
     expect(heard("Glacial Wall", captain, "blocks")).not.toEqual([]);
   });
-  test("combat-damage is still supplied (CEILING: a consumer's 'to a player' is not carried)", () => {
-    expect(heard("Wall of Limbs", moria, "combat-damage")).toEqual(heard("Grizzly Bears", moria, "combat-damage"));
+  test("the wall's implied events carry blocks and combat-damage but not attacks", () => {
+    const verbs = impliedEvents(dc("Wall of Limbs").tags!.characteristics).map((e) => e.verb);
+    expect(verbs).toContain("blocks");
+    expect(verbs).toContain("combat-damage");
+    expect(verbs).not.toContain("attacks");
   });
 });
 
 describe("a card whose own text gets round defender keeps attacking", () => {
-  test.each(["Mirror Wall", "Wishful Merfolk", "Guardians of Oboro"])("%s still supplies attacks", (p) => {
+  test.each(["Mirror Wall", "Wishful Merfolk", "Guardians of Oboro", "Elder Land Wurm"])("%s still supplies attacks", (p) => {
     expect(heard(p, hellrider, "attacks")).not.toEqual([]);
   });
 });

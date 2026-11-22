@@ -76,9 +76,12 @@ function alsoTypes(card: Card): string[] {
 /** A CARD'S TEXT, ONE STRING PER FACE: the corpus joins a multi-face card's oracle text on a "//" line. */
 const faceTexts = (oracleText: string): string[] => oracleText.split("\n//\n");
 
-/** DOES THIS FACE'S TEXT PRINT DEFENDER, AND ONLY AS A KEYWORD (#1753)? A keyword line is a comma list ("Defender", "Flying, defender", "Defender, reach, vigilance, trample"), reminder text removed. A face
- *  whose text names defender anywhere else gets round it or loses it ("can attack as though it didn't have defender", "loses defender", Arcades-style grants) and is not barred.
- *  CEILING: a card whose own text names defender beyond the keyword line is never barred, whatever the condition (Mirror Wall's {W}, Bristlepack Sentry's power 4, Elder Land Wurm's block), so it still supplies `attacks`.
+/** A LINE THAT GETS ROUND DEFENDER: "can attack as though it didn't have defender", "loses defender" (also "lose defender"). A line that only counts or names creatures with defender does not. */
+const GETS_ROUND_DEFENDER = /(?:didn['\u2019]t|did not) have defender|loses? defender/;
+
+/** DOES THIS FACE'S TEXT PRINT DEFENDER, AND NOTHING IN IT GETS ROUND IT (#1753; CR 702.3b)? A keyword line is a list split on commas or semicolons ("Defender", "Flying, defender", "Defender; reach"), reminder text removed.
+ *  A face with another line that gets round defender ("can attack as though it didn't have defender", "loses defender": GETS_ROUND_DEFENDER) is not barred. A line that merely names the class ("a creature with defender") is ignored.
+ *  CEILING: a card with such a line is never barred, whatever its condition (Mirror Wall's {W}, Bristlepack Sentry's power 4, Elder Land Wurm's block), so it still supplies `attacks`.
  *  CEILING: a creature handed "can attack as though it didn't have defender" by ANOTHER card (Arcades, High Alert, Felothar, Ghalta, Assault Formation, Rolling Stones, Warmonger's Chariot, Animate Wall) is read
  *  as barred in every deck: the matcher judges one pair and does not see the enabler, so those decks lose the defender -> attack payoff pair. */
 function barredByDefender(text: string): boolean {
@@ -86,9 +89,8 @@ function barredByDefender(text: string): boolean {
   for (const raw of text.split("\n")) {
     const paren = raw.indexOf("(");
     const line = (paren < 0 ? raw : raw.slice(0, paren)).trim().toLowerCase();
-    if (!/\bdefender\b/.test(line)) continue;
-    if (!line.split(",").map((w) => w.trim()).includes("defender")) return false;
-    keyword = true;
+    if (line.split(/[,;]/).map((w) => w.trim()).includes("defender")) keyword = true;
+    else if (GETS_ROUND_DEFENDER.test(line)) return false;
   }
   return keyword;
 }
