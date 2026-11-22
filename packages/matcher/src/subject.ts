@@ -440,8 +440,6 @@ const NONCREATURE_KEYWORDS: ReadonlySet<string> = new Set([
   "entwine", "awaken", "spree", "compleated", "harmonize", "overload", "station", "aftermath", "fuse", "living weapon", "conspire", "retrace", "cleave", "hidden agenda", "double agenda", "demonstrate",
   "read ahead", "casualty", "epic", "cipher", "strive", "escalate", "umbra armor", "gravestorm", "jump-start", "fortify", "undaunted", "tiered", "solved", "job select", "for mirrodin!",
 ]);
-// CEILING: a SECOND TYPE beside a creature fill's own (an artifact creature, an enchantment creature) is not reached: a bare "artifact card" / "enchantment card" demand is met by a chosen creature only if the deck holds such a creature, and
-// reading it for every creature fill was 52% of each fill's gains (107 of 316 consumers for Buried Alive, 2026-11-21). A reach gated on the deck's own cards is #1731 (it would bring back Ultron the Annihilator and Ultron's Auxiliary for Jarad's Orders).
 const BASIC_LAND_TYPES = ["plains", "island", "swamp", "mountain", "forest"];
 const PERMANENT_TYPES = ["creature", "artifact", "enchantment", "land", "planeswalker", "battle"];
 
@@ -450,14 +448,16 @@ const PERMANENT_TYPES = ["creature", "artifact", "enchantment", "land", "planesw
  *  wildcards a fill that names no class); this gives the typed fill the same reach INSIDE its class and no further. Subtype, colour, mana value, keyword, legendary/historic/snow/basic and "different names" are dropped from the demand when the
  *  class can carry them; a demand outside the class still goes to `subjectMatches` and fails.
  *  What marks the fill chosen is `fromZone: library` on a non-self `enters-graveyard` (derive stamps it on every searched put): a mill is a `mill` verb, and `impliedGraveyardEvents` gives it no origin on the subject and no type.
+ *  A SECOND TYPE beside a creature fill's own (#1731): a bare "artifact card" / "enchantment card" demand (Ultron's Auxiliary, Trading Post) is met by a chosen creature only if the deck holds a creature of that type, so it is reached
+ *  only for a type in `coTypes` (`creatureCoTypes`, per deck); with none given (a card page, the compass) it is not reached, since reading it for every creature fill was 52% of each fill's gains (107 of 316 consumers for Buried Alive, 2026-11-21).
  *  CEILING: a fill that already names a subtype keeps strict subtype matching (a chosen Spirit is not offered to a Zombie demand); a subtype of a type beside the fill's (an Equipment for a creature fill) is not reached; a land fill's colour and
  *  mana value demands stay strict; keywords are reached only on a creature class; a land is never offered to a creature or artifact demand (Dryad Arbor, the artifact lands). */
-function chosenFillMatches(producer: SubjectFilter, consumer: SubjectFilter, h: Hierarchy): boolean {
+function chosenFillMatches(producer: SubjectFilter, consumer: SubjectFilter, h: Hierarchy, coTypes?: readonly string[]): boolean {
   // "this card" is the card itself, which another card's fill is not
   if (consumer.self === true) return subjectMatches(producer, consumer, h);
   if (consumer.anyOf !== undefined && consumer.anyOf.length > 0) {
     const { anyOf, ...shared } = consumer;
-    return anyOf.some((b) => chosenFillMatches(producer, { ...shared, ...b }, h));
+    return anyOf.some((b) => chosenFillMatches(producer, { ...shared, ...b }, h, coTypes));
   }
   // A FILL THAT NAMES A SUBTYPE IS THAT SUBTYPE'S TYPE: Scion's "Dragon permanent card" is a creature (SUBTYPE_TYPES), not the permanent umbrella that includes a land
   const named = arr(producer.subtype).flatMap((st) => SUBTYPE_TYPES[st.toLowerCase()] ?? []);
@@ -485,12 +485,18 @@ function chosenFillMatches(producer: SubjectFilter, consumer: SubjectFilter, h: 
     const reachable = arr(c.subtype).filter((st) => (SUBTYPE_TYPES[st.toLowerCase()] ?? []).some((t) => cls.has(t)) && (producer.basic !== true || BASIC_LAND_TYPES.includes(st.toLowerCase())));
     if (reachable.length > 0) p.subtype = reachable;
   }
-  return subjectMatches(p, c, h);
+  if (subjectMatches(p, c, h)) return true;
+  // the chosen creature may also be an artifact / enchantment / land card the deck holds: a bare demand for that type alone (no subtype: an Equipment is not reached) is met as that type
+  const own = arr(c.type);
+  if (coTypes === undefined || !cls.has("creature") || named.length > 0 || arr(producer.subtype).length > 0 || own.length !== 1 || arr(c.subtype).length > 0 || !coTypes.includes(own[0]!.toLowerCase())
+    // ...and the card stays a creature: a NONCREATURE artifact demand (Salvaging Station: "target noncreature artifact card") is never a chosen creature (#1731 review)
+    || (c.notType ?? []).some((t) => t.toLowerCase() === "creature")) return false;
+  return subjectMatches({ ...p, type: [own[0]!] }, c, h);
 }
 
-export function graveyardFillMatches(producer: SubjectFilter, consumer: SubjectFilter, h: Hierarchy): boolean {
+export function graveyardFillMatches(producer: SubjectFilter, consumer: SubjectFilter, h: Hierarchy, coTypes?: readonly string[]): boolean {
   const untyped = namesNoClass(producer);
-  if (!untyped) return (producer.fromZone === "library" && producer.self !== true ? chosenFillMatches : subjectMatches)(producer, consumer, h);
+  if (!untyped) return producer.fromZone === "library" && producer.self !== true ? chosenFillMatches(producer, consumer, h, coTypes) : subjectMatches(producer, consumer, h);
   if (sharedTypeRefuses(producer, consumer)) return false;
   if (consumer.control !== "any" && producer.control !== "any" && consumer.control !== producer.control) return false;
   if (consumer.token !== null && producer.token !== null && consumer.token !== producer.token) return false;

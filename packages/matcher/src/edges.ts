@@ -1272,8 +1272,10 @@ const REMOVAL_VERBS: ReadonlySet<string> = new Set(["dies", "leaves", "exiled", 
  *  plus the subject test the verb calls for -- graveyard fills and counter adds have their own
  *  matchers, everything else is plain subsumption. Shared by `directedReasons` and the event
  *  census so the two cannot drift: a census that counted supply differently from the matcher
- *  would report holes the engine does not actually have. */
-export function eventMatches(producer: GameEvent, consumer: GameEvent, h: Hierarchy): boolean {
+ *  would report holes the engine does not actually have.
+ *  CEILING: the census (`buildCensus`) and lines (`detectLines`) call it without `coTypes` (#1731), so a chosen creature fill's deck-gated reach to a bare artifact / enchantment card demand is drawn as an edge but not
+ *  counted as that demand's supply; the evidence creature itself usually supplies it, so no hole is reported for it in practice. */
+export function eventMatches(producer: GameEvent, consumer: GameEvent, h: Hierarchy, coTypes?: readonly string[]): boolean {
   if (!verbSatisfies(producer, consumer)) return false;
   // A TRIGGER ON THE MILL ACTION HEARS ONLY A MILL (#1444, CR 701.17a; owner 2026-11-06): "whenever a player mills" (Zellix, Glowing One) is not met by "look at the top card ... put it into your graveyard"
   // or manifest dread, which move the same cards without the keyword action. Derive stamps those `notMillAction`; they still feed every graveyard consumer (an `enters-graveyard` demand, recursion, delirium, a count).
@@ -1372,7 +1374,7 @@ export function eventMatches(producer: GameEvent, consumer: GameEvent, h: Hierar
     // A MILL DOES NOT PROMISE A NONCREATURE, NONLAND CARD (#716), for a trigger ("whenever an
     // artifact card is put into your graveyard") exactly as for a recursion (`reanimatorEdges`).
     if (producer.milled === true && namesNoncreatureClass(consumer.subject)) return false;
-    return graveyardFillMatches(producer.subject, consumer.subject, h);
+    return graveyardFillMatches(producer.subject, consumer.subject, h, coTypes);
   }
   // SELF ON BOTH SIDES: a card adapting ITSELF cannot put the counter on another card's "this
   // creature" (Incubation Druid -> Evolution Witness, owner-judged FALSE 2026-08-22). The same
@@ -2027,6 +2029,37 @@ export interface ReasonOptions {
    *  when the deck also has a death payoff -- see `revenantToughness`. Absent on a card page and in
    *  the compass, where an own-board static -N/-N kills nothing. */
   revenantToughness?: number;
+  /** The second types the deck's own creature cards carry beside "creature" (artifact, enchantment, land), for a chosen creature fill's reach (#1731, `chosenFillMatches`). Absent on a card page and in the compass:
+   *  no deck, no reach. */
+  creatureCoTypes?: ReadonlyMap<string, readonly string[]>;
+}
+
+/** The card a deck row is, across the faces `faceDeckCards` splits it into (they spread the same tags). */
+const cardKey = (dc: DeckCard): string => dc.tags?.oracleId ?? dc.card.name;
+
+/** THE SECOND TYPES A DECK'S CREATURES CARRY (#1731): an artifact creature, an enchantment creature, a land creature. A tutor that puts "a creature card" into the graveyard may pick one only if the deck holds it.
+ *  Each type maps to the oracle ids of the deck cards that provide it, so a pair can leave out its own two cards (`coTypesFor`).
+ *  CEILING: the type alone, not the card's colour, mana value or subtype: a demand that narrows the co-typed card further ("a legendary artifact card") is read as met by any creature of that co-type in the deck. */
+export function creatureCoTypes(deck: DeckCard[]): Map<string, string[]> {
+  const out = new Map<string, string[]>();
+  for (const dc of deck) {
+    const ch = dc.tags?.characteristics;
+    if (!ch || ch.token || !ch.types.some((t) => t.toLowerCase() === "creature")) continue;
+    for (const t of ch.types) {
+      const k = t.toLowerCase();
+      if (k !== "creature") out.set(k, [...(out.get(k) ?? []), cardKey(dc)]);
+    }
+  }
+  return out;
+}
+
+/** THE CO-TYPES A PAIR MAY USE (#1731): the types some deck creature OTHER than the pair's own two cards carries. A singleton deck's only artifact creature being the consumer itself is no evidence: Ultron's Auxiliary watches
+ *  from the battlefield, so the artifact card a tutor puts into the graveyard is never Ultron's Auxiliary. Undefined when the options carry no deck (no reach). */
+function coTypesFor(opts: ReasonOptions, p: DeckCard, c: DeckCard): string[] | undefined {
+  const all = opts.creatureCoTypes;
+  if (!all) return undefined;
+  const own = new Set([cardKey(p), cardKey(c)]);
+  return [...all].filter(([, ids]) => ids.some((id) => !own.has(id))).map(([t]) => t);
 }
 
 /** A STATIC -N/-N ON YOUR OWN CREATURES IS A DOWNSIDE (owner ruling 2026-09-30, #805 b). The sweep
@@ -2287,8 +2320,8 @@ function auraHostSide(host: NonNullable<CardTags["characteristics"]["enchants"]>
  *  land card" put reaches only the basics' types, so Rampant Growth finds Valakut a basic Mountain
  *  and never a Smoldering Marsh. Corpus: 87 basic-from-library puts, 49 untyped from hand, 34 from
  *  a graveyard; 25 `enters` triggers name a land subtype (Mountain 8, Forest 7, Swamp 3, Gate 3). */
-function landPutFor(e: GameEvent, t: GameEvent, landTypes: LandTypes | undefined, own: ReadonlySet<string>, h: Hierarchy): GameEvent | null {
-  if (eventMatches(e, t, h)) return e;
+function landPutFor(e: GameEvent, t: GameEvent, landTypes: LandTypes | undefined, own: ReadonlySet<string>, h: Hierarchy, coTypes?: readonly string[]): GameEvent | null {
+  if (eventMatches(e, t, h, coTypes)) return e;
   if (!landTypes || t.verb !== "enters") return null;
   const s = e.subject;
   if (e.verb !== "enters" || (s.zone !== undefined && s.zone !== "battlefield") || s.self === true) return null;
@@ -2556,6 +2589,7 @@ export function punishesItsActor(a: Pick<CardTags["abilities"][number], "trigger
 // EVENT EDGES: a producer event against a consumer trigger. The main channel; every other
 // channel below is a relation this one cannot express.
 function eventEdges({ p, c, h, opts, pEvents, reasons, replacementOnly, cAbilitiesRaw }: PairScope): void {
+  const co = coTypesFor(opts, p, c);
   // The producer's own implied events, for `landPutFor`; built only where a deck is known.
   const ownEvents: ReadonlySet<string> = opts.landTypes
     ? new Set(impliedEvents(p.tags.characteristics).map((x) => JSON.stringify(normalizeZoneEvent(x))))
@@ -2619,8 +2653,8 @@ function eventEdges({ p, c, h, opts, pEvents, reasons, replacementOnly, cAbiliti
         // `e` is `e0` when it matches as authored, or an untyped land put resolved against the
         // deck's lands to the subtype this trigger names (`landPutFor`); null is no match.
         const viaHost = auraHostLeaves(c.tags.characteristics, a, e0, t, h, cAbilitiesRaw ?? c.tags.abilities, pEvents, p.card.oracleText ?? "");
-        const viaAura = !viaHost && !eventMatches(e0, t, h) && auraOwnLeaves(c.tags.characteristics, a, e0, t, h, pEvents, p.card.oracleText ?? "");
-        const e = viaHost || viaAura ? e0 : landPutFor(e0, t, opts.landTypes, ownEvents, h);
+        const viaAura = !viaHost && !eventMatches(e0, t, h, co) && auraOwnLeaves(c.tags.characteristics, a, e0, t, h, pEvents, p.card.oracleText ?? "");
+        const e = viaHost || viaAura ? e0 : landPutFor(e0, t, opts.landTypes, ownEvents, h, co);
         if (!e) continue;
         // TOKENS MEDIATE (Task 7, tokens-as-nodes, 2026-08-16). A maker's own "a Treasure enters"
         // event and the Treasure NODE's own implied "it enters" event (Task 6 -- `selfSubject` in
@@ -2937,7 +2971,8 @@ function namesNoncreatureClass(s: SubjectFilter): boolean {
   return types.length > 0 && !types.some((t) => t === "creature" || t === "land" || t === "permanent" || t === "card");
 }
 // Reanimator-consumer edge: a producer graveyard fill enables C's graveyard-recursion effect.
-function reanimatorEdges({ p, c, h, pEvents, reasons }: PairScope): void {
+function reanimatorEdges({ p, c, h, opts, pEvents, reasons }: PairScope): void {
+  const co = coTypesFor(opts, p, c);
   // ONE REASON PER TAG, as before #558: the sentence used to be the same whichever fill enabled the
   // recursion, so a producer that fills with ITSELF and with other cards (Summon: Anima) collapsed to
   // one reason downstream. Now the two read differently; the card's OWN fill speaks for the pair when
@@ -2974,7 +3009,7 @@ function reanimatorEdges({ p, c, h, pEvents, reasons }: PairScope): void {
       // (The RAW fill, as the event channel below reads it: it does not retype, see the CEILING there.)
       if (a.trigger && a.trigger.verbs.some((v) => {
         const t = normalizeZoneEvent({ verb: v, subject: a.trigger!.subject });
-        return t.verb === "enters" && t.subject.zone === "graveyard" && graveyardFillMatches(raw.subject, t.subject, h);
+        return t.verb === "enters" && t.subject.zone === "graveyard" && graveyardFillMatches(raw.subject, t.subject, h, co);
       })) continue;
       // THE SET IS DEFINED BY THE CONSUMER'S OWN EARLIER ACTION, so no other card's fill can put
       // anything in it. Three printed templates, each measured over the whole corpus:
@@ -3013,7 +3048,7 @@ function reanimatorEdges({ p, c, h, pEvents, reasons }: PairScope): void {
       if (e.milled === true && namesNoncreatureClass(a.effect.subject)) continue;
       // A FILL THE SAME ABILITY EXILES AT ONCE leaves no card to return (Sword of the Ages' "exile ... those creature cards", #1523 part 2); its death still feeds the death triggers.
       if (e.exiledAtOnce === true) continue;
-      if (!graveyardFillMatches(e.subject, a.effect.subject, h)) continue;
+      if (!graveyardFillMatches(e.subject, a.effect.subject, h, co)) continue;
       // A SELF-scoped recursion returns the card ITSELF ("return this card from your graveyard"), so
       // a fill enables it only if that fill could contain THAT card. Reassembling Skeleton is a real
       // payoff for a sacrifice outlet that can eat it; Metalwork Colossus is not a payoff for Buried
@@ -3114,7 +3149,8 @@ function exileProcessingEdges({ p, c, pEvents, reasons }: PairScope): void {
 // `effect.scalingSubject` carries the counted type and whose graveyard, so the fill goes through
 // `graveyardFillMatches` exactly as a reanimator demand does. A payoff whose count derived no
 // subject forms nothing rather than everything.
-function graveyardScalingEdges({ p, c, h, pEvents, reasons }: PairScope): void {
+function graveyardScalingEdges({ p, c, h, opts, pEvents, reasons }: PairScope): void {
+  const co = coTypesFor(opts, p, c);
   // One reason per tag, as `reanimatorEdges` keeps (#558).
   const said = new Set<string>();
   for (const raw of selfFillsFirst(pEvents)) {
@@ -3162,7 +3198,7 @@ function graveyardScalingEdges({ p, c, h, pEvents, reasons }: PairScope): void {
       // subtype. The set is now {tax, win-game, extra-turn, extra-phase}.
       if (ROLE_NOT_SYNERGY.has(a.effect.kind)) continue;
       if (e.exiledAtOnce === true) continue; // exiled by the same ability: no card is left to count (#1523 part 2)
-      if (!graveyardFillMatches(e.subject, a.effect.scalingSubject, h)) continue;
+      if (!graveyardFillMatches(e.subject, a.effect.scalingSubject, h, co)) continue;
       const tag = `scales:${themeSubjectKey(keyedOn(a.effect.scalingSubject, e.subject))}`;
       if (said.has(tag)) continue;
       said.add(tag);
@@ -3319,7 +3355,8 @@ function donatedCountEdges({ p, c, pEvents, reasons }: PairScope): void {
 // abilities -- so every artifact in its deck earned the same sentence three times (195 rows for
 // 65 artifacts in the-capitoline-triad, measured 2026-09-16). The relation is between two cards,
 // not between a card and each of the other's abilities.
-function countGateEdges({ p, c, h, pEvents, reasons }: PairScope): void {
+function countGateEdges({ p, c, h, opts, pEvents, reasons }: PairScope): void {
+  const co = coTypesFor(opts, p, c);
   const countsSeen = new Set<string>();
   // A GRAVEYARD COUNT IS A FILL DEMAND (AF7c, 2026-09-16; recall v5 #154 In Garruk's Wake -> See
   // Double): "seven or more cards in your graveyard" is fed by what puts YOUR cards there, "an
@@ -3352,7 +3389,7 @@ function countGateEdges({ p, c, h, pEvents, reasons }: PairScope): void {
     // THE PRODUCER'S OWN CARD IN THE GRAVEYARD IS ITS FRONT FACE (`graveyardIdentity`, #1505).
     const seen = pEvents.map((raw) => ({ raw, e: graveyardIdentity(p, raw) }));
     const fill = seen.find(({ e }) => e.verb === "enters" && e.subject.zone === "graveyard" && !e.implied
-      && e.subject.token !== true && e.exiledAtOnce !== true && reaches(e) && graveyardFillMatches(e.subject, counted, h));
+      && e.subject.token !== true && e.exiledAtOnce !== true && reaches(e) && graveyardFillMatches(e.subject, counted, h, co));
     if (!fill) continue;
     countsSeen.add(`${tag}|${a.threshold.atLeast}|gy`);
     reasons.push({

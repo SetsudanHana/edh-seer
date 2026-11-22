@@ -1,0 +1,1084 @@
+{
+ "Buried Alive": {
+  "source": {
+   "name": "Buried Alive",
+   "typeLine": "Sorcery",
+   "oracleText": "Search your library for up to three creature cards, put them into your graveyard, then shuffle.",
+   "keywords": [],
+   "colors": [
+    "B"
+   ],
+   "manaValue": 3,
+   "colorIdentity": [
+    "B"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{2}{B}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "search",
+      "object": "up to three creature cards",
+      "fromZone": "library",
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "put",
+      "object": "up to three creature cards",
+      "fromZone": "library",
+      "toZone": "graveyard",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "shuffle",
+      "object": "your library",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "3e86d4a5c9ef0b81abd91d6dca49a9551f5807649673de6cd59f42b0ecc9078e"
+ },
+ "Jarad's Orders": {
+  "source": {
+   "name": "Jarad's Orders",
+   "typeLine": "Sorcery",
+   "oracleText": "Search your library for up to two creature cards and reveal them. Put one into your hand and the other into your graveyard. Then shuffle.",
+   "keywords": [],
+   "colors": [
+    "B",
+    "G"
+   ],
+   "manaValue": 4,
+   "colorIdentity": [
+    "B",
+    "G"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{2}{B}{G}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "search",
+      "object": "up to two creature cards",
+      "fromZone": "library",
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "put",
+      "object": "one",
+      "fromZone": "library",
+      "toZone": "hand",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "put",
+      "object": "the other",
+      "fromZone": "library",
+      "toZone": "graveyard",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "shuffle",
+      "object": "your library",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "9c8c821d11d3ef30de4d69dafc3ace534fd89e4e7b783e5d5e5cda491f131f92"
+ },
+ "Ultron's Auxiliary": {
+  "source": {
+   "name": "Ultron's Auxiliary",
+   "typeLine": "Artifact Creature — Robot Villain",
+   "oracleText": "Menace\nWhenever another artifact is put into your graveyard from the battlefield or an artifact card is put into your graveyard from anywhere other than the battlefield, put a +1/+1 counter on this creature.",
+   "keywords": [
+    "Menace"
+   ],
+   "colors": [
+    "B"
+   ],
+   "manaValue": 2,
+   "colorIdentity": [
+    "B"
+   ],
+   "power": "1",
+   "toughness": "1",
+   "manaCost": "{1}{B}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Menace",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "dies",
+     "subject": "another artifact",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "add-counter",
+      "object": "+1/+1",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "exiled",
+     "subject": "an artifact card from anywhere other than the battlefield",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "add-counter",
+      "object": "+1/+1",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "6bcc216baf0f5ab14afb5f94fe760ab9eb6a598dbb33dd7ebafe8ef9b4ca73f2"
+ },
+ "Ultron the Annihilator": {
+  "source": {
+   "name": "Ultron the Annihilator",
+   "typeLine": "Legendary Artifact Creature — Robot Villain",
+   "oracleText": "Flying\nWhenever Ultron enters or attacks, create a 2/2 colorless Robot Villain artifact creature token.\nWhenever another artifact is put into your graveyard from the battlefield or an artifact card is put into your graveyard from anywhere other than the battlefield, each opponent loses 1 life.",
+   "keywords": [
+    "Flying"
+   ],
+   "colors": [
+    "B"
+   ],
+   "manaValue": 5,
+   "colorIdentity": [
+    "B"
+   ],
+   "power": "3",
+   "toughness": "4",
+   "manaCost": "{3}{B}{B}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Flying",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "Ultron the Annihilator",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "create",
+      "object": "a 2/2 colorless Robot Villain artifact creature token",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "attacks",
+     "subject": "Ultron the Annihilator",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "create",
+      "object": "a 2/2 colorless Robot Villain artifact creature token",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "dies",
+     "subject": "another artifact",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "lose-life",
+      "object": "each opponent",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "put-into-graveyard",
+     "subject": "an artifact card from anywhere other than the battlefield",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "lose-life",
+      "object": "each opponent",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "0bbd04ab5cf79e19759fe67bf4ef54dfe6c7898f28561c46b25363d418bfb9f7"
+ },
+ "Solemn Simulacrum": {
+  "source": {
+   "name": "Solemn Simulacrum",
+   "typeLine": "Artifact Creature — Golem",
+   "oracleText": "When this creature enters, you may search your library for a basic land card, put that card onto the battlefield tapped, then shuffle.\nWhen this creature dies, you may draw a card.",
+   "keywords": [],
+   "colors": [],
+   "manaValue": 4,
+   "colorIdentity": [],
+   "power": "2",
+   "toughness": "2",
+   "manaCost": "{4}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "this creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "search",
+      "object": "your library for a basic land card",
+      "fromZone": "library",
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     },
+     {
+      "verb": "put",
+      "object": "that card",
+      "fromZone": "library",
+      "toZone": "battlefield",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "tap",
+      "object": "that card",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "shuffle",
+      "object": "your library",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "dies",
+     "subject": "this creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "draw",
+      "object": "a card",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": true
+     }
+    ]
+   }
+  ],
+  "segmentHash": "82cfa3a74e06c11961b4c6f34d6ec700d3390c5ab02bf251dacb05d36f4d0088"
+ },
+ "Llanowar Elves": {
+  "source": {
+   "name": "Llanowar Elves",
+   "typeLine": "Creature — Elf Druid",
+   "oracleText": "{T}: Add {G}.",
+   "keywords": [],
+   "colors": [
+    "G"
+   ],
+   "manaValue": 1,
+   "colorIdentity": [
+    "G"
+   ],
+   "power": "1",
+   "toughness": "1",
+   "manaCost": "{G}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "add-mana",
+      "object": "{G}",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "02ab38ff881cfe07df0fbf730a861bd9aa196da25f2561fc0633d67ee78c3edd"
+ },
+ "Emry, Lurker of the Loch": {
+  "source": {
+   "name": "Emry, Lurker of the Loch",
+   "typeLine": "Legendary Creature — Merfolk Wizard",
+   "oracleText": "Affinity for artifacts (This spell costs {1} less to cast for each artifact you control.)\nWhen Emry enters, mill four cards.\n{T}: Choose target artifact card in your graveyard. You may cast that card this turn. (You still pay its costs. Timing rules still apply.)",
+   "keywords": [
+    "Affinity",
+    "Mill"
+   ],
+   "colors": [
+    "U"
+   ],
+   "manaValue": 3,
+   "colorIdentity": [
+    "U"
+   ],
+   "power": "1",
+   "toughness": "2",
+   "manaCost": "{2}{U}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Affinity for artifacts",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "this",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "mill",
+      "object": "four cards",
+      "amount": "4",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "cast",
+      "object": "target artifact card in your graveyard",
+      "optional": true,
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   }
+  ],
+  "segmentHash": "1f7ef19d0170562f52756a764644abaad364a97cddf036dbdada168a9887922e"
+ },
+ "Trading Post": {
+  "source": {
+   "name": "Trading Post",
+   "typeLine": "Artifact",
+   "oracleText": "{1}, {T}, Discard a card: You gain 4 life.\n{1}, {T}, Pay 1 life: Create a 0/1 white Goat creature token.\n{1}, {T}, Sacrifice a creature: Return target artifact card from your graveyard to your hand.\n{1}, {T}, Sacrifice an artifact: Draw a card.",
+   "keywords": [],
+   "colors": [],
+   "manaValue": 4,
+   "colorIdentity": [],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{4}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "discard",
+      "object": "a card",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "gain-life",
+      "object": "you",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "4",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "lose-life",
+      "object": "you",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     },
+     {
+      "verb": "create",
+      "object": "a 0/1 white Goat creature token",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "sacrifice",
+      "object": "a creature",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "return",
+      "object": "target artifact card",
+      "fromZone": "graveyard",
+      "toZone": "hand",
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 4,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "sacrifice",
+      "object": "an artifact",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "draw",
+      "object": "a card",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "66767e44c92cda1ef89983db15236e2971e4b9972573127256bde5b4363ca010"
+ },
+ "Dryad Arbor": {
+  "source": {
+   "name": "Dryad Arbor",
+   "typeLine": "Land Creature — Forest Dryad",
+   "oracleText": "(This land isn't a spell, it's affected by summoning sickness, and it has \"{T}: Add {G}.\")",
+   "keywords": [],
+   "colors": [
+    "G"
+   ],
+   "manaValue": 0,
+   "colorIdentity": [
+    "G"
+   ],
+   "power": "1",
+   "toughness": "1",
+   "manaCost": "",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "(This land isn't a spell, it's affected by summoning sickness, and it has \"{T}: Add {G}.\")",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   }
+  ],
+  "segmentHash": "bf9e2fcd7066832fac35660ae88847ae0a0d5e7ab25851fe210c8273b2e927ff"
+ },
+ "Hammerheim Deadeye": {
+  "source": {
+   "name": "Hammerheim Deadeye",
+   "typeLine": "Creature — Giant Warrior",
+   "oracleText": "Echo {5}{R} (At the beginning of your upkeep, if this came under your control since the beginning of your last upkeep, sacrifice it unless you pay its echo cost.)\nWhen this creature enters, destroy target creature with flying.",
+   "keywords": [
+    "Echo"
+   ],
+   "colors": [
+    "R"
+   ],
+   "manaValue": 4,
+   "colorIdentity": [
+    "R"
+   ],
+   "power": "3",
+   "toughness": "3",
+   "manaCost": "{3}{R}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Echo {5}{R}",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "this creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "destroy",
+      "object": "target creature with flying",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "1e74778a2dfa3fd6dc5104494a44d4bb66d03d0b7923834f5e252f824797a6a4"
+ },
+ "Eidolon of Countless Battles": {
+  "source": {
+   "name": "Eidolon of Countless Battles",
+   "typeLine": "Enchantment Creature — Spirit",
+   "oracleText": "Bestow {2}{W}{W} (If you cast this card for its bestow cost, it's an Aura spell with enchant creature. It becomes a creature again if it's not attached.)\nThis creature and enchanted creature each get +1/+1 for each creature you control and +1/+1 for each Aura you control.",
+   "keywords": [
+    "Bestow"
+   ],
+   "colors": [
+    "W"
+   ],
+   "manaValue": 3,
+   "colorIdentity": [
+    "W"
+   ],
+   "power": "0",
+   "toughness": "0",
+   "manaCost": "{1}{W}{W}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Bestow {2}{W}{W}",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "modify-pt",
+      "object": "this creature and enchanted creature",
+      "amount": "+1/+1 for each creature you control",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     },
+     {
+      "verb": "modify-pt",
+      "object": "this creature and enchanted creature",
+      "amount": "+1/+1 for each Aura you control",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   }
+  ],
+  "segmentHash": "a0f32ff76776f479f79725f97365a22cf5480de66d3135dfd456de16afa30ea9"
+ },
+ "Sol Ring": {
+  "source": {
+   "name": "Sol Ring",
+   "typeLine": "Artifact",
+   "oracleText": "{T}: Add {C}{C}.",
+   "keywords": [],
+   "colors": [],
+   "manaValue": 1,
+   "colorIdentity": [],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{1}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "add-mana",
+      "object": "{C}{C}",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "17632accec9769553f4e43cfe11a932c81a8cc736f9d74c13d2af1c0166c4b97"
+ },
+ "Abiding Grace": {
+  "source": {
+   "name": "Abiding Grace",
+   "typeLine": "Enchantment",
+   "oracleText": "At the beginning of your end step, choose one —\n• You gain 1 life.\n• Return target creature card with mana value 1 from your graveyard to the battlefield.",
+   "keywords": [],
+   "colors": [
+    "W"
+   ],
+   "manaValue": 3,
+   "colorIdentity": [
+    "W"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{2}{W}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "end-step",
+     "subject": "you",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "none"
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "actions": [
+     {
+      "verb": "gain-life",
+      "object": "you",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "triggered",
+    "actions": [
+     {
+      "verb": "return",
+      "object": "target creature card with mana value 1 from your graveyard",
+      "fromZone": "graveyard",
+      "toZone": "battlefield",
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "13c080cba00559104445d76e693732819d54b732551ac8ab93f1b7a45e851016"
+ },
+ "Goryo's Vengeance": {
+  "source": {
+   "name": "Goryo's Vengeance",
+   "typeLine": "Instant — Arcane",
+   "oracleText": "Return target legendary creature card from your graveyard to the battlefield. That creature gains haste. Exile it at the beginning of the next end step.\nSplice onto Arcane {2}{B} (As you cast an Arcane spell, you may reveal this card from your hand and pay its splice cost. If you do, add this card's effects to that spell.)",
+   "keywords": [
+    "Splice"
+   ],
+   "colors": [
+    "B"
+   ],
+   "manaValue": 2,
+   "colorIdentity": [
+    "B"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{1}{B}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "return",
+      "object": "target legendary creature card",
+      "fromZone": "graveyard",
+      "toZone": "battlefield",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "grant-ability",
+      "object": "that creature gains haste",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "exile",
+      "object": "it",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Splice onto Arcane {2}{B}",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   }
+  ],
+  "segmentHash": "5aa4696639a34db37ce67bb94ffe212b6afbe60e4fbd68bcbb4dfc8cc6d37711"
+ },
+ "Salvaging Station": {
+  "source": {
+   "_id": "3501ed98-473c-4a17-8b5f-1e0c00ee75da",
+   "name": "Salvaging Station",
+   "typeLine": "Artifact",
+   "oracleText": "{T}: Return target noncreature artifact card with mana value 1 or less from your graveyard to the battlefield.\nWhenever a creature dies, you may untap this artifact.",
+   "keywords": [],
+   "colors": [],
+   "manaValue": 6,
+   "colorIdentity": [],
+   "power": null,
+   "toughness": null,
+   "tags": {
+    "produces": [],
+    "cares": [
+     "creature-death",
+     "sacrifice-event",
+     "graveyard",
+     "ramp"
+    ]
+   },
+   "searchNames": [
+    "salvaging station"
+   ],
+   "edhrecRank": 12552,
+   "manaCost": "{6}",
+   "layout": "normal",
+   "legalities": {
+    "standard": "not_legal",
+    "future": "not_legal",
+    "historic": "not_legal",
+    "timeless": "not_legal",
+    "gladiator": "not_legal",
+    "pioneer": "not_legal",
+    "modern": "legal",
+    "legacy": "legal",
+    "pauper": "not_legal",
+    "vintage": "legal",
+    "penny": "legal",
+    "commander": "legal",
+    "oathbreaker": "legal",
+    "standardbrawl": "not_legal",
+    "brawl": "not_legal",
+    "competitivebrawl": "not_legal",
+    "alchemy": "not_legal",
+    "paupercommander": "not_legal",
+    "duel": "legal",
+    "oldschool": "not_legal",
+    "premodern": "not_legal",
+    "predh": "legal",
+    "tlr": "not_legal"
+   },
+   "releasedAt": "2004-06-04",
+   "gameChanger": false,
+   "reserved": false,
+   "artCrop": "https://cards.scryfall.io/art_crop/front/f/0/f0336e07-8eaf-4b90-af54-4764e5ba50f2.jpg?1783944375"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "return",
+      "object": "target noncreature artifact card with mana value 1 or less",
+      "fromZone": "graveyard",
+      "toZone": "battlefield",
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "dies",
+     "subject": "a creature",
+     "control": "any"
+    },
+    "actions": [
+     {
+      "verb": "untap",
+      "object": "this artifact",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     }
+    ]
+   }
+  ],
+  "segmentHash": "9168174035b791265042b7dbde58f273762b5c14ff2d96fee88f0209f192cbf4"
+ },
+ "Monk Idealist": {
+  "source": {
+   "_id": "1f47ff5a-dd93-46de-a1ca-b412631218bf",
+   "name": "Monk Idealist",
+   "typeLine": "Creature — Human Monk Cleric",
+   "oracleText": "When this creature enters, return target enchantment card from your graveyard to your hand.",
+   "keywords": [],
+   "colors": [
+    "W"
+   ],
+   "manaValue": 3,
+   "colorIdentity": [
+    "W"
+   ],
+   "power": "2",
+   "toughness": "2",
+   "tags": {
+    "produces": [
+     "tribe:human",
+     "tribe-nontoken:human",
+     "tribe:monk",
+     "tribe-nontoken:monk",
+     "tribe:cleric",
+     "tribe-nontoken:cleric"
+    ],
+    "cares": [
+     "graveyard"
+    ]
+   },
+   "searchNames": [
+    "monk idealist"
+   ],
+   "edhrecRank": 17874,
+   "manaCost": "{2}{W}",
+   "layout": "normal",
+   "legalities": {
+    "standard": "not_legal",
+    "future": "not_legal",
+    "historic": "not_legal",
+    "timeless": "not_legal",
+    "gladiator": "not_legal",
+    "pioneer": "not_legal",
+    "modern": "not_legal",
+    "legacy": "legal",
+    "pauper": "legal",
+    "vintage": "legal",
+    "penny": "legal",
+    "commander": "legal",
+    "oathbreaker": "legal",
+    "standardbrawl": "not_legal",
+    "brawl": "not_legal",
+    "competitivebrawl": "not_legal",
+    "alchemy": "not_legal",
+    "paupercommander": "legal",
+    "duel": "legal",
+    "oldschool": "not_legal",
+    "premodern": "legal",
+    "predh": "legal",
+    "tlr": "legal"
+   },
+   "releasedAt": "2016-06-10",
+   "gameChanger": false,
+   "reserved": false,
+   "artCrop": "https://cards.scryfall.io/art_crop/front/3/1/31c729e2-4e55-4a14-a288-9c3473e58b88.jpg?1783937628"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "this creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "return",
+      "object": "target enchantment card from your graveyard",
+      "fromZone": "graveyard",
+      "toZone": "hand",
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "aaff83d4d4b933674ee2cfc01e8b55488c452ec8c41b740245f7ec8c67022a93"
+ }
+}

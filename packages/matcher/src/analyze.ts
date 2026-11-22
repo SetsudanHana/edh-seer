@@ -23,7 +23,7 @@ import { loadHierarchy, subsumptionMap } from "./hierarchy.js";
 import { makeGateWeigher } from "./effect-gate-weight.js";
 import { deckSentence } from "./deck-sentence.js";
 import { applyAnthems, applyState, reachableMarkers } from "./layers.js";
-import { tokenSeats, pairReasons, cardThemeTags, axisThemeTags, cardCaresTags, directedReasons, createsReasons, createsForYou, claimCount, ROLE_NOT_SYNERGY, meldReason, revenantToughness, type ReasonOptions } from "./edges.js";
+import { tokenSeats, pairReasons, cardThemeTags, axisThemeTags, cardCaresTags, directedReasons, createsReasons, createsForYou, claimCount, ROLE_NOT_SYNERGY, meldReason, revenantToughness, creatureCoTypes, type ReasonOptions } from "./edges.js";
 import { createdTokenRefs, type TokenRef } from "./tokens.js";
 import { GETS_AN_EMBLEM } from "@edh-seer/tagger/emblem";
 import { flipPerspective, opponentHeld } from "./perspective.js";
@@ -313,7 +313,7 @@ export function analyzeDeckStructured(
       && (Array.isArray(a.trigger.subject.subtype) ? a.trigger.subject.subtype.length > 0 : a.trigger.subject.subtype !== undefined))
     .map((a) => ({ name: dc.card.name, subject: a.trigger!.subject })));
   // The fifth: whether an own-board static -N/-N kills anything worth killing (#805).
-  const reasonOpts: ReasonOptions = { landTypes: deckLandTypes(resolved), enterWatchers, revenantToughness: revenantToughness(resolved) };
+  const reasonOpts: ReasonOptions = { landTypes: deckLandTypes(resolved), enterWatchers, revenantToughness: revenantToughness(resolved), creatureCoTypes: creatureCoTypes(resolved) };
   // THE COMPANION, READ LIKE A DECK CARD FOR ITS RELATIONS AND COUNTED NOWHERE. A companion that is
   // also in the deck is a 903.11a violation legality reports; here it is simply not added twice.
   const deckNameSet = new Set(resolved.map((dc) => dc.card.name));

@@ -20,7 +20,7 @@ import { extendRoutes, findRoutes, indexRoutes, type RouteHop } from "./routes.j
 import { docToCard } from "@edh-seer/data/docs";
 import { normalizeName } from "@edh-seer/data/names";
 import { StaticLookup } from "./static-lookup.js";
-import { directedReasons, isPolymorph, POLYMORPH_HIT_MV, sizeMeets, type ReasonOptions } from "./edges.js";
+import { creatureCoTypes, directedReasons, isPolymorph, POLYMORPH_HIT_MV, sizeMeets, type ReasonOptions } from "./edges.js";
 import { detectPolymorph, type CardSignal } from "./archetypes.js";
 import { faceDeckCards } from "./faces.js";
 import { deckLandTypes, deckSubtypeCounts, resolveChosenTypes } from "./chosen-type.js";
@@ -231,7 +231,7 @@ type Verify = (candidate: IndexCard, against: readonly string[], producerOnly: b
 /** Run the engine on (deck card, candidate) in both directions -- or candidate -> deck card only,
  *  for an unmet demand the candidate must SUPPLY -- and keep the deck cards it draws a reason with. */
 function verifier(
-  dc: (name: string) => Promise<DeckCard | null>, landTypes: ReasonOptions["landTypes"], axis: Map<string, number>,
+  dc: (name: string) => Promise<DeckCard | null>, landTypes: ReasonOptions["landTypes"], coTypes: ReadonlyMap<string, readonly string[]>, axis: Map<string, number>,
   commanders: ReadonlySet<string>, weights: ImpactWeights, refuses: (d: DeckCard) => boolean = () => false,
 ): Verify {
   const h = loadHierarchy();
@@ -240,7 +240,7 @@ function verifier(
   // that hop -- so ask the way `partners-core` asks, or every token maker's partner reads as stale.
   // THE DECK'S LAND TYPES, as the report threads them (`analyze.ts` reasonOpts), so an untyped land
   // put resolves against this deck's lands here too.
-  const opts: ReasonOptions = { tokensMediate: false, ...(landTypes ? { landTypes } : {}) };
+  const opts: ReasonOptions = { tokensMediate: false, ...(landTypes ? { landTypes } : {}), creatureCoTypes: coTypes };
   // ONE ENGINE RUN PER QUESTION: a card on two shortlists is asked once.
   const memo = new Map<string, Promise<Verified | null>>();
   return (candidate, against, producerOnly) => {
@@ -576,7 +576,7 @@ export async function suggestForDeck(input: {
   const offPlanPolymorph = (d: DeckCard | null | undefined): boolean => !!d && !polymorphDeck && isPolymorph(d)
     && !detectPolymorph([...deckPlanSignals, planSignal(d)], deckPlanSignals.length + 1);
   const refused = (d: DeckCard | null | undefined): boolean => dilutesReveal(d) || offPlanPolymorph(d);
-  const verify = verifier(dc, deckLandTypes(deckDcs), axis, commanderNames, loadImpactWeights(), refused);
+  const verify = verifier(dc, deckLandTypes(deckDcs), creatureCoTypes(deckDcs), axis, commanderNames, loadImpactWeights(), refused);
   const nonland = physical.filter((n) => !atName.get(n)?.isLand);
   // AN UNREADABLE CARD IS LEFT TO `verify`, which drops it and says so.
   const harmsDeck = (name: string): Promise<boolean> => dc(name).then((d) => killsOwnCreatures(d?.tags, d?.card.oracleText) || refused(d), () => false);
