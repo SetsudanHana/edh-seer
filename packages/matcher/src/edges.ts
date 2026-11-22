@@ -574,7 +574,7 @@ function baseEvents(tags: CardTags): GameEvent[] {
 /** A CREATURE THAT CANNOT ATTACK OR BLOCK SUPPLIES NEITHER (#1685; CR 508.1c, 509.1b, 510.1a): Grakk the Pacifist ("Grakk can't attack or block"), Vigean Hydropon, Gravecrawler ("This creature can't block"). The card's own unconditional
  *  restriction is `selfRestricts` (derive 577, `selfRestrictionOf`); it silences the card's IMPLIED `attacks` / `blocks` (and `combat-damage`, when both are barred: CR 510.1a) only, the baseline "a creature on the battlefield can attack" that `impliedEvents` supplies. A conditional
  *  restriction ("can't attack unless ...", "alone") is not stored as a restriction at all, so such a card still supplies it.
- *  CEILING: a KEYWORD that forbids it is NOT read here -- `defender` (CR 702.3b: a creature with defender can't attack) and decayed's reminder (Rot-Curse Rakshasa: "This creature can't block") -- and a whole-card node of a double-faced card (the report splits faces) would let one face's restriction bar the other's events. */
+ *  `defender` (CR 702.3b) is read in `impliedEvents` (#1753). CEILING: a KEYWORD that forbids it is NOT read here -- decayed's reminder (Rot-Curse Rakshasa: "This creature can't block") -- and a whole-card node of a double-faced card (the report splits faces) would let one face's restriction bar the other's events. */
 function selfBarredCombat(tags: CardTags, e: GameEvent): boolean {
   if (e.verb !== "attacks" && e.verb !== "blocks" && e.verb !== "combat-damage") return false;
   const barred = new Set(tags.abilities.filter((a) => a.selfRestricts === true).flatMap((a) => a.restricts ?? []));

@@ -21,6 +21,7 @@ const TESTED: Record<string, string> = {
   "202.2": "grammar/named-tokens-1671.test.ts — the named token's colour is the colour of the mana symbols of the cost its reminder prints (#1671)",
   "701.15a": "grammar/named-tokens-1671.test.ts — 'The token is goaded for the rest of the game' reads as the goad alone; the duration is a CEILING (Balefang the Unslayable; #1671)",
   "601.2a": "grammar/other-actor-1676.test.ts — proposing a cast makes the proposer the spell's controller: Itazura's 'then they may cast a spell from among those cards' after the pick is the chosen opponent's cast, `control: opp` on the emit (#1676)",
+  "702.3b": "characteristics.test.ts — a creature whose only mention of defender is the keyword line carries `defender` (per face); a card naming it elsewhere does not (#1753)",
   "702.119": "grammar/spell-keywords-1672.test.ts — 'each sea monster spell you cast has emerge' is a cost note on those spells, never a keyword on the board (Zekes, Acid Rock Fan; #1672)",
   "702.144a": "grammar/spell-keywords-1672.test.ts — demonstrate is a triggered ability on casting the spell: its copy is not read, so the grant claims no cost change (Elda, Conjurer of Spectacle; #1672)",
   "702.144": "grammar/spell-keywords-1672.test.ts — 'the first nonlegendary creature spell you cast each turn has demonstrate' copies the spell and claims no cost change (Elda, Conjurer of Spectacle; #1672)",

@@ -108,7 +108,7 @@ export function impliedEvents(chars: Characteristics): GameEvent[] {
   // "Instant // Land" is a land you cast and an instant that enters the battlefield, and
   // "Artifact // Land — Cave" is a land that supplies landfall while being unable to be cast at all.
   // A transform or flip card lists only its front face here, so its back contributes nothing.
-  const faces = chars.faces ?? [{ types: chars.types, subtypes: chars.subtypes }];
+  const faces = chars.faces ?? [{ types: chars.types, subtypes: chars.subtypes, ...(chars.defender === true ? { defender: true as const } : {}) }];
   const out: GameEvent[] = [];
   const seen = new Set<string>();
   for (const face of faces) {
@@ -159,7 +159,9 @@ export function impliedEvents(chars: Characteristics): GameEvent[] {
     // marks them as synthetic so that gate applies only to these, never to a card's own AUTHORED
     // attacks/combat-damage emit (goad, Mage Slayer, Saskia).
     if (types.includes("creature") && chars.creatureOnlyIf !== true) {
-      push("attacks");
+      // CR 702.3b: a creature with defender can't attack (#1753), so it supplies no `attacks`; it still blocks and deals combat damage as a blocker. The flag is per face (`Characteristics.faces`).
+      // CEILING: combat-damage stays, so a "deals combat damage to a player" payoff still hears a defender, because a consumer does not carry the player recipient; a blocker's damage only ever reaches creatures.
+      if (face.defender !== true) push("attacks");
       // CR 509.1a: only creatures block. Supplied for the same reason as `attacks`, and gated the same way (`combatSelfSupplied`). #1373.
       push("blocks");
       push("combat-damage");

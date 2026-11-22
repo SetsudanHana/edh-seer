@@ -222,3 +222,15 @@ test("frontFaceOnly: More Than Meets the Eye (CR 702.162) is cast either face, o
   expect(playableFaces("Artifact Creature — Robot // Artifact — Vehicle", "transform", ["More Than Meets the Eye"])).toHaveLength(2);
   expect(playableFaces("Artifact Creature — Robot // Artifact — Vehicle", "transform", [])).toHaveLength(1);
 });
+
+test("defender (CR 702.3b, #1753): flagged from the keyword line, per face, and not when the card's own text names it again", () => {
+  const wall = { ...inalla, typeLine: "Creature — Wall", oracleText: "Defender (This creature can't attack.)", keywords: ["Defender"] };
+  expect(extractCharacteristics(wall).defender).toBe(true);
+  expect(extractCharacteristics({ ...wall, oracleText: "Defender, flying, vigilance" }).defender).toBe(true);
+  expect(extractCharacteristics({ ...wall, oracleText: "Defender\n{W}: This creature can attack this turn as though it didn't have defender." }).defender).toBeUndefined();
+  expect(extractCharacteristics({ ...wall, oracleText: "Defender\n{1}: Until end of turn, this creature loses defender." }).defender).toBeUndefined();
+  expect(extractCharacteristics({ ...inalla, oracleText: "Flying", keywords: ["Flying"] }).defender).toBeUndefined();
+  const dfc = { ...inalla, typeLine: "Creature — Egg // Creature — Dragon", layout: "transform", oracleText: "Defender\n{T}: Add {G}.\n//\nFlying", keywords: ["Transform", "Defender", "Flying"] };
+  expect(extractCharacteristics(dfc).faces).toEqual([{ types: ["creature"], subtypes: ["egg"], defender: true }]);
+  expect(extractCharacteristics(dfc).defender).toBeUndefined();
+});
