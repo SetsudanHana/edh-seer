@@ -36,6 +36,11 @@ describe("a put that can take a card an opponent owns is still heard", () => {
   test("Bribery puts a creature out of a target opponent's library under your control", () => {
     expect(heardBy("Bribery")).not.toEqual([]);
   });
+  test("Journey to Eternity returns 'it', the enchanted creature that died: it can be a stolen creature, so no owner is written and Brainstealer Dragon still hears it", () => {
+    const j = "Journey to Eternity // Atzal, Cave of Eternity";
+    expect(putEmits(j).find((s) => s.ref === "trigger")?.owner).toBeUndefined();
+    expect(heardBy(j)).not.toEqual([]);
+  });
   test.each(["Animate Dead", "Reanimate"])("%s reanimates out of ANY graveyard (the card could be an opponent's): no owner is written, still heard", (producer) => {
     for (const s of putEmits(producer)) expect(s.owner).not.toBe("you");
     expect(heardBy(producer)).not.toEqual([]);
