@@ -14,6 +14,8 @@ const dc = (name: string): DeckCard => ({
 });
 const H = loadHierarchy();
 const hellrider = dc("Hellrider"); // "Whenever a creature you control attacks, ..."
+const moria = dc("Moria Marauder"); // "Whenever a Goblin or Orc you control deals combat damage to a player, ..."
+const shell = dc("Heroes in a Half Shell"); // "Whenever one or more Mutants, Ninjas, and/or Turtles you control deal combat damage to a player, ..."
 const noble = dc("Noble Stand"); // "Whenever a creature you control blocks, you gain 2 life."
 const heard = (producer: string, consumer: DeckCard, verb: string) => pairReasons(dc(producer), consumer, H).map((r) => r.tag).filter((t) => t.startsWith(verb + ":"));
 const selfRestricts = (name: string) => (dc(name).tags?.abilities ?? []).filter((a) => a.effect.kind === "restriction").map((a) => a.selfRestricts === true);
@@ -59,5 +61,18 @@ describe("an ordinary creature is unchanged", () => {
     expect(selfRestricts("Grizzly Bears")).toEqual([]);
     expect(heard("Grizzly Bears", hellrider, "attacks")).not.toEqual([]);
     expect(heard("Grizzly Bears", noble, "blocks")).not.toEqual([]);
+  });
+});
+
+/** CR 510.1a: only an attacking or a blocking creature assigns combat damage, so a creature barred from BOTH supplies no `combat-damage` either; one barred from blocking alone still attacks and connects. */
+describe("a creature that can neither attack nor block deals no combat damage", () => {
+  test("Grakk the Pacifist (an Orc) is not heard by Moria Marauder's combat-damage payoff", () => {
+    expect(heard("Grakk the Pacifist", moria, "combat-damage")).toEqual([]);
+  });
+  test("Vigean Hydropon (a Mutant) is not heard by Heroes in a Half Shell", () => {
+    expect(heard("Vigean Hydropon", shell, "combat-damage")).toEqual([]);
+  });
+  test("Goblin Raider (a Goblin; 'This creature can't block' only) still supplies combat-damage", () => {
+    expect(heard("Goblin Raider", moria, "combat-damage")).not.toEqual([]);
   });
 });

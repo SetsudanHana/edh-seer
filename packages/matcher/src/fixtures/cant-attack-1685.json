@@ -1,4 +1,133 @@
 {
+ "Moria Marauder": {
+  "source": {
+   "name": "Moria Marauder",
+   "typeLine": "Creature — Goblin Warrior",
+   "oracleText": "Double strike\nWhenever a Goblin or Orc you control deals combat damage to a player, exile the top card of your library. You may play that card this turn.",
+   "keywords": [
+    "Double strike"
+   ],
+   "colors": [
+    "R"
+   ],
+   "manaValue": 2,
+   "colorIdentity": [
+    "R"
+   ],
+   "power": "1",
+   "toughness": "1",
+   "manaCost": "{R}{R}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Double strike"
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "actions": [
+     {
+      "verb": "exile",
+      "object": "the top card of your library",
+      "fromZone": "library",
+      "toZone": "exile",
+      "optional": false
+     },
+     {
+      "verb": "play",
+      "object": "that card this turn",
+      "fromZone": null,
+      "toZone": null,
+      "optional": true
+     }
+    ],
+    "trigger": {
+     "event": "damage-dealt",
+     "subject": "a Goblin or Orc you control",
+     "control": "you"
+    }
+   }
+  ]
+ },
+ "Heroes in a Half Shell": {
+  "source": {
+   "name": "Heroes in a Half Shell",
+   "typeLine": "Legendary Creature — Mutant Ninja Turtle",
+   "oracleText": "Vigilance, menace, trample, haste\nWhenever one or more Mutants, Ninjas, and/or Turtles you control deal combat damage to a player, put a +1/+1 counter on each of those creatures and draw a card.",
+   "keywords": [
+    "Vigilance",
+    "Haste",
+    "Trample",
+    "Menace"
+   ],
+   "colors": [
+    "B",
+    "G",
+    "R",
+    "U",
+    "W"
+   ],
+   "manaValue": 5,
+   "colorIdentity": [
+    "B",
+    "G",
+    "R",
+    "U",
+    "W"
+   ],
+   "power": "5",
+   "toughness": "5",
+   "manaCost": "{W}{U}{B}{R}{G}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Vigilance, menace, trample, haste"
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "actions": [
+     {
+      "verb": "add-counter",
+      "object": "+1/+1",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     },
+     {
+      "verb": "draw",
+      "object": "a card",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ],
+    "trigger": {
+     "event": "damage-dealt",
+     "subject": "one or more Mutants, Ninjas, and/or Turtles you control",
+     "control": "you"
+    }
+   }
+  ]
+ },
  "Grakk the Pacifist": {
   "source": {
    "name": "Grakk the Pacifist",
@@ -640,6 +769,40 @@
      {
       "verb": "cant",
       "object": "be blocked",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Goblin Raider": {
+  "source": {
+   "name": "Goblin Raider",
+   "typeLine": "Creature — Goblin Warrior",
+   "oracleText": "This creature can't block.",
+   "keywords": [],
+   "colors": [
+    "R"
+   ],
+   "manaValue": 2,
+   "colorIdentity": [
+    "R"
+   ],
+   "power": "2",
+   "toughness": "2",
+   "manaCost": "{1}{R}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "cant",
+      "object": "block",
       "fromZone": null,
       "toZone": null,
       "optional": false
