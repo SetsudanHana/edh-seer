@@ -95,8 +95,8 @@ describe("#1502 fix round: the exile of a put NONTOKEN permanent", () => {
     expect(exiledFromBattlefield("Gruesome Encore").map((e) => e.subject.owner)).toEqual(["opp"]);
     expect(emitsOf(rowOf("Whip of Erebos"), "exiled").map((e) => e.subject.owner)).toEqual([undefined]);
   });
-  test("Ashen Powder (no end-step exile): its `enters` is left as stored, the opponent's graveyard owner (CEILING, derive.ts)", () => {
-    expect(emitsOf(rowOf("Ashen Powder"), "enters").map((e) => e.subject.control)).toEqual(["opp"]);
+  test("Ashen Powder (no end-step exile): its `enters` is the opponent's card entering under your control (#1750, own-entry.ts putsOpponentsCard)", () => {
+    expect(emitsOf(rowOf("Ashen Powder"), "enters").map((e) => [e.subject.control, e.subject.owner])).toEqual([["you", "opp"]]);
   });
   test("Vindictive Triumph: the real exile of the target stays the opponent's; the end-step exile of the returned permanent is yours", () => {
     const ex = emitsOf(rowOf("Vindictive Triumph"), "exiled");

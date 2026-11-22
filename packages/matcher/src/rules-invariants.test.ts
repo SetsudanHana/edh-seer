@@ -42,6 +42,7 @@ const TESTED: Record<string, string> = {
   "108.3": "stolen-cast-pairs.test.ts — a card's owner is the player who started the game with it in their deck: a deck card's own cast is a spell you own, so 'a noncreature spell you don't own' never hears Lightning Bolt (Don Andres, the Renegade, #1609)",
   "111.2": "enters-owner-1737.test.ts — the player who creates a token is its owner: a token you create is never an opponent's permanent, so Raise the Alarm's Soldiers are not heard by Brainstealer Dragon (#1746)",
   "400.3": "end-step-exile-pairs.test.ts — a card in an opponent's graveyard is owned by that opponent, so Gruesome Encore's put fires no deck-mate's own enters trigger (#1502); subject.test.ts and stolen-cast-pairs.test.ts — a card an opponent owns is never in YOUR hand, so its cast is 'from anywhere other than your hand' (Osgood, Operation Double, #1596)",
+  "608.3": "enters-owner-1737.test.ts — a permanent spell becomes a permanent as it resolves: your cast of a card an opponent owns (Gonti, Thief of Sanity) enters under your control, owned by them, and Brainstealer Dragon hears it (#1750)",
   "112.2": "stolen-cast-pairs.test.ts — a copy you cast of an opponent's card is a spell you own, yet it copies their card, so Flawless Forgery fires no deck-mate's own cast trigger (#1594)",
   "400.1": "partners-core.test.ts — a graveyard leave keys apart from a battlefield leave (AK6)",
   "205.3i": "rules.test.ts — tutor.text refuses a search whose subject is only a land type (land types are the CR 205.3i list: Gate, Desert, Cave, Town ...), #1266",

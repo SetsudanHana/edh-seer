@@ -1190,6 +1190,16 @@ export function castSelfSupplied(producer: GameEvent, consumer: GameEvent): bool
  *  census can ask "is this row one of the ones that gate applies to" without restating the list. */
 export const COMBAT_VERBS: ReadonlySet<string> = new Set(["attacks", "blocks", "combat-damage"]);
 
+/** YOUR CAST OF A CARD AN OPPONENT OWNS ENTERS UNDER YOUR CONTROL, OWNED BY THEM (#1750; CR 400.3, CR 108.3, CR 608.3: a permanent spell becomes a permanent as it resolves). "Whenever a nonland permanent an opponent owns enters under your
+ *  control" (Brainstealer Dragon, `owner: opp`) is heard by Gonti, Thief of Sanity, Opposition Agent, Nightveil Specter, which cast a card their cast emit says is theirs (`owner: opp`). Derive emits no enter beside such a cast, and one would meet every
+ *  "whenever a creature enters under your control" consumer on a card that may be an instant, so the bridge is read HERE and only for a demand that STATES `owner: opp` (`eventMatches` drops the demand's `zone`: the cast is on the stack).
+ *  CEILING: a cast whose type is named and is not a permanent type (an instant or sorcery) is refused; a cast of "a spell" (type `spell`, untyped) could be an instant and is still read as possibly a permanent. A cast that states no owner (Hostage Taker's
+ *  "another target creature or artifact": the card can be yours) is not read, and no enter is stated to a consumer that names no owner ("whenever a creature enters under your control" does not hear Gonti's stolen creature). */
+function castEntersOpponentsCard(producer: GameEvent, consumer: GameEvent): boolean {
+  if (consumer.verb !== "enters" || producer.verb !== "cast" || consumer.subject.owner !== "opp" || producer.subject.owner !== "opp" || producer.subject.control !== "you" || producer.implied === true) return false;
+  const types = list(producer.subject.type);
+  return types.length === 0 || types.includes("spell") || types.some((t) => ["creature", "artifact", "enchantment", "planeswalker", "battle", "permanent"].includes(t));
+}
 /** Does the producer's event come from where the consumer's trigger demands?
  *
  *  ONE-DIRECTIONAL on purpose. A trigger that names no origin means "however it got there" and must
@@ -1211,6 +1221,7 @@ export const COMBAT_VERBS: ReadonlySet<string> = new Set(["attacks", "blocks", "
  *  graveyard kind, and every death in their decks fed them. */
 function verbSatisfies(producer: GameEvent, consumer: GameEvent): boolean {
   if (producer.verb === consumer.verb) return true;
+  if (castEntersOpponentsCard(producer, consumer)) return true;
   if (consumer.verb === "leaves" && producer.verb === "dies"
     && consumer.subject.zone !== "graveyard" && consumer.subject.withoutDying !== true) return true;
   // DAMAGE TO A PLAYER IS LIFE LOSS (CR 120.3). A damage emit naming NO type is aimed at a player --
@@ -1281,6 +1292,10 @@ const REMOVAL_VERBS: ReadonlySet<string> = new Set(["dies", "leaves", "exiled", 
  *  counted as that demand's supply; the evidence creature itself usually supplies it, so no hole is reported for it in practice. */
 export function eventMatches(producer: GameEvent, consumer: GameEvent, h: Hierarchy, coTypes?: readonly string[]): boolean {
   if (!verbSatisfies(producer, consumer)) return false;
+  if (castEntersOpponentsCard(producer, consumer)) {
+    const { zone: _stack, ...onStack } = consumer.subject;
+    consumer = { ...consumer, subject: onStack };
+  }
   // A TRIGGER ON THE MILL ACTION HEARS ONLY A MILL (#1444, CR 701.17a; owner 2026-11-06): "whenever a player mills" (Zellix, Glowing One) is not met by "look at the top card ... put it into your graveyard"
   // or manifest dread, which move the same cards without the keyword action. Derive stamps those `notMillAction`; they still feed every graveyard consumer (an `enters-graveyard` demand, recursion, delirium, a count).
   if (consumer.verb === "mill" && producer.verb === "mill" && producer.subject.notMillAction === true) return false;

@@ -71,3 +71,25 @@ describe("an implied enter and a token you create are yours (#1746)", () => {
     expect(heardBy(producer)).not.toEqual([]);
   });
 });
+
+/** #1750: the real Dragon partners #1746 took away. A put out of an opponent's graveyard stored `control: opp` with no owner (Puppeteer Clique, Rakshasa Debaser, Bone Dancer, Tariel, Visions of Dread), and a cast of a card an
+ *  opponent owns emitted no enter at all (Gonti, Thief of Sanity, Hostage Taker). Both are "a nonland permanent an opponent owns enters under your control". A steal (Control Magic) is no enter. Fixtures added 2026-11-22 (DERIVE 575). */
+describe("an opponent-owned card entering under your control is heard (#1750)", () => {
+  test.each(["Puppeteer Clique", "Rakshasa Debaser", "Bone Dancer", "Tariel, Reckoner of Souls", "Visions of Dread"])("%s: the put out of an opponent's graveyard states control you, owner opp", (producer) => {
+    const puts = putEmits(producer).filter((s) => s.fromZone === "graveyard");
+    expect(puts.length).toBeGreaterThan(0);
+    for (const s of puts) expect([s.control, s.owner]).toEqual(["you", "opp"]);
+  });
+  test.each(["Puppeteer Clique", "Rakshasa Debaser", "Bone Dancer", "Tariel, Reckoner of Souls", "Visions of Dread", "Gonti, Lord of Luxury", "Thief of Sanity", "Gruesome Encore", "Bribery"])("%s is heard by Brainstealer Dragon", (producer) => {
+    expect(heardBy(producer)).not.toEqual([]);
+  });
+  test("Prince of Thralls puts back a creature an opponent CONTROLS died: it can be a stolen card of yours, so no owner is written", () => {
+    for (const s of putEmits("Prince of Thralls")) expect(s.owner).toBeUndefined();
+  });
+  test("Control Magic gains control, it is no enter: not heard", () => {
+    expect(heardBy("Control Magic")).toEqual([]);
+  });
+  test("Primal Surge (your own cards) is still not heard", () => {
+    expect(heardBy("Primal Surge")).toEqual([]);
+  });
+});
