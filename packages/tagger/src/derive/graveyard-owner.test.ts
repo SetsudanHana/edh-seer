@@ -12,12 +12,13 @@ type Fx = { typeLine: string; keywords: string[]; oracleText: string; clauses: u
 const FX = fixtures as unknown as Record<string, Fx>;
 
 /** Every control the card's graveyard-origin emits and graveyard-recursion subjects carry. */
-function graveyardControls(name: string): { emits: string[]; effects: string[] } {
+function graveyardControls(name: string): { emits: string[]; leaves: string[]; effects: string[] } {
   const f = FX[name]!;
   const { abilities } = deriveAbilities(f.clauses as ClauseRecord[], name, clauseTexts(f), undefined, f.oracleText, undefined, undefined, undefined, undefined, undefined, undefined, undefined, clauseGrants(f));
   const emits = abilities.flatMap((a) => a.emits ?? []).filter((e) => e.subject.zone === "graveyard" || e.subject.fromZone === "graveyard").map((e) => e.subject.control ?? "?");
+  const leaves = abilities.flatMap((a) => a.emits ?? []).filter((e) => e.subject.zone === "graveyard").map((e) => e.subject.control ?? "?");
   const effects = abilities.filter((a) => a.effect.kind === "graveyard-recursion").map((a) => a.effect.subject?.control ?? "?");
-  return { emits, effects };
+  return { emits, leaves, effects };
 }
 
 describe("a recursion from your graveyard carries control you", () => {
@@ -45,9 +46,11 @@ describe("a recursion from your graveyard carries control you", () => {
     expect(r.emits).not.toContain("any");
     expect(r.effects.every((c) => c === "you")).toBe(true);
   });
-  test("Rakshasa Debaser: defending player's graveyard is never read as yours", () => {
+  test("Rakshasa Debaser: defending player's graveyard is never read as yours; the card it takes ENTERS under your control (#1750)", () => {
     const r = graveyardControls("Rakshasa Debaser");
-    expect(r.emits).not.toContain("you");
+    expect(r.leaves).not.toContain("you");
+    expect(r.effects).not.toContain("you");
+    expect(r.emits.filter((c) => c === "you").length).toBe(r.emits.length - r.leaves.length);
   });
 });
 

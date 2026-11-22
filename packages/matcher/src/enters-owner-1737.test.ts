@@ -71,3 +71,44 @@ describe("an implied enter and a token you create are yours (#1746)", () => {
     expect(heardBy(producer)).not.toEqual([]);
   });
 });
+
+/** #1750: the real Dragon partners #1746 took away. A put out of an opponent's graveyard stored `control: opp` with no owner (Puppeteer Clique, Rakshasa Debaser, Bone Dancer, Tariel, Visions of Dread), and a cast of a card an
+ *  opponent owns emitted no enter at all (Gonti, Thief of Sanity, Hostage Taker). Both are "a nonland permanent an opponent owns enters under your control". A steal (Control Magic) is no enter. Fixtures added 2026-11-22 (DERIVE 575). */
+describe("an opponent-owned card entering under your control is heard (#1750)", () => {
+  test.each(["Puppeteer Clique", "Rakshasa Debaser", "Bone Dancer", "Tariel, Reckoner of Souls", "Visions of Dread"])("%s: the put out of an opponent's graveyard states control you, owner opp", (producer) => {
+    const puts = putEmits(producer).filter((s) => s.fromZone === "graveyard");
+    expect(puts.length).toBeGreaterThan(0);
+    for (const s of puts) expect([s.control, s.owner]).toEqual(["you", "opp"]);
+  });
+  test.each(["Puppeteer Clique", "Rakshasa Debaser", "Bone Dancer", "Tariel, Reckoner of Souls", "Visions of Dread", "Gonti, Lord of Luxury", "Thief of Sanity", "Gruesome Encore", "Bribery"])("%s is heard by Brainstealer Dragon", (producer) => {
+    expect(heardBy(producer)).not.toEqual([]);
+  });
+  test("Prince of Thralls puts back a creature an opponent CONTROLS died: it can be a stolen card of yours, so no owner is written", () => {
+    for (const s of putEmits("Prince of Thralls")) expect(s.owner).toBeUndefined();
+  });
+  test("Control Magic gains control, it is no enter: not heard", () => {
+    expect(heardBy("Control Magic")).toEqual([]);
+  });
+  test("Primal Surge (your own cards) is still not heard", () => {
+    expect(heardBy("Primal Surge")).toEqual([]);
+  });
+});
+
+/** #1750 review: the cast bridge reads a cast as an enter only when the card cast can be a permanent. Memory Plunder, Taster of Wares and Tasha's -3 cast instants and sorceries only; Supper for Spiders' cards enter as Food ARTIFACTS, not creatures (CR 611.2e). */
+describe("a cast that can only be an instant or sorcery is no enter (#1750 review)", () => {
+  test.each(["Memory Plunder", "Taster of Wares", "Tasha, the Witch Queen"])("%s: not heard by Brainstealer Dragon", (producer) => {
+    expect(heardBy(producer)).toEqual([]);
+  });
+  test("Taster of Wares' and Tasha's casts are typed instant or sorcery", () => {
+    for (const n of ["Taster of Wares", "Tasha, the Witch Queen"]) {
+      const casts = (dc(n).tags?.abilities ?? []).flatMap((a) => a.emits ?? []).filter((e) => e.verb === "cast" && e.subject.owner === "opp").map((e) => e.subject.type);
+      expect(casts.length).toBeGreaterThan(0);
+      for (const t of casts) expect(t).toEqual(["instant", "sorcery"]);
+    }
+  });
+  test("Supper for Spiders: the put cards enter as Food artifacts, still the opponent's, still heard; a creature-enters consumer does not hear them", () => {
+    const puts = putEmits("Supper for Spiders");
+    expect(puts.map((s) => [s.type, s.subtype, s.control, s.owner])).toEqual([["artifact", "food", "you", "opp"]]);
+    expect(heardBy("Supper for Spiders")).not.toEqual([]);
+  });
+});

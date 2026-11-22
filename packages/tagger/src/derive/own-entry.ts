@@ -78,3 +78,16 @@ export function putsOwnCard(
     default: return false;
   }
 }
+
+/** A PUT OUT OF AN OPPONENT'S GRAVEYARD UNDER YOUR CONTROL IS A CARD AN OPPONENT OWNS ENTERING UNDER YOUR CONTROL (#1750; CR 400.3: a graveyard holds only its owner's cards, CR 108.3: the owner is the player whose deck it started in). Puppeteer Clique,
+ *  Rakshasa Debaser, Bone Dancer, Tariel, Visions of Dread stored `control: opp` (the graveyard's owner) with no owner, so "a nonland permanent an opponent owns enters under your control" (Brainstealer Dragon, `control: you, owner: opp`) never heard them;
+ *  Gruesome Encore, whose put is followed by an exile of it, was already stored `control: you, owner: opp` (derive.ts, #1502). The object itself names the graveyard ("an opponent's graveyard", "defending player's graveyard", "target opponent's graveyard",
+ *  "your opponents' graveyards") and the clause says "under your control".
+ *  CEILING: only that printed shape. A POINTER ("that card" after a creature an opponent controls died: Prince of Thralls, Necroskitter, Vraska the Silencer, Lim-Dul the Necromancer, The Reaper, Grave Betrayal: the creature can be yours, stolen, and then it is
+ *  your own card) and a put out of "that player's graveyard" with no opponent named in the put's own object (Geth's Summons, Shark Shredder: stored `control: any`) and the pointers keep their stored control and no owner; a put out of an opponent's LIBRARY or exile (Bribery, Acquire) is stored `control: any`
+ *  and meets the Dragon already. */
+const OPPONENTS_YARD = /\b(?:opponents?['\u2019]s?|defending player['\u2019]s) graveyards?\b/i;
+export function putsOpponentsCard(action: Pick<Action, "object" | "fromZone">, zone: string | null | undefined, clauseText: string): boolean {
+  const object = (action.object ?? "").trim();
+  return zone === "graveyard" && OPPONENTS_YARD.test(object) && !/\b(?:from|in) your (?:own )?graveyard\b/i.test(object) && /\bunder your control\b/.test(clauseText);
+}
