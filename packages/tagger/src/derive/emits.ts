@@ -988,6 +988,36 @@ function attachHead(object: string): string | undefined {
   return SELF_REFERENCE.test(head) ? head : undefined;
 }
 
+/** "If a creature dealt damage this way would die this turn, exile it instead" (Anger of the Gods, Fiery Justice's kin): the creature never dies, so the damage fills no graveyard. */
+const DEATH_EXILED_INSTEAD = /\bwould die\b[^.]*\bexile\b[^.]*\binstead\b/i;
+
+/** THE DEATH A DAMAGE EMIT MAY CAUSE (#1734, owner ruling 2026-11-22, option 2 "marked conditional"). Damage at creatures kills the ones whose toughness it reaches (CR 704.5g), so every non-combat damage emit at a creature
+ *  (a target, "each creature", "any target") records the `dies` of the creatures it hits, flagged `conditional` so the matcher weighs it below a destroy's. Without it Goblin Bombardment, Siege-Gang Commander,
+ *  Devastating Dreams and Rupture never paired with an opponent-death or opponent-graveyard payoff (Massacre Wurm, Wight of Precinct Six).
+ *  CONTROL follows the destroy precedent (`REMOVAL_VERBS`, derive.ts): a TARGETED hit with no stated controller is aimed at an opponent's creature (`opp`); a sweep ("each creature") keeps `any`, since it hits your own creatures as a destroy sweep does;
+ *  a stated controller is kept, and a creature you control gets no fill. Players, planeswalkers and the card itself get none.
+ *  CEILING: the fill is conditional even when the source has deathtouch (CR 702.2b: damage from a deathtouch source destroys any creature it hits), which would make it certain; no corpus card is both (4 oracle texts print deathtouch and a damage verb, Bow of Nylea, Sorin, Imperious Bloodlord, Garruk Relentless and Stingerquill Charm, and in none is the damage's source the deathtouch one).
+ *  CEILING: damage a creature is later regenerated from or prevented from, or that an indestructible creature survives, is not read; the fill is conditional on the amount alone.
+ *  CEILING: only the printed "would die ... exile it instead" rider is read as no death; a card that exiles what dies of it in another sentence's words still records the fill. */
+function damageDeathFill(events: readonly GameEvent[], clauseText: string | undefined, cardText: string | undefined): GameEvent[] {
+  if (DEATH_EXILED_INSTEAD.test(`${clauseText ?? ""} ${cardText ?? ""}`)) return [];
+  const out: GameEvent[] = [];
+  for (const e of events) {
+    const s = e.subject;
+    if (e.verb !== "non-combat-damage" || s.player === true || s.self === true || s.control === "you") continue;
+    const types = s.type === undefined ? [] : [s.type].flat();
+    if (types.length > 0 && !types.includes("creature")) continue;
+    // AN UNTYPED RECIPIENT IS "ANY TARGET" (a creature, a player, a planeswalker), and only that: an untyped "them" / "it" is a player or a back-reference (Scytheclaw Raptor's "deals 4 damage to them").
+    if (types.length === 0 && s.scope !== "target") continue;
+    out.push({
+      verb: "dies",
+      subject: { ...s, type: "creature", control: s.control === "any" && (s.scope === "target" || s.targetPlayer === true) ? "opp" : s.control },
+      conditional: true,
+    });
+  }
+  return out;
+}
+
 export function actionEmits(action: Action, clauseText?: string, opts: { self?: boolean; trigger?: CounterTrigger; cardName?: string; costText?: string; cardText?: string } = {}): GameEvent[] {
   if (definesPowerToughness(action)) return [];
   // A LIFE TOTAL SET THAT IS A LOSS (#1333, CR 119.5): "target opponent's life total becomes 10" is the `lose-life` a printed "target opponent loses N life" is; a plain set emits nothing.
@@ -1470,5 +1500,6 @@ export function actionEmits(action: Action, clauseText?: string, opts: { self?: 
       }
     }
   }
+  if (action.verb === "deal-damage" || action.verb === "fight") events.push(...damageDeathFill(events, clauseText, opts.cardText));
   return events;
 }

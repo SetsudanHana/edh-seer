@@ -1,0 +1,1111 @@
+{
+ "Goblin Bombardment": {
+  "source": {
+   "name": "Goblin Bombardment",
+   "typeLine": "Enchantment",
+   "oracleText": "Sacrifice a creature: This enchantment deals 1 damage to any target.",
+   "keywords": [],
+   "colors": [
+    "R"
+   ],
+   "manaValue": 2,
+   "colorIdentity": [
+    "R"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{1}{R}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "sacrifice",
+      "object": "a creature",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "deal-damage",
+      "object": "any target",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "0d6c5aae4b9ede3f233f526e2de4d2abcf9c23a99132b7aa25aa1d1aef7c4087"
+ },
+ "Siege-Gang Commander": {
+  "source": {
+   "name": "Siege-Gang Commander",
+   "typeLine": "Creature — Goblin",
+   "oracleText": "When this creature enters, create three 1/1 red Goblin creature tokens.\n{1}{R}, Sacrifice a Goblin: This creature deals 2 damage to any target.",
+   "keywords": [],
+   "colors": [
+    "R"
+   ],
+   "manaValue": 5,
+   "colorIdentity": [
+    "R"
+   ],
+   "power": "2",
+   "toughness": "2",
+   "manaCost": "{3}{R}{R}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "this creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "create",
+      "object": "three 1/1 red Goblin creature tokens",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "sacrifice",
+      "object": "a Goblin",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "deal-damage",
+      "object": "any target",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "2",
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "da094de5db927baa113777991cf117d808e0360ff3017728eedc15e798486ca2"
+ },
+ "Devastating Dreams": {
+  "source": {
+   "name": "Devastating Dreams",
+   "typeLine": "Sorcery",
+   "oracleText": "As an additional cost to cast this spell, discard X cards at random.\nEach player sacrifices X lands of their choice. Devastating Dreams deals X damage to each creature.",
+   "keywords": [],
+   "colors": [
+    "R"
+   ],
+   "manaValue": 2,
+   "colorIdentity": [
+    "R"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{R}{R}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "discard",
+      "object": "X cards at random",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "sacrifice",
+      "object": "X lands of their choice",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "deal-damage",
+      "object": "each creature",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "X",
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "65b35e636561dd65dc1c82d0dfd4216da23486c9f51353547fcf04bd7f3664ec"
+ },
+ "Rupture": {
+  "source": {
+   "name": "Rupture",
+   "typeLine": "Sorcery",
+   "oracleText": "Sacrifice a creature. Rupture deals damage equal to that creature's power to each creature without flying and each player.",
+   "keywords": [],
+   "colors": [
+    "R"
+   ],
+   "manaValue": 3,
+   "colorIdentity": [
+    "R"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{2}{R}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "sacrifice",
+      "object": "a creature",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "deal-damage",
+      "object": "each creature without flying and each player",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "that creature's power",
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "0d2b82a970141d244fc0dd9ef828c6877adddd9e96998007a7b81924b6fd8cb9"
+ },
+ "Murder": {
+  "source": {
+   "name": "Murder",
+   "typeLine": "Instant",
+   "oracleText": "Destroy target creature.",
+   "keywords": [],
+   "colors": [
+    "B"
+   ],
+   "manaValue": 3,
+   "colorIdentity": [
+    "B"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{1}{B}{B}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "destroy",
+      "object": "target creature",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "01cf1d5c18b86c2a0ace6e64dba5c112e85269d8989ab7196b12a42a99ff69e0"
+ },
+ "Lava Spike": {
+  "source": {
+   "name": "Lava Spike",
+   "typeLine": "Sorcery — Arcane",
+   "oracleText": "Lava Spike deals 3 damage to target player or planeswalker.",
+   "keywords": [],
+   "colors": [
+    "R"
+   ],
+   "manaValue": 1,
+   "colorIdentity": [
+    "R"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{R}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "deal-damage",
+      "object": "target player or planeswalker",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "3",
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "4fc529cbfdf93f08a2a0ce42542574016d7e30715c7d4eaa251b4715b7f0dd10"
+ },
+ "Lightning Bolt": {
+  "source": {
+   "name": "Lightning Bolt",
+   "typeLine": "Instant",
+   "oracleText": "Lightning Bolt deals 3 damage to any target.",
+   "keywords": [],
+   "colors": [
+    "R"
+   ],
+   "manaValue": 1,
+   "colorIdentity": [
+    "R"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{R}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "deal-damage",
+      "object": "any target",
+      "amount": "3",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   }
+  ],
+  "segmentHash": "2dddbcdc2e0ab07ca6ca92afa96b7fba5745e9ffa8fd55706de2e3a414954255"
+ },
+ "Anger of the Gods": {
+  "source": {
+   "name": "Anger of the Gods",
+   "typeLine": "Sorcery",
+   "oracleText": "Anger of the Gods deals 3 damage to each creature. If a creature dealt damage this way would die this turn, exile it instead.",
+   "keywords": [],
+   "colors": [
+    "R"
+   ],
+   "manaValue": 3,
+   "colorIdentity": [
+    "R"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{1}{R}{R}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "deal-damage",
+      "object": "each creature",
+      "amount": "3",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     },
+     {
+      "verb": "exile",
+      "object": "a creature that would die from damage dealt this way this turn",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   }
+  ],
+  "segmentHash": "03acba8ed44da3f563eb68de7057871892879ad402553f680c974d544a631e4f"
+ },
+ "Wight of Precinct Six": {
+  "source": {
+   "name": "Wight of Precinct Six",
+   "typeLine": "Creature — Zombie",
+   "oracleText": "This creature gets +1/+1 for each creature card in your opponents' graveyards.",
+   "keywords": [],
+   "colors": [
+    "B"
+   ],
+   "manaValue": 2,
+   "colorIdentity": [
+    "B"
+   ],
+   "power": "1",
+   "toughness": "1",
+   "manaCost": "{1}{B}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "modify-pt",
+      "object": "this creature",
+      "amount": "+1/+1 for each creature card in your opponents' graveyards",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   }
+  ],
+  "segmentHash": "6d512f7932cb19cbf39b23840341ed244b8dc68e14a387e0c0189ea7baaf8f71"
+ },
+ "Massacre Wurm": {
+  "source": {
+   "name": "Massacre Wurm",
+   "typeLine": "Creature — Phyrexian Wurm",
+   "oracleText": "When this creature enters, creatures your opponents control get -2/-2 until end of turn.\nWhenever a creature an opponent controls dies, that player loses 2 life.",
+   "keywords": [],
+   "colors": [
+    "B"
+   ],
+   "manaValue": 6,
+   "colorIdentity": [
+    "B"
+   ],
+   "power": "6",
+   "toughness": "5",
+   "manaCost": "{3}{B}{B}{B}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "this creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "modify-pt",
+      "object": "creatures your opponents control",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "-2/-2",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "dies",
+     "subject": "a creature an opponent controls",
+     "control": "opponent"
+    },
+    "actions": [
+     {
+      "verb": "lose-life",
+      "object": "that player",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "2",
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "aae80948605522d5e84560a122d72f3120756c6a67be7b34e8ef93ebd4972c00"
+ },
+ "Skred": {
+  "source": {
+   "name": "Skred",
+   "typeLine": "Instant",
+   "oracleText": "Skred deals damage to target creature equal to the number of snow permanents you control.",
+   "keywords": [],
+   "colors": [
+    "R"
+   ],
+   "manaValue": 1,
+   "colorIdentity": [
+    "R"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{R}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "deal-damage",
+      "object": "target creature",
+      "amount": "the number of snow permanents you control",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   }
+  ],
+  "segmentHash": "5e781bb681ca2927cb86bee206f8ed39b9590350ff1ccaed1141dd0022e55fd8"
+ },
+ "Pestilence": {
+  "source": {
+   "name": "Pestilence",
+   "typeLine": "Enchantment",
+   "oracleText": "At the beginning of the end step, if no creatures are on the battlefield, sacrifice this enchantment.\n{B}: This enchantment deals 1 damage to each creature and each player.",
+   "keywords": [],
+   "colors": [
+    "B"
+   ],
+   "manaValue": 4,
+   "colorIdentity": [
+    "B"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{2}{B}{B}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "end-step",
+     "subject": "you",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "sacrifice",
+      "object": "this enchantment",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "deal-damage",
+      "object": "each creature and each player",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "3d7f6f7bbd864fbb5f65f07fc7192d2e0eba4da1b495312fcb43e5520b1652e4"
+ },
+ "Zulaport Cutthroat": {
+  "source": {
+   "name": "Zulaport Cutthroat",
+   "typeLine": "Creature — Human Rogue Ally",
+   "oracleText": "Whenever this creature or another creature you control dies, each opponent loses 1 life and you gain 1 life.",
+   "keywords": [],
+   "colors": [
+    "B"
+   ],
+   "manaValue": 2,
+   "colorIdentity": [
+    "B"
+   ],
+   "power": "1",
+   "toughness": "1",
+   "manaCost": "{1}{B}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "dies",
+     "subject": "this creature or another creature you control",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "lose-life",
+      "object": "each opponent",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     },
+     {
+      "verb": "gain-life",
+      "object": "you",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "0b8bdcf698ee92c579890d7d0f00e3d2f6063d93dda086ea238c8a83bbd5e562"
+ },
+ "Blood Artist": {
+  "source": {
+   "name": "Blood Artist",
+   "typeLine": "Creature — Vampire",
+   "oracleText": "Whenever this creature or another creature dies, target player loses 1 life and you gain 1 life.",
+   "keywords": [],
+   "colors": [
+    "B"
+   ],
+   "manaValue": 2,
+   "colorIdentity": [
+    "B"
+   ],
+   "power": "0",
+   "toughness": "1",
+   "manaCost": "{1}{B}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "dies",
+     "subject": "this creature or another creature",
+     "control": "any"
+    },
+    "actions": [
+     {
+      "verb": "lose-life",
+      "object": "target player",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     },
+     {
+      "verb": "gain-life",
+      "object": "you",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "0af8d6274dc4ad32988084eeb18618499b245ab76b101c64e19c6c904cf87cfe"
+ },
+ "Syr Konrad, the Grim": {
+  "source": {
+   "name": "Syr Konrad, the Grim",
+   "typeLine": "Legendary Creature — Human Knight",
+   "oracleText": "Whenever another creature dies, or a creature card is put into a graveyard from anywhere other than the battlefield, or a creature card leaves your graveyard, Syr Konrad deals 1 damage to each opponent.\n{1}{B}: Each player mills a card. (They each put the top card of their library into their graveyard.)",
+   "keywords": [
+    "Mill"
+   ],
+   "colors": [
+    "B"
+   ],
+   "manaValue": 5,
+   "colorIdentity": [
+    "B"
+   ],
+   "power": "5",
+   "toughness": "4",
+   "manaCost": "{3}{B}{B}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "dies",
+     "subject": "another creature",
+     "control": "any"
+    },
+    "actions": [
+     {
+      "verb": "deal-damage",
+      "object": "each opponent",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "mill",
+      "object": "each player",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "2ade318c09e82f6c919020879382c6b2d7778d19d09d2fd245fd68536745ef11"
+ },
+ "Flame Sweep": {
+  "source": {
+   "name": "Flame Sweep",
+   "typeLine": "Instant",
+   "oracleText": "Flame Sweep deals 2 damage to each creature except for creatures you control with flying.",
+   "keywords": [],
+   "colors": [
+    "R"
+   ],
+   "manaValue": 3,
+   "colorIdentity": [
+    "R"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{2}{R}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "deal-damage",
+      "object": "each creature except for creatures you control with flying",
+      "amount": "2",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   }
+  ],
+  "segmentHash": "ecec9c8d45a1ade3e5470f0cf5ebe2a3bfce23cb3402afb5b198442c6661f8a7"
+ },
+ "Wrath of God": {
+  "source": {
+   "name": "Wrath of God",
+   "typeLine": "Sorcery",
+   "oracleText": "Destroy all creatures. They can't be regenerated.",
+   "keywords": [],
+   "colors": [
+    "W"
+   ],
+   "manaValue": 4,
+   "colorIdentity": [
+    "W"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{2}{W}{W}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "destroy",
+      "object": "all creatures",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "cant",
+      "object": "be regenerated",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "9eb28d717c0c73a9b80952df7038a4e9f58cfd3e01e3656cf6fbae2125625d22"
+ },
+ "Grizzly Bears": {
+  "source": {
+   "name": "Grizzly Bears",
+   "typeLine": "Creature — Bear",
+   "oracleText": "",
+   "keywords": [],
+   "colors": [
+    "G"
+   ],
+   "manaValue": 2,
+   "colorIdentity": [
+    "G"
+   ],
+   "power": "2",
+   "toughness": "2",
+   "manaCost": "{1}{G}",
+   "layout": "normal"
+  },
+  "canonical": [],
+  "segmentHash": "a7c34c316e1d30cdda67651d89c73d82e41861b1471e9f29455a27965f797e4c"
+ },
+ "Cathedral Membrane": {
+  "source": {
+   "name": "Cathedral Membrane",
+   "typeLine": "Artifact Creature — Phyrexian Wall",
+   "oracleText": "({W/P} can be paid with either {W} or 2 life.)\nDefender\nWhen this creature dies during combat, it deals 6 damage to each creature it blocked this combat.",
+   "keywords": [
+    "Defender"
+   ],
+   "colors": [
+    "W"
+   ],
+   "manaValue": 2,
+   "colorIdentity": [
+    "W"
+   ],
+   "power": "0",
+   "toughness": "3",
+   "manaCost": "{1}{W/P}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "({W/P} can be paid with either {W} or 2 life.)",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Defender",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "dies",
+     "subject": "this creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "deal-damage",
+      "object": "each creature it blocked this combat",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "6",
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "fde23cf7bf0055c9240b89cda517dd44a1f2dbaf02a3b45d7a102d9bcfd47217"
+ },
+ "Sickening Dreams": {
+  "source": {
+   "name": "Sickening Dreams",
+   "typeLine": "Sorcery",
+   "oracleText": "As an additional cost to cast this spell, discard X cards.\nSickening Dreams deals X damage to each creature and each player.",
+   "keywords": [],
+   "colors": [
+    "B"
+   ],
+   "manaValue": 2,
+   "colorIdentity": [
+    "B"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{1}{B}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "discard",
+      "object": "X cards",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "deal-damage",
+      "object": "each creature and each player",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "X",
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "f55f651c7d3f102dcc8611ecd5dd8bd3b4dc21df05b9b4effa5323c9233102cc"
+ },
+ "Abyssal Hunter": {
+  "source": {
+   "name": "Abyssal Hunter",
+   "typeLine": "Creature — Human Assassin",
+   "oracleText": "{B}, {T}: Tap target creature. This creature deals damage equal to its power to that creature.",
+   "keywords": [],
+   "colors": [
+    "B"
+   ],
+   "manaValue": 4,
+   "colorIdentity": [
+    "B"
+   ],
+   "power": "1",
+   "toughness": "1",
+   "manaCost": "{3}{B}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "tap",
+      "object": "target creature",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "deal-damage",
+      "object": "that creature",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "its power",
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "86951b09d3fe724e3ab1034a3f990017e91830ac203002d52f344cd8da123f13"
+ },
+ "Bring Low": {
+  "source": {
+   "name": "Bring Low",
+   "typeLine": "Instant",
+   "oracleText": "Bring Low deals 3 damage to target creature. If that creature has a +1/+1 counter on it, Bring Low deals 5 damage to it instead.",
+   "keywords": [],
+   "colors": [
+    "R"
+   ],
+   "manaValue": 4,
+   "colorIdentity": [
+    "R"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{3}{R}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "deal-damage",
+      "object": "target creature",
+      "amount": "3",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     },
+     {
+      "verb": "deal-damage",
+      "object": "that creature",
+      "amount": "5",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   }
+  ],
+  "segmentHash": "146708f53a9cfa8be6cb27ad384e62c6ba4af29f89093845093982aa401a94c3"
+ },
+ "Aether Flash": {
+  "source": {
+   "name": "Aether Flash",
+   "typeLine": "Enchantment",
+   "oracleText": "Whenever a creature enters, this enchantment deals 2 damage to it.",
+   "keywords": [],
+   "colors": [
+    "R"
+   ],
+   "manaValue": 4,
+   "colorIdentity": [
+    "R"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{2}{R}{R}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "a creature",
+     "control": "any"
+    },
+    "actions": [
+     {
+      "verb": "deal-damage",
+      "object": "it",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "2",
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "4b9b5f503ad3bddab8e24e3fc1f11e47203401fa685bc756e1de0917dc281787"
+ },
+ "Ashmouth Hound": {
+  "source": {
+   "name": "Ashmouth Hound",
+   "typeLine": "Creature — Elemental Dog",
+   "oracleText": "Whenever this creature blocks or becomes blocked by a creature, this creature deals 1 damage to that creature.",
+   "keywords": [],
+   "colors": [
+    "R"
+   ],
+   "manaValue": 2,
+   "colorIdentity": [
+    "R"
+   ],
+   "power": "2",
+   "toughness": "1",
+   "manaCost": "{1}{R}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "blocks",
+     "subject": "this creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "deal-damage",
+      "object": "that creature",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "becomes-blocked",
+     "subject": "this creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "deal-damage",
+      "object": "that creature",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "12f05dc9596aa7bd33eedb8aa105e894760c87b6aa3a2407a958acb692178f6e"
+ }
+}

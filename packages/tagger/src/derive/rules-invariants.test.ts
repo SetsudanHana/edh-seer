@@ -15,7 +15,7 @@ import { actionEmits } from "./emits.js";
 import { actionEffectKind } from "./effect-kind.js";
 import { emblemRecipient } from "../emblem.js";
 
-const ASSERTED = new Set(["104.3", "106.12a", "111.1", "111.2", "114.1", "114.2", "601.2f", "603.8", "603.12", "614", "701.5", "701.17a", "701.22b"]);
+const ASSERTED = new Set(["104.3", "106.12a", "111.1", "111.2", "114.1", "114.2", "601.2f", "603.8", "603.12", "614", "701.5", "701.17a", "701.22b", "704.5g"]);
 const TESTED: Record<string, string> = {
   "111.3": "grammar/named-tokens-1671.test.ts — a named token's characteristics are the ones its reminder prints (Black Lotus, Lord of the Pit, Scryb Sprites, Akroma, Baneslayer Angel; #1671)",
   "202.2": "grammar/named-tokens-1671.test.ts — the named token's colour is the colour of the mana symbols of the cost its reminder prints (#1671)",
@@ -180,6 +180,7 @@ const TESTED: Record<string, string> = {
 };
 /** A reading in a comment, no fixture. Each carries where the reading lives. */
 const PROSE: Record<string, string> = {
+  "702.2b": "emits.ts damageDeathFill — a deathtouch source's damage destroys any creature it hits: read as a CEILING (the fill stays conditional, #1734); no corpus card with printed deathtouch is a damage dealer",
   "702.37": "CEILING note on putsFaceDown: a morph card cast face down is a cast, not a put, and is not marked (#1682)",
   "301.5d": "CEILING note on damagedPlayerIsOpponent: an Equipment's controller is separate from the equipped creature's; not modelled",
   "100.2a": "schema: the CR's own numbering for a rules reference", "104.2": "verb-accounting: win-game NOT AN EVENT",
@@ -270,6 +271,12 @@ test("CR 701.17a: you may sacrifice only what you control — an unqualified sac
 test("CR 701.22b: scry 0 is no scry event", () => {
   expect(actionEmits({ verb: "scry", object: "0", amount: "0" }, "")).toEqual([]);
   expect(actionEmits({ verb: "scry", object: "2", amount: "2" }, "").map((e) => e.verb)).toEqual(["scry"]);
+});
+
+test("CR 704.5g: lethal damage destroys the creature — damage at creatures records the death, flagged conditional (#1734)", () => {
+  const e = actionEmits({ verb: "deal-damage", object: "each creature", amount: "3" }, "This spell deals 3 damage to each creature.");
+  expect(e.map((x) => [x.verb, x.conditional === true])).toEqual([["non-combat-damage", false], ["dies", true]]);
+  expect(actionEmits({ verb: "deal-damage", object: "target player", amount: "3" }, "This spell deals 3 damage to target player.").map((x) => x.verb)).toEqual(["non-combat-damage"]);
 });
 
 test("CR 701.5: countering a spell is an event — the action emits it and `countered` watches it", () => {

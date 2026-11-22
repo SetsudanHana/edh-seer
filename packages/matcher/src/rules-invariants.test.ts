@@ -13,6 +13,7 @@ import type { DeckCard, Hierarchy } from "./types.js";
 
 const ASSERTED = new Set(["111.7", "114.1", "903.3", "712.8d"]);
 const TESTED: Record<string, string> = {
+  "704.5g": "damage-fill-1734.test.ts — lethal damage destroys the creature: damage at creatures records a death flagged conditional, and a reason built on it weighs below a certain one (#1734)",
   "708.3": "face-down-1682.test.ts — a card put onto the battlefield face down is turned face down before it enters, so it satisfies no 'When this creature enters'; a class trigger still hears the 2/2 (#1682)",
   "107.4f": "copy-source.test.ts — a Phyrexian mana symbol is paid with 2 life, so Verrak (copies an ability paid with life) reaches Birthing Pod (#1650)",
   "721.2a": "lines.test.ts — a Station row's threshold counts charge counters, so a Station trigger row is no loop line (#1349)",

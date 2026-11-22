@@ -7,6 +7,7 @@ import crKeywords from "@edh-seer/tagger/cr-keywords" with { type: "json" };
  *  must never be keyed as one -- see `impliedEntryThemeTags`. */
 import type { DeckCard, Hierarchy } from "./types.js";
 import { isEveryoneEdict, isZonedCardGrant, subjectMatches, graveyardFillMatches, counterAddMatches } from "./subject.js";
+import { conditionalMark } from "./conditional-fill.js";
 import { enterAsCopyAbilities, impliedEvents, preparedAbilities, impliedGraveyardEvents, impliedCounterEvents, isHistoric, isOutlaw, keywordAbilities, printedAllTypes, proliferateAbilities, selfFillTypes, selfLeavesTypes } from "./implied.js";
 import { normalizeZoneEvent, tagKey, zoneEventKey } from "./zones.js";
 import { parseStat } from "./stats.js";
@@ -651,7 +652,8 @@ function producerEventsUncached(tags: CardTags): GameEvent[] {
     ...selfFillTypes(impliedGraveyardEvents(base), tags.characteristics),
     ...impliedCounterEvents(base),
   ];
-  const withDerived = [...base, ...derived];
+  // A CONDITIONAL EVENT COMES AFTER THE CERTAIN ONES (#1734): the graveyard channels say one reason per tag and keep the first fill that meets it, so a card with a destroy and a damage fill reads as the sure one.
+  const withDerived = [...base, ...derived].sort((x, y) => Number(x.conditional === true) - Number(y.conditional === true));
   const seen = new Set<string>();
   const out: GameEvent[] = [];
   for (const e of withDerived) {
@@ -2891,6 +2893,7 @@ function eventEdges({ p, c, h, opts, pEvents, reasons, replacementOnly, cAbiliti
         if (a.grants?.length && !keywords?.length) continue;
         reasons.push({
           tag: eventReasonTag(key, t.verb, a),
+          ...conditionalMark(e0),
           ...(origin !== undefined ? { producerAbility: origin } : {}),
           ...(ai < realAbilities ? { consumerAbility: ai } : {}),
           text: viaHost ? auraHostSentence(p.card.name, c.card.name, (emitSubjectNoun(c.tags.characteristics.enchants) ?? "a permanent").replace(/^an? /, ""))
@@ -3140,6 +3143,7 @@ function reanimatorEdges({ p, c, h, opts, pEvents, reasons }: PairScope): void {
       said.add(tag);
       reasons.push({
         tag,
+        ...conditionalMark(e),
         text: graveyardEnablesRecursion(graveyardFaceName(p, raw) ?? p.card.name, c.card.name, {
           producerItself: e.subject.self === true, returnsItself: a.effect.subject.self === true,
           intercepted,
@@ -3245,6 +3249,7 @@ function graveyardScalingEdges({ p, c, h, opts, pEvents, reasons }: PairScope): 
       said.add(tag);
       reasons.push({
         tag,
+        ...conditionalMark(e),
         text: graveyardFeedsScaling(graveyardFaceName(p, raw) ?? p.card.name, c.card.name, e.subject.self === true),
         effectKind: a.effect.kind,
         // AN ON-CAST COUNT HAPPENS ONCE (overview item 6c): this ternary had no `on-cast` branch, so
@@ -3435,6 +3440,7 @@ function countGateEdges({ p, c, h, opts, pEvents, reasons }: PairScope): void {
     countsSeen.add(`${tag}|${a.threshold.atLeast}|gy`);
     reasons.push({
       tag,
+      ...conditionalMark(fill.raw),
       text: graveyardThresholdSentence(graveyardFaceName(p, fill.raw) ?? p.card.name, c.card.name, a.threshold.atLeast, counted),
       effectKind: a.effect.kind,
       repeatability: a.kind === "static" ? "static" : a.kind === "activated" ? "activated" : a.kind === "on-cast" ? "oneshot" : "triggered",
@@ -4412,6 +4418,7 @@ function delveEdges({ p, c, pEvents, reasons }: PairScope): void {
       if (!key) continue;
       reasons.push({
         tag: key,
+        ...conditionalMark(e),
         text: delveSentence(p.card.name, c.card.name),
         effectKind: "",
         repeatability: "oneshot",

@@ -569,7 +569,8 @@ export function impliedGraveyardEvents(emits: GameEvent[]): GameEvent[] {
       // A DEATH fills the graveyard with a typed card; a `leaves` does not -- a flicker, a bounce
       // or an exile moved the permanent anywhere but a graveyard (CR 700.4), and until 2026-09-05
       // the two were one verb here only because `normalizeZoneEvent` spelled every death `leaves`.
-      out.push({ verb: "enters", subject: { ...e.subject, zone: "graveyard" }, ...(e.exiledAtOnce === true ? { exiledAtOnce: true as const } : {}) });
+      // A CONDITIONAL DEATH (damage, #1734) fills the graveyard only when it happens.
+      out.push({ verb: "enters", subject: { ...e.subject, zone: "graveyard" }, ...(e.exiledAtOnce === true ? { exiledAtOnce: true as const } : {}), ...(e.conditional === true ? { conditional: true as const } : {}) });
     }
   }
   return out;

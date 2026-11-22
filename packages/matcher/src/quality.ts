@@ -70,7 +70,7 @@ export function roleAbilities(d: DeckCard, role: Role): Ability[] {
   return (d.tags?.abilities ?? []).filter((a) =>
     (want.kinds?.includes(a.effect.kind) ?? false)
     // A TUCK IS REMOVAL ONLY WHEN IT TARGETS (Chaos Warp); Path's own library shuffle is not.
-    || (a.emits ?? []).some((e) => (want.verbs?.includes(e.verb) ?? false) && (e.verb !== "shuffle" || e.subject.scope === "target"))
+    || (a.emits ?? []).some((e) => (want.verbs?.includes(e.verb) ?? false) && e.conditional !== true && (e.verb !== "shuffle" || e.subject.scope === "target")) // a death damage may cause (#1734) is no role
     || (role === "ramp" && a.effect.kind === "token-generation" && namesManaToken(a.effect.subject?.subtype)));
 }
 
@@ -113,7 +113,7 @@ function breadthOf(s: SubjectFilter): number {
 
 /** Exile 3 > dies (destroy / sacrifice) 2 > leaves to hand 1 > tuck 0 (the spec's ladder). */
 function permanenceOf(a: Ability): number | undefined {
-  const verbs = (a.emits ?? []).map((e) => e.verb);
+  const verbs = (a.emits ?? []).filter((e) => e.conditional !== true).map((e) => e.verb); // a death damage may cause (#1734) is no permanence
   if (verbs.includes("exiled")) return 3;
   if (verbs.includes("dies")) return 2;
   // A `leaves` marked `tuck` (derive: a put into a library) is the ladder's bottom rung, not a bounce.

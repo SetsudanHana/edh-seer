@@ -11,7 +11,7 @@ const fx = (name: string) => (fixtures as Record<string, Fx>)[name]!;
 const rowOf = (name: string) => deriveRow({ doc: { oracleId: name, name, canonical: fx(name).canonical } as never, source: fx(name).source, isToken: false });
 const grammarRowOf = (name: string) => deriveRow({ doc: { oracleId: name, name, canonical: grammarClauseRecords(fx(name).source as never).records } as never, source: fx(name).source, isToken: false });
 const dies = (row: ReturnType<typeof rowOf>) =>
-  row.tags.abilities.flatMap((a) => a.emits ?? []).filter((e) => e.verb === "dies" || e.verb === "sacrifice").map((e) => ({ verb: e.verb, ...e.subject }));
+  row.tags.abilities.flatMap((a) => a.emits ?? []).filter((e) => (e.verb === "dies" || e.verb === "sacrifice") && e.conditional !== true).map((e) => ({ verb: e.verb, ...e.subject }));
 const selfOf = (row: ReturnType<typeof rowOf>) => dies(row).filter((s) => s.self === true);
 const tailOf = (row: ReturnType<typeof rowOf>) => dies(row).filter((s) => s.self !== true);
 
@@ -73,7 +73,7 @@ describe("the payment holds both objects (the cost is not free of the tail)", ()
 });
 
 describe("a sacrifice whose cards the same ability exiles (#1523 part 2 fix)", () => {
-  const exiled = (name: string) => rowOf(name).tags.abilities.flatMap((a) => a.emits ?? []).filter((e) => e.verb === "dies" || e.verb === "sacrifice").map((e) => [e.verb, e.subject.self === true, e.exiledAtOnce === true]);
+  const exiled = (name: string) => rowOf(name).tags.abilities.flatMap((a) => a.emits ?? []).filter((e) => (e.verb === "dies" || e.verb === "sacrifice") && e.conditional !== true).map((e) => [e.verb, e.subject.self === true, e.exiledAtOnce === true]);
   test("Sword of the Ages exiles \"this artifact and those creature cards\": the card and the tail are both marked", () => {
     expect(exiled("Sword of the Ages")).toEqual([["sacrifice", true, true], ["dies", true, true], ["sacrifice", false, true], ["dies", false, true]]);
   });
