@@ -57,7 +57,7 @@ describe("derive marks every searched put as from the library", () => {
 
 describe("it never reaches a consumer outside its class", () => {
   test.each([
-    // A BARE "artifact card" demand is outside a creature's class: it is met only if the chosen creature is also an artifact, which only a deck that holds one can say. Deck-gated reach: #1731.
+    // A BARE "artifact card" demand is outside a creature's class: it is met only if the chosen creature is also an artifact, which only a deck that holds one OTHER than the consumer can say (#1731: chosen-fill-1731.test.ts).
     ["Jarad's Orders", "Ultron's Auxiliary"], ["Jarad's Orders", "Ultron the Annihilator"], ["Buried Alive", "Ultron's Auxiliary"],
     // a keyword no creature carries (awaken is on spells only); an origin that is not the battlefield; a Dragon is a creature, never a land
     ["Buried Alive", "Halimar Tidecaller"], ["Buried Alive", "Yomiji, Who Bars the Way"], ["Entomb", "Yomiji, Who Bars the Way"], ["Jarad's Orders", "Yomiji, Who Bars the Way"],

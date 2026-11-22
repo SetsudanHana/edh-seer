@@ -21,9 +21,9 @@ export interface MatcherModule {
  *  `tagsOf` is every derived row's tags of that side (tokens too). A token with no derived row gets `synthesizeTokenTags` of THAT side's matcher, as `loadTokenTags` does.
  *  `cardOf` is the `Card` of each non-token id; `tokenDocs` the whole `tokens` collection (printingIds resolve a created token to its oracle id).
  *
- *  CEILING: the deck-specific `ReasonOptions` (`landTypes`, `enterWatchers`, `revenantToughness`) are left unset: each is computed from ONE deck's cards, and a corpus-wide value
+ *  CEILING: the deck-specific `ReasonOptions` (`landTypes`, `enterWatchers`, `revenantToughness`, `creatureCoTypes`) are left unset: each is computed from ONE deck's cards, and a corpus-wide value
  *  would turn on `landPutFor`, `reuseEdges` and the revenant gate between every pair. Pair reasons here are the card-page / compass reading, so a change that only matters through
- *  those three options (and `disambiguateFaceNames`, applied corpus-wide instead of per deck) is not seen. */
+ *  those options (and `disambiguateFaceNames`, applied corpus-wide instead of per deck) is not seen. */
 export function pairContext(m: MatcherModule, tagsOf: Map<string, any>, cardOf: Map<string, any>, tokenDocs: readonly { _id: string; printingIds?: string[] }[]) {
   const tokenIds = new Set(tokenDocs.map((t) => t._id));
   const tokenTagsById = new Map<string, any>();
