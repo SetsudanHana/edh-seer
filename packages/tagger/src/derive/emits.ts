@@ -626,6 +626,20 @@ export function millsOwnLibrary(action: Action, clauseText?: string): boolean {
   return action.verb === "manifest-dread" && manifestsDreadYourself(text);
 }
 
+/** A PUT ONTO THE BATTLEFIELD FACE DOWN (#1682): manifest (CR 701.40a), manifest dread (CR 701.62a, "Manifest one of them"), cloak (CR 701.58a), or a put/return the clause words "onto the battlefield face down" (Cyber-Controller's
+ *  milled creature cards, Death in Heaven). The permanent is turned face down BEFORE it enters, "so the permanent's enters-the-battlefield abilities won't trigger" (CR 708.3): its own "When this creature enters" never fires, and the matcher
+ *  (`selfEtbSelfSupplied`) refuses it as a supplier of a SELF enters trigger. A class trigger ("whenever a creature enters") still hears the 2/2 that enters. The mark is the existing `status: ["face-down"]`.
+ *  CEILING: the wording is read off the clause text, so a clause that puts one card face down and another face up reads both face down; a morph, megamorph or disguise card CAST face down is a cast (CR 702.37), not a put, and is not marked here;
+ *  "turned face up" is no entry and emits no `enters`. */
+const FACE_DOWN_VERBS: Record<string, RegExp> = { manifest: /\bmanifest/i, "manifest-dread": /\bmanifest/i, cloak: /\bcloak/i };
+const PUT_FACE_DOWN = /\bbattlefield face down\b/i;
+export function putsFaceDown(action: Action, clauseText?: string): boolean {
+  // THE CLAUSE MUST SAY IT (The Foretold Soldier: the stored answer files "exile it face down. It becomes foretold" with a `cloak` beside the exile): a verb the printed clause never words is no face-down put. A clause with no text fails open.
+  const worded = FACE_DOWN_VERBS[action.verb ?? ""];
+  if (worded !== undefined) return clauseText === undefined || clauseText === "" || worded.test(clauseText);
+  return (action.verb === "put" || action.verb === "return") && action.toZone === "battlefield" && PUT_FACE_DOWN.test(clauseText ?? "");
+}
+
 /** The back-references to a spell the clause named earlier. */
 const SPELL_ANAPHORS = ["the chosen spell", "that spell", "the spell"];
 
@@ -1347,6 +1361,7 @@ export function actionEmits(action: Action, clauseText?: string, opts: { self?: 
         : verb === "mill" && control === "any" && millsOwnLibrary(action, clauseText) ? "you" as const : control,
       ...(createsAToken && subject.token !== true ? { token: true as const } : {}),
       ...(arrivesTapped && verb === "enters" ? { entersTapped: true as const } : {}),
+      ...(verb === "enters" && putsFaceDown(action, clauseText) ? { status: [...(subject.status ?? []), "face-down"] } : {}),
       ...(leftTheGraveyard && verb === "leaves" ? { zone: "graveyard" } : {}),
       // A COUNTER ON A CARD EXILED WITH IT is on a card in exile (#1523: Rayami "exile that card with a blood counter on it", Darigaaz Reincarnated, suspend), not on a battlefield permanent.
       ...(verb === "counter-added" && exilesWithCounter(clauseText ?? "", counter) ? { zone: "exile" } : {}),

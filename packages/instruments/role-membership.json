@@ -18627,6 +18627,7 @@
 "Yawgmoth's Vile Offering": ["answer:creature","answer:planeswalker","role:targetedRemoval"],
 "Yawgmoth, Thran Physician": ["answer:creature","role:draw","role:targetedRemoval"],
 "Year of Hell": ["role:burn","role:draw","wincon:burn"],
+"Yedora, Grave Gardener": ["role:ramp"],
 "Yenna, Redtooth Regent": ["role:cardSelection"],
 "Yennett, Cryptic Sovereign": ["role:draw"],
 "Yes Man, Personal Securitron": ["role:draw","wincon:go-wide"],
