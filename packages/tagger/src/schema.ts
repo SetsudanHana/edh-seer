@@ -1809,7 +1809,7 @@ export interface Characteristics {
    *  permanent can BE should read: a transformed Westvale Abbey really is a Demon. What the union
    *  cannot express is what ENTERS or is CAST, since those happen one face at a time.
    *  `impliedEvents` is its only reader. */
-  faces?: { types: string[]; subtypes: string[] }[];
+  faces?: { types: string[]; subtypes: string[]; defender?: true }[];
   /** Scryfall's printing layout, carried so the matcher can apply the ZONE rules, which differ by
    *  family and cannot be read off `faces` alone — split and adventure both list every face.
    *  See `zoneTypes` in matcher/implied.ts. */
@@ -1842,6 +1842,9 @@ export interface Characteristics {
    *  (#797). Its cast is still a creature spell: the static works only on the battlefield (CR 113.6).
    *  Set by derive from the action grammar's reading; absent on every other card. */
   creatureOnlyIf?: true;
+  /** A CREATURE WITH DEFENDER AND NOTHING IN ITS OWN TEXT TO GET ROUND IT (#1753; CR 702.3b: it can't attack). Read by `impliedEvents`, which then supplies no `attacks`. On a single-face card it is this flag;
+   *  on a card with `faces` it is the flag on the face that prints the keyword, so a back face never inherits the front's. Absent on every other card. */
+  defender?: true;
   /** THE ONE DECK FACT ON AN OTHERWISE PRINTED RECORD. Set per deck by `markCommander`
    *  (matcher/commander.ts), never by extraction — CR 903.3 says the commander designation "is not a
    *  characteristic of the object represented by the card". It lives here anyway because a card's

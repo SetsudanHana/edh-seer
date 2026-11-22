@@ -1,0 +1,1020 @@
+{
+ "Wall of Limbs": {
+  "source": {
+   "name": "Wall of Limbs",
+   "typeLine": "Creature — Zombie Wall",
+   "oracleText": "Defender (This creature can't attack.)\nWhenever you gain life, put a +1/+1 counter on this creature.\n{5}{B}{B}, Sacrifice this creature: Target player loses X life, where X is this creature's power.",
+   "keywords": [
+    "Defender"
+   ],
+   "colors": [
+    "B"
+   ],
+   "manaValue": 3,
+   "colorIdentity": [
+    "B"
+   ],
+   "power": "0",
+   "toughness": "3",
+   "manaCost": "{2}{B}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Defender",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "life-gained",
+     "subject": "you",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "add-counter",
+      "object": "+1/+1",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "sacrifice",
+      "object": "this creature",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "lose-life",
+      "object": "target player",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "X",
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Glacial Wall": {
+  "source": {
+   "name": "Glacial Wall",
+   "typeLine": "Creature — Wall",
+   "oracleText": "Defender (This creature can't attack.)",
+   "keywords": [
+    "Defender"
+   ],
+   "colors": [
+    "U"
+   ],
+   "manaValue": 3,
+   "colorIdentity": [
+    "U"
+   ],
+   "power": "0",
+   "toughness": "7",
+   "manaCost": "{2}{U}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Defender",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   }
+  ]
+ },
+ "Mirror Wall": {
+  "source": {
+   "name": "Mirror Wall",
+   "typeLine": "Creature — Wall",
+   "oracleText": "Defender (This creature can't attack.)\n{W}: This creature can attack this turn as though it didn't have defender.",
+   "keywords": [
+    "Defender"
+   ],
+   "colors": [
+    "U"
+   ],
+   "manaValue": 4,
+   "colorIdentity": [
+    "U",
+    "W"
+   ],
+   "power": "3",
+   "toughness": "4",
+   "manaCost": "{3}{U}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Defender",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "cant",
+      "object": "has defender restriction, this turn",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Wishful Merfolk": {
+  "source": {
+   "name": "Wishful Merfolk",
+   "typeLine": "Creature — Merfolk",
+   "oracleText": "Defender\n{1}{U}: This creature loses defender and becomes a Human until end of turn.",
+   "keywords": [
+    "Defender"
+   ],
+   "colors": [
+    "U"
+   ],
+   "manaValue": 2,
+   "colorIdentity": [
+    "U"
+   ],
+   "power": "3",
+   "toughness": "2",
+   "manaCost": "{1}{U}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Defender",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "cant",
+      "object": "defender",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "animate",
+      "object": "this becomes a Human",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Guardians of Oboro": {
+  "source": {
+   "name": "Guardians of Oboro",
+   "typeLine": "Creature — Moonfolk Samurai",
+   "oracleText": "Defender\nModified creatures you control can attack as though they didn't have defender. (Equipment, Auras you control, and counters are modifications.)",
+   "keywords": [
+    "Defender"
+   ],
+   "colors": [
+    "U"
+   ],
+   "manaValue": 3,
+   "colorIdentity": [
+    "U"
+   ],
+   "power": "3",
+   "toughness": "4",
+   "manaCost": "{2}{U}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Defender",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "cant",
+      "object": "modified creatures you control are prevented from having defender restrict their ability to attack",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Hellrider": {
+  "source": {
+   "name": "Hellrider",
+   "typeLine": "Creature — Devil",
+   "oracleText": "Haste\nWhenever a creature you control attacks, this creature deals 1 damage to the player or planeswalker it's attacking.",
+   "keywords": [
+    "Haste"
+   ],
+   "colors": [
+    "R"
+   ],
+   "manaValue": 4,
+   "colorIdentity": [
+    "R"
+   ],
+   "power": "3",
+   "toughness": "3",
+   "manaCost": "{2}{R}{R}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Haste",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "attacks",
+     "subject": "a creature you control",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "deal-damage",
+      "object": "the player or planeswalker it's attacking",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Noble Stand": {
+  "source": {
+   "name": "Noble Stand",
+   "typeLine": "Enchantment",
+   "oracleText": "Whenever a creature you control blocks, you gain 2 life.",
+   "keywords": [],
+   "colors": [
+    "W"
+   ],
+   "manaValue": 5,
+   "colorIdentity": [
+    "W"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{4}{W}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "blocks",
+     "subject": "a creature you control",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "gain-life",
+      "object": "you",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "2",
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Arcades, the Strategist": {
+  "source": {
+   "name": "Arcades, the Strategist",
+   "typeLine": "Legendary Creature — Elder Dragon",
+   "oracleText": "Flying, vigilance\nWhenever a creature you control with defender enters, draw a card.\nEach creature you control with defender assigns combat damage equal to its toughness rather than its power and can attack as though it didn't have defender.",
+   "keywords": [
+    "Flying",
+    "Vigilance"
+   ],
+   "colors": [
+    "G",
+    "U",
+    "W"
+   ],
+   "manaValue": 4,
+   "colorIdentity": [
+    "G",
+    "U",
+    "W"
+   ],
+   "power": "3",
+   "toughness": "5",
+   "manaCost": "{1}{G}{W}{U}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Flying, vigilance",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "a creature you control with defender",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "draw",
+      "object": "a card",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "modify-pt",
+      "object": "each creature you control with defender",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "assigns combat damage equal to its toughness rather than its power",
+      "optional": false
+     },
+     {
+      "verb": "cant",
+      "object": "defender restriction removed for each creature you control with defender",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Grizzly Bears": {
+  "source": {
+   "name": "Grizzly Bears",
+   "typeLine": "Creature — Bear",
+   "oracleText": "",
+   "keywords": [],
+   "colors": [
+    "G"
+   ],
+   "manaValue": 2,
+   "colorIdentity": [
+    "G"
+   ],
+   "power": "2",
+   "toughness": "2",
+   "manaCost": "{1}{G}",
+   "layout": "normal"
+  },
+  "canonical": []
+ },
+ "Ulvenwald Captive": {
+  "source": {
+   "name": "Ulvenwald Captive // Ulvenwald Abomination",
+   "typeLine": "Creature — Werewolf Horror // Creature — Eldrazi Werewolf",
+   "oracleText": "Defender\n{T}: Add {G}.\n{5}{G}{G}: Transform this creature.\n//\n{T}: Add {C}{C}.",
+   "keywords": [
+    "Transform",
+    "Defender"
+   ],
+   "colors": [
+    "G"
+   ],
+   "manaValue": 2,
+   "colorIdentity": [
+    "G"
+   ],
+   "power": null,
+   "toughness": null,
+   "layout": "transform",
+   "faces": [
+    {
+     "name": "Ulvenwald Captive",
+     "typeLine": "Creature — Werewolf Horror",
+     "oracleText": "Defender\n{T}: Add {G}.\n{5}{G}{G}: Transform this creature.",
+     "colors": [
+      "G"
+     ],
+     "manaCost": "{1}{G}",
+     "power": "1",
+     "toughness": "2"
+    },
+    {
+     "name": "Ulvenwald Abomination",
+     "typeLine": "Creature — Eldrazi Werewolf",
+     "oracleText": "{T}: Add {C}{C}.",
+     "colors": [],
+     "manaCost": "",
+     "power": "4",
+     "toughness": "6"
+    }
+   ],
+   "allParts": [
+    {
+     "component": "combo_piece",
+     "name": "Eldritch Moon Checklist",
+     "typeLine": "Card",
+     "printingId": "cd8586f9-97e2-438d-b74f-1e53c811f314"
+    }
+   ]
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Defender",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "add-mana",
+      "object": "{G}",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "transform",
+      "object": "this creature",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 4,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "add-mana",
+      "object": "{C}{C}",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "The Fall of Lord Konda": {
+  "source": {
+   "name": "The Fall of Lord Konda // Fragment of Konda",
+   "typeLine": "Enchantment — Saga // Enchantment Creature — Human Noble",
+   "oracleText": "(As this Saga enters and after your draw step, add a lore counter.)\nI — Exile target creature an opponent controls with mana value 4 or greater.\nII — Each player gains control of all permanents they own.\nIII — Exile this Saga, then return it to the battlefield transformed under your control.\n//\nDefender\nWhen this creature dies, draw a card.",
+   "keywords": [
+    "Transform",
+    "Defender"
+   ],
+   "colors": [
+    "W"
+   ],
+   "manaValue": 3,
+   "colorIdentity": [
+    "W"
+   ],
+   "power": null,
+   "toughness": null,
+   "layout": "transform",
+   "faces": [
+    {
+     "name": "The Fall of Lord Konda",
+     "typeLine": "Enchantment — Saga",
+     "oracleText": "(As this Saga enters and after your draw step, add a lore counter.)\nI — Exile target creature an opponent controls with mana value 4 or greater.\nII — Each player gains control of all permanents they own.\nIII — Exile this Saga, then return it to the battlefield transformed under your control.",
+     "colors": [
+      "W"
+     ],
+     "manaCost": "{2}{W}"
+    },
+    {
+     "name": "Fragment of Konda",
+     "typeLine": "Enchantment Creature — Human Noble",
+     "oracleText": "Defender\nWhen this creature dies, draw a card.",
+     "colors": [
+      "W"
+     ],
+     "manaCost": "",
+     "power": "1",
+     "toughness": "3",
+     "colorIndicator": [
+      "W"
+     ]
+    }
+   ]
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "(As this Saga enters and after your draw step, add a lore counter.)",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "chapter",
+     "subject": "chapter I",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "exile",
+      "object": "target creature an opponent controls with mana value 4 or greater",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "chapter",
+     "subject": "chapter II",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "gain-control",
+      "object": "all permanents each player owns",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 4,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "chapter",
+     "subject": "chapter III",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "exile",
+      "object": "this Saga",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "return",
+      "object": "it",
+      "fromZone": "exile",
+      "toZone": "battlefield",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "transform",
+      "object": "it",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 5,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Defender",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 6,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "dies",
+     "subject": "this creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "draw",
+      "object": "a card",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Perimeter Captain": {
+  "source": {
+   "name": "Perimeter Captain",
+   "typeLine": "Creature — Human Soldier",
+   "oracleText": "Defender\nWhenever a creature you control with defender blocks, you may gain 2 life.",
+   "keywords": [
+    "Defender"
+   ],
+   "colors": [
+    "W"
+   ],
+   "manaValue": 1,
+   "colorIdentity": [
+    "W"
+   ],
+   "power": "0",
+   "toughness": "4",
+   "manaCost": "{W}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Defender",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "blocks",
+     "subject": "a creature you control with defender",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "gain-life",
+      "object": "2",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     }
+    ]
+   }
+  ]
+ },
+ "Moria Marauder": {
+  "source": {
+   "name": "Moria Marauder",
+   "typeLine": "Creature — Goblin Warrior",
+   "oracleText": "Double strike\nWhenever a Goblin or Orc you control deals combat damage to a player, exile the top card of your library. You may play that card this turn.",
+   "keywords": [
+    "Double strike"
+   ],
+   "colors": [
+    "R"
+   ],
+   "manaValue": 2,
+   "colorIdentity": [
+    "R"
+   ],
+   "power": "1",
+   "toughness": "1",
+   "manaCost": "{R}{R}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Double strike",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "damage-dealt",
+     "subject": "a Goblin or Orc you control",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "exile",
+      "object": "the top card of your library",
+      "fromZone": "library",
+      "toZone": "exile",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "play",
+      "object": "that card",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     }
+    ]
+   }
+  ]
+ },
+ "Aether Membrane": {
+  "source": {
+   "name": "Aether Membrane",
+   "typeLine": "Creature — Wall",
+   "oracleText": "Defender; reach (This creature can block creatures with flying.)\nWhenever this creature blocks a creature, return that creature to its owner's hand at end of combat.",
+   "keywords": [
+    "Reach",
+    "Defender"
+   ],
+   "colors": [
+    "R"
+   ],
+   "manaValue": 3,
+   "colorIdentity": [
+    "R"
+   ],
+   "power": "0",
+   "toughness": "5",
+   "manaCost": "{1}{R}{R}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "cant",
+      "object": "attack",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "grant-ability",
+      "object": "reach",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "blocks",
+     "subject": "a creature",
+     "control": "any"
+    },
+    "actions": [
+     {
+      "verb": "return",
+      "object": "that creature",
+      "fromZone": null,
+      "toZone": "hand",
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Elder Land Wurm": {
+  "source": {
+   "name": "Elder Land Wurm",
+   "typeLine": "Creature — Dragon Wurm",
+   "oracleText": "Defender, trample\nWhen this creature blocks, it loses defender.",
+   "keywords": [
+    "Trample",
+    "Defender"
+   ],
+   "colors": [
+    "W"
+   ],
+   "manaValue": 7,
+   "colorIdentity": [
+    "W"
+   ],
+   "power": "5",
+   "toughness": "5",
+   "manaCost": "{4}{W}{W}{W}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Defender, trample",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "blocks",
+     "subject": "this creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "cant",
+      "object": "defender",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Axebane Guardian": {
+  "source": {
+   "name": "Axebane Guardian",
+   "typeLine": "Creature — Human Druid",
+   "oracleText": "Defender\n{T}: Add X mana in any combination of colors, where X is the number of creatures you control with defender.",
+   "keywords": [
+    "Defender"
+   ],
+   "colors": [
+    "G"
+   ],
+   "manaValue": 3,
+   "colorIdentity": [
+    "G"
+   ],
+   "power": "0",
+   "toughness": "3",
+   "manaCost": "{2}{G}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Defender",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "add-mana",
+      "object": "X mana in any combination of colors, where X is the number of creatures you control with defender",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
+ }
+}

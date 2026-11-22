@@ -73,9 +73,35 @@ function alsoTypes(card: Card): string[] {
     .filter((w) => known.has(w));
 }
 
+/** A CARD'S TEXT, ONE STRING PER FACE: the corpus joins a multi-face card's oracle text on a "//" line. */
+const faceTexts = (oracleText: string): string[] => oracleText.split("\n//\n");
+
+/** A LINE THAT GETS ROUND DEFENDER: "can attack as though it didn't have defender", "loses defender" (also "lose defender"). A line that only counts or names creatures with defender does not. */
+const GETS_ROUND_DEFENDER = /(?:didn['\u2019]t|did not) have defender|loses? defender/;
+
+/** DOES THIS FACE'S TEXT PRINT DEFENDER, AND NOTHING IN IT GETS ROUND IT (#1753; CR 702.3b)? A keyword line is a list split on commas or semicolons ("Defender", "Flying, defender", "Defender; reach"), reminder text removed.
+ *  A face with another line that gets round defender ("can attack as though it didn't have defender", "loses defender": GETS_ROUND_DEFENDER) is not barred. A line that merely names the class ("a creature with defender") is ignored.
+ *  CEILING: a card with such a line is never barred, whatever its condition (Mirror Wall's {W}, Bristlepack Sentry's power 4, Elder Land Wurm's block), so it still supplies `attacks`.
+ *  CEILING: a creature handed "can attack as though it didn't have defender" by ANOTHER card (Arcades, High Alert, Felothar, Ghalta, Assault Formation, Rolling Stones, Warmonger's Chariot, Animate Wall) is read
+ *  as barred in every deck: the matcher judges one pair and does not see the enabler, so those decks lose the defender -> attack payoff pair. */
+function barredByDefender(text: string): boolean {
+  let keyword = false;
+  for (const raw of text.split("\n")) {
+    const paren = raw.indexOf("(");
+    const line = (paren < 0 ? raw : raw.slice(0, paren)).trim().toLowerCase();
+    if (line.split(/[,;]/).map((w) => w.trim()).includes("defender")) keyword = true;
+    else if (GETS_ROUND_DEFENDER.test(line)) return false;
+  }
+  return keyword;
+}
+
 export function extractCharacteristics(card: Card): Characteristics {
   const [left, right] = splitTypeLine(card.typeLine);
-  const faces = playableFaces(card.typeLine, card.layout, card.keywords);
+  const playable = playableFaces(card.typeLine, card.layout, card.keywords);
+  // Defender is read off the printed keyword for a single face and off each face's own text for a multi-face card (`keywords` is the union of both faces).
+  const texts = faceTexts(card.oracleText ?? "");
+  const faces = playable?.map((f, i) => barredByDefender(texts[i] ?? "") && f.types.includes("creature") ? { ...f, defender: true as const } : f);
+  const defender = playable === undefined && card.keywords.some((k) => k.toLowerCase() === "defender") && barredByDefender(card.oracleText ?? "");
   const keywords = card.keywords.map((k) => k.toLowerCase());
   // CHANGELING IS A CHARACTERISTIC-DEFINING ABILITY: the card has EVERY creature type, in every
   // zone — not only on the battlefield, which is why it belongs here and not in an implied event.
@@ -92,6 +118,7 @@ export function extractCharacteristics(card: Card): Characteristics {
     types: left,
     subtypes,
     ...(faces ? { faces } : {}),
+    ...(defender && left.includes("creature") ? { defender: true as const } : {}),
     // Carried for the zone rules — see `zoneTypes`. Free: it is already on the card document.
     ...(card.layout ? { layout: card.layout } : {}),
     colors: card.colors,
