@@ -1,0 +1,1533 @@
+{
+ "Necromentia": {
+  "source": {
+   "_id": "92acbbeb-f82b-413b-b243-f7a012f5400c",
+   "name": "Necromentia",
+   "typeLine": "Sorcery",
+   "oracleText": "Choose a card name other than a basic land card name. Search target opponent's graveyard, hand, and library for any number of cards with that name and exile them. That player shuffles, then creates a 2/2 black Zombie creature token for each card exiled from their hand this way.",
+   "keywords": [],
+   "colors": [
+    "B"
+   ],
+   "manaValue": 3,
+   "colorIdentity": [
+    "B"
+   ],
+   "power": null,
+   "toughness": null,
+   "tags": {
+    "produces": [
+     "cast:sorcery"
+    ],
+    "cares": []
+   },
+   "searchNames": [
+    "necromentia"
+   ],
+   "edhrecRank": 26852,
+   "manaCost": "{1}{B}{B}",
+   "layout": "normal",
+   "legalities": {
+    "standard": "not_legal",
+    "future": "not_legal",
+    "historic": "legal",
+    "timeless": "legal",
+    "gladiator": "legal",
+    "pioneer": "legal",
+    "modern": "legal",
+    "legacy": "legal",
+    "pauper": "not_legal",
+    "vintage": "legal",
+    "penny": "not_legal",
+    "commander": "legal",
+    "oathbreaker": "legal",
+    "standardbrawl": "not_legal",
+    "brawl": "legal",
+    "competitivebrawl": "legal",
+    "alchemy": "not_legal",
+    "paupercommander": "not_legal",
+    "duel": "legal",
+    "oldschool": "not_legal",
+    "premodern": "not_legal",
+    "predh": "not_legal",
+    "tlr": "legal"
+   },
+   "releasedAt": "2020-07-03",
+   "gameChanger": false,
+   "reserved": false,
+   "allParts": [
+    {
+     "component": "combo_piece",
+     "name": "Necromentia",
+     "typeLine": "Sorcery",
+     "printingId": "9350ab9a-263b-4698-b4e7-2beb01c39134"
+    },
+    {
+     "component": "token",
+     "name": "Zombie",
+     "typeLine": "Token Creature — Zombie",
+     "printingId": "3f170f84-6c36-43e2-91e6-3c7a136944b1"
+    }
+   ],
+   "artCrop": "https://cards.scryfall.io/art_crop/front/3/2/32c5252e-ff15-4f86-ad63-d8286427e70f.jpg?1783930700"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "search",
+      "object": "any number of cards with that name",
+      "fromZone": "graveyard",
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "search",
+      "object": "any number of cards with that name",
+      "fromZone": "hand",
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "search",
+      "object": "any number of cards with that name",
+      "fromZone": "library",
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "exile",
+      "object": "those cards",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "shuffle",
+      "object": "target opponent's library",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "create",
+      "object": "a 2/2 black Zombie creature token",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "one for each card exiled from their hand this way",
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "70f887f00d9739ca969153983f07e7d48a7775aa1efa285b6964688041bf6c1e"
+ },
+ "Smuggler's Share": {
+  "source": {
+   "_id": "17b29350-4f37-4552-8192-4856b15345f9",
+   "name": "Smuggler's Share",
+   "typeLine": "Enchantment",
+   "oracleText": "At the beginning of each end step, draw a card for each opponent who drew two or more cards this turn, then create a Treasure token for each opponent who had two or more lands enter the battlefield under their control this turn.",
+   "keywords": [
+    "Treasure"
+   ],
+   "colors": [
+    "W"
+   ],
+   "manaValue": 3,
+   "colorIdentity": [
+    "W"
+   ],
+   "power": null,
+   "toughness": null,
+   "tags": {
+    "produces": [
+     "artifact",
+     "treasure",
+     "token",
+     "mana",
+     "sacrifice-fodder",
+     "card-draw",
+     "enchantment"
+    ],
+    "cares": []
+   },
+   "searchNames": [
+    "smugglers share"
+   ],
+   "edhrecRank": 1648,
+   "manaCost": "{2}{W}",
+   "layout": "normal",
+   "legalities": {
+    "standard": "not_legal",
+    "future": "not_legal",
+    "historic": "not_legal",
+    "timeless": "not_legal",
+    "gladiator": "not_legal",
+    "pioneer": "not_legal",
+    "modern": "not_legal",
+    "legacy": "legal",
+    "pauper": "not_legal",
+    "vintage": "legal",
+    "penny": "not_legal",
+    "commander": "legal",
+    "oathbreaker": "legal",
+    "standardbrawl": "not_legal",
+    "brawl": "not_legal",
+    "competitivebrawl": "not_legal",
+    "alchemy": "not_legal",
+    "paupercommander": "not_legal",
+    "duel": "legal",
+    "oldschool": "not_legal",
+    "premodern": "not_legal",
+    "predh": "not_legal",
+    "tlr": "legal"
+   },
+   "releasedAt": "2024-02-09",
+   "gameChanger": false,
+   "reserved": false,
+   "allParts": [
+    {
+     "component": "token",
+     "name": "Treasure",
+     "typeLine": "Token Artifact — Treasure",
+     "printingId": "804c5c79-0b1f-4e2d-83d4-0518a615265a"
+    }
+   ],
+   "artCrop": "https://cards.scryfall.io/art_crop/front/f/1/f1ced678-5cfd-49ff-9420-6ee52d5edf5a.jpg?1783913024"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "end-step",
+     "subject": "each opponent",
+     "control": "any"
+    },
+    "actions": [
+     {
+      "verb": "draw",
+      "object": "a card",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "for each opponent who drew two or more cards this turn",
+      "optional": false
+     },
+     {
+      "verb": "create",
+      "object": "a Treasure token",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "for each opponent who had two or more lands enter the battlefield under their control this turn",
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "55b3986a8a7a89429ef6b27dfb3624b9f3e05f56162e1422fa95ed5606a8353c"
+ },
+ "Giant Space Amoeba": {
+  "source": {
+   "_id": "ff9f3d23-a12f-428b-8001-90dafac0c6d7",
+   "name": "Giant Space Amoeba",
+   "typeLine": "Creature — Germ",
+   "oracleText": "Flying\nWhenever this creature attacks, target creature defending player controls gets -3/-0 until end of turn, then create a token that's a copy of this creature.",
+   "keywords": [
+    "Flying"
+   ],
+   "colors": [
+    "U"
+   ],
+   "manaValue": 5,
+   "colorIdentity": [
+    "U"
+   ],
+   "power": "3",
+   "toughness": "3",
+   "tags": {
+    "produces": [
+     "tribe:germ",
+     "tribe-nontoken:germ",
+     "attack-trigger"
+    ],
+    "cares": []
+   },
+   "searchNames": [
+    "giant space amoeba"
+   ],
+   "edhrecRank": 29695,
+   "manaCost": "{4}{U}",
+   "layout": "normal",
+   "legalities": {
+    "standard": "not_legal",
+    "future": "not_legal",
+    "historic": "not_legal",
+    "timeless": "not_legal",
+    "gladiator": "not_legal",
+    "pioneer": "not_legal",
+    "modern": "not_legal",
+    "legacy": "legal",
+    "pauper": "not_legal",
+    "vintage": "legal",
+    "penny": "not_legal",
+    "commander": "legal",
+    "oathbreaker": "legal",
+    "standardbrawl": "not_legal",
+    "brawl": "not_legal",
+    "competitivebrawl": "not_legal",
+    "alchemy": "not_legal",
+    "paupercommander": "not_legal",
+    "duel": "legal",
+    "oldschool": "not_legal",
+    "premodern": "not_legal",
+    "predh": "not_legal",
+    "tlr": "not_legal"
+   },
+   "releasedAt": "2026-11-13",
+   "gameChanger": false,
+   "reserved": false,
+   "allParts": [
+    {
+     "component": "token",
+     "name": "Copy",
+     "typeLine": "Token",
+     "printingId": "2115c141-f2fb-4bfd-a8b5-2943bad9f418"
+    },
+    {
+     "component": "combo_piece",
+     "name": "Giant Space Amoeba",
+     "typeLine": "Creature — Germ",
+     "printingId": "6b49ed91-0898-4d03-8f5f-e5f39813e3ef"
+    }
+   ],
+   "artCrop": "https://cards.scryfall.io/art_crop/front/9/2/92791a77-c508-4411-8d5d-abc5c9f881a2.jpg?1793281203"
+  },
+  "canonical": []
+ },
+ "Tempt with Bunnies": {
+  "source": {
+   "_id": "6874be51-623d-4eaf-a67a-2fcbb9a8ceca",
+   "name": "Tempt with Bunnies",
+   "typeLine": "Sorcery",
+   "oracleText": "Tempting Offer — Draw a card and create a 1/1 white Rabbit creature token. Then each opponent may draw a card and create a 1/1 white Rabbit creature token. For each opponent who does, you draw a card and you create a 1/1 white Rabbit creature token.",
+   "keywords": [
+    "Tempting offer"
+   ],
+   "colors": [
+    "W"
+   ],
+   "manaValue": 3,
+   "colorIdentity": [
+    "W"
+   ],
+   "power": null,
+   "toughness": null,
+   "tags": {
+    "produces": [
+     "token",
+     "creature-etb",
+     "sacrifice-fodder",
+     "card-draw",
+     "cast:sorcery"
+    ],
+    "cares": []
+   },
+   "searchNames": [
+    "tempt with bunnies"
+   ],
+   "edhrecRank": 1991,
+   "manaCost": "{2}{W}",
+   "layout": "normal",
+   "legalities": {
+    "standard": "not_legal",
+    "future": "not_legal",
+    "historic": "not_legal",
+    "timeless": "not_legal",
+    "gladiator": "not_legal",
+    "pioneer": "not_legal",
+    "modern": "not_legal",
+    "legacy": "legal",
+    "pauper": "not_legal",
+    "vintage": "legal",
+    "penny": "not_legal",
+    "commander": "legal",
+    "oathbreaker": "legal",
+    "standardbrawl": "not_legal",
+    "brawl": "not_legal",
+    "competitivebrawl": "not_legal",
+    "alchemy": "not_legal",
+    "paupercommander": "not_legal",
+    "duel": "legal",
+    "oldschool": "not_legal",
+    "premodern": "not_legal",
+    "predh": "not_legal",
+    "tlr": "legal"
+   },
+   "releasedAt": "2026-10-19",
+   "gameChanger": false,
+   "reserved": false,
+   "allParts": [
+    {
+     "component": "token",
+     "name": "Rabbit",
+     "typeLine": "Token Creature — Rabbit",
+     "printingId": "63ae4f9c-ad6e-4d6a-89f1-653916bf5373"
+    }
+   ],
+   "artCrop": "https://cards.scryfall.io/art_crop/front/3/4/34fb2206-241a-46c6-9f48-af72119ee8bd.jpg?1787677339"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "draw",
+      "object": "a card",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "create",
+      "object": "a 1/1 white Rabbit creature token",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "draw",
+      "object": "a card",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     },
+     {
+      "verb": "create",
+      "object": "a 1/1 white Rabbit creature token",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     },
+     {
+      "verb": "draw",
+      "object": "a card",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "create",
+      "object": "a 1/1 white Rabbit creature token",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "cec3038d75f64bd5ec8dec813266d74fde82ff854eb60eef7393492da0f1d3e7"
+ },
+ "Magus of the Balance": {
+  "source": {
+   "_id": "ed450f48-e69d-48d7-82cc-79cf89b2a1fb",
+   "name": "Magus of the Balance",
+   "typeLine": "Creature — Human Wizard",
+   "oracleText": "{4}{W}, {T}, Sacrifice this creature: Each player chooses a number of lands they control equal to the number of lands controlled by the player who controls the fewest, then sacrifices the rest. Players discard cards and sacrifice creatures the same way.",
+   "keywords": [],
+   "colors": [
+    "W"
+   ],
+   "manaValue": 2,
+   "colorIdentity": [
+    "W"
+   ],
+   "power": "2",
+   "toughness": "2",
+   "tags": {
+    "produces": [
+     "tribe:human",
+     "tribe-nontoken:human",
+     "tribe:wizard",
+     "tribe-nontoken:wizard"
+    ],
+    "cares": []
+   },
+   "searchNames": [
+    "magus of the balance"
+   ],
+   "edhrecRank": 19220,
+   "manaCost": "{1}{W}",
+   "layout": "normal",
+   "legalities": {
+    "standard": "not_legal",
+    "future": "not_legal",
+    "historic": "not_legal",
+    "timeless": "not_legal",
+    "gladiator": "not_legal",
+    "pioneer": "not_legal",
+    "modern": "not_legal",
+    "legacy": "legal",
+    "pauper": "not_legal",
+    "vintage": "legal",
+    "penny": "not_legal",
+    "commander": "legal",
+    "oathbreaker": "legal",
+    "standardbrawl": "not_legal",
+    "brawl": "not_legal",
+    "competitivebrawl": "not_legal",
+    "alchemy": "not_legal",
+    "paupercommander": "not_legal",
+    "duel": "legal",
+    "oldschool": "not_legal",
+    "premodern": "not_legal",
+    "predh": "not_legal",
+    "tlr": "legal"
+   },
+   "releasedAt": "2022-06-10",
+   "gameChanger": false,
+   "reserved": false,
+   "artCrop": "https://cards.scryfall.io/art_crop/front/e/6/e63074e4-2c4c-411c-b320-c90d3a4a96d0.jpg?1783922489"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "sacrifice",
+      "object": "this creature",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "sacrifice",
+      "object": "lands you control equal to the number of lands controlled by the player who controls the fewest",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "discard",
+      "object": "cards equal to the number of lands controlled by the player who controls the fewest",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "sacrifice",
+      "object": "creatures you control equal to the number of lands controlled by the player who controls the fewest",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "747cdfb3936bd0d2ce736cb4d925e6f31e4d61c3a6acf47488dc8b8456e3576b"
+ },
+ "Archfiend of Depravity": {
+  "source": {
+   "_id": "af247e2f-b271-4f5b-ab98-4579d2c17c21",
+   "name": "Archfiend of Depravity",
+   "typeLine": "Creature — Demon",
+   "oracleText": "Flying\nAt the beginning of each opponent's end step, that player chooses up to two creatures they control, then sacrifices the rest.",
+   "keywords": [
+    "Flying"
+   ],
+   "colors": [
+    "B"
+   ],
+   "manaValue": 5,
+   "colorIdentity": [
+    "B"
+   ],
+   "power": "5",
+   "toughness": "4",
+   "tags": {
+    "produces": [
+     "tribe:demon",
+     "tribe-nontoken:demon"
+    ],
+    "cares": []
+   },
+   "searchNames": [
+    "archfiend of depravity"
+   ],
+   "edhrecRank": 1576,
+   "manaCost": "{3}{B}{B}",
+   "layout": "normal",
+   "legalities": {
+    "standard": "not_legal",
+    "future": "not_legal",
+    "historic": "not_legal",
+    "timeless": "not_legal",
+    "gladiator": "not_legal",
+    "pioneer": "legal",
+    "modern": "legal",
+    "legacy": "legal",
+    "pauper": "not_legal",
+    "vintage": "legal",
+    "penny": "legal",
+    "commander": "legal",
+    "oathbreaker": "legal",
+    "standardbrawl": "not_legal",
+    "brawl": "not_legal",
+    "competitivebrawl": "not_legal",
+    "alchemy": "not_legal",
+    "paupercommander": "not_legal",
+    "duel": "legal",
+    "oldschool": "not_legal",
+    "premodern": "not_legal",
+    "predh": "not_legal",
+    "tlr": "not_legal"
+   },
+   "releasedAt": "2017-06-16",
+   "gameChanger": false,
+   "reserved": false,
+   "artCrop": "https://cards.scryfall.io/art_crop/front/0/e/0ec85db7-c8ec-4730-b692-c140977436aa.jpg?1783936156"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Flying",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "end-step",
+     "subject": "opponent",
+     "control": "opponent"
+    },
+    "actions": [
+     {
+      "verb": "sacrifice",
+      "object": "creatures that player controls other than up to two chosen",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "7003be046ddab5e2c75ff9e67432a460c8202dfdb54a487003fe6cff9b347fa2"
+ },
+ "Balancing Act": {
+  "source": {
+   "_id": "4c68282b-776f-463a-9652-f611538c53ee",
+   "name": "Balancing Act",
+   "typeLine": "Sorcery",
+   "oracleText": "Each player chooses a number of permanents they control equal to the number of permanents controlled by the player who controls the fewest, then sacrifices the rest. Each player discards cards the same way.",
+   "keywords": [],
+   "colors": [
+    "W"
+   ],
+   "manaValue": 4,
+   "colorIdentity": [
+    "W"
+   ],
+   "power": null,
+   "toughness": null,
+   "tags": {
+    "produces": [
+     "cast:sorcery"
+    ],
+    "cares": []
+   },
+   "searchNames": [
+    "balancing act"
+   ],
+   "edhrecRank": 21089,
+   "manaCost": "{2}{W}{W}",
+   "layout": "normal",
+   "legalities": {
+    "standard": "not_legal",
+    "future": "not_legal",
+    "historic": "not_legal",
+    "timeless": "not_legal",
+    "gladiator": "not_legal",
+    "pioneer": "not_legal",
+    "modern": "not_legal",
+    "legacy": "legal",
+    "pauper": "not_legal",
+    "vintage": "legal",
+    "penny": "not_legal",
+    "commander": "legal",
+    "oathbreaker": "legal",
+    "standardbrawl": "not_legal",
+    "brawl": "not_legal",
+    "competitivebrawl": "not_legal",
+    "alchemy": "not_legal",
+    "paupercommander": "not_legal",
+    "duel": "legal",
+    "oldschool": "not_legal",
+    "premodern": "legal",
+    "predh": "legal",
+    "tlr": "not_legal"
+   },
+   "releasedAt": "2001-10-01",
+   "gameChanger": false,
+   "reserved": false,
+   "artCrop": "https://cards.scryfall.io/art_crop/front/7/d/7d6cb368-43f7-4d06-9cd5-492df5766567.jpg?1783945282"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "sacrifice",
+      "object": "permanents they control equal to the number of permanents controlled by the player who controls the fewest",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "discard",
+      "object": "cards the same way",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "54cac5a2ce5c0159abcc946719d1c539ce81c3f714538267e10760f1022a5536"
+ },
+ "Tragic Arrogance": {
+  "source": {
+   "_id": "8a29bd35-33ef-4317-9fe5-8aaff5d7d64d",
+   "name": "Tragic Arrogance",
+   "typeLine": "Sorcery",
+   "oracleText": "For each player, you choose from among the permanents that player controls an artifact, a creature, an enchantment, and a planeswalker. Then each player sacrifices all other nonland permanents they control.",
+   "keywords": [],
+   "colors": [
+    "W"
+   ],
+   "manaValue": 5,
+   "colorIdentity": [
+    "W"
+   ],
+   "power": null,
+   "toughness": null,
+   "tags": {
+    "produces": [
+     "cast:sorcery"
+    ],
+    "cares": []
+   },
+   "searchNames": [
+    "tragic arrogance"
+   ],
+   "edhrecRank": 2804,
+   "manaCost": "{3}{W}{W}",
+   "layout": "normal",
+   "legalities": {
+    "standard": "not_legal",
+    "future": "not_legal",
+    "historic": "legal",
+    "timeless": "legal",
+    "gladiator": "legal",
+    "pioneer": "legal",
+    "modern": "legal",
+    "legacy": "legal",
+    "pauper": "not_legal",
+    "vintage": "legal",
+    "penny": "legal",
+    "commander": "legal",
+    "oathbreaker": "legal",
+    "standardbrawl": "not_legal",
+    "brawl": "legal",
+    "competitivebrawl": "legal",
+    "alchemy": "not_legal",
+    "paupercommander": "not_legal",
+    "duel": "legal",
+    "oldschool": "not_legal",
+    "premodern": "not_legal",
+    "predh": "not_legal",
+    "tlr": "not_legal"
+   },
+   "releasedAt": "2026-06-26",
+   "gameChanger": false,
+   "reserved": false,
+   "artCrop": "https://cards.scryfall.io/art_crop/front/9/5/956d4728-e7a3-43f4-a350-86eca1b95d06.jpg?1783903243"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "sacrifice",
+      "object": "all other nonland permanents each player controls",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "9084c36215cf9ef4a7c381a674b274c7dead5ed3a6902a9a7251a0122944bbea"
+ },
+ "Cataclysm": {
+  "source": {
+   "_id": "b0479ca4-e925-4aa7-a4fa-f7e01f899ac5",
+   "name": "Cataclysm",
+   "typeLine": "Sorcery",
+   "oracleText": "Each player chooses from among the permanents they control an artifact, a creature, an enchantment, and a land, then sacrifices the rest.",
+   "keywords": [],
+   "colors": [
+    "W"
+   ],
+   "manaValue": 4,
+   "colorIdentity": [
+    "W"
+   ],
+   "power": null,
+   "toughness": null,
+   "tags": {
+    "produces": [
+     "cast:sorcery"
+    ],
+    "cares": []
+   },
+   "searchNames": [
+    "cataclysm"
+   ],
+   "edhrecRank": 12887,
+   "manaCost": "{2}{W}{W}",
+   "layout": "normal",
+   "legalities": {
+    "standard": "not_legal",
+    "future": "not_legal",
+    "historic": "not_legal",
+    "timeless": "not_legal",
+    "gladiator": "not_legal",
+    "pioneer": "not_legal",
+    "modern": "not_legal",
+    "legacy": "legal",
+    "pauper": "not_legal",
+    "vintage": "legal",
+    "penny": "not_legal",
+    "commander": "legal",
+    "oathbreaker": "legal",
+    "standardbrawl": "not_legal",
+    "brawl": "not_legal",
+    "competitivebrawl": "not_legal",
+    "alchemy": "not_legal",
+    "paupercommander": "not_legal",
+    "duel": "legal",
+    "oldschool": "not_legal",
+    "premodern": "legal",
+    "predh": "legal",
+    "tlr": "not_legal"
+   },
+   "releasedAt": "2015-05-06",
+   "gameChanger": false,
+   "reserved": false,
+   "artCrop": "https://cards.scryfall.io/art_crop/front/7/1/713160be-bcfd-4ef5-9457-c02b926ba06e.jpg?1783938511"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "sacrifice",
+      "object": "permanents not chosen",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "3e6b57a841ab4ad9609416bc2f2916bc8aa0ca43070c68cf15e46cb24c0676b5"
+ },
+ "Cataclysmic Gearhulk": {
+  "source": {
+   "_id": "2e4865c5-a590-4820-81ec-926014ddb8c4",
+   "name": "Cataclysmic Gearhulk",
+   "typeLine": "Artifact Creature — Construct",
+   "oracleText": "Vigilance\nWhen this creature enters, each player chooses an artifact, a creature, an enchantment, and a planeswalker from among the nonland permanents they control, then sacrifices the rest.",
+   "keywords": [
+    "Vigilance"
+   ],
+   "colors": [
+    "W"
+   ],
+   "manaValue": 5,
+   "colorIdentity": [
+    "W"
+   ],
+   "power": "4",
+   "toughness": "5",
+   "tags": {
+    "produces": [
+     "tribe:construct",
+     "tribe-nontoken:construct"
+    ],
+    "cares": []
+   },
+   "searchNames": [
+    "cataclysmic gearhulk"
+   ],
+   "edhrecRank": 5417,
+   "manaCost": "{3}{W}{W}",
+   "layout": "normal",
+   "legalities": {
+    "standard": "not_legal",
+    "future": "not_legal",
+    "historic": "legal",
+    "timeless": "legal",
+    "gladiator": "legal",
+    "pioneer": "legal",
+    "modern": "legal",
+    "legacy": "legal",
+    "pauper": "not_legal",
+    "vintage": "legal",
+    "penny": "legal",
+    "commander": "legal",
+    "oathbreaker": "legal",
+    "standardbrawl": "not_legal",
+    "brawl": "legal",
+    "competitivebrawl": "legal",
+    "alchemy": "not_legal",
+    "paupercommander": "not_legal",
+    "duel": "legal",
+    "oldschool": "not_legal",
+    "premodern": "not_legal",
+    "predh": "not_legal",
+    "tlr": "not_legal"
+   },
+   "releasedAt": "2023-04-21",
+   "gameChanger": false,
+   "reserved": false,
+   "artCrop": "https://cards.scryfall.io/art_crop/front/d/5/d5b8efa8-2d62-45b8-9e48-6be0a4ee944d.jpg?1783917189"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Vigilance",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "this creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "sacrifice",
+      "object": "each nonland permanent not chosen",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "84ac276c92e6e14828e9230a04c12723f9e5f697d89eadd8a0cf93fe6e3e0a7c"
+ },
+ "Single Combat": {
+  "source": {
+   "_id": "822ef47e-3f1b-40a6-8c5c-fea3d7deba5b",
+   "name": "Single Combat",
+   "typeLine": "Sorcery",
+   "oracleText": "Each player chooses a creature or planeswalker they control, then sacrifices the rest. Players can't cast creature or planeswalker spells until the end of your next turn.",
+   "keywords": [],
+   "colors": [
+    "W"
+   ],
+   "manaValue": 5,
+   "colorIdentity": [
+    "W"
+   ],
+   "power": null,
+   "toughness": null,
+   "tags": {
+    "produces": [
+     "cast:sorcery"
+    ],
+    "cares": []
+   },
+   "searchNames": [
+    "single combat"
+   ],
+   "edhrecRank": 2101,
+   "manaCost": "{3}{W}{W}",
+   "layout": "normal",
+   "legalities": {
+    "standard": "not_legal",
+    "future": "not_legal",
+    "historic": "legal",
+    "timeless": "legal",
+    "gladiator": "legal",
+    "pioneer": "legal",
+    "modern": "legal",
+    "legacy": "legal",
+    "pauper": "not_legal",
+    "vintage": "legal",
+    "penny": "legal",
+    "commander": "legal",
+    "oathbreaker": "legal",
+    "standardbrawl": "not_legal",
+    "brawl": "legal",
+    "competitivebrawl": "legal",
+    "alchemy": "not_legal",
+    "paupercommander": "not_legal",
+    "duel": "legal",
+    "oldschool": "not_legal",
+    "premodern": "not_legal",
+    "predh": "not_legal",
+    "tlr": "not_legal"
+   },
+   "releasedAt": "2019-05-03",
+   "gameChanger": false,
+   "reserved": false,
+   "artCrop": "https://cards.scryfall.io/art_crop/front/c/e/ce0e7c6a-e628-4327-a16f-2062c5a662df.jpg?1783933474"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "sacrifice",
+      "object": "creatures and planeswalkers they control other than the chosen one",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "cant",
+      "object": "cast creature or planeswalker spells until the end of your next turn",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "3f256e06788aecf42a181f1af1680cd2bad02c66d9dda172ff704c95c7669c68"
+ },
+ "Razia's Purification": {
+  "source": {
+   "_id": "60e95faf-1496-4298-9588-52b50b05fc6b",
+   "name": "Razia's Purification",
+   "typeLine": "Sorcery",
+   "oracleText": "Each player chooses three permanents they control, then sacrifices the rest.",
+   "keywords": [],
+   "colors": [
+    "R",
+    "W"
+   ],
+   "manaValue": 6,
+   "colorIdentity": [
+    "R",
+    "W"
+   ],
+   "power": null,
+   "toughness": null,
+   "tags": {
+    "produces": [
+     "cast:sorcery"
+    ],
+    "cares": [
+     "ramp"
+    ]
+   },
+   "searchNames": [
+    "razias purification"
+   ],
+   "edhrecRank": 21671,
+   "manaCost": "{4}{R}{W}",
+   "layout": "normal",
+   "legalities": {
+    "standard": "not_legal",
+    "future": "not_legal",
+    "historic": "not_legal",
+    "timeless": "not_legal",
+    "gladiator": "not_legal",
+    "pioneer": "not_legal",
+    "modern": "legal",
+    "legacy": "legal",
+    "pauper": "not_legal",
+    "vintage": "legal",
+    "penny": "legal",
+    "commander": "legal",
+    "oathbreaker": "legal",
+    "standardbrawl": "not_legal",
+    "brawl": "not_legal",
+    "competitivebrawl": "not_legal",
+    "alchemy": "not_legal",
+    "paupercommander": "not_legal",
+    "duel": "legal",
+    "oldschool": "not_legal",
+    "premodern": "not_legal",
+    "predh": "legal",
+    "tlr": "not_legal"
+   },
+   "releasedAt": "2005-10-07",
+   "gameChanger": false,
+   "reserved": false,
+   "artCrop": "https://cards.scryfall.io/art_crop/front/7/3/73bfefd3-bddd-47bb-92f3-9356a7bca637.jpg?1783943615"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "sacrifice",
+      "object": "permanents they control other than the three chosen",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "b4f3f219c5d1e181db9749e809d5fe455078ca6e995dd198c0af93013a0184a9"
+ },
+ "Mythos of Snapdax": {
+  "source": {
+   "_id": "4b0b4d16-1d2b-497e-a1ae-bfb89eece665",
+   "name": "Mythos of Snapdax",
+   "typeLine": "Sorcery",
+   "oracleText": "Each player chooses an artifact, a creature, an enchantment, and a planeswalker from among the nonland permanents they control, then sacrifices the rest. If {B}{R} was spent to cast this spell, you choose the permanents for each player instead.",
+   "keywords": [],
+   "colors": [
+    "W"
+   ],
+   "manaValue": 4,
+   "colorIdentity": [
+    "B",
+    "R",
+    "W"
+   ],
+   "power": null,
+   "toughness": null,
+   "tags": {
+    "produces": [
+     "cast:sorcery"
+    ],
+    "cares": []
+   },
+   "searchNames": [
+    "mythos of snapdax"
+   ],
+   "edhrecRank": 6908,
+   "manaCost": "{2}{W}{W}",
+   "layout": "normal",
+   "legalities": {
+    "standard": "not_legal",
+    "future": "not_legal",
+    "historic": "legal",
+    "timeless": "legal",
+    "gladiator": "legal",
+    "pioneer": "legal",
+    "modern": "legal",
+    "legacy": "legal",
+    "pauper": "not_legal",
+    "vintage": "legal",
+    "penny": "legal",
+    "commander": "legal",
+    "oathbreaker": "legal",
+    "standardbrawl": "not_legal",
+    "brawl": "legal",
+    "competitivebrawl": "legal",
+    "alchemy": "not_legal",
+    "paupercommander": "not_legal",
+    "duel": "legal",
+    "oldschool": "not_legal",
+    "premodern": "not_legal",
+    "predh": "not_legal",
+    "tlr": "not_legal"
+   },
+   "releasedAt": "2020-04-24",
+   "gameChanger": false,
+   "reserved": false,
+   "artCrop": "https://cards.scryfall.io/art_crop/front/2/7/2712a1a3-dd28-44c8-a661-5bcf68d3acaa.jpg?1783931085"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "sacrifice",
+      "object": "nonland permanents",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "70ef440b50a4277d543fea63959339297b824297aef7f33ba3dda75f20169da9"
+ },
+ "Slaughter the Strong": {
+  "source": {
+   "_id": "7a3569a0-a55f-40c9-9588-92db35e26567",
+   "name": "Slaughter the Strong",
+   "typeLine": "Sorcery",
+   "oracleText": "Each player chooses any number of creatures they control with total power 4 or less, then sacrifices all other creatures they control.",
+   "keywords": [],
+   "colors": [
+    "W"
+   ],
+   "manaValue": 3,
+   "colorIdentity": [
+    "W"
+   ],
+   "power": null,
+   "toughness": null,
+   "tags": {
+    "produces": [
+     "cast:sorcery"
+    ],
+    "cares": []
+   },
+   "searchNames": [
+    "slaughter the strong"
+   ],
+   "edhrecRank": 2337,
+   "manaCost": "{1}{W}{W}",
+   "layout": "normal",
+   "legalities": {
+    "standard": "not_legal",
+    "future": "not_legal",
+    "historic": "legal",
+    "timeless": "legal",
+    "gladiator": "legal",
+    "pioneer": "legal",
+    "modern": "legal",
+    "legacy": "legal",
+    "pauper": "not_legal",
+    "vintage": "legal",
+    "penny": "legal",
+    "commander": "legal",
+    "oathbreaker": "legal",
+    "standardbrawl": "not_legal",
+    "brawl": "legal",
+    "competitivebrawl": "legal",
+    "alchemy": "not_legal",
+    "paupercommander": "not_legal",
+    "duel": "legal",
+    "oldschool": "not_legal",
+    "premodern": "not_legal",
+    "predh": "not_legal",
+    "tlr": "legal"
+   },
+   "releasedAt": "2025-04-11",
+   "gameChanger": false,
+   "reserved": false,
+   "artCrop": "https://cards.scryfall.io/art_crop/front/9/b/9b4a42d9-4568-414d-8caf-9a7c33073059.jpg?1783907119"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "sacrifice",
+      "object": "all other creatures you control",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "sacrifice",
+      "object": "all other creatures opponent controls",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "a5e66964d33a105f018833d6585b47a99815b50bc2cb129251e492d5e27254f5"
+ },
+ "Vile Mutilator": {
+  "source": {
+   "_id": "1aae80a5-079c-48f3-aad1-563931e1a031",
+   "name": "Vile Mutilator",
+   "typeLine": "Creature — Demon",
+   "oracleText": "As an additional cost to cast this spell, sacrifice a creature or enchantment.\nFlying, trample\nWhen this creature enters, each opponent sacrifices a nontoken enchantment of their choice, then sacrifices a nontoken creature of their choice.",
+   "keywords": [
+    "Flying",
+    "Trample"
+   ],
+   "colors": [
+    "B"
+   ],
+   "manaValue": 7,
+   "colorIdentity": [
+    "B"
+   ],
+   "power": "6",
+   "toughness": "5",
+   "tags": {
+    "produces": [
+     "sacrifice-event",
+     "tribe:demon",
+     "tribe-nontoken:demon"
+    ],
+    "cares": [
+     "sacrifice-fodder",
+     "ramp"
+    ]
+   },
+   "searchNames": [
+    "vile mutilator"
+   ],
+   "edhrecRank": 6777,
+   "manaCost": "{5}{B}{B}",
+   "layout": "normal",
+   "legalities": {
+    "standard": "legal",
+    "future": "not_legal",
+    "historic": "legal",
+    "timeless": "legal",
+    "gladiator": "legal",
+    "pioneer": "legal",
+    "modern": "legal",
+    "legacy": "legal",
+    "pauper": "not_legal",
+    "vintage": "legal",
+    "penny": "not_legal",
+    "commander": "legal",
+    "oathbreaker": "legal",
+    "standardbrawl": "legal",
+    "brawl": "legal",
+    "competitivebrawl": "legal",
+    "alchemy": "legal",
+    "paupercommander": "not_legal",
+    "duel": "legal",
+    "oldschool": "not_legal",
+    "premodern": "not_legal",
+    "predh": "not_legal",
+    "tlr": "not_legal"
+   },
+   "releasedAt": "2024-09-27",
+   "gameChanger": false,
+   "reserved": false,
+   "artCrop": "https://cards.scryfall.io/art_crop/front/3/8/383fe040-98bb-40f3-b809-48c429b83f47.jpg?1783909474"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "sacrifice",
+      "object": "a creature or enchantment",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Flying, trample",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "this creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "sacrifice",
+      "object": "a nontoken enchantment of their choice",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "sacrifice",
+      "object": "a nontoken creature of their choice",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "9b6532d713ba4bdadd5a7dd5591b14f6a8f4a530c9e74ca526fc72fb10e24648"
+ },
+ "Din of the Fireherd": {
+  "source": {
+   "_id": "6480ab32-3a29-4449-8ff7-c8e43c320ed3",
+   "name": "Din of the Fireherd",
+   "typeLine": "Sorcery",
+   "oracleText": "Create a 5/5 black and red Elemental creature token. Target opponent sacrifices a creature of their choice for each black creature you control, then sacrifices a land of their choice for each red creature you control.",
+   "keywords": [],
+   "colors": [
+    "B",
+    "R"
+   ],
+   "manaValue": 8,
+   "colorIdentity": [
+    "B",
+    "R"
+   ],
+   "power": null,
+   "toughness": null,
+   "tags": {
+    "produces": [
+     "token",
+     "creature-etb",
+     "sacrifice-fodder",
+     "tribe:elemental",
+     "cast:sorcery"
+    ],
+    "cares": [
+     "ramp"
+    ]
+   },
+   "searchNames": [
+    "din of the fireherd"
+   ],
+   "edhrecRank": 20274,
+   "manaCost": "{5}{B/R}{B/R}{B/R}",
+   "layout": "normal",
+   "legalities": {
+    "standard": "not_legal",
+    "future": "not_legal",
+    "historic": "not_legal",
+    "timeless": "not_legal",
+    "gladiator": "not_legal",
+    "pioneer": "not_legal",
+    "modern": "legal",
+    "legacy": "legal",
+    "pauper": "not_legal",
+    "vintage": "legal",
+    "penny": "legal",
+    "commander": "legal",
+    "oathbreaker": "legal",
+    "standardbrawl": "not_legal",
+    "brawl": "not_legal",
+    "competitivebrawl": "not_legal",
+    "alchemy": "not_legal",
+    "paupercommander": "not_legal",
+    "duel": "legal",
+    "oldschool": "not_legal",
+    "premodern": "not_legal",
+    "predh": "legal",
+    "tlr": "not_legal"
+   },
+   "releasedAt": "2008-05-02",
+   "gameChanger": false,
+   "reserved": false,
+   "allParts": [
+    {
+     "component": "token",
+     "name": "Elemental",
+     "typeLine": "Token Creature — Elemental",
+     "printingId": "0c5afb0a-a158-4995-881e-eae0f20805a6"
+    }
+   ],
+   "artCrop": "https://cards.scryfall.io/art_crop/front/9/b/9bde655f-9f49-42f8-a168-9cbca0592bb8.jpg?1783942728"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "create",
+      "object": "a 5/5 black and red Elemental creature token",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     },
+     {
+      "verb": "sacrifice",
+      "object": "a creature of their choice",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "for each black creature you control",
+      "optional": false
+     },
+     {
+      "verb": "sacrifice",
+      "object": "a land of their choice",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "for each red creature you control",
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "da2cd3eed6496f77e2c3a7111e2c122bcac8466004c45c747e7cf0cdba8796d5"
+ }
+}
