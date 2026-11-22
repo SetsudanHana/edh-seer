@@ -177,9 +177,13 @@ test("a gated mana line plays in a deck that meets its gate and not in one that 
   // any colour, once the gate is met: the model plays the line's colours
   expect(colourMaskOf(jasper, none)).toBe(0);
   expect(colourMaskOf(jasper, dragons)).toBe(colorMask(WUBRG));
-  // and the simulation sees it: the same deck prices one more accelerant with the Dragons than without
-  expect(manaAvailability(dragons, { trials: 50 }).accelerants).toBe(1);
-  expect(manaAvailability([jasper, ...spells(11, 5), ...basics(36), ...spells(51, 3)], { trials: 50 }).accelerants).toBe(0);
+  // and the simulation sees it: the same deck prices one more accelerant with the Dragons than without.
+  // THE DECKS ARE COPIES OF ONE NAME (#1717): `manaModel` tops every SINGLETON nonland's cast curve up to MIN_HELD_TRIALS with forced re-simulations (up to 2,000 trials per card and arm), so ~100
+  // distinct filler names cost ~1 s per call whatever `trials` is (fewer base trials, more top-up) and put this test at 50-100% of its 5 s timeout on CI. Copies are never topped up; the
+  // accelerant count and the Dragon gate read types, not names (measured: 1 and 0 as before, ~0.1 s each).
+  const copies = (n: number, name: string, typeLine: string, manaValue = 0): DeckCard[] => Array.from({ length: n }, () => card(name, typeLine, manaValue));
+  expect(manaAvailability([jasper, ...copies(12, "Dragon", "Creature — Dragon", 5), ...copies(87, "Spell", "Sorcery", 3)], { trials: 50 }).accelerants).toBe(1);
+  expect(manaAvailability([jasper, ...copies(11, "Spell 5", "Sorcery", 5), ...copies(36, "Forest", "Basic Land — Forest"), ...copies(51, "Spell 3", "Sorcery", 3)], { trials: 50 }).accelerants).toBe(0);
 });
 
 test("the board-count gates stay priced turn by turn whatever the deck: Sceptre of Eternal Glory still waits on its three lands (not 'met' from the first land)", () => {
