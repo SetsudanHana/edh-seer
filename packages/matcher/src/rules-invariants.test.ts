@@ -65,6 +65,7 @@ const TESTED: Record<string, string> = {
   "103.8c": "wincon.test.ts — no first-turn draw skip in multiplayer, so an opponent's library on our turn t is 92 - t (#1056 mill)",
   "704.5b": "wincon.test.ts — a player loses on the draw from an empty library, so a library at 0 is the mill kill (#1056)",
   "508.1a": "commander-damage.test.ts, zones.test.ts — a creature attacks only with haste or controlled since the turn began, so the commander-damage turn assumes haste and says so (#1056); only a creature attacks, so no tag is attacks:any (#1088)",
+  "508.1c": "cant-attack-1685.test.ts — a creature whose own text says it can't attack supplies no implied `attacks`; 'can't attack unless' / 'alone' still does (#1685)",
   "509.1a": "edges.test.ts — only a creature blocks, so every creature supplies `blocks` (implied.ts) and a generic or self blocks trigger needs no supplier (#1373)",
   "509.1h": "edges.test.ts — the game makes an attacking creature blocked, so no card supplies `becomes-blocked` and a becomes-blocked payoff forms no edge (#1375)",
   "802.2": "deck-math.test.ts — attackers split across opponents, so three opponents' 40 is a floor for the board's combat speed (#1056)",
@@ -95,6 +96,7 @@ const TESTED: Record<string, string> = {
   "305.6": "land-score.test.ts — a basic land type is a mana ability: a shock land printed with reminder text only makes both its colours (#767)",
 };
 const PROSE: Record<string, string> = {
+  "702.3b": "defender: a creature with defender can't attack; named in the selfBarredCombat CEILING as not read (#1685)",
   "106.1b": "mana colours", "107.4c": "hybrid mana", "107.14": "energy symbol is a counter on a player (subject.test asserts the player-counter gate)", "114.2": "emblem recipient (tagger asserts it)", "118.7": "costs paid once",
   "120.3": "damage to a player", "202.3b": "mana value of a split card", "205.2a": "type line", "205.3": "subtypes", "205.4a": "supertypes",
   "302.6": "a creature's summoning sickness", "305.1": "land play", "500.5": "unspent mana empties as a step ends", "715.3": "an adventurer card is played as either half", "722.3c": "a prepare spell is cast from a copy in exile", "501": "beginning phase",

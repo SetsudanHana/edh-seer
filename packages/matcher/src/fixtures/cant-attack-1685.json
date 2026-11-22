@@ -1,0 +1,651 @@
+{
+ "Grakk the Pacifist": {
+  "source": {
+   "name": "Grakk the Pacifist",
+   "typeLine": "Legendary Creature — Orc",
+   "oracleText": "Grakk can't attack or block.\nWhenever you cast an Aura spell that targets a creature an opponent controls, draw a card. This ability triggers only once each turn.",
+   "keywords": [],
+   "colors": [
+    "W"
+   ],
+   "manaValue": 2,
+   "colorIdentity": [
+    "W"
+   ],
+   "power": "4",
+   "toughness": "3",
+   "manaCost": "{1}{W}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "cant",
+      "object": "attack or block",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "actions": [
+     {
+      "verb": "draw",
+      "object": "a card",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ],
+    "trigger": {
+     "event": "cast",
+     "subject": "an Aura spell that targets a creature an opponent controls",
+     "control": "you"
+    }
+   }
+  ]
+ },
+ "Vigean Hydropon": {
+  "source": {
+   "name": "Vigean Hydropon",
+   "typeLine": "Creature — Plant Mutant",
+   "oracleText": "Graft 5 (This creature enters with five +1/+1 counters on it. Whenever another creature enters, you may move a +1/+1 counter from this creature onto it.)\nThis creature can't attack or block.",
+   "keywords": [
+    "Graft"
+   ],
+   "colors": [
+    "G",
+    "U"
+   ],
+   "manaValue": 3,
+   "colorIdentity": [
+    "G",
+    "U"
+   ],
+   "power": "0",
+   "toughness": "0",
+   "manaCost": "{1}{G}{U}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Graft 5"
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "cant",
+      "object": "attack or block",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Gravecrawler": {
+  "source": {
+   "name": "Gravecrawler",
+   "typeLine": "Creature — Zombie",
+   "oracleText": "This creature can't block.\nYou may cast this card from your graveyard as long as you control a Zombie.",
+   "keywords": [],
+   "colors": [
+    "B"
+   ],
+   "manaValue": 1,
+   "colorIdentity": [
+    "B"
+   ],
+   "power": "2",
+   "toughness": "1",
+   "manaCost": "{B}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "cant",
+      "object": "block",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "cast",
+      "object": "this card",
+      "fromZone": "graveyard",
+      "toZone": null,
+      "optional": true
+     }
+    ]
+   }
+  ]
+ },
+ "Phyrexian Marauder": {
+  "source": {
+   "name": "Phyrexian Marauder",
+   "typeLine": "Artifact Creature — Phyrexian Construct",
+   "oracleText": "This creature enters with X +1/+1 counters on it.\nThis creature can't block.\nThis creature can't attack unless you pay {1} for each +1/+1 counter on it.",
+   "keywords": [],
+   "colors": [],
+   "manaValue": 0,
+   "colorIdentity": [],
+   "power": "0",
+   "toughness": "0",
+   "manaCost": "{X}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "add-counter",
+      "object": "+1/+1",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "X",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "cant",
+      "object": "block",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "cant",
+      "object": "attack",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false,
+      "unless": {
+       "cost": "{1} for each +1/+1 counter on it",
+       "payer": "you"
+      }
+     }
+    ]
+   }
+  ]
+ },
+ "Kulrath Knight": {
+  "source": {
+   "name": "Kulrath Knight",
+   "typeLine": "Creature — Elemental Knight",
+   "oracleText": "Flying\nWither (This deals damage to creatures in the form of -1/-1 counters.)\nCreatures your opponents control with counters on them can't attack or block.",
+   "keywords": [
+    "Flying",
+    "Wither"
+   ],
+   "colors": [
+    "B",
+    "R"
+   ],
+   "manaValue": 5,
+   "colorIdentity": [
+    "B",
+    "R"
+   ],
+   "power": "3",
+   "toughness": "3",
+   "manaCost": "{3}{B/R}{B/R}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Flying"
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Wither"
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "cant",
+      "object": "attack or block",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Grizzly Bears": {
+  "source": {
+   "name": "Grizzly Bears",
+   "typeLine": "Creature — Bear",
+   "oracleText": "",
+   "keywords": [],
+   "colors": [
+    "G"
+   ],
+   "manaValue": 2,
+   "colorIdentity": [
+    "G"
+   ],
+   "power": "2",
+   "toughness": "2",
+   "manaCost": "{1}{G}",
+   "layout": "normal"
+  },
+  "canonical": []
+ },
+ "Hellrider": {
+  "source": {
+   "name": "Hellrider",
+   "typeLine": "Creature — Devil",
+   "oracleText": "Haste\nWhenever a creature you control attacks, this creature deals 1 damage to the player or planeswalker it's attacking.",
+   "keywords": [
+    "Haste"
+   ],
+   "colors": [
+    "R"
+   ],
+   "manaValue": 4,
+   "colorIdentity": [
+    "R"
+   ],
+   "power": "3",
+   "toughness": "3",
+   "manaCost": "{2}{R}{R}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Haste"
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "actions": [
+     {
+      "verb": "deal-damage",
+      "object": "the player or planeswalker it's attacking",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ],
+    "trigger": {
+     "event": "attacks",
+     "subject": "a creature you control",
+     "control": "you"
+    }
+   }
+  ]
+ },
+ "Doran, Besieged by Time": {
+  "source": {
+   "name": "Doran, Besieged by Time",
+   "typeLine": "Legendary Creature — Treefolk Druid",
+   "oracleText": "Each creature spell you cast with toughness greater than its power costs {1} less to cast.\nWhenever a creature you control attacks or blocks, it gets +X/+X until end of turn, where X is the difference between its power and toughness.",
+   "keywords": [],
+   "colors": [
+    "B",
+    "G",
+    "W"
+   ],
+   "manaValue": 4,
+   "colorIdentity": [
+    "B",
+    "G",
+    "W"
+   ],
+   "power": "0",
+   "toughness": "5",
+   "manaCost": "{1}{W}{B}{G}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "cost-modify",
+      "object": "creature spell you cast with toughness greater than its power",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "-1",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "actions": [
+     {
+      "verb": "modify-pt",
+      "object": "it",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "+X/+X, where X is the difference between its power and toughness",
+      "optional": false
+     }
+    ],
+    "trigger": {
+     "event": "attacks",
+     "subject": "a creature you control",
+     "control": "you"
+    }
+   },
+   {
+    "id": 3,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "blocks",
+     "subject": "a creature you control",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "modify-pt",
+      "object": "it",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "+X/+X, where X is the difference between its power and toughness",
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Noble Stand": {
+  "source": {
+   "name": "Noble Stand",
+   "typeLine": "Enchantment",
+   "oracleText": "Whenever a creature you control blocks, you gain 2 life.",
+   "keywords": [],
+   "colors": [
+    "W"
+   ],
+   "manaValue": 5,
+   "colorIdentity": [
+    "W"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{4}{W}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "actions": [
+     {
+      "verb": "gain-life",
+      "object": "you",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "2",
+      "optional": false
+     }
+    ],
+    "trigger": {
+     "event": "blocks",
+     "subject": "a creature you control",
+     "control": "you"
+    }
+   }
+  ]
+ },
+ "Ember Beast": {
+  "source": {
+   "name": "Ember Beast",
+   "typeLine": "Creature — Beast",
+   "oracleText": "This creature can't attack or block alone.",
+   "keywords": [],
+   "colors": [
+    "R"
+   ],
+   "manaValue": 3,
+   "colorIdentity": [
+    "R"
+   ],
+   "power": "3",
+   "toughness": "4",
+   "manaCost": "{2}{R}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "cant",
+      "object": "attack or block alone",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Pipsqueak, Rebel Strongarm": {
+  "source": {
+   "name": "Pipsqueak, Rebel Strongarm",
+   "typeLine": "Legendary Creature — Human Rebel Ally",
+   "oracleText": "Pipsqueak can't attack alone unless he has a +1/+1 counter on him.",
+   "keywords": [],
+   "colors": [
+    "W"
+   ],
+   "manaValue": 3,
+   "colorIdentity": [
+    "W"
+   ],
+   "power": "4",
+   "toughness": "4",
+   "manaCost": "{2}{W}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "cant",
+      "object": "attack alone unless he has a +1/+1 counter on him",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Postmortem Professor": {
+  "source": {
+   "name": "Postmortem Professor",
+   "typeLine": "Creature — Zombie Warlock",
+   "oracleText": "This creature can't block.\nWhenever this creature attacks, each opponent loses 1 life and you gain 1 life.\n{1}{B}, Exile an instant or sorcery card from your graveyard: Return this card from your graveyard to the battlefield.",
+   "keywords": [],
+   "colors": [
+    "B"
+   ],
+   "manaValue": 2,
+   "colorIdentity": [
+    "B"
+   ],
+   "power": "2",
+   "toughness": "2",
+   "manaCost": "{1}{B}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "cant",
+      "object": "block",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "actions": [
+     {
+      "verb": "lose-life",
+      "object": "each opponent",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     },
+     {
+      "verb": "gain-life",
+      "object": "you",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ],
+    "trigger": {
+     "event": "attacks",
+     "subject": "this creature",
+     "control": "you"
+    }
+   },
+   {
+    "id": 3,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "exile",
+      "object": "an instant or sorcery card from your graveyard",
+      "fromZone": "graveyard",
+      "toZone": "exile",
+      "optional": false
+     },
+     {
+      "verb": "return",
+      "object": "this card",
+      "fromZone": "graveyard",
+      "toZone": "battlefield",
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Inkfathom Infiltrator": {
+  "source": {
+   "name": "Inkfathom Infiltrator",
+   "typeLine": "Creature — Merfolk Rogue",
+   "oracleText": "This creature can't block and can't be blocked.",
+   "keywords": [],
+   "colors": [
+    "B",
+    "U"
+   ],
+   "manaValue": 2,
+   "colorIdentity": [
+    "B",
+    "U"
+   ],
+   "power": "2",
+   "toughness": "1",
+   "manaCost": "{U/B}{U/B}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "cant",
+      "object": "block",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     },
+     {
+      "verb": "cant",
+      "object": "be blocked",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
+ }
+}
