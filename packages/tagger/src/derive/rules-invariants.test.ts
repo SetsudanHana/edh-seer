@@ -33,6 +33,8 @@ const TESTED: Record<string, string> = {
   "609.4b": "grammar/clause-record.test.ts — a spend-mana-as-any-colour rider changes how a cost is paid, not the cost: it stays an unclaimed `other` after the cast or play, never stripped (Evelyn, Tinybones, #1355)",
   "613.4b": "effect-kind.test.ts — a set of base power and toughness is `base-pt-set`, neither a pump nor a debuff (Sludge Monster, Godhead of Awe); matcher base-pt-class.test.ts pairs a class set with what it upgrades (#1572)",
   "122.6a": "grammar/replacements-1677.test.ts — the creature you cast from your graveyard enters with the counter an effect gives it, and its controller puts them: Overflow Submatrix's finality counter is a counter on a creature you control (#1677)",
+  "701.58a": "derive/face-down-1682.test.ts — cloak puts the card onto the battlefield face down: its enters emit is stamped status face-down (#1682)",
+  "708.3": "derive/face-down-1682.test.ts — a card put onto the battlefield face down is turned face down before it enters, so its enters emit is marked face-down; matcher face-down-1682.test.ts — such a put satisfies no self enters trigger (#1682)",
   "701.62": "manifest dread: its mill is of your library (emits.test.ts, manifest dread mills the top-two card of YOUR library)",
   "701.62a": "manifest dread alone puts the cards not manifested into the graveyard; a plain manifest emits no mill (derive.test.ts, a library-to-graveyard move the printed clause never makes, #1562)",
   "104.2b": "derive.test.ts — a win-game VERB derives the win-game kind (Epic Struggle, Laboratory Maniac, #1266)",
@@ -177,6 +179,7 @@ const TESTED: Record<string, string> = {
 };
 /** A reading in a comment, no fixture. Each carries where the reading lives. */
 const PROSE: Record<string, string> = {
+  "702.37": "CEILING note on putsFaceDown: a morph card cast face down is a cast, not a put, and is not marked (#1682)",
   "301.5d": "CEILING note on damagedPlayerIsOpponent: an Equipment's controller is separate from the equipped creature's; not modelled",
   "100.2a": "schema: the CR's own numbering for a rules reference", "104.2": "verb-accounting: win-game NOT AN EVENT",
   "106.4": "normalize-prompt / verb-accounting: mana-spent, add-mana",

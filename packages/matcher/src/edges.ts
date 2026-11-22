@@ -1142,7 +1142,8 @@ export function selfEtbSelfSupplied(producer: GameEvent, consumer: GameEvent): b
   // everything and make the gate dead code.
   if (consumer.subject.zone === "graveyard") return false;
   if (consumer.subject.self !== true) return false;
-  return producer.implied === true || producer.subject.token === true;
+  // A FACE-DOWN PUT (manifest, cloak, "put ... onto the battlefield face down", #1682) has no abilities when it enters (CR 708.3), so it supplies no "When this creature enters" either.
+  return producer.implied === true || producer.subject.token === true || producer.subject.status?.includes("face-down") === true;
 }
 
 /** Does a cast consumer filter on WHICH spell, or does every card in the deck satisfy it?
