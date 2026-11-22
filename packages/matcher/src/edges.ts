@@ -1249,7 +1249,7 @@ function originMatches(producer: SubjectFilter, consumer: SubjectFilter, verb: s
   if ((verb === "cast" || verb === "land-play") && consumer.owner === "opp" && producer.owner === "you") return false;
   // ..."WHENEVER A NONLAND PERMANENT AN OPPONENT OWNS ENTERS UNDER YOUR CONTROL" NEVER HEARS A CARD YOU OWN (#1737; CR 400.3): a put out of your library, hand or graveyard (Primal Surge, Stitch Together, Revivify, a tutor to the battlefield) says
   // `owner: you` (derive, `putsOwnCard`) and met Brainstealer Dragon's `owner: opp`. A steal (`owner: opp`: Gruesome Encore, Edea) and a put that states no owner (Bribery, Animate Dead's and Reanimate's "a graveyard") are still heard.
-  // CEILING: only a producer that STATES `owner: you`, or an implied enter / token you create (#1746, `castFrom` in `directedMatches`). "Return that card under its owner's control" (Long Road Home: `control: any`) states none and still meets it.
+  // CEILING: only a producer that STATES `owner: you`, or an implied enter / token you create (#1746, `castFrom` in `eventMatches`). "Return that card under its owner's control" (Long Road Home: `control: any`) states none and still meets it.
   if (verb === "enters" && consumer.owner === "opp" && producer.owner === "you") return false;
   if (consumer.fromZone === undefined) return true;
   // "WHENEVER YOU CAST A SPELL FROM YOUR LIBRARY / HAND / GRAVEYARD" NEVER HEARS A CARD AN OPPONENT OWNS (#1596 review; CR 400.3: an object that would go to a library, graveyard or hand other than its owner's goes to its
@@ -1366,6 +1366,8 @@ export function eventMatches(producer: GameEvent, consumer: GameEvent, h: Hierar
   // your control" (Brainstealer Dragon, `owner: opp`) heard Wall of Omens' own entry and every token YOU create: 22,392 Dragon pairs at DERIVE 575 (19,388 cards, 2,581 token makers, 423 token rows). Read here, on the copy only `originMatches` sees, so
   // nothing else that reads `owner` (subject.ts, `notOwnedByYou`, `eventKey`, the producer dedupe) moves. Only `control: you`: an opponent's token (Forbidden Orchard) and `control: any` stay heard.
   // CEILING: an authored put that states no owner (Bribery, Animate Dead, Long Road Home's `control: any`) is still heard; and a token with no stated `control: you` (a maker whose clause lost its creator) is not read as yours.
+  // REAL PARTNERS LOST WITH THEM (#1750): a card whose opponent-owned entry derive does not state, so only its own implied enter met the Dragon: a put out of an opponent's graveyard stored `control: opp` (Puppeteer Clique, Rakshasa Debaser,
+  // Tariel, Bone Dancer, Agadeem Occultist) and a cast of an opponent's card that emits no enter (Gonti, Thief of Sanity, Hostage Taker, Opposition Agent).
   const castFrom = producer.verb === "enters" && castFromOwned.owner === undefined && producer.subject.control === "you"
     && (producer.implied === true || producer.subject.token === true)
     ? { ...castFromOwned, owner: "you" as const } : castFromOwned;
