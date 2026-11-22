@@ -1,7 +1,8 @@
 import { describe, expect, test } from "vitest";
 import { deriveCardTags, deriveInputOf } from "@edh-seer/tagger";
 import type { CardTags, ClauseRecord } from "@edh-seer/tagger";
-import { loadHierarchy, pairReasons } from "./index.js";
+import { analyzeDeckStructured, loadHierarchy, pairReasons } from "./index.js";
+import { synthesizeTokenTags } from "./token-tags.js";
 import type { DeckCard } from "./types.js";
 import fixtures from "./fixtures/enters-owner-1737.json" with { type: "json" };
 
@@ -43,6 +44,30 @@ describe("a put that can take a card an opponent owns is still heard", () => {
   });
   test.each(["Animate Dead", "Reanimate"])("%s reanimates out of ANY graveyard (the card could be an opponent's): no owner is written, still heard", (producer) => {
     for (const s of putEmits(producer)) expect(s.owner).not.toBe("you");
+    expect(heardBy(producer)).not.toEqual([]);
+  });
+});
+
+/** #1746: the same demand is never met by a permanent you own by the rules, though the producer's words state no owner. CR 108.3: a card of your deck is yours, so a card you cast enters owned by you; CR 111.2: the player who
+ *  creates a token owns it. A token is its own node whose implied entry is the route (`collectTokenNodes`), so the token cases run the whole deck. Fixtures added 2026-11-22 (DERIVE 575). */
+const vanilla = (name: string, typeLine: string, p: string, colors: string[]): CardTags =>
+  synthesizeTokenTags({ _id: `test-${name}`, name, typeLine, power: p, toughness: p, colors, keywords: [], printingIds: [] });
+const TOKENS: Record<string, CardTags> = {
+  Soldier: vanilla("Soldier", "Token Creature — Soldier", "1", ["W"]),
+};
+const tokenTags = (ref: { name: string }): CardTags | null => TOKENS[ref.name] ?? null;
+const dragonHears = (maker: string): boolean =>
+  analyzeDeckStructured([dc(maker), dragon], undefined, H, undefined, undefined, undefined, tokenTags as never)
+    .cards.find((c) => c.name === maker)!.topPartners.some((p) => p.name === "Brainstealer Dragon");
+describe("an implied enter and a token you create are yours (#1746)", () => {
+  test("Wall of Omens: its own entry is a card of your deck, not heard", () => {
+    expect(heardBy("Wall of Omens")).toEqual([]);
+  });
+  test("Raise the Alarm (an instant, its only route is the Soldier tokens): a token you create is yours, not heard", () => {
+    expect(heardBy("Raise the Alarm")).toEqual([]);
+    expect(dragonHears("Raise the Alarm")).toBe(false);
+  });
+  test.each(["Gruesome Encore", "Bribery", "Animate Dead"])("%s is still heard", (producer) => {
     expect(heardBy(producer)).not.toEqual([]);
   });
 });
