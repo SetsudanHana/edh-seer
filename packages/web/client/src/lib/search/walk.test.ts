@@ -103,3 +103,20 @@ test("catalogue carries stamps, counts and registry labels", () => {
     values: [{ v: "static", n: 1 }, { v: "triggered", n: 1 }],
   });
 });
+
+test("a path with string and number leaves keeps the numbers as set members and is reported as mixed", () => {
+  const recs = [rec(0, { amount: "all" }), rec(1, { amount: 3 }), rec(2, { amount: [2, "x"] })];
+  const r = walkRecords(recs, registry());
+  const col = r.columns.get("tags.amount") as SetColumn;
+  expect(col.kind).toBe("set");
+  expect([...col.values]).toEqual([["2", [2]], ["3", [1]], ["all", [0]], ["x", [2]]]);
+  expect(r.mixed).toEqual(["tags.amount"]);
+  expect(walkRecords(fixture(), registry()).mixed).toEqual([]);
+});
+
+test("external, internal and build-state fields never become fields, nested or not", () => {
+  const card = { edhrecSaltiness: 0.07, artCrop: "u", nested: { _id: "a", printingId: "p", oracleId: "o", artCrop: "u", ok: "yes" } };
+  const tags = { deriveVersion: 5, normalizeVersion: 2, clauseSource: "grammar", abilities: [{ _id: "z", kind: "static" }] };
+  const { columns } = walkRecords([rec(0, tags, card)], registry({ groups: { read: ["tags"], card: ["card"] } }));
+  expect([...columns.keys()].sort()).toEqual(["card.nested.ok", "tags.abilities.kind", "tags.clauseSource"]);
+});

@@ -31,6 +31,8 @@ export interface WalkResult {
   columns: Map<string, Column>;
   /** String paths above the threshold: free text, not searched. */
   dropped: { path: string; distinct: number }[];
+  /** Paths holding both string and number leaves: numbers are kept as set members (stringified). */
+  mixed: string[];
 }
 
 /** Collapse array indices: leaves are collected under `a.b.c` whatever the nesting. */
@@ -51,6 +53,7 @@ function leaves(node: unknown, path: string, out: (path: string, v: string | boo
 interface Acc {
   strings: Map<string, Set<number>>;
   hasString: boolean;
+  numStrings: Map<string, Set<number>>;
   nums: Map<number, { min: number; max: number }>;
   hasNumber: boolean;
 }
@@ -70,7 +73,7 @@ export function walkRecords(records: Iterable<WalkRecord>, registry: SearchRegis
   };
 
   for (const rec of records) {
-    const perCard = new Map<string, { s?: Set<string>; lo?: number; hi?: number }>();
+    const perCard = new Map<string, { s?: Set<string>; n?: Set<string>; lo?: number; hi?: number }>();
     const visit = (path: string, v: string | boolean | number) => {
       if (wanted(path) === null) return;
       let c = perCard.get(path);
@@ -78,13 +81,23 @@ export function walkRecords(records: Iterable<WalkRecord>, registry: SearchRegis
       if (typeof v === "number") {
         c.lo = c.lo === undefined ? v : Math.min(c.lo, v);
         c.hi = c.hi === undefined ? v : Math.max(c.hi, v);
+        (c.n ??= new Set()).add(String(v)); // stringified, used if the path turns out mixed
       } else (c.s ??= new Set()).add(String(v));
     };
     leaves(rec.card, "card", visit);
     leaves(rec.tags, "tags", visit);
     for (const [path, c] of perCard) {
       let acc = accs.get(path);
-      if (!acc) accs.set(path, (acc = { strings: new Map(), hasString: false, nums: new Map(), hasNumber: false }));
+      if (!acc) accs.set(path, (acc = { strings: new Map(), hasString: false, nums: new Map(), numStrings: new Map(), hasNumber: false }));
+      if (c.lo !== undefined) {
+        acc.hasNumber = true;
+        acc.nums.set(rec.row, { min: c.lo, max: c.hi! });
+        for (const s of c.n!) {
+          let rows = acc.numStrings.get(s);
+          if (!rows) acc.numStrings.set(s, (rows = new Set()));
+          rows.add(rec.row);
+        }
+      }
       if (c.s) {
         acc.hasString = true;
         for (const s of c.s) {
@@ -93,18 +106,23 @@ export function walkRecords(records: Iterable<WalkRecord>, registry: SearchRegis
           rows.add(rec.row);
         }
       }
-      if (c.lo !== undefined) {
-        acc.hasNumber = true;
-        acc.nums.set(rec.row, { min: c.lo, max: c.hi! });
-      }
     }
   }
 
   const columns = new Map<string, Column>();
   const dropped: { path: string; distinct: number }[] = [];
+  const mixed: string[] = [];
   for (const [path, acc] of [...accs].sort((a, b) => (a[0] < b[0] ? -1 : 1))) {
     const group = wanted(path)!;
     if (acc.hasString) {
+      if (acc.hasNumber) {
+        mixed.push(path);
+        for (const [v, rows] of acc.numStrings) {
+          const have = acc.strings.get(v);
+          if (have) for (const r of rows) have.add(r);
+          else acc.strings.set(v, rows);
+        }
+      }
       if (acc.strings.size > threshold) {
         dropped.push({ path, distinct: acc.strings.size });
         continue;
@@ -124,5 +142,5 @@ export function walkRecords(records: Iterable<WalkRecord>, registry: SearchRegis
       });
     }
   }
-  return { columns, dropped };
+  return { columns, dropped, mixed };
 }
