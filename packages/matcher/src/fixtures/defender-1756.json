@@ -1,0 +1,1013 @@
+{
+ "Arcades, the Strategist": {
+  "source": {
+   "name": "Arcades, the Strategist",
+   "typeLine": "Legendary Creature \u2014 Elder Dragon",
+   "oracleText": "Flying, vigilance\nWhenever a creature you control with defender enters, draw a card.\nEach creature you control with defender assigns combat damage equal to its toughness rather than its power and can attack as though it didn't have defender.",
+   "keywords": [
+    "Flying",
+    "Vigilance"
+   ],
+   "colors": [
+    "G",
+    "U",
+    "W"
+   ],
+   "manaValue": 4,
+   "colorIdentity": [
+    "G",
+    "U",
+    "W"
+   ],
+   "power": "3",
+   "toughness": "5",
+   "manaCost": "{1}{G}{W}{U}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Flying, vigilance",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "a creature you control with defender",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "draw",
+      "object": "a card",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "modify-pt",
+      "object": "each creature you control with defender",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "assigns combat damage equal to its toughness rather than its power",
+      "optional": false
+     },
+     {
+      "verb": "cant",
+      "object": "defender restriction removed for each creature you control with defender",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "High Alert": {
+  "source": {
+   "name": "High Alert",
+   "typeLine": "Enchantment",
+   "oracleText": "Each creature you control assigns combat damage equal to its toughness rather than its power.\nCreatures you control can attack as though they didn't have defender.\n{2}{W}{U}: Untap target creature.",
+   "keywords": [],
+   "colors": [
+    "U",
+    "W"
+   ],
+   "manaValue": 3,
+   "colorIdentity": [
+    "U",
+    "W"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{1}{W}{U}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "modify-pt",
+      "object": "Each creature you control assigns combat damage equal to its toughness rather than its power",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "grant-ability",
+      "object": "Creatures you control can attack as though they didn't have defender",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "untap",
+      "object": "target creature",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Felothar the Steadfast": {
+  "source": {
+   "name": "Felothar the Steadfast",
+   "typeLine": "Legendary Creature \u2014 Human Warrior",
+   "oracleText": "Each creature you control assigns combat damage equal to its toughness rather than its power.\nCreatures you control can attack as though they didn't have defender.\n{3}, {T}, Sacrifice another creature: Draw cards equal to the sacrificed creature's toughness, then discard cards equal to its power.",
+   "keywords": [],
+   "colors": [
+    "B",
+    "G",
+    "W"
+   ],
+   "manaValue": 4,
+   "colorIdentity": [
+    "B",
+    "G",
+    "W"
+   ],
+   "power": "0",
+   "toughness": "5",
+   "manaCost": "{1}{W}{B}{G}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "modify-pt",
+      "object": "Each creature you control assigns combat damage equal to its toughness rather than its power",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "cant",
+      "object": "Creatures you control can attack as though they didn't have defender",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "sacrifice",
+      "object": "another creature",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "draw",
+      "object": "cards equal to the sacrificed creature's toughness",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "equal to the sacrificed creature's toughness",
+      "optional": false
+     },
+     {
+      "verb": "discard",
+      "object": "cards equal to the sacrificed creature's power",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "equal to the sacrificed creature's power",
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Ghalta the Immovable": {
+  "source": {
+   "name": "Ghalta the Immovable",
+   "typeLine": "Legendary Creature \u2014 Elder Dinosaur",
+   "oracleText": "This spell costs {X} less to cast, where X is the greatest toughness among creatures you control.\nCreatures you control can attack as though they didn't have defender.\nEach creature you control with toughness greater than its power assigns combat damage equal to its toughness rather than its power.",
+   "keywords": [],
+   "colors": [
+    "W"
+   ],
+   "manaValue": 9,
+   "colorIdentity": [
+    "W"
+   ],
+   "power": "0",
+   "toughness": "7",
+   "manaCost": "{8}{W}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "cost-modify",
+      "object": "this spell costs {X} less to cast, where X is the greatest toughness among creatures you control",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "cant",
+      "object": "creatures you control can attack as though they didn't have defender",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "modify-pt",
+      "object": "each creature you control with toughness greater than its power assigns combat damage equal to its toughness rather than its power",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Ghalta, Stampede Tyrant": {
+  "source": {
+   "name": "Ghalta, Stampede Tyrant",
+   "typeLine": "Legendary Creature \u2014 Elder Dinosaur",
+   "oracleText": "Trample\nWhen Ghalta enters, put any number of creature cards from your hand onto the battlefield.",
+   "keywords": [
+    "Trample"
+   ],
+   "colors": [
+    "G"
+   ],
+   "manaValue": 8,
+   "colorIdentity": [
+    "G"
+   ],
+   "power": "12",
+   "toughness": "12",
+   "manaCost": "{5}{G}{G}{G}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Trample",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "Ghalta",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "put",
+      "object": "any number of creature cards from your hand",
+      "fromZone": "hand",
+      "toZone": "battlefield",
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Assault Formation": {
+  "source": {
+   "name": "Assault Formation",
+   "typeLine": "Enchantment",
+   "oracleText": "Each creature you control assigns combat damage equal to its toughness rather than its power.\n{G}: Target creature with defender can attack this turn as though it didn't have defender.\n{2}{G}: Creatures you control get +0/+1 until end of turn.",
+   "keywords": [],
+   "colors": [
+    "G"
+   ],
+   "manaValue": 2,
+   "colorIdentity": [
+    "G"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{1}{G}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "modify-pt",
+      "object": "Each creature you control assigns combat damage equal to its toughness rather than its power",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "cant",
+      "object": "target creature with defender can attack this turn as though it didn't have defender",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "modify-pt",
+      "object": "Creatures you control",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "+0/+1",
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Rolling Stones": {
+  "source": {
+   "name": "Rolling Stones",
+   "typeLine": "Enchantment",
+   "oracleText": "Wall creatures can attack as though they didn't have defender.",
+   "keywords": [],
+   "colors": [
+    "W"
+   ],
+   "manaValue": 2,
+   "colorIdentity": [
+    "W"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{1}{W}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "cant",
+      "object": "Wall creatures can't be restricted from attacking by defender",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   }
+  ]
+ },
+ "Warmonger's Chariot": {
+  "source": {
+   "name": "Warmonger's Chariot",
+   "typeLine": "Artifact \u2014 Equipment",
+   "oracleText": "Equipped creature gets +2/+2.\nAs long as equipped creature has defender, it can attack as though it didn't have defender.\nEquip {3} ({3}: Attach to target creature you control. Equip only as a sorcery.)",
+   "keywords": [
+    "Equip"
+   ],
+   "colors": [],
+   "manaValue": 2,
+   "colorIdentity": [],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{2}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "modify-pt",
+      "object": "equipped creature",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "+2/+2",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "cant",
+      "object": "equipped creature can't be restricted from attacking due to defender",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Equip {3}",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   }
+  ]
+ },
+ "Animate Wall": {
+  "source": {
+   "name": "Animate Wall",
+   "typeLine": "Enchantment \u2014 Aura",
+   "oracleText": "Enchant Wall\nEnchanted Wall can attack as though it didn't have defender.",
+   "keywords": [
+    "Enchant"
+   ],
+   "colors": [
+    "W"
+   ],
+   "manaValue": 1,
+   "colorIdentity": [
+    "W"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{W}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Enchant Wall",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "cant",
+      "object": "can't be restricted from attacking by defender",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Wakestone Gargoyle": {
+  "source": {
+   "name": "Wakestone Gargoyle",
+   "typeLine": "Creature \u2014 Gargoyle",
+   "oracleText": "Defender, flying\n{1}{W}: Creatures you control with defender can attack this turn as though they didn't have defender.",
+   "keywords": [
+    "Flying",
+    "Defender"
+   ],
+   "colors": [
+    "W"
+   ],
+   "manaValue": 4,
+   "colorIdentity": [
+    "W"
+   ],
+   "power": "3",
+   "toughness": "4",
+   "manaCost": "{3}{W}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Defender, flying",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "grant-ability",
+      "object": "creatures you control with defender can attack this turn as though they didn't have defender",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   }
+  ]
+ },
+ "Walking Bulwark": {
+  "source": {
+   "name": "Walking Bulwark",
+   "typeLine": "Artifact Creature \u2014 Golem",
+   "oracleText": "Defender\n{2}: Until end of turn, target creature with defender gains haste, can attack as though it didn't have defender, and assigns combat damage equal to its toughness rather than its power. Activate only as a sorcery.",
+   "keywords": [
+    "Defender"
+   ],
+   "colors": [],
+   "manaValue": 1,
+   "colorIdentity": [],
+   "power": "0",
+   "toughness": "3",
+   "manaCost": "{1}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Defender",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "grant-ability",
+      "object": "haste",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     },
+     {
+      "verb": "cant",
+      "object": "doesn't have defender restriction on attacking",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     },
+     {
+      "verb": "modify-pt",
+      "object": "assigns combat damage equal to its toughness rather than its power",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   }
+  ]
+ },
+ "Wall of Limbs": {
+  "source": {
+   "name": "Wall of Limbs",
+   "typeLine": "Creature \u2014 Zombie Wall",
+   "oracleText": "Defender (This creature can't attack.)\nWhenever you gain life, put a +1/+1 counter on this creature.\n{5}{B}{B}, Sacrifice this creature: Target player loses X life, where X is this creature's power.",
+   "keywords": [
+    "Defender"
+   ],
+   "colors": [
+    "B"
+   ],
+   "manaValue": 3,
+   "colorIdentity": [
+    "B"
+   ],
+   "power": "0",
+   "toughness": "3",
+   "manaCost": "{2}{B}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Defender",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "life-gained",
+     "subject": "you",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "add-counter",
+      "object": "+1/+1",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "sacrifice",
+      "object": "this creature",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "lose-life",
+      "object": "target player",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "X",
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Glacial Wall": {
+  "source": {
+   "name": "Glacial Wall",
+   "typeLine": "Creature \u2014 Wall",
+   "oracleText": "Defender (This creature can't attack.)",
+   "keywords": [
+    "Defender"
+   ],
+   "colors": [
+    "U"
+   ],
+   "manaValue": 3,
+   "colorIdentity": [
+    "U"
+   ],
+   "power": "0",
+   "toughness": "7",
+   "manaCost": "{2}{U}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Defender",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   }
+  ]
+ },
+ "Aether Membrane": {
+  "source": {
+   "name": "Aether Membrane",
+   "typeLine": "Creature \u2014 Wall",
+   "oracleText": "Defender; reach (This creature can block creatures with flying.)\nWhenever this creature blocks a creature, return that creature to its owner's hand at end of combat.",
+   "keywords": [
+    "Reach",
+    "Defender"
+   ],
+   "colors": [
+    "R"
+   ],
+   "manaValue": 3,
+   "colorIdentity": [
+    "R"
+   ],
+   "power": "0",
+   "toughness": "5",
+   "manaCost": "{1}{R}{R}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "cant",
+      "object": "attack",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "grant-ability",
+      "object": "reach",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "blocks",
+     "subject": "a creature",
+     "control": "any"
+    },
+    "actions": [
+     {
+      "verb": "return",
+      "object": "that creature",
+      "fromZone": null,
+      "toZone": "hand",
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Hellrider": {
+  "source": {
+   "name": "Hellrider",
+   "typeLine": "Creature \u2014 Devil",
+   "oracleText": "Haste\nWhenever a creature you control attacks, this creature deals 1 damage to the player or planeswalker it's attacking.",
+   "keywords": [
+    "Haste"
+   ],
+   "colors": [
+    "R"
+   ],
+   "manaValue": 4,
+   "colorIdentity": [
+    "R"
+   ],
+   "power": "3",
+   "toughness": "3",
+   "manaCost": "{2}{R}{R}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Haste",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "attacks",
+     "subject": "a creature you control",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "deal-damage",
+      "object": "the player or planeswalker it's attacking",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Grizzly Bears": {
+  "source": {
+   "name": "Grizzly Bears",
+   "typeLine": "Creature \u2014 Bear",
+   "oracleText": "",
+   "keywords": [],
+   "colors": [
+    "G"
+   ],
+   "manaValue": 2,
+   "colorIdentity": [
+    "G"
+   ],
+   "power": "2",
+   "toughness": "2",
+   "manaCost": "{1}{G}",
+   "layout": "normal"
+  },
+  "canonical": []
+ },
+ "Mirror Wall": {
+  "source": {
+   "name": "Mirror Wall",
+   "typeLine": "Creature \u2014 Wall",
+   "oracleText": "Defender (This creature can't attack.)\n{W}: This creature can attack this turn as though it didn't have defender.",
+   "keywords": [
+    "Defender"
+   ],
+   "colors": [
+    "U"
+   ],
+   "manaValue": 4,
+   "colorIdentity": [
+    "U",
+    "W"
+   ],
+   "power": "3",
+   "toughness": "4",
+   "manaCost": "{3}{U}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Defender",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "cant",
+      "object": "has defender restriction, this turn",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Perimeter Captain": {
+  "source": {
+   "name": "Perimeter Captain",
+   "typeLine": "Creature \u2014 Human Soldier",
+   "oracleText": "Defender\nWhenever a creature you control with defender blocks, you may gain 2 life.",
+   "keywords": [
+    "Defender"
+   ],
+   "colors": [
+    "W"
+   ],
+   "manaValue": 1,
+   "colorIdentity": [
+    "W"
+   ],
+   "power": "0",
+   "toughness": "4",
+   "manaCost": "{W}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Defender",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "blocks",
+     "subject": "a creature you control with defender",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "gain-life",
+      "object": "2",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     }
+    ]
+   }
+  ]
+ }
+}

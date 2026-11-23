@@ -83,7 +83,7 @@ const GETS_ROUND_DEFENDER = /(?:didn['\u2019]t|did not) have defender|loses? def
  *  A face with another line that gets round defender ("can attack as though it didn't have defender", "loses defender": GETS_ROUND_DEFENDER) is not barred. A line that merely names the class ("a creature with defender") is ignored.
  *  CEILING: a card with such a line is never barred, whatever its condition (Mirror Wall's {W}, Bristlepack Sentry's power 4, Elder Land Wurm's block), so it still supplies `attacks`.
  *  CEILING: a creature handed "can attack as though it didn't have defender" by ANOTHER card (Arcades, High Alert, Felothar, Ghalta, Assault Formation, Rolling Stones, Warmonger's Chariot, Animate Wall) is read
- *  as barred in every deck: the matcher judges one pair and does not see the enabler, so those decks lose the defender -> attack payoff pair. */
+ *  as barred by a PAIR (the matcher judges two cards and does not see the enabler); a DECK holding one clears it again, in `analyzeDeckStructured` (#1756, packages/matcher/src/defender-enablers.ts). */
 function barredByDefender(text: string): boolean {
   let keyword = false;
   for (const raw of text.split("\n")) {

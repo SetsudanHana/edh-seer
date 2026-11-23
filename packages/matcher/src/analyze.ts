@@ -28,6 +28,7 @@ import { createdTokenRefs, type TokenRef } from "./tokens.js";
 import { GETS_AN_EMBLEM } from "@edh-seer/tagger/emblem";
 import { flipPerspective, opponentHeld } from "./perspective.js";
 import { commanderSubtypes, markCommander, resolveSharedTypes } from "./commander.js";
+import { defenderScopes, freeDefenders } from "./defender-enablers.js";
 import { deckLandTypes, deckSubtypeCounts, resolveChosenTypes } from "./chosen-type.js";
 import { computeCardBuckets } from "./buckets.js";
 import { groupEdgesByArchetype } from "./mechanisms.js";
@@ -300,9 +301,11 @@ export function analyzeDeckStructured(
   const sharedWith = commanderSubtypes(inputs.filter((dc) => commanderSet.has(dc.card.name)).map((dc) => dc.tags));
   // A chosen COLOUR is one the deck plays: its commanders' identity (CR 903.4), unknown without a commander (#1360).
   const chosenIdentity = commanderIdentity(inputs, commanderSet);
+  // A card that lets defenders attack (Arcades, High Alert, Rolling Stones ...) sits on another card, so it is read here, off the deck (#1756).
+  const defenderFree = defenderScopes(inputs);
   const resolved: DeckCard[] = inputs.map((dc) => {
     if (!dc.tags) return dc;
-    const tags = resolveSharedTypes(resolveChosenTypes(dc.tags, counts, hierarchy, chosenIdentity), sharedWith);
+    const tags = freeDefenders(resolveSharedTypes(resolveChosenTypes(dc.tags, counts, hierarchy, chosenIdentity), sharedWith), defenderFree);
     return { card: dc.card, tags: commanderSet.has(dc.card.name) ? markCommander(tags) : tags };
   });
   // The third deck fact, read at match time rather than written into the tags: what land types an
