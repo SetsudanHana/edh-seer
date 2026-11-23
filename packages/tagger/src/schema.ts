@@ -1241,6 +1241,11 @@ export interface Effect {
    *  edge drawn off the basis would claim that milling anything feeds all three. Carries the zone
    *  and the owner too, so `graveyardFillMatches` can judge it like any other graveyard demand. */
   scalingSubject?: SubjectFilter;
+  /** A COUNT OF DISTINCT CHARACTERISTICS ("the number of colors among artifacts you control", "card types among other nonland permanents you control") is raised when a thing joins the class WITH a characteristic the class lacks, not by the
+   *  class growing, so no class is a `scalingSubject` (owner ruling 2026-11-22, #1680: that made every member a `scales` partner). The class is kept HERE, which only the type-grant reader (`usesGrantedType`, `usesCreatureType`) reads: a grant that makes
+   *  more things that class (Encroaching Mycosynth's artifacts for Karn, Maskwood Nexus's Allies for Earthen Ally) or adds a card type (The Flesh Is Weak's artifacts for Loot) really does raise the count. `counts` says which characteristic is
+   *  counted. Set for colour, name and card-type counts over a battlefield class; not for creature, planeswalker or basic land types, whose count no grant of members raises. */
+  distinctCount?: { class: SubjectFilter; counts: "type" | "colour" | "name" };
   /** A recursion that takes the card ON THE WAY IN: a replacement exiles what would go to an
    *  opponent's graveyard and this card plays it from exile (Dauthi Voidwalker, Valgavoth). The card
    *  never reaches the graveyard, so the reason must not say "bring back". Edges are unchanged by

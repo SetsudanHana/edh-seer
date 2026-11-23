@@ -136,6 +136,7 @@ const countedText = (action: Action, clauseText?: string): string => {
 };
 
 const DISTINCT_CHARACTERISTICS = /\b(?:types?|colou?rs?|names?)\s+among\b/i;
+const LEAVES_OUT_CHANGELINGS = /\bwithout changeling\b|\b(?:don't|do not|doesn't|does not) count changelings?\b|\bnon-?changeling\b/i;
 
 /** A PARTY IS A BOARD COUNT OF FOUR TYPES (CR 700.8): up to one each of Cleric, Rogue, Warrior and
  *  Wizard among creatures you control. CEILING: the cap of four is a magnitude the engine does not
@@ -191,14 +192,18 @@ export function scalingSubject(action: Action, clauseText?: string): SubjectFilt
 
   // A COUNT OF DISTINCT CHARACTERISTICS ("creature types / colors / names among <class> you control", owner ruling 2026-11-22, #1680, extending #1673's refusal for Starfleet Academy to every battlefield count):
   // the count rises when an object adds a NEW type, colour or name, not when the class grows, so naming the class made every member a `scales` partner (Valiant Changeling alone paired with every creature: about 20,700
-  // pairs each for Valiant Changeling, Saavik, Captain Jonathan Archer and Infinite Diversity). No class is read for a colour, name, planeswalker, basic land or card-type count (Faeburrow Elder, Bloom Tender, Karn, Earthen Ally, Tam).
+  // pairs each for Valiant Changeling, Saavik, Captain Jonathan Archer and Infinite Diversity). No class is read for a colour, name, planeswalker, basic land or card-type count (Faeburrow Elder, Bloom Tender, Karn, Earthen Ally, Tam);
+  // the class a colour, name or card-type count ranges over survives in `distinctCountOf`, for the type-grant reader alone.
   // A graveyard count (Tarmogoyf) is decided above and keeps its class: a mill really raises it.
   // A CREATURE-TYPE count keeps the one member that raises it by itself: a changeling is every creature type, read as the printed `changeling` keyword on the class.
+  // Not when the class leaves out a type a changeling has ("non-Borg creatures": Saavik, Infinite Diversity, Captain Jonathan Archer, Starfleet Academy; a changeling is a Borg), nor when the clause leaves changelings out of the count
+  // ("without changeling": The Lorwyn Lizard; "Don't count changelings": You and Ooze Army?).
   // CEILING: the changeling partner is the printed keyword only; a card that "is every creature type" in its text without the keyword (Mistform Ultimus, Maskwood Nexus's grant) is not read as one.
+  // CEILING: "leaves changelings out" is read from the counted text and this clause, not from the rest of the card; a sentence outside the clause that does it is not seen.
   let countedNoun = noun;
   let changelingOnly = false;
   if (DISTINCT_CHARACTERISTICS.test(noun)) {
-    if (!/\bcreature types?\s+among\b/i.test(noun)) return undefined;
+    if (!/\bcreature types?\s+among\b/i.test(noun) || LEAVES_OUT_CHANGELINGS.test(`${text} ${clauseText ?? ""}`)) return undefined;
     countedNoun = noun.slice(noun.search(/\bamong\b/i) + "among".length);
     changelingOnly = true;
   }
@@ -230,7 +235,10 @@ export function scalingSubject(action: Action, clauseText?: string): SubjectFilt
   // graveyard branch draws between "your graveyard" and "all graveyards", and it decides whether an
   // opponent's Goblins count toward the number.
   subject.control = /\byou control\b/i.test(countedNoun) ? "you" : "any";
-  if (changelingOnly) subject.keyword = ["changeling"];
+  if (changelingOnly) {
+    if ((subject.notSubtype?.length ?? 0) > 0) return undefined;
+    subject.keyword = ["changeling"];
+  }
   return subject;
 }
 
@@ -258,4 +266,26 @@ export function actionScaling(action: Action, clauseText?: string): ScalingBasis
   const noun = counted[1].split(/\s{1,4}on\s{1,4}/i)[0];
   for (const [re, basis] of BASES) if (re.test(noun)) return basis;
   return undefined;
+}
+
+/** THE CLASS A DISTINCT-CHARACTERISTICS COUNT RANGES OVER, for the type-grant reader only (`Effect.distinctCount`, #1680). A colour, name or card-type count over a battlefield class ("the number of colors among artifacts you control") is no `scalingSubject`
+ *  (see there), but a grant that makes more things that class, or adds a card type, raises it, so `usesGrantedType` and `usesCreatureType` still read the class. A creature, planeswalker or basic land type count gets none: no grant of members
+ *  raises it (Toph's lands add no basic land type). A graveyard count is a `scalingSubject`.
+ *  CEILING: a card-type count is read for "card types" and "permanent types" only. */
+export function distinctCountOf(action: Action, clauseText?: string): { class: SubjectFilter; counts: "type" | "colour" | "name" } | undefined {
+  const text = countedText(action, clauseText);
+  const counted = COUNTED.exec(text);
+  if (!counted) return undefined;
+  const noun = counted[1];
+  if (GRAVEYARD_COUNT.test(text) || !DISTINCT_CHARACTERISTICS.test(noun)) return undefined;
+  const counts = /\bcolou?rs?\s+among\b/i.test(noun) ? "colour" : /\bnames?\s+among\b/i.test(noun) ? "name" : /\b(?:card|permanent) types?\s+among\b/i.test(noun) ? "type" : undefined;
+  if (!counts) return undefined;
+  const cls = noun.slice(noun.search(/\bamong\b/i) + "among".length);
+  if (!BATTLEFIELD_COUNT.test(cls)) return undefined;
+  const [head = "", tail = ""] = cls.split(/\s{1,4}(?:you control|on the battlefield)\b/i);
+  const qualifier = /\bthat(?:'s| is| are)\b[^.]*/i.exec(tail)?.[0];
+  const subject = parseSubject(qualifier ? `${head} ${qualifier}` : head);
+  subject.zone = "battlefield";
+  subject.control = /\byou control\b/i.test(cls) ? "you" : "any";
+  return { class: subject, counts };
 }

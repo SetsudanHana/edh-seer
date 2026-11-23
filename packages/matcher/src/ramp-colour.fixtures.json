@@ -2145,6 +2145,16 @@
       }
      },
      "effect": {
+      "distinctCount": {
+       "class": {
+        "control": "you",
+        "scope": "all",
+        "token": null,
+        "type": "permanent",
+        "zone": "battlefield"
+       },
+       "counts": "colour"
+      },
       "kind": "draw-card",
       "scaling": "per-permanent",
       "subject": {
@@ -5399,6 +5409,16 @@
       }
      },
      "effect": {
+      "distinctCount": {
+       "class": {
+        "control": "you",
+        "scope": "all",
+        "token": null,
+        "type": "permanent",
+        "zone": "battlefield"
+       },
+       "counts": "colour"
+      },
       "kind": "pump",
       "scaling": "per-permanent"
      },
