@@ -489,6 +489,9 @@ function zoneOf(words: string): string | undefined {
 function fromOf(phrase: string): { rest: string; from?: string } {
   const at = phrase.search(/ from (?:your|their|its owner's|a|an opponent's|target player's|that player's|each player's|each opponent's|all) (?:graveyards?|hands?|librar(?:y|ies))(?: or from exile)?$| from exile$| from the battlefield$/);
   if (at < 0) return { rest: phrase };
+  // #1309: "creature from the battlefield or creature card from a graveyard" (Savior of Ollenbock) names TWO origins; the closing zone is one half, so reading it as the whole object's zone drops the battlefield half. No zone is set and the
+  // words stay whole for derive. CEILING: the phrase is left unsplit, so its emits carry no zone for either half until derive reads the words.
+  if (/ from the battlefield (?:or|and\/or) /.test(phrase.slice(0, at))) return { rest: phrase };
   return { rest: phrase.slice(0, at), from: zoneOf(phrase.slice(at + " from ".length).replace(/ or from exile$/, "").replace(/^(?:your|their|its owner's|a|an opponent's|target player's|that player's|each player's|each opponent's|all|the) /, "")) };
 }
 

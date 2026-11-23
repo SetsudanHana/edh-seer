@@ -297,7 +297,8 @@ function actionsOf(readings: ActionReading[], selfTrigger: string | undefined, t
       // (Szarekh's "from among the cards milled this way", Glint Raker's "revealed this way" and "the rest").
       : /\bmilled\b/i.test(object) ? "graveyard"
       // "exile up to two target cards from a single graveyard" (Faerie Macabre, Shred Memory).
-      : /\bfrom (?:a single |target player's |an opponent's |each opponent's |any )?graveyards?\b/i.test(object) ? "graveyard"
+      // #1309: not when the object also names the battlefield ("target creature from the battlefield or creature card from a graveyard", Savior of Ollenbock): the graveyard is one half of the object, and a single zone drops the other. Left unset, derive reads each half itself.
+      : /\bfrom (?:a single |target player's |an opponent's |each opponent's |any )?graveyards?\b/i.test(object) && !/\bfrom (?:the )?battlefield\b/i.test(object) ? "graveyard"
       // "return the exiled card" (Champion of the Path), "cast any number of cards exiled with this
       // creature" (Izzet Chemister), "target face-up exiled card": from exile.
       : /\bexiled\b/i.test(object) && !/\bthis way\b/i.test(object) ? "exile"
