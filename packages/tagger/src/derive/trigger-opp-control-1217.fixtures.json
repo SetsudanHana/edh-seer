@@ -1,0 +1,61 @@
+{
+ "Magus of the Bridge": {
+  "source": {
+   "name": "Magus of the Bridge",
+   "typeLine": "Creature — Human Wizard",
+   "oracleText": "Whenever a nontoken creature is put into your graveyard from the battlefield, create a 2/2 black Zombie creature token.\nWhen a creature is put into an opponent's graveyard from the battlefield, exile this creature.",
+   "keywords": [],
+   "colors": [
+    "B"
+   ],
+   "manaValue": 3,
+   "colorIdentity": [
+    "B"
+   ],
+   "power": "4",
+   "toughness": "4",
+   "manaCost": "{B}{B}{B}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "dies",
+     "subject": "a nontoken creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "create",
+      "object": "a 2/2 black Zombie creature token",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "dies",
+     "subject": "a creature",
+     "control": "opponent"
+    },
+    "actions": [
+     {
+      "verb": "exile",
+      "object": "this creature",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
+ }
+}
