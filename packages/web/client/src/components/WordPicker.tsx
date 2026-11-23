@@ -1,4 +1,4 @@
-import { useId, useMemo, useRef, useState } from "react";
+import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { useListboxKeys } from "../lib/listbox-keys.js";
 
 /** A TYPEAHEAD OVER ONE VOCABULARY OF WORDS, and the only listbox on this page.
@@ -11,6 +11,10 @@ import { useListboxKeys } from "../lib/listbox-keys.js";
  *  this knows nothing about tables.
  *
  *  THE KEYBOARD MODEL IS THE ONE THE HEADER SEARCH ALREADY HAS, via `useListboxKeys`. */
+type Mode = "and" | "any" | "not";
+/** The word each mode wears on its chip. "never" for `not`, said in words so strike-through is never the only carrier. */
+const MODE_WORD: Record<Mode, string> = { and: "must", any: "any of", not: "never" };
+
 const Cross = (): React.JSX.Element => (
   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true" focusable="false">
     <path d="M18 6 6 18M6 6l12 12" />
@@ -52,6 +56,19 @@ export function WordPicker(
   const anyChosen = anyOf ?? [];
   const listId = useId();
   const fieldRef = useRef<HTMLInputElement>(null);
+  const chipsRef = useRef<HTMLUListElement>(null);
+  // WHICH CHIP'S MODE MENU IS OPEN, and where focus goes once the new mode has re-drawn the chip (a chip moving between
+  // modes is a different list entry, so the node the reader was on may be gone).
+  const [modeOpen, setModeOpen] = useState<string | null>(null);
+  const [refocus, setRefocus] = useState<{ name: string; sig: string } | null>(null);
+  const sig = `${chosen.join("\u0000")}|${anyChosen.join("\u0000")}|${negated.join("\u0000")}`;
+  const modeButton = (name: string): HTMLElement | undefined =>
+    [...(chipsRef.current?.querySelectorAll<HTMLElement>("[data-mode-for]") ?? [])].find((b) => b.dataset["modeFor"] === name);
+  useEffect(() => {
+    if (refocus === null || refocus.sig === sig) return;
+    modeButton(refocus.name)?.focus();
+    setRefocus(null);
+  }, [refocus, sig]);
 
   /** PREFIX FIRST, THEN ANYWHERE. Typing "sli" should put Sliver above Basilisk, and a plain
    *  `includes` does not: 28 subtypes contain "sli" and the one that starts with it is what was
@@ -92,8 +109,9 @@ export function WordPicker(
       {/* THE CHOSEN ONES ARE CHIPS, so removing one is a click rather than a re-typed field, and so
         * the ANSWERED question stays visible while the next is being asked. */}
       {(chosen.length > 0 || negated.length > 0 || anyChosen.length > 0) && (
-        <ul className="flex flex-wrap gap-2 list-none p-0 m-0">
-          {chosen.map((name) => (
+        <ul ref={chipsRef} className="flex flex-wrap gap-2 list-none p-0 m-0">
+          {/* WITHOUT A MODE CONTROL a chosen word is the one-button chip it always was. */}
+          {!onMove && chosen.map((name) => (
             <li key={name} className="flex items-center gap-1">
               <button
                 type="button"
@@ -104,54 +122,71 @@ export function WordPicker(
                 {say(name)}
                 <Cross />
               </button>
-              {onMove && anyOf !== undefined && (
-                <button type="button" className="chip" aria-label={`any of: allow ${say(name)}`} onClick={() => onMove(name, "any")}>any of</button>
-              )}
-              {onMove && (
-                <button type="button" className="chip" aria-label={`not: leave out ${say(name)}`} onClick={() => onMove(name, "not")}>not</button>
-              )}
             </li>
           ))}
-          {anyChosen.map((name) => (
-            <li key={`any-${name}`} className="flex items-center gap-1">
-              {/* ANY OF, said in words: "any of A" "any of B" is one OR group, and a chip's border is not the carrier. */}
-              <button
-                type="button"
-                className={`chip${caps}`}
-                aria-label={`Remove any of ${say(name)}`}
-                onClick={() => onRemoveAny?.(name)}
-              >
-                <span>any of</span> {say(name)}
-                <Cross />
-              </button>
-              {onMove && (
-                <button type="button" className="chip" aria-label={`must: require ${say(name)}`} onClick={() => onMove(name, "and")}>must</button>
-              )}
-              {onMove && (
-                <button type="button" className="chip" aria-label={`not: leave out ${say(name)}`} onClick={() => onMove(name, "not")}>not</button>
-              )}
-            </li>
-          ))}
-          {negated.map((name) => (
-            <li key={`not-${name}`} className="flex items-center gap-1">
-              {/* NEVER, said in words as well as struck through: colour and a line are not the only carrier. */}
-              <button
-                type="button"
-                className={`chip${caps} line-through decoration-(--muted)`}
-                aria-label={`Remove never ${say(name)}`}
-                onClick={() => onRemoveNegated?.(name)}
-              >
-                <span className="no-underline">never</span> {say(name)}
-                <Cross />
-              </button>
-              {onMove && (
-                <button type="button" className="chip" aria-label={`must: require ${say(name)}`} onClick={() => onMove(name, "and")}>must</button>
-              )}
-              {onMove && anyOf !== undefined && (
-                <button type="button" className="chip" aria-label={`any of: allow ${say(name)}`} onClick={() => onMove(name, "any")}>any of</button>
-              )}
-            </li>
-          ))}
+          {/* ONE CHIP, THREE PARTS (owner review of #1782): the mode leads and says itself, the word follows, the cross
+            * removes. Separate sibling buttons read as loose chips and wrapped apart on a phone. */}
+          {onMove && ([
+            ...chosen.map((name) => [name, "and"] as const),
+            ...anyChosen.map((name) => [name, "any"] as const),
+            ...negated.map((name) => [name, "not"] as const),
+          ]).map(([name, mode]) => {
+            const word = MODE_WORD[mode];
+            const open = modeOpen === name;
+            const close = (): void => { setModeOpen(null); modeButton(name)?.focus(); };
+            const modes = (["and", ...(anyOf !== undefined ? ["any" as const] : []), "not"] as Mode[]);
+            return (
+              <li key={name} className="relative" onKeyDown={(e) => { if (e.key === "Escape" && open) { e.stopPropagation(); close(); } }}>
+                <div role="group" aria-label={say(name)} className="inline-flex items-stretch rounded-(--radius) border border-(--separator)">
+                  <button
+                    type="button"
+                    className="chip border-0 rounded-none"
+                    data-mode-for={name}
+                    aria-label={`${say(name)}: ${word}. Change mode`}
+                    aria-haspopup="true"
+                    aria-expanded={open}
+                    onClick={() => setModeOpen(open ? null : name)}
+                  >
+                    {word}
+                  </button>
+                  {/* NEVER KEEPS ITS STRIKE-THROUGH AND ITS WORD, which sits on the mode button beside it. */}
+                  <span className={`flex items-center px-2 text-sm text-(--foreground) [overflow-wrap:anywhere]${caps}${mode === "not" ? " line-through decoration-(--muted)" : ""}`}>
+                    {say(name)}
+                  </span>
+                  <button
+                    type="button"
+                    className="chip border-0 rounded-none"
+                    aria-label={mode === "and" ? `Remove ${say(name)}` : mode === "any" ? `Remove any of ${say(name)}` : `Remove never ${say(name)}`}
+                    onClick={() => (mode === "and" ? onChange(chosen.filter((s) => s !== name)) : mode === "any" ? onRemoveAny?.(name) : onRemoveNegated?.(name))}
+                  >
+                    <Cross />
+                  </button>
+                </div>
+                {open && (
+                  <ul role="group" aria-label={`Mode for ${say(name)}`} className="site-search-list mt-1 list-none p-0 w-fit">
+                    {modes.map((m) => (
+                      <li key={m}>
+                        <button
+                          type="button"
+                          className="site-search-row w-full text-left"
+                          aria-pressed={m === mode}
+                          aria-label={`Set ${say(name)} to ${MODE_WORD[m]}`}
+                          onClick={() => {
+                            if (m === mode) { close(); return; }
+                            setModeOpen(null);
+                            setRefocus({ name, sig });
+                            onMove(name, m);
+                          }}
+                        >
+                          {MODE_WORD[m]}
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </li>
+            );
+          })}
         </ul>
       )}
       <div className="relative">

@@ -38,7 +38,9 @@ export function FieldRow(
     );
   }
   if (field === undefined) return <span className="eyebrow">{label}</span>;
-  const values = field.values ?? [];
+  // A VALUE THE REGISTRY LABELS IS OFFERED EVEN WITH NO CARD: the build drops empty values, and "no record" is a real answer.
+  const held = field.values ?? [];
+  const values = [...held, ...Object.keys(field.valueLabels ?? {}).filter((v) => !held.some((h) => h.v === v)).map((v) => ({ v, n: 0 }))];
   const counts = new Map(values.map((v) => [v.v, v.n] as const));
   const of = (op: "must" | "any" | "not"): string[] => filters.flatMap((f) => (f.op === op ? [f.value] : []));
   const emit = (must: string[], any: string[], not: string[]): void => onChange([

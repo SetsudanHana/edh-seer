@@ -257,7 +257,8 @@ export function CardSearch({
   const resolveLoader = useMemo(() => searchLoader ?? createSearchLoader("/static"), [searchLoader]);
   const [catalogueInfo, setCatalogueInfo] = useState<{ state: "idle" | "loading" | "ready" | "none" | "failed"; cat: Catalogue | null }>({ state: "idle", cat: null });
   const [catAttempt, setCatAttempt] = useState(0);
-  const wantCatalogue = menuOpen || genericAsked;
+  // A MENU WITH NO KIND LEFT HAS ONLY THE CATALOGUE TO OFFER, so it is read without waiting for the menu to open.
+  const wantCatalogue = menuOpen || genericAsked || available.length === 0;
   useEffect(() => {
     if (!wantCatalogue) return;
     let live = true;
@@ -459,18 +460,29 @@ export function CardSearch({
   // WHAT A LINK ASKS THAT THE CATALOGUE DOES NOT HOLD: a field, a value of a set field, or the wrong kind of question for
   // the field. One line each, said where the answer would be; the list is not drawn (an unknown is not an empty answer).
   const unknownLines = useMemo((): string[] => {
-    if (catalogueInfo.cat === null) return [];
     const out = new Set<string>();
-    for (const f of fieldFilters) {
-      const def = catalogueFields.get(f.field);
-      const name = def ? (def.label ?? f.field) : f.field;
-      if (!def) out.add(`This build doesn't know ${f.field}.`);
-      else if (f.op === "range") { if (def.kind !== "number") out.add(`This build reads ${name} as a list of values, so a range does not apply.`); }
-      else if (def.kind !== "set") out.add(`This build reads ${name} as a number, so the value "${f.value}" does not apply.`);
-      else if (!(def.values ?? []).some((v) => v.v === f.value)) out.add(`This build doesn't know the value "${f.value}" for ${name}.`);
+    // AN ANY-OF WORD THE VOCABULARY LACKS is said, not ignored: the group would otherwise answer with the words it knows
+    // and look complete. A table that has not loaded yet knows nothing, so it is not judged.
+    for (const [kind, words, table] of [
+      ["type", eventQuery.orTypes, vocabulary.types], ["subtype", eventQuery.orSubtypes, vocabulary.subtypes],
+      ["keyword", eventQuery.orKeywords, vocabulary.keywords],
+    ] as const) {
+      if (table.length === 0) continue;
+      for (const w of words ?? []) if (!table.includes(w)) out.add(`This build doesn't know the ${kind} "${w}".`);
+    }
+    if (catalogueInfo.cat !== null) {
+      for (const f of fieldFilters) {
+        const def = catalogueFields.get(f.field);
+        const name = def ? (def.label ?? f.field) : f.field;
+        if (!def) out.add(`This build doesn't know ${f.field}.`);
+        else if (f.op === "range") { if (def.kind !== "number") out.add(`This build reads ${name} as a list of values, so a range does not apply.`); }
+        else if (def.kind !== "set") out.add(`This build reads ${name} as a number, so the value "${f.value}" does not apply.`);
+        // A VALUE THE REGISTRY HAS A LABEL FOR IS KNOWN even when no card holds it in this build (the build drops empty values).
+        else if (!(def.values ?? []).some((v) => v.v === f.value) && !(f.value in (def.valueLabels ?? {}))) out.add(`This build doesn't know the value "${f.value}" for ${name}.`);
+      }
     }
     return [...out];
-  }, [catalogueInfo.cat, catalogueFields, fieldFilters]);
+  }, [catalogueInfo.cat, catalogueFields, fieldFilters, eventQuery.orTypes, eventQuery.orSubtypes, eventQuery.orKeywords, vocabulary]);
   const changelingsUnmatched = keepAsked && (catalogueState === "no-pointer" || catalogueState === "incomplete");
   const typeCountsBlocked = blocking && (catalogueState === "pending" || !catalogueSettled);
   // NO POINTER AND AN INCOMPLETE CATALOGUE both say the build cannot answer; a failed read says so differently, with a retry.
@@ -996,7 +1008,7 @@ export function CardSearch({
         {/* A NATIVE `<details>`, so the keyboard and screen-reader model is the platform's -- the
           * same reason the panel it replaces was one. It closes itself once a row is added,
           * because a menu still standing over the control it just created is in the way. */}
-        {(
+        {(available.length > 0 || offeredFields.length > 0 || catalogueInfo.state === "loading" || catalogueInfo.state === "failed") && (
           <details
             // `relative`, AND IT IS LOAD-BEARING: `.site-search-list` below is `position:absolute`,
             // so without a positioned ancestor it resolves against the INITIAL containing block.

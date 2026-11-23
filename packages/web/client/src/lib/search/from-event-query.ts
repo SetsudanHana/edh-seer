@@ -97,7 +97,8 @@ export function fieldNodes(filters: readonly FieldFilter[]): Node[] {
   const out: Node[] = [];
   const any = new Map<string, Node[]>();
   for (const f of filters) {
-    if (f.op === "range") out.push({ field: f.field, op: "cmp", ...(f.min !== undefined ? { min: f.min } : {}), ...(f.max !== undefined ? { max: f.max } : {}) });
+    // A RANGE WITH NO BOUND ASKS NOTHING (a malformed link kept only so the page can name its field).
+    if (f.op === "range") { if (f.min !== undefined || f.max !== undefined) out.push({ field: f.field, op: "cmp", ...(f.min !== undefined ? { min: f.min } : {}), ...(f.max !== undefined ? { max: f.max } : {}) }); }
     else if (f.op === "must") out.push({ field: f.field, op: "has", value: f.value });
     else if (f.op === "not") out.push({ not: { field: f.field, op: "has", value: f.value } });
     else (any.get(f.field) ?? any.set(f.field, []).get(f.field)!).push({ field: f.field, op: "has", value: f.value });
@@ -131,10 +132,14 @@ export function fromEventQuery(q: CharQuery, mode: PageMode, opts: CompileOption
     and.push(negate("st", opts.vocab?.subtypes, v, q.keepChangelings === true && opts.creatureTypes?.has(v) === true));
   }
   for (const v of q.notKeywords ?? []) and.push(negate("k", opts.vocab?.keywords, v, false));
-  // ANY OF, ONE GROUP PER ROW: at least one of the row's any-of words, ANDed with everything else.
-  for (const [field, words] of [["t", q.orTypes], ["st", q.orSubtypes], ["k", q.orKeywords]] as const) {
-    if (words && words.length > 0) and.push({ or: words.map((value): Node => ({ field, op: "has", value })) });
-  }
+  // ANY OF, ONE GROUP PER ROW. The type line is ONE row over two tables, so its any-of words are one OR group across
+  // both ("land or elf"); keywords are their own row and their own group.
+  const typeLine: Node[] = [
+    ...(q.orTypes ?? []).map((value): Node => ({ field: "t", op: "has", value })),
+    ...(q.orSubtypes ?? []).map((value): Node => ({ field: "st", op: "has", value })),
+  ];
+  if (typeLine.length > 0) and.push({ or: typeLine });
+  if (q.orKeywords && q.orKeywords.length > 0) and.push({ or: q.orKeywords.map((value): Node => ({ field: "k", op: "has", value })) });
   and.push(...fieldNodes(q.fieldFilters ?? []));
   if (q.cardColours.length > 0) {
     if (q.cardColours.includes("C")) and.push({ field: "c", op: "count", max: 0 });

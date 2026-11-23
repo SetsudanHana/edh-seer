@@ -126,10 +126,12 @@ test("a query with no NOT subtype and no count never reads the catalogue", async
 
 test("a chip's and/not control moves a word between must and never, in the URL", async () => {
   const spy = atUrl("/cards?type=creature", loaderOf(CATALOGUE));
-  await userEvent.click(await screen.findByRole("button", { name: "not: leave out creature" }));
+  await userEvent.click(await screen.findByRole("button", { name: "creature: must. Change mode" }));
+  await userEvent.click(await screen.findByRole("button", { name: "Set creature to never" }));
   await waitFor(() => expect(spy.search).toContain("nottype=creature"));
   expect(spy.search).not.toMatch(/[?&]type=/);
-  await userEvent.click(await screen.findByRole("button", { name: "must: require creature" }));
+  await userEvent.click(await screen.findByRole("button", { name: "creature: never. Change mode" }));
+  await userEvent.click(await screen.findByRole("button", { name: "Set creature to must" }));
   await waitFor(() => expect(spy.search).toMatch(/[?&]type=creature/));
   expect(spy.search).not.toContain("nottype");
 });
@@ -234,8 +236,9 @@ test("three creature types read as a list", async () => {
 test("the never chip and the must chip have names of their own, each holding its visible word (WCAG 2.5.3)", async () => {
   atUrl("/cards?type=creature&nottype=land", loaderOf(CATALOGUE));
   expect(await screen.findByRole("button", { name: "Remove never land" })).toBeInTheDocument();
-  expect(screen.getByRole("button", { name: "must: require land" })).toHaveTextContent("must");
-  expect(screen.getByRole("button", { name: "not: leave out creature" })).toHaveTextContent("not");
+  // ONE CHIP, THREE PARTS: the mode word leads, the word follows, the cross removes. Never keeps its word.
+  expect(screen.getByRole("button", { name: "land: never. Change mode" })).toHaveTextContent("never");
+  expect(screen.getByRole("button", { name: "creature: must. Change mode" })).toHaveTextContent("must");
   expect(screen.getByRole("button", { name: "Remove creature" })).toBeInTheDocument();
 });
 

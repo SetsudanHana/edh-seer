@@ -202,13 +202,14 @@ function fieldFiltersFromParams(p: URLSearchParams): FieldFilter[] {
     }
   }
   for (const raw of p.getAll("frange")) {
+    // A BAD BOUND IS NO BOUND, BUT THE FIELD STAYS: the page can then say it does not know a field it was asked about.
     const at = raw.indexOf(":");
-    const dots = raw.indexOf("..", at + 1);
-    if (at <= 0 || dots < 0) continue;
-    const min = bound(raw.slice(at + 1, dots));
-    const max = bound(raw.slice(dots + 2));
-    if (min === undefined && max === undefined) continue;
-    out.push({ field: raw.slice(0, at), op: "range", ...(min !== undefined ? { min } : {}), ...(max !== undefined ? { max } : {}) });
+    const field = at < 0 ? raw : raw.slice(0, at);
+    if (field.length === 0) continue;
+    const dots = at < 0 ? -1 : raw.indexOf("..", at + 1);
+    const min = dots < 0 ? undefined : bound(raw.slice(at + 1, dots));
+    const max = dots < 0 ? undefined : bound(raw.slice(dots + 2));
+    out.push({ field, op: "range", ...(min !== undefined ? { min } : {}), ...(max !== undefined ? { max } : {}) });
   }
   return out;
 }

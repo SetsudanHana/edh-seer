@@ -23,6 +23,16 @@ describe("any-of inside one row", () => {
     expect(run({ ...base, orSubtypes: ["elf", "wizard"], notSubtypes: ["human"] })).toEqual({ ok: true, rows: [0, 2, 3] });
   });
 
+  test("the type line is ONE group: (land or elf), not land and elf", () => {
+    expect(run({ ...base, orTypes: ["land"], orSubtypes: ["elf"] })).toEqual({ ok: true, rows: [0, 3, 4] });
+  });
+
+  test("the type line group is ANDed with a keyword group, which stays its own", () => {
+    const withK: CoreRow[] = rows.map((r, i) => ({ ...r, k: i === 0 ? [0] : i === 3 ? [1] : [] }));
+    const res = evaluate(fromEventQuery({ ...base, orTypes: ["land"], orSubtypes: ["elf"], orKeywords: ["flying"] }, "cards", { vocab }), coreContext(withK, vocab));
+    expect(res).toEqual({ ok: true, rows: [0] });
+  });
+
   test("a single any-of word is the same question as a must word", () => {
     expect(run({ ...base, orTypes: ["land"] })).toEqual(run({ ...base, types: ["land"] }));
   });

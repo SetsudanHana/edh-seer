@@ -58,6 +58,13 @@ describe("generic catalogue rows: f / fany / fnot / frange", () => {
     expect(eventsFromParams(new URLSearchParams("f=nocolon")).fieldFilters).toEqual([{ field: "nocolon", op: "must", value: "" }]);
   });
 
+  test("a malformed range keeps its field so the page can name it", () => {
+    expect(eventsFromParams(new URLSearchParams("frange=nope.x:abc..&frange=nope.y:5&frange=nope.z")).fieldFilters).toEqual([
+      { field: "nope.x", op: "range" }, { field: "nope.y", op: "range" }, { field: "nope.z", op: "range" },
+    ]);
+    expect(eventsFromParams(new URLSearchParams("frange=:1..2")).fieldFilters).toBeUndefined();
+  });
+
   test("absent when empty; no collision with a param that already exists", () => {
     expect([...eventsToParams(base, new URLSearchParams("f=a:b&fany=a:b&fnot=a:b&frange=a:1..2")).keys()]).toEqual([]);
     expect(eventsFromParams(new URLSearchParams("fronttypesmin=2&sort=fronttypes")).fieldFilters).toBeUndefined();

@@ -10,9 +10,10 @@ import type { Column } from "../lib/search/walk.js";
 
 /** #1782 task 3: rows for catalogue fields no bespoke row covers. Nothing in CardSearch names these fields: the
  *  fixture catalogue is the only place they exist, which is what the elasticity tests prove. */
-const VOCAB = { types: ["creature", "land"], subtypes: ["elf", "human"], keywords: [] };
-const row = (slug: string, name: string): NameIndexEntry => ({ slug, name, identity: [], commander: false, t: [0], s: [] });
-const INDEX = [row("a", "Card A"), row("b", "Card B"), row("c", "Card C"), row("d", "Card D"), row("e", "Card E")];
+const VOCAB = { types: ["creature", "land"], subtypes: ["elf", "human"], keywords: ["flying"] };
+const row = (slug: string, name: string, t: number[], s: number[]): NameIndexEntry => ({ slug, name, identity: [], commander: false, t, s });
+// A is a creature elf, B a creature human, C a land, D and E plain creatures.
+const INDEX = [row("a", "Card A", [0], [0]), row("b", "Card B", [0], [1]), row("c", "Card C", [1], []), row("d", "Card D", [0], []), row("e", "Card E", [0], [])];
 
 const VERB = "tags.abilities.emits.verb";
 const FLOOR = "tags.abilities.count.floor";
@@ -111,21 +112,25 @@ test("any of, within one row: (mill or gain-life) and draw is one card, in the l
   await waitFor(() => expect(names()).toEqual(["Card B"]));
   expect(screen.getByRole("button", { name: "Remove any of mill" })).toBeInTheDocument();
   // Moving a must chip to any-of rewrites one param and the answer follows: (draw or mill or gain-life).
-  await userEvent.click(screen.getByRole("button", { name: "any of: allow draw" }));
+  await userEvent.click(screen.getByRole("button", { name: `${VERB}: must. Change mode`.replace(VERB, "draw") }));
+  await userEvent.click(screen.getByRole("button", { name: "Set draw to any of" }));
   await waitFor(() => expect(q(spy.search)).not.toContain(`&f=`));
   await waitFor(() => expect(names()).toEqual(["Card A", "Card B", "Card C", "Card D"]));
-  await userEvent.click(screen.getByRole("button", { name: "not: leave out draw" }));
+  await userEvent.click(screen.getByRole("button", { name: "draw: any of. Change mode" }));
+  await userEvent.click(screen.getByRole("button", { name: "Set draw to never" }));
   await waitFor(() => expect(q(spy.search)).toContain(`fnot=${VERB}:draw`));
   await waitFor(() => expect(names()).toEqual(["Card C", "Card D"]));
 });
 
 test("any of on the type row: the chip has an any-of control and writes ortype", async () => {
   const spy = atUrl("/cards?type=creature", loaderOf());
-  await userEvent.click(await screen.findByRole("button", { name: "any of: allow creature" }));
+  await userEvent.click(await screen.findByRole("button", { name: "creature: must. Change mode" }));
+  await userEvent.click(await screen.findByRole("button", { name: "Set creature to any of" }));
   await waitFor(() => expect(spy.search).toContain("ortype=creature"));
   expect(spy.search).not.toMatch(/[?&]type=/);
   expect(await screen.findByRole("button", { name: "Remove any of creature" })).toBeInTheDocument();
-  await userEvent.click(screen.getByRole("button", { name: "must: require creature" }));
+  await userEvent.click(screen.getByRole("button", { name: "creature: any of. Change mode" }));
+  await userEvent.click(screen.getByRole("button", { name: "Set creature to must" }));
   await waitFor(() => expect(spy.search).toMatch(/[?&]type=creature/));
   expect(spy.search).not.toContain("ortype");
 });
@@ -155,7 +160,8 @@ test("the read row speaks in player words and filters on the fixture", async () 
   await userEvent.click(await screen.findByRole("button", { name: "Our reading" }));
   await userEvent.click(screen.getByRole("combobox", { name: "Our reading" }));
   const opts = within(await screen.findByRole("listbox")).getAllByRole("option").map((o) => o.textContent);
-  expect(opts).toEqual(["read by our rules (3)", "read by the model (1)", "not read yet (1)"]);
+  // A labelled value with no cards is still offered, with its count of zero.
+  expect(opts).toEqual(["read by our rules (3)", "read by the model (1)", "not read yet (1)", "no record (0)"]);
   await userEvent.click(screen.getByRole("option", { name: /^not read yet/ }));
   await waitFor(() => expect(spy.search).toContain("f=read%3Aunread"));
   await waitFor(() => expect(names()).toEqual(["Card E"]));
@@ -206,4 +212,93 @@ test("removing a generic row clears its params", async () => {
   await userEvent.click(await screen.findByRole("button", { name: "Remove the Emitted verb filter" }));
   await waitFor(() => expect(spy.search).not.toContain("f="));
   expect(spy.search).toContain("type=creature");
+});
+
+test("the type line is one any-of group across types and subtypes: (land or elf) is two cards, not one", async () => {
+  atUrl("/cards?ortype=land&orsubtype=elf", loaderOf());
+  await waitFor(() => expect(names()).toEqual(["Card A", "Card C"]));
+});
+
+test("an any-of word outside the vocabulary is said, with no list, even beside a known one", async () => {
+  atUrl("/cards?orsubtype=elf&orsubtype=bogus", loaderOf());
+  expect(await screen.findByText(`This build doesn't know the subtype "bogus".`)).toBeInTheDocument();
+  expect(screen.queryByRole("list", { name: "Results" })).toBeNull();
+  expect(screen.queryByText(/No card matches/)).toBeNull();
+});
+
+test.each([["ortype", "type"], ["orkeyword", "keyword"]])("%s with an unknown word names a %s", async (param, kind) => {
+  atUrl(`/cards?${param}=bogus`, loaderOf());
+  expect(await screen.findByText(`This build doesn't know the ${kind} "bogus".`)).toBeInTheDocument();
+});
+
+test("a labelled value with no cards is known: fnot answers every card, f answers none", async () => {
+  atUrl("/cards?fnot=read:no-record", loaderOf());
+  await waitFor(() => expect(names()).toHaveLength(5));
+  expect(screen.queryByText(/doesn't know/)).toBeNull();
+});
+
+test("a labelled value with no cards asked as a must says no card matches, not 'unknown'", async () => {
+  atUrl("/cards?f=read:no-record", loaderOf());
+  expect(await screen.findByText(/No card matches/)).toBeInTheDocument();
+  expect(screen.queryByText(/doesn't know/)).toBeNull();
+});
+
+test("a malformed range on an unknown field still says it does not know the field", async () => {
+  atUrl("/cards?frange=nope.field:abc..", loaderOf());
+  expect(await screen.findByText("This build doesn't know nope.field.")).toBeInTheDocument();
+});
+
+test("a malformed range on a known field asks nothing, and does not narrow the list", async () => {
+  atUrl(`/cards?frange=${FLOOR}:abc..`, loaderOf());
+  await waitFor(() => expect(names()).toHaveLength(5));
+});
+
+test("the menu is not drawn empty: no kinds left and nothing from the catalogue means no menu", async () => {
+  const ALL = "colors=W&cardcolors=W&type=creature&cardtypesmin=1&keyword=flying&mvmax=3&powmin=1&toumin=1";
+  atUrl(`/cards?${ALL}`, loaderOf(null));
+  await screen.findByText(/can't answer/);
+  expect(screen.queryByText("Add a filter")).toBeNull();
+});
+
+test("with no kinds left the menu still appears once the catalogue offers fields", async () => {
+  atUrl("/cards?colors=W&cardcolors=W&type=creature&cardtypesmin=1&keyword=flying&mvmax=3&powmin=1&toumin=1", loaderOf());
+  await userEvent.click(await screen.findByText("Add a filter"));
+  expect(await screen.findByRole("button", { name: "Emitted verb" })).toBeInTheDocument();
+});
+
+test("a chip is one unit of three parts: mode, word, remove, with names that hold their visible words", async () => {
+  atUrl("/cards?type=creature&nottype=land&ortype=instant", loaderOf());
+  const mode = await screen.findByRole("button", { name: "creature: must. Change mode" });
+  expect(mode).toHaveTextContent("must");
+  expect(screen.getByRole("button", { name: "land: never. Change mode" })).toHaveTextContent("never");
+  expect(screen.getByRole("button", { name: "instant: any of. Change mode" })).toHaveTextContent("any of");
+  expect(screen.getByRole("button", { name: "Remove creature" })).toBeInTheDocument();
+  // The word of a never chip is struck through AND the word "never" is there.
+  expect(screen.getByText("land").className).toMatch(/line-through/);
+});
+
+test("the mode menu opens on the mode button, offers the three modes, and Escape closes it back to the button", async () => {
+  atUrl("/cards?type=creature", loaderOf());
+  const mode = await screen.findByRole("button", { name: "creature: must. Change mode" });
+  expect(mode).toHaveAttribute("aria-expanded", "false");
+  await userEvent.click(mode);
+  expect(mode).toHaveAttribute("aria-expanded", "true");
+  for (const m of ["must", "any of", "never"]) expect(screen.getByRole("button", { name: `Set creature to ${m}` })).toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "Set creature to must" })).toHaveAttribute("aria-pressed", "true");
+  await userEvent.keyboard("{Escape}");
+  expect(screen.queryByRole("button", { name: "Set creature to never" })).toBeNull();
+  expect(mode).toHaveFocus();
+});
+
+test("after choosing a mode, focus returns to that word's mode button", async () => {
+  atUrl("/cards?type=creature", loaderOf());
+  await userEvent.click(await screen.findByRole("button", { name: "creature: must. Change mode" }));
+  await userEvent.click(screen.getByRole("button", { name: "Set creature to never" }));
+  await waitFor(() => expect(screen.getByRole("button", { name: "creature: never. Change mode" })).toHaveFocus());
+});
+
+test("a keyword and a generic value use the same chip", async () => {
+  atUrl(`/cards?keyword=flying&f=${VERB}:draw`, loaderOf());
+  expect(await screen.findByRole("button", { name: "flying: must. Change mode" })).toBeInTheDocument();
+  expect(await screen.findByRole("button", { name: "draw: must. Change mode" })).toBeInTheDocument();
 });
