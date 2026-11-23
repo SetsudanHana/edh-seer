@@ -28,7 +28,7 @@ import { grantsSelfOf } from "./grants-self.js";
 import { librarySearchOwner, printsSearch, searchedLibraryOwner } from "./library-search.js";
 import { putsOpponentsCard, putsOwnCard } from "./own-entry.js";
 import { damageDealerOf, granteeDealer, grantedDealerIsGranter, damageHitsSelf, damageRecipient, playerOnlyRecipient } from "./damage-recipient.js";
-import { actionRecipients, damagedPlayerIsOpponent, everyPlayerChoosesThenSacrifices, oneSacrificer, pronounActs, sacrificeFallsOnEveryone, sacrificerIsTargeted, sentenceNamesAPlayer, thatPlayerIsOpponent, unstatedCreates, victimDeclines } from "./recipient.js";
+import { actionRecipients, damagedPlayerActsEveryTime, damagedPlayerIsOpponent, everyPlayerChoosesThenSacrifices, oneSacrificer, pronounActs, sacrificeFallsOnEveryone, sacrificerIsTargeted, sentenceNamesAPlayer, thatPlayerIsOpponent, unstatedCreates, victimDeclines } from "./recipient.js";
 import { actionScaling, distinctCountOf, scalingSubject } from "./scaling.js";
 import { CARD_TYPES, namesAClass, parseSubject, parseCounter, counterKindOf } from "./subject.js";
 import { parse as parseFilterRaw, stableJson } from "../grammar/filter.js";
@@ -773,7 +773,8 @@ import { castClassFromPrint, castIsOnlyACondition, castsYourOwnCard } from "./ca
 // 586: #1275 -- Magus of the Will's stored put-to-battlefield of 'lands and spells from your graveyard' is the play it prints (land-play + cast from graveyard), no land enters
 // 587: #1277 -- Sacred Ground's 'a spell or ability an opponent controls causes a land to be put into your graveyard from the battlefield' derives a real dies trigger of your land carrying the new Ability.trigger.cause: opp (owner 2026-11-23). eventMatches refuses every producer for a cause-opp trigger (all deck producers are yours); ramp.landPut refuses an enters whose ref-trigger is opp-caused, so Sacred Ground leaves Ramp (owner 2026-10-17). The recursion keeps the returned land's class. Discard family stays refused.
 // 588: #1330 -- a dropped reveal of another card (top of library, outside the game) or a looked-at card makes the following 'it' that card, not the trigger's own card (Neurok Familiar, Caustic Bronco, Coiling Oracle, Goblin Guide)
-export const DERIVE_VERSION = 588;
+// 589: #1269 -- the card's own damaged player written 'they' / 'the player' after the damage reads opp (damagedPlayerRead: Unstoppable Slasher, Rex, Glowing One, Infesting Radroach, Etali Primal Conqueror, Skullknocker Ogre, Doomsday Specter, Tomb Blade), and a clause with two actions of one verb that player does every time (Sabertooth Cobra's two poison counters) is read opp (damagedPlayerActsEveryTime). Mirko Vosk / Balshan Beguiler's reveal-and-put mill was already opp (#1663). MEASURED (derive-impact vs 031b2764, pair-sample 0): 9 rows changed, 0 added/removed, 0 source flips; pair reasons +17 / -5,367; LOST->CLASS 393 (all consumers of YOUR discard / draw / lose-life / graveyard / creature deaths fed by an opponent's); role-ratchet lost 1 (Skullknocker Ogre -role:draw)
+export const DERIVE_VERSION = 589;
 
 /** "a nonland card from target opponent's graveyard or hand" (#1592): the object of a stored hand-or-graveyard pick. */
 const GRAVEYARD_OR_HAND_PICK = /\bfrom (?:target opponent|target player|that player|that opponent|an opponent)'s (?:graveyard or hand|hand or graveyard)$/i;
@@ -3558,12 +3559,15 @@ export function deriveAbilities(
     // `repeated`: the caller is an action that is not the cost's own sacrifice, so a clause that stores the verb twice may still name ONE actor (`oneSacrificer`, #1579).
     // Only an OPPONENT's edict is read that way: "Each player sacrifices the creature they control ... unless" (Tariff) stores one action per side, each with its own object ("you control" / "an opponent controls"), and a repeated "each player" would overwrite both with `any`.
     const actorFor = (verb?: string, repeated = false): Control | undefined => {
-      const several = (clause.actions ?? []).filter((a) => a.verb === verb).length !== 1;
-      if (several && !(repeated && verb === "sacrifice" && (oneSacrificer(clauseText) || everyPlayerChoosesThenSacrifices(clauseText)))) return undefined;
+      const storedOfVerb = (clause.actions ?? []).filter((a) => a.verb === verb).length;
+      const several = storedOfVerb !== 1;
+      // #1269: two actions of one verb that the card's damaged player does every time (Sabertooth Cobra's two poison counters) are both that player's.
+      const damagedEach = several && storedOfVerb > 1 && verb !== undefined && damagedPlayerActsEveryTime(clauseText, verb, storedOfVerb, { triggerIsSelf: trigger?.subject.self === true, cardName });
+      if (several && !damagedEach && !(repeated && verb === "sacrifice" && (oneSacrificer(clauseText) || everyPlayerChoosesThenSacrifices(clauseText)))) return undefined;
       actors ??= clauseText ? actionRecipients(clauseText, { triggerIsSelf: trigger?.subject.self === true, cardName }) : {};
       const who = actors[verb ?? ""];
       // ...AND "each player chooses ..., then sacrifices the rest" is everyone's whatever the object says (#1740, Magus of the Balance).
-      return several && who !== "opp" && !(repeated && verb === "sacrifice" && who === "any" && everyPlayerChoosesThenSacrifices(clauseText)) ? undefined : who;
+      return several && !damagedEach && who !== "opp" && !(repeated && verb === "sacrifice" && who === "any" && everyPlayerChoosesThenSacrifices(clauseText)) ? undefined : who;
     };
     // #1728: THIS create of several names no player in its own sentence (a tempting offer's leading "Create ...", Misfortune Teller's two). See `unstatedCreates`.
     const unstatedCreateOf = (action: Action): boolean => {
