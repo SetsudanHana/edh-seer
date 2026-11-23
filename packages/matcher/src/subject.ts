@@ -544,6 +544,9 @@ export function counterAddMatches(producer: SubjectFilter, consumer: SubjectFilt
   // All Will Be One, Vorinclex) and a proliferate (which also chooses players) still take it.
   if (producer.counter !== undefined && PLAYER_COUNTERS.has(producer.counter) && consumer.counter === undefined
     && (arr(consumer.type).length > 0 || arr(consumer.subtype).length > 0)) return false;
+  // ...NOR ON THE CONSUMER ITSELF (#1772): "whenever you put one or more counters on Aragorn" is `self` with no type stamped (the card is named, not typed), and the type test above let every energy producer through (13 more
+  // since #1323). The consumer is a permanent, so a player's counter is never one put on it.
+  if (producer.counter !== undefined && PLAYER_COUNTERS.has(producer.counter) && consumer.counter === undefined && consumer.self === true) return false;
   // A COUNTER ON A PERMANENT IS NEVER A PLAYER'S COUNTER. A kindless emit that names the permanent it
   // lands on (a card's own counters, "a counter on target creature") cannot be the energy Territorial
   // Gorger's "whenever you get one or more {E}" waits for, so the unknown-kind wildcard below must not
