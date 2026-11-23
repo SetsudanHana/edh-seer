@@ -2037,3 +2037,36 @@ test("cards whose lead or zone cannot be carried stay blocked, at the grammar th
   // Sovereign Okinec Ahau: the count's "with power greater than that creature's base power" would read as every creature you control
   expect(blocked("Sovereign Okinec Ahau", "Legendary Creature \u2014 Human Noble", "Ward {2}\nWhenever Sovereign Okinec Ahau attacks, for each creature you control with power greater than that creature's base power, put a number of +1/+1 counters on that creature equal to the difference.").complete).toBe(false);
 });
+
+// #1361: "Whenever day becomes night or night becomes day" is two triggers of one `day-night` event (CR 731.1 Day and Night). Oracle texts are the corpus's own (Mongo `cards`, 2026-11-23); the stored answer words the halves "day becomes night" and "night becomes day".
+const DAY_NIGHT = (name: string, typeLine: string, lead: string, effect: string) => ({ name, typeLine, keywords: [] as string[], oracleText: `${lead}\nIf it's neither day nor night, it becomes day as this creature enters.\nWhenever day becomes night or night becomes day, ${effect}` });
+const SUNSTREAK = DAY_NIGHT("Sunstreak Phoenix", "Creature — Phoenix", "Flying", "you may pay {1}{R}. If you do, return this card from your graveyard to the battlefield tapped.");
+const BRIMSTONE = DAY_NIGHT("Brimstone Vandal", "Creature — Gargoyle", "Menace (This creature can't be blocked except by two or more creatures.)", "this creature deals 1 damage to each opponent.");
+
+test("the day/night twin is two triggers of one event: Sunstreak Phoenix, Brimstone Vandal", () => {
+  for (const c of [SUNSTREAK, BRIMSTONE]) {
+    const g = grammarClauseRecords(c);
+    expect(g.complete, c.name).toBe(true);
+    expect(g.records.filter((r) => r.trigger).map((r) => r.trigger), c.name).toEqual([
+      { event: "day-night", subject: "day becomes night", control: "any" },
+      { event: "day-night", subject: "night becomes day", control: "any" },
+    ]);
+  }
+});
+
+test("the day/night twin derives two abilities from the grammar, one per half (production at DERIVE 583: the stored answer has both)", () => {
+  const o = { foldGrantTwins: false, collapseZoneSearches: false };
+  for (const c of [SUNSTREAK, BRIMSTONE]) {
+    const g = grammarClauseRecords(c);
+    const abilities = deriveCardTags(deriveInputOf(c as never, c.name, c.name, g.records, undefined, g.readings), o).abilities;
+    expect(abilities.filter((a) => a.kind === "triggered").map((a) => a.clause), c.name).toEqual([3, 4]);
+  }
+});
+
+test("a trigger that is not the twin keeps one record: Weekly Princess's bare night-becomes-day stays refused, a plain dies trigger is one", () => {
+  const princess = grammarClauseRecords({ name: "The Weekly Princess", typeLine: "Legendary Creature — Human Noble", keywords: [], oracleText: "Whenever night becomes day, put a +1/+1 counter on The Weekly Princess." });
+  expect(princess.complete).toBe(false);
+  expect(princess.blocker).toMatchObject({ kind: "trigger", phrase: "Whenever night becomes day" });
+  const dies = grammarClauseRecords({ name: "X", typeLine: "Creature — Elf", keywords: [], oracleText: "Whenever a creature dies, draw a card." });
+  expect(dies.records.filter((r) => r.trigger)).toHaveLength(1);
+});
