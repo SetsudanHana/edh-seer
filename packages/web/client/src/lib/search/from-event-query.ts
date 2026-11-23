@@ -1,7 +1,7 @@
 // The /cards and /commanders characteristic filter, as an AST over views of the name-index rows.
 // One evaluator for the page and for every later search surface (#1782). The event terms are still
 // computed by the existing code and join as `rows` leaves.
-import { TYPE_COUNTS, type EventQuery, type TypeCountSort } from "../facets.js";
+import { TYPE_COUNTS, type EventQuery, type FieldFilter, type TypeCountSort } from "../facets.js";
 import { evaluate, rowCounts, type EvalContext, type EvalResult, type Node } from "./evaluate.js";
 import { buildCodeView, buildColourView, buildEveryCreatureTypeView, buildIdentityView, buildNumberViews } from "./type-views.js";
 import type { Column } from "./walk.js";
@@ -79,7 +79,7 @@ export function withEveryCreatureType(ctx: EvalContext, rows: readonly CoreRow[]
 
 type CharQuery = Pick<EventQuery, "colours" | "types" | "subtypes" | "keywords" | "cardColours"
   | "mvMin" | "mvMax" | "powMin" | "powMax" | "touMin" | "touMax"
-  | "notTypes" | "notSubtypes" | "notKeywords" | "keepChangelings"
+  | "notTypes" | "notSubtypes" | "notKeywords" | "keepChangelings" | "orTypes" | "orSubtypes" | "orKeywords" | "fieldFilters"
   | "cardTypesMin" | "cardTypesMax" | "frontTypesMin" | "frontTypesMax" | "supertypesMin" | "supertypesMax"
   | "subtypeCountMin" | "subtypeCountMax" | "creatureTypesMin" | "creatureTypesMax">;
 
@@ -89,6 +89,21 @@ export interface CompileOptions {
   vocab?: CoreVocab;
   /** The creature types (the catalogue's `creature` list): the subtypes `keepChangelings` is about. */
   creatureTypes?: ReadonlySet<string>;
+}
+
+/** The catalogue rows as nodes: must and never per value, one OR group per field for its any-of values, a range per
+ *  number filter. Whether a field exists is the evaluator's to say (cannot-answer), never this function's. */
+export function fieldNodes(filters: readonly FieldFilter[]): Node[] {
+  const out: Node[] = [];
+  const any = new Map<string, Node[]>();
+  for (const f of filters) {
+    if (f.op === "range") out.push({ field: f.field, op: "cmp", ...(f.min !== undefined ? { min: f.min } : {}), ...(f.max !== undefined ? { max: f.max } : {}) });
+    else if (f.op === "must") out.push({ field: f.field, op: "has", value: f.value });
+    else if (f.op === "not") out.push({ not: { field: f.field, op: "has", value: f.value } });
+    else (any.get(f.field) ?? any.set(f.field, []).get(f.field)!).push({ field: f.field, op: "has", value: f.value });
+  }
+  for (const group of any.values()) out.push({ or: group });
+  return out;
 }
 
 /** The characteristic half of an EventQuery as an AST, matching `compileCharacteristics` + `coloursFit`:
@@ -116,6 +131,11 @@ export function fromEventQuery(q: CharQuery, mode: PageMode, opts: CompileOption
     and.push(negate("st", opts.vocab?.subtypes, v, q.keepChangelings === true && opts.creatureTypes?.has(v) === true));
   }
   for (const v of q.notKeywords ?? []) and.push(negate("k", opts.vocab?.keywords, v, false));
+  // ANY OF, ONE GROUP PER ROW: at least one of the row's any-of words, ANDed with everything else.
+  for (const [field, words] of [["t", q.orTypes], ["st", q.orSubtypes], ["k", q.orKeywords]] as const) {
+    if (words && words.length > 0) and.push({ or: words.map((value): Node => ({ field, op: "has", value })) });
+  }
+  and.push(...fieldNodes(q.fieldFilters ?? []));
   if (q.cardColours.length > 0) {
     if (q.cardColours.includes("C")) and.push({ field: "c", op: "count", max: 0 });
     else for (const v of q.cardColours) if (WUBRG.includes(v)) and.push({ field: "c", op: "has", value: v });

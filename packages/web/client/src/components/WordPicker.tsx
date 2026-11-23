@@ -11,8 +11,14 @@ import { useListboxKeys } from "../lib/listbox-keys.js";
  *  this knows nothing about tables.
  *
  *  THE KEYBOARD MODEL IS THE ONE THE HEADER SEARCH ALREADY HAS, via `useListboxKeys`. */
+const Cross = (): React.JSX.Element => (
+  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true" focusable="false">
+    <path d="M18 6 6 18M6 6l12 12" />
+  </svg>
+);
+
 export function WordPicker(
-  { label, placeholder, listLabel, all, chosen, onChange, negated = [], onMove, onRemoveNegated }: {
+  { label, placeholder, listLabel, all, chosen, onChange, negated = [], onMove, onRemoveNegated, anyOf, onRemoveAny, labelOf, optionText, browse = false, plain = false }: {
     label: string;
     placeholder: string;
     /** The listbox's accessible name -- "Types and subtypes", "Keywords". */
@@ -23,11 +29,27 @@ export function WordPicker(
     /** WORDS THE CARD MUST NOT HAVE (#1782), drawn struck through. Only with `onMove`, which is what makes a chip
      *  a must/never control: moves a word between the two lists in one call, so one click is one URL write. */
     negated?: string[];
-    onMove?: (name: string, to: "and" | "not") => void;
+    /** ANY OF (#1782): words forming one OR group, drawn "any of X". Given together with `onMove`, every chip offers
+     *  the two states it is not in (must, any of, never), so a word reaches any state in one click. */
+    anyOf?: string[];
+    onMove?: (name: string, to: "and" | "not" | "any") => void;
     onRemoveNegated?: (name: string) => void;
+    onRemoveAny?: (name: string) => void;
+    /** The words a reader sees for a value (a catalogue value label); the value itself is what `onChange` carries. */
+    labelOf?: (value: string) => string;
+    /** What a listbox row says, beside the label (a count). */
+    optionText?: (value: string) => string;
+    /** A short list: an empty, focused field offers every free value rather than waiting for a letter. */
+    browse?: boolean;
+    /** Values are not words to capitalise ("read by our rules", "gain-life"). */
+    plain?: boolean;
   },
 ): React.JSX.Element {
   const [query, setQuery] = useState("");
+  const [focused, setFocused] = useState(false);
+  const say = (v: string): string => labelOf?.(v) ?? v;
+  const caps = plain ? "" : " capitalize";
+  const anyChosen = anyOf ?? [];
   const listId = useId();
   const fieldRef = useRef<HTMLInputElement>(null);
 
@@ -37,25 +59,28 @@ export function WordPicker(
    *  on the phone this panel is now one row of. */
   const options = useMemo(() => {
     const q = query.trim().toLowerCase();
-    if (q.length === 0) return [];
-    const taken = new Set([...chosen, ...negated]);
+    const taken = new Set([...chosen, ...negated, ...anyChosen]);
     const free = all.filter((s) => !taken.has(s));
-    const starts = free.filter((s) => s.startsWith(q));
-    const contains = free.filter((s) => !s.startsWith(q) && s.includes(q));
+    if (q.length === 0) return browse && focused ? free : [];
+    // A value is found by what it says, and by what it is called when the two differ.
+    const starts = free.filter((s) => s.startsWith(q) || say(s).toLowerCase().startsWith(q));
+    const contains = free.filter((s) => !starts.includes(s) && (s.includes(q) || say(s).toLowerCase().includes(q)));
     return [...starts, ...contains].slice(0, 8);
-  }, [all, chosen, negated, query]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [all, chosen, negated, anyOf, query, browse, focused, labelOf]);
 
   // DECLARED BEFORE `take` USES IT, and `take` is referenced by the hook -- so the hook's callback
   // reads `options` through the closure rather than taking the name as an argument.
   const { active, setActive, onKey, reset } = useListboxKeys({
     count: options.length,
     onChoose: (i) => { const name = options[i]; if (name) take(name); },
-    onClose: () => { setQuery(""); },
+    onClose: () => { setQuery(""); setFocused(false); },
   });
 
   const take = (name: string): void => {
     onChange([...chosen, name]);
     setQuery("");
+    setFocused(false);
     reset();
     fieldRef.current?.focus();
   };
@@ -66,23 +91,44 @@ export function WordPicker(
       <label className="eyebrow" htmlFor={`${listId}-field`}>{label}</label>
       {/* THE CHOSEN ONES ARE CHIPS, so removing one is a click rather than a re-typed field, and so
         * the ANSWERED question stays visible while the next is being asked. */}
-      {(chosen.length > 0 || negated.length > 0) && (
+      {(chosen.length > 0 || negated.length > 0 || anyChosen.length > 0) && (
         <ul className="flex flex-wrap gap-2 list-none p-0 m-0">
           {chosen.map((name) => (
             <li key={name} className="flex items-center gap-1">
               <button
                 type="button"
-                className="chip capitalize"
-                aria-label={`Remove ${name}`}
+                className={`chip${caps}`}
+                aria-label={`Remove ${say(name)}`}
                 onClick={() => onChange(chosen.filter((s) => s !== name))}
               >
-                {name}
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true" focusable="false">
-                  <path d="M18 6 6 18M6 6l12 12" />
-                </svg>
+                {say(name)}
+                <Cross />
+              </button>
+              {onMove && anyOf !== undefined && (
+                <button type="button" className="chip" aria-label={`any of: allow ${say(name)}`} onClick={() => onMove(name, "any")}>any of</button>
+              )}
+              {onMove && (
+                <button type="button" className="chip" aria-label={`not: leave out ${say(name)}`} onClick={() => onMove(name, "not")}>not</button>
+              )}
+            </li>
+          ))}
+          {anyChosen.map((name) => (
+            <li key={`any-${name}`} className="flex items-center gap-1">
+              {/* ANY OF, said in words: "any of A" "any of B" is one OR group, and a chip's border is not the carrier. */}
+              <button
+                type="button"
+                className={`chip${caps}`}
+                aria-label={`Remove any of ${say(name)}`}
+                onClick={() => onRemoveAny?.(name)}
+              >
+                <span>any of</span> {say(name)}
+                <Cross />
               </button>
               {onMove && (
-                <button type="button" className="chip" aria-label={`not: leave out ${name}`} onClick={() => onMove(name, "not")}>not</button>
+                <button type="button" className="chip" aria-label={`must: require ${say(name)}`} onClick={() => onMove(name, "and")}>must</button>
+              )}
+              {onMove && (
+                <button type="button" className="chip" aria-label={`not: leave out ${say(name)}`} onClick={() => onMove(name, "not")}>not</button>
               )}
             </li>
           ))}
@@ -91,17 +137,18 @@ export function WordPicker(
               {/* NEVER, said in words as well as struck through: colour and a line are not the only carrier. */}
               <button
                 type="button"
-                className="chip capitalize line-through decoration-(--muted)"
-                aria-label={`Remove never ${name}`}
+                className={`chip${caps} line-through decoration-(--muted)`}
+                aria-label={`Remove never ${say(name)}`}
                 onClick={() => onRemoveNegated?.(name)}
               >
-                <span className="no-underline">never</span> {name}
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true" focusable="false">
-                  <path d="M18 6 6 18M6 6l12 12" />
-                </svg>
+                <span className="no-underline">never</span> {say(name)}
+                <Cross />
               </button>
               {onMove && (
-                <button type="button" className="chip" aria-label={`must: require ${name}`} onClick={() => onMove(name, "and")}>must</button>
+                <button type="button" className="chip" aria-label={`must: require ${say(name)}`} onClick={() => onMove(name, "and")}>must</button>
+              )}
+              {onMove && anyOf !== undefined && (
+                <button type="button" className="chip" aria-label={`any of: allow ${say(name)}`} onClick={() => onMove(name, "any")}>any of</button>
               )}
             </li>
           ))}
@@ -122,6 +169,9 @@ export function WordPicker(
           placeholder={placeholder}
           value={query}
           onChange={(e) => { setQuery(e.target.value); setActive(-1); }}
+          onFocus={() => setFocused(true)}
+          onClick={() => setFocused(true)}
+          onBlur={() => setFocused(false)}
           onKeyDown={onKey}
         />
         {options.length > 0 && (
@@ -132,13 +182,13 @@ export function WordPicker(
                 id={optId(i)}
                 role="option"
                 aria-selected={i === active}
-                className="site-search-row capitalize"
+                className={`site-search-row${caps}`}
                 // `mousedown` rather than `click`: the field loses focus first otherwise, and the
                 // blur closes the list out from under the pointer.
                 onMouseDown={(e) => { e.preventDefault(); take(name); }}
                 onMouseEnter={() => setActive(i)}
               >
-                {name}
+                {optionText?.(name) ?? name}
               </li>
             ))}
           </ul>

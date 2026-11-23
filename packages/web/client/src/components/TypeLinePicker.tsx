@@ -12,7 +12,7 @@ import { WordPicker } from "./WordPicker.js";
  *  ALL THIS FILE KNOWS IS WHICH TABLE A WORD CAME FROM. The typeahead, the chips and the whole
  *  keyboard model live in `WordPicker`, which the keyword row uses too. */
 export function TypeLinePicker(
-  { types, subtypes, chosenTypes, chosenSubtypes, notTypes, notSubtypes, onChange }: {
+  { types, subtypes, chosenTypes, chosenSubtypes, notTypes, notSubtypes, anyTypes, anySubtypes, onChange }: {
     types: string[];
     subtypes: string[];
     chosenTypes: string[];
@@ -21,7 +21,10 @@ export function TypeLinePicker(
      *  lists; without them the control is exactly what it was. */
     notTypes?: string[];
     notSubtypes?: string[];
-    onChange: (next: { types: string[]; subtypes: string[]; notTypes?: string[]; notSubtypes?: string[] }) => void;
+    /** ANY OF (#1782): one OR group across both tables. With either given the chips offer must / any of / never. */
+    anyTypes?: string[];
+    anySubtypes?: string[];
+    onChange: (next: { types: string[]; subtypes: string[]; notTypes?: string[]; notSubtypes?: string[]; anyTypes?: string[]; anySubtypes?: string[] }) => void;
   },
 ): React.JSX.Element {
   /** TYPES FIRST, because they are the coarser question and the shorter list -- so "creature"
@@ -32,11 +35,15 @@ export function TypeLinePicker(
    *  cannot see the difference anyway. */
   const isType = useMemo(() => new Set(types), [types]);
 
-  const withNots = notTypes !== undefined || notSubtypes !== undefined;
+  const withAny = anyTypes !== undefined || anySubtypes !== undefined;
+  const withNots = notTypes !== undefined || notSubtypes !== undefined || withAny;
   const nt = notTypes ?? [];
   const ns = notSubtypes ?? [];
-  const emit = (t: string[], s: string[], nT: string[], nS: string[]) =>
-    onChange(withNots ? { types: t, subtypes: s, notTypes: nT, notSubtypes: nS } : { types: t, subtypes: s });
+  const at = anyTypes ?? [];
+  const as = anySubtypes ?? [];
+  const emit = (t: string[], s: string[], nT: string[], nS: string[], aT: string[], aS: string[]) =>
+    onChange({ types: t, subtypes: s, ...(withNots ? { notTypes: nT, notSubtypes: nS } : {}), ...(withAny ? { anyTypes: aT, anySubtypes: aS } : {}) });
+  const drop = (xs: string[], name: string) => xs.filter((w) => w !== name);
   return (
     <WordPicker
       label="Type line"
@@ -46,14 +53,20 @@ export function TypeLinePicker(
       chosen={[...chosenTypes, ...chosenSubtypes]}
       {...(withNots ? {
         negated: [...nt, ...ns],
+        ...(withAny ? { anyOf: [...at, ...as], onRemoveAny: (name: string) => emit(chosenTypes, chosenSubtypes, nt, ns, drop(at, name), drop(as, name)) } : {}),
         // A WORD KEEPS ITS TABLE whichever list it is on, for the reason the comment below gives.
-        onMove: (name: string, to: "and" | "not") => {
-          const isT = chosenTypes.includes(name) || nt.includes(name);
-          const drop = (xs: string[]) => xs.filter((w) => w !== name);
-          if (to === "not") emit(isT ? drop(chosenTypes) : chosenTypes, isT ? chosenSubtypes : drop(chosenSubtypes), isT ? [...nt, name] : nt, isT ? ns : [...ns, name]);
-          else emit(isT ? [...chosenTypes, name] : chosenTypes, isT ? chosenSubtypes : [...chosenSubtypes, name], isT ? drop(nt) : nt, isT ? ns : drop(ns));
+        onMove: (name: string, to: "and" | "not" | "any") => {
+          const isT = chosenTypes.includes(name) || nt.includes(name) || at.includes(name);
+          // Out of all three lists of its table, then into the one asked for.
+          const t = isT ? drop(chosenTypes, name) : chosenTypes; const s = isT ? chosenSubtypes : drop(chosenSubtypes, name);
+          const nT = isT ? drop(nt, name) : nt; const nS = isT ? ns : drop(ns, name);
+          const aT = isT ? drop(at, name) : at; const aS = isT ? as : drop(as, name);
+          const into = (xs: string[], mine: boolean) => (mine ? [...xs, name] : xs);
+          if (to === "not") emit(t, s, into(nT, isT), into(nS, !isT), aT, aS);
+          else if (to === "any") emit(t, s, nT, nS, into(aT, isT), into(aS, !isT));
+          else emit(into(t, isT), into(s, !isT), nT, nS, aT, aS);
         },
-        onRemoveNegated: (name: string) => emit(chosenTypes, chosenSubtypes, nt.filter((w) => w !== name), ns.filter((w) => w !== name)),
+        onRemoveNegated: (name: string) => emit(chosenTypes, chosenSubtypes, drop(nt, name), drop(ns, name), at, as),
       } : {})}
       onChange={(next) => {
         // A WORD ALREADY CHOSEN KEEPS THE TABLE IT CAME IN UNDER, and re-deriving it from
@@ -69,7 +82,7 @@ export function TypeLinePicker(
         // which is drawn from the vocabulary, so by the time one arrives here it has loaded.
         const known = new Set([...chosenTypes, ...chosenSubtypes]);
         for (const w of next) if (!known.has(w)) (isType.has(w) ? types : subtypes).push(w);
-        emit(types, subtypes, nt, ns);
+        emit(types, subtypes, nt, ns, at, as);
       }}
     />
   );

@@ -4,6 +4,8 @@
 export interface FieldEntry {
   label?: string;
   alias?: string;
+  /** Player words for a set field's values (`read`: "grammar" -> "read by our rules"). A value without one shows as it is. */
+  valueLabels?: Record<string, string>;
   /** Overrides the group the owning prefix would give. */
   group?: string;
   sortable?: boolean;

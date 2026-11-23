@@ -146,6 +146,7 @@
   "packages/web/client/src/components/CommanderPage.tsx": 1,
   "packages/web/client/src/components/Constellation.tsx": 1,
   "packages/web/client/src/components/DeckGauges.tsx": 1,
+  "packages/web/client/src/components/FieldRow.tsx": 1,
   "packages/web/client/src/components/ReportShell.tsx": 1,
   "packages/web/client/src/components/ScrollToTop.tsx": 1,
   "packages/web/client/src/components/art-cache.ts": 1,

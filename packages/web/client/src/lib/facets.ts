@@ -23,6 +23,12 @@ export type { RateFamily } from "@edh-seer/matcher/rate";
  *  reachable by name and on the report, and is unaskable here until AK2. Copy-spell has since
  *  become an event (`copy|spell`); the picker says which of the rest are unaskable when a player
  *  types one (`unaskable.ts`, #730). */
+/** One question about a catalogue field. `must`: the card holds the value; `any`: it holds at least one of this field's
+ *  `any` values; `not`: it holds none; `range`: a number field overlaps [min, max], either end optional. */
+export type FieldFilter =
+  | { field: string; op: "must" | "any" | "not"; value: string }
+  | { field: string; op: "range"; min?: number; max?: number };
+
 /** The five type counts and their order keys. */
 export type TypeCountSort = "cardtypes" | "fronttypes" | "supertypes" | "subtypes" | "creaturetypes";
 export const TYPE_COUNTS = [
@@ -72,6 +78,14 @@ export interface EventQuery {
   notTypes?: string[];
   notSubtypes?: string[];
   notKeywords?: string[];
+  /** ANY OF, ONE LEVEL (#1782). Within a word row the chips in one of these lists form one OR group: at least one must
+   *  hold, ANDed with the row's must chips, its never chips and the rest of the query. Absent when empty, so every
+   *  link written before them reads as it did. Cross-row OR is not a thing here. */
+  orTypes?: string[];
+  orSubtypes?: string[];
+  orKeywords?: string[];
+  /** ROWS OFF THE SEARCH CATALOGUE (#1782): a field no bespoke row covers, asked by its path id. Order is the URL's. */
+  fieldFilters?: FieldFilter[];
   /** HOW MANY TYPES THE CARD HAS, as ranges, zero a real bound. Card types are CR 205.2a (kindred counts,
    *  supertypes do not); `cardTypes` reads every face, `frontTypes` the front face only. These need the
    *  search catalogue (named lists, the faces group). */
@@ -169,6 +183,36 @@ const bound = (raw: string | null): number | undefined => {
 /** The NOT params of the three word rows. */
 const WORD_NOT_PARAMS = [["notTypes", "nottype"], ["notSubtypes", "notsubtype"], ["notKeywords", "notkeyword"]] as const;
 
+/** The any-of params of the three word rows. */
+const WORD_ANY_PARAMS = [["orTypes", "ortype"], ["orSubtypes", "orsubtype"], ["orKeywords", "orkeyword"]] as const;
+
+/** THE GENERIC ROWS' PARAMS: `<fieldId>:<value>` split at the FIRST colon (a path id never holds one, a value may), and
+ *  `<fieldId>:<min>..<max>` for a range. A malformed one is kept as a filter that names it, so the page can say it does
+ *  not know it rather than lose it. */
+const FIELD_SET_PARAMS = [["must", "f"], ["any", "fany"], ["not", "fnot"]] as const;
+const FIELD_PARAMS = ["f", "fany", "fnot", "frange"] as const;
+
+function fieldFiltersFromParams(p: URLSearchParams): FieldFilter[] {
+  const out: FieldFilter[] = [];
+  for (const [op, param] of FIELD_SET_PARAMS) {
+    for (const raw of p.getAll(param)) {
+      if (raw.length === 0) continue;
+      const at = raw.indexOf(":");
+      out.push(at < 0 ? { field: raw, op, value: "" } : { field: raw.slice(0, at), op, value: raw.slice(at + 1) });
+    }
+  }
+  for (const raw of p.getAll("frange")) {
+    const at = raw.indexOf(":");
+    const dots = raw.indexOf("..", at + 1);
+    if (at <= 0 || dots < 0) continue;
+    const min = bound(raw.slice(at + 1, dots));
+    const max = bound(raw.slice(dots + 2));
+    if (min === undefined && max === undefined) continue;
+    out.push({ field: raw.slice(0, at), op: "range", ...(min !== undefined ? { min } : {}), ...(max !== undefined ? { max } : {}) });
+  }
+  return out;
+}
+
 /** The `or` and `not` terms' params, one per field. */
 const OPERATOR_PARAMS = [
   ["orProduce", "orproduce"], ["orConsume", "orconsume"], ["notProduce", "notproduce"], ["notConsume", "notconsume"],
@@ -201,6 +245,10 @@ export function eventsFromParams(p: URLSearchParams): EventQuery {
     ...Object.fromEntries(WORD_NOT_PARAMS
       .map(([field, param]) => [field, p.getAll(param).filter((k) => k.length > 0)] as const)
       .filter(([, v]) => v.length > 0)),
+    ...Object.fromEntries(WORD_ANY_PARAMS
+      .map(([field, param]) => [field, p.getAll(param).filter((k) => k.length > 0)] as const)
+      .filter(([, v]) => v.length > 0)),
+    ...(() => { const f = fieldFiltersFromParams(p); return f.length > 0 ? { fieldFilters: f } : {}; })(),
     ...Object.fromEntries(TYPE_COUNTS.flatMap((c) => [[c.min, bound(p.get(`${c.param}min`))], [c.max, bound(p.get(`${c.param}max`))]] as const)
       .filter(([, v]) => v !== undefined)),
     ...(p.get("changelings") === "keep" ? { keepChangelings: true } : {}),
@@ -250,7 +298,7 @@ export function eventsToParams(q: EventQuery, p: URLSearchParams): URLSearchPara
   const out = new URLSearchParams(p);
   for (const k of [
     "produce", "consume", ...OPERATOR_PARAMS.map(([, param]) => param), "colors", "type", "subtype", "keyword", "cardcolors", "sort", "dir",
-    ...WORD_NOT_PARAMS.map(([, param]) => param), "changelings",
+    ...WORD_NOT_PARAMS.map(([, param]) => param), ...WORD_ANY_PARAMS.map(([, param]) => param), ...FIELD_PARAMS, "changelings",
     ...TYPE_COUNTS.flatMap((c) => [`${c.param}min`, `${c.param}max`]),
     // `mv` IS DELETED AND NEVER WRITTEN. It is read for the links that already carry it and
     // rewritten as `mvmax`, so the legacy spelling does not propagate into new ones.
@@ -265,6 +313,13 @@ export function eventsToParams(q: EventQuery, p: URLSearchParams): URLSearchPara
   for (const k of q.subtypes) out.append("subtype", k);
   for (const k of q.keywords) out.append("keyword", k);
   for (const [field, param] of WORD_NOT_PARAMS) for (const k of q[field] ?? []) out.append(param, k);
+  for (const [field, param] of WORD_ANY_PARAMS) for (const k of q[field] ?? []) out.append(param, k);
+  for (const [op, param] of FIELD_SET_PARAMS) {
+    for (const f of q.fieldFilters ?? []) if (f.op === op) out.append(param, `${f.field}:${f.value}`);
+  }
+  for (const f of q.fieldFilters ?? []) {
+    if (f.op === "range") out.append("frange", `${f.field}:${f.min ?? ""}..${f.max ?? ""}`);
+  }
   if (q.keepChangelings === true) out.set("changelings", "keep");
   for (const c of TYPE_COUNTS) {
     if (q[c.min] !== undefined) out.set(`${c.param}min`, String(q[c.min]));
@@ -467,9 +522,10 @@ export function filterKindsOf(q: EventQuery): FilterKind[] {
   const asked: Record<FilterKind, boolean> = {
     colours: q.colours.length > 0,
     cardColours: q.cardColours.length > 0,
-    typeline: q.types.length > 0 || q.subtypes.length > 0 || (q.notTypes?.length ?? 0) > 0 || (q.notSubtypes?.length ?? 0) > 0,
+    typeline: q.types.length > 0 || q.subtypes.length > 0 || (q.notTypes?.length ?? 0) > 0 || (q.notSubtypes?.length ?? 0) > 0
+      || (q.orTypes?.length ?? 0) > 0 || (q.orSubtypes?.length ?? 0) > 0,
     typeCounts: TYPE_COUNTS.some((c) => q[c.min] !== undefined || q[c.max] !== undefined),
-    keywords: q.keywords.length > 0 || (q.notKeywords?.length ?? 0) > 0,
+    keywords: q.keywords.length > 0 || (q.notKeywords?.length ?? 0) > 0 || (q.orKeywords?.length ?? 0) > 0,
     // EITHER END IS THE SAME ROW. "3 or more" is a range with no ceiling and still the mana value
     // question; two rows for one dimension would let a reader remove half of it.
     mv: q.mvMin !== undefined || q.mvMax !== undefined,
@@ -492,11 +548,11 @@ export function withoutFilterKind(q: EventQuery, kind: FilterKind): EventQuery {
   switch (kind) {
     case "colours": return { ...q, colours: [] };
     case "cardColours": return { ...q, cardColours: [] };
-    case "keywords": { const { notKeywords: _n, ...rest } = q; return { ...rest, keywords: [] }; }
+    case "keywords": { const { notKeywords: _n, orKeywords: _o, ...rest } = q; return { ...rest, keywords: [] }; }
     // BOTH, because one row asked both. Clearing only the one the reader last typed would leave the
     // row gone from the panel and its other param still narrowing the list, which is the shape of
     // "the filter I removed is still filtering".
-    case "typeline": { const { notTypes: _a, notSubtypes: _b, ...rest } = q; return { ...rest, types: [], subtypes: [] }; }
+    case "typeline": { const { notTypes: _a, notSubtypes: _b, orTypes: _c, orSubtypes: _d, ...rest } = q; return { ...rest, types: [], subtypes: [] }; }
     case "typeCounts": {
       const next: EventQuery = { ...q };
       for (const c of TYPE_COUNTS) { delete next[c.min]; delete next[c.max]; }

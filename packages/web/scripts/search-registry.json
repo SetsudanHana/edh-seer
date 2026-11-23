@@ -41,7 +41,13 @@
       "label": "Colour identity"
     },
     "read": {
-      "label": "How the card was read"
+      "label": "Our reading",
+      "valueLabels": {
+        "grammar": "read by our rules",
+        "model": "read by the model",
+        "unread": "not read yet",
+        "no-record": "no record"
+      }
     },
     "tags.clauseSource": {
       "label": "Clause source"

@@ -15,6 +15,10 @@ export interface SearchLoader {
 /** Fields the page answers from name-index rows alone. */
 export const CORE_FIELDS: ReadonlySet<string> = new Set(["t", "st", "k", "mv", "pow", "tou", "id", "c"]);
 
+/** Fields a bespoke row already covers (the core views, the front-face types and the changeling flag): the generic menu
+ *  does not offer them a second time. */
+export const BESPOKE_FIELDS: ReadonlySet<string> = new Set([...CORE_FIELDS, "tFront", "everyCreatureType"]);
+
 export function fieldsOf(node: Node, out: Set<string> = new Set()): string[] {
   if ("and" in node) node.and.forEach((n) => fieldsOf(n, out));
   else if ("or" in node) node.or.forEach((n) => fieldsOf(n, out));

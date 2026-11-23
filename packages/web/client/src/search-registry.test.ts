@@ -41,3 +41,10 @@ test.skipIf(!existsSync(rules))("card and super match CR 205.2a / 205.4a, whose 
 test.skipIf(existsSync(rules))("CR check skipped: rules/MagicCompRules.txt absent (npx tsx research/rules/fetch-comprehensive-rules.ts)", () => {
   expect(true).toBe(true);
 });
+
+test("`read` says itself in player words, one label per value the build can produce (#1782)", () => {
+  expect(registry.fields["read"]).toEqual({
+    label: "Our reading",
+    valueLabels: { grammar: "read by our rules", model: "read by the model", unread: "not read yet", "no-record": "no record" },
+  });
+});

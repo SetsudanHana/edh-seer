@@ -4,11 +4,13 @@ import { useSearchParams } from "react-router";
 import { identityMask, inIdentityOf } from "@edh-seer/matcher/partners-core";
 import { matchNames, needleOf } from "../lib/name-match.js";
 import { coreContext, evaluateEventQuery, fromEventQuery, rowCountsOf, typeCountSpec, withEveryCreatureType } from "../lib/search/from-event-query.js";
-import { createSearchLoader, fieldsOf, resolveCatalogue, type CatalogueResolution, type SearchLoader } from "../lib/search/load.js";
+import { BESPOKE_FIELDS, createSearchLoader, fieldsOf, resolveCatalogue, type CatalogueResolution, type SearchLoader } from "../lib/search/load.js";
+import type { Catalogue, CatalogueField } from "../lib/search/catalogue.js";
 import type { EvalContext, Node } from "../lib/search/evaluate.js";
 import { TypeCountRow } from "./TypeCountRow.js";
+import { FieldRow } from "./FieldRow.js";
 import { sharedEventFrequency, sharedEventMembers, sharedNameIndex, sharedNameIndexVocabulary, type EventFrequencyFile, type EventMembers, type NameIndexEntry } from "../lib/partners.js";
-import { eventsFromParams, eventsToParams, filterKindsOf, factFilterOf, orderOf, withoutFilterKind, EFFECT_KINDS, FILTER_KINDS, NATURAL_DIR, TYPE_COUNTS, type EventQuery, type FilterKind, type TypeCountSort } from "../lib/facets.js";
+import { eventsFromParams, eventsToParams, filterKindsOf, factFilterOf, orderOf, withoutFilterKind, EFFECT_KINDS, FILTER_KINDS, NATURAL_DIR, TYPE_COUNTS, type EventQuery, type FieldFilter, type FilterKind, type TypeCountSort } from "../lib/facets.js";
 import { BY_WHAT_IT_IS, TIMING_UNKNOWN, effectCaption } from "../lib/effect-caption.js";
 import { isEmptyFilter } from "@edh-seer/matcher/member-facts";
 import { membersPassing, unjudgedLeftOut } from "../lib/effect-filter.js";
@@ -131,6 +133,9 @@ const aTypes = (names: readonly string[]): string => {
   return all.length <= 1 ? (all[0] ?? "") : `${all.slice(0, -1).join(", ")} and ${all[all.length - 1]}`;
 };
 
+/** ONE EMPTY LIST, so a query with no catalogue rows keeps the identity of what depends on it. */
+const NO_FILTERS: readonly FieldFilter[] = [];
+
 /** The panel's rows: every kind but the two events, which the sentence asks. */
 const ROW_KINDS = FILTER_KINDS.filter((k) => k !== "produce" && k !== "consume");
 
@@ -242,12 +247,56 @@ export function CardSearch({
   const eventAsked = terms.some((t) => t.op !== "not");
   const available = ROW_KINDS.filter((k) => !shownKinds.includes(k) && (eventAsked || !EFFECT_KINDS.includes(k)));
   const [menuOpen, setMenuOpen] = useState(false);
+  // THE CATALOGUE'S OWN ROWS (#1782): fields no bespoke row covers, each a row drawn from the catalogue entry. The ids in
+  // the URL, then the ones added and not yet filled (as `pending` does for the kinds). The catalogue is read when the
+  // menu opens or the link names one of these fields, never otherwise; their group files only once a row holds a value.
+  const fieldFilters = eventQuery.fieldFilters ?? NO_FILTERS;
+  const genericAsked = fieldFilters.length > 0;
+  const [fieldRows, setFieldRows] = useState<string[]>([]);
+  const [advanced, setAdvanced] = useState(false);
+  const resolveLoader = useMemo(() => searchLoader ?? createSearchLoader("/static"), [searchLoader]);
+  const [catalogueInfo, setCatalogueInfo] = useState<{ state: "idle" | "loading" | "ready" | "none" | "failed"; cat: Catalogue | null }>({ state: "idle", cat: null });
+  const [catAttempt, setCatAttempt] = useState(0);
+  const wantCatalogue = menuOpen || genericAsked;
+  useEffect(() => {
+    if (!wantCatalogue) return;
+    let live = true;
+    setCatalogueInfo((prev) => (prev.state === "ready" || prev.state === "none" ? prev : { state: "loading", cat: null }));
+    resolveLoader.catalogue().then(
+      (cat) => { if (live) setCatalogueInfo(cat ? { state: "ready", cat } : { state: "none", cat: null }); },
+      () => { if (live) setCatalogueInfo({ state: "failed", cat: null }); },
+    );
+    return () => { live = false; };
+  }, [wantCatalogue, resolveLoader, catAttempt]);
+  const idsInQuery = useMemo(() => [...new Set(fieldFilters.map((f) => f.field))], [fieldFilters]);
+  useEffect(() => {
+    setFieldRows((rs) => (idsInQuery.every((id) => rs.includes(id)) ? rs : [...new Set([...rs, ...idsInQuery])]));
+  }, [idsInQuery]);
+  const catalogueFields = useMemo(
+    () => new Map((catalogueInfo.cat ? Object.values(catalogueInfo.cat.groups).flatMap((g) => g.fields) : []).map((f) => [f.id, f] as const)),
+    [catalogueInfo.cat]);
+  const dropField = (id: string): void => {
+    const rest = fieldFilters.filter((f) => f.field !== id);
+    const { fieldFilters: _f, ...without } = eventQuery;
+    setEffects(rest.length > 0 ? { ...without, fieldFilters: rest } : without);
+    setFieldRows((rs) => rs.filter((r) => r !== id));
+  };
+  const setFieldFilters = (id: string, next: FieldFilter[]): void => {
+    const all = [...fieldFilters.filter((f) => f.field !== id), ...next];
+    const { fieldFilters: _f, ...without } = eventQuery;
+    setEffects(all.length > 0 ? { ...without, fieldFilters: all } : without);
+  };
   // REMOVING A ROW CLEARS ITS QUESTION AND FORGETS THE ROW. Doing only the first would leave an
   // empty control standing where a reader had just said they were finished with it.
   const dropKind = (kind: FilterKind): void => {
     setEffects(withoutFilterKind(eventQuery, kind));
     setPending((ks) => ks.filter((k) => k !== kind));
   };
+  const offeredFields = useMemo((): CatalogueField[] => [...catalogueFields.values()]
+    .filter((f) => !BESPOKE_FIELDS.has(f.id) && !fieldRows.includes(f.id)), [catalogueFields, fieldRows]);
+  const isLabelled = (f: CatalogueField): boolean => f.label !== undefined && f.label !== f.id;
+  const menuLabelled = useMemo(() => offeredFields.filter(isLabelled).sort((a, b) => a.label!.localeCompare(b.label!, "en")), [offeredFields]);
+  const menuUnlabelled = useMemo(() => offeredFields.filter((f) => !isLabelled(f)).sort((a, b) => a.id.localeCompare(b.id, "en")), [offeredFields]);
   useEffect(() => {
     let live = true;
     void load("/static").then((i) => { if (live) setIndex(i); });
@@ -304,7 +353,7 @@ export function CardSearch({
   // THE EFFECT ROWS ARE NOT A QUESTION ON THEIR OWN: they narrow the events, and with none asked an
   // "Amount 1 to 1" link would otherwise draw the whole index as its answer.
   const asked = needle.length > 0 || chosenKeys.length > 0
-    || filterKindsOf(eventQuery).some((k) => !EFFECT_KINDS.includes(k));
+    || filterKindsOf(eventQuery).some((k) => !EFFECT_KINDS.includes(k)) || genericAsked;
   // A ROW'S POSITION IN THE INDEX, which is what the event lists hold. Once per artifact.
   const positionOf = useMemo(() => new Map((index ?? []).map((e, i) => [e, i] as const)), [index]);
 
@@ -355,21 +404,20 @@ export function CardSearch({
   // THE KEY IS WHAT IS NEEDED, not the whole question: moving a mana-value bound must not look like a new
   // catalogue request and flash the loading line. `fields|lists`; the every-creature-type flag is built here, not fetched.
   const needKey = useMemo((): string | null => {
-    if (!countsAsked && countSort === null && !notSubtypesAsked) return null;
+    if (!countsAsked && countSort === null && !notSubtypesAsked && !genericAsked) return null;
     const node = fromEventQuery(eventQuery, mode);
     const fields = new Set(fieldsOf(node).filter((f) => f !== "everyCreatureType"));
-    const lists = new Set(["creature", ...(JSON.stringify(node).match(/"list":"(\w+)"/g) ?? []).map((m) => m.slice(8, -1))]);
+    const lists = new Set([...(countsAsked || countSort !== null || notSubtypesAsked ? ["creature"] : []), ...(JSON.stringify(node).match(/"list":"(\w+)"/g) ?? []).map((m) => m.slice(8, -1))]);
     if (countSort !== null) {
       fields.add(typeCountSpec[countSort].field);
       const l = typeCountSpec[countSort].list;
       if (l) lists.add(l);
     }
     return `${[...fields].sort().join(",")}|${[...lists].sort().join(",")}`;
-  }, [countsAsked, countSort, notSubtypesAsked, eventQuery, mode]);
+  }, [countsAsked, countSort, notSubtypesAsked, genericAsked, eventQuery, mode]);
   const [resolved, setResolved] = useState<{ core: EvalContext; key: string; ctx: EvalContext; state: CatalogueResolution["state"] } | null>(null);
   // THE RETRY CHIP: bumping it runs the read again. A failed read is shown, and the loader keeps nothing of it.
   const [attempt, setAttempt] = useState(0);
-  const resolveLoader = useMemo(() => searchLoader ?? createSearchLoader("/static"), [searchLoader]);
   useEffect(() => {
     if (searchContext === null || index === null || needKey === null) return;
     let live = true;
@@ -402,9 +450,29 @@ export function CardSearch({
   // can never be known: it is shown without them, and says so (`changelingsUnmatched`).
   const keepAsked = eventQuery.keepChangelings === true && notSubtypesAsked;
   const keepUnresolved = keepAsked && (catalogueState === "pending" || catalogueState === "failed");
-  const blocking = countsAsked || countSort !== null || keepUnresolved || (keepAsked && hiddenTypeNames.length > 0);
+  const blocking = countsAsked || countSort !== null || keepUnresolved || (keepAsked && hiddenTypeNames.length > 0) || genericAsked;
+  // WHICH QUESTION THE WORDS ARE ABOUT: type counts and the changeling note have their own, a catalogue row the general one.
+  const typeQuestion = countsAsked || countSort !== null || keepAsked;
+  // A LINK'S FIELD IS JUDGED AGAINST THE CATALOGUE ITSELF, so the page waits for it too: an incomplete read must not say
+  // "can't answer" for a moment and "doesn't know" the next.
+  const catalogueSettled = !genericAsked || catalogueInfo.state === "ready" || catalogueInfo.state === "none" || catalogueInfo.state === "failed";
+  // WHAT A LINK ASKS THAT THE CATALOGUE DOES NOT HOLD: a field, a value of a set field, or the wrong kind of question for
+  // the field. One line each, said where the answer would be; the list is not drawn (an unknown is not an empty answer).
+  const unknownLines = useMemo((): string[] => {
+    if (catalogueInfo.cat === null) return [];
+    const out = new Set<string>();
+    for (const f of fieldFilters) {
+      const def = catalogueFields.get(f.field);
+      const name = def ? (def.label ?? f.field) : f.field;
+      if (!def) out.add(`This build doesn't know ${f.field}.`);
+      else if (f.op === "range") { if (def.kind !== "number") out.add(`This build reads ${name} as a list of values, so a range does not apply.`); }
+      else if (def.kind !== "set") out.add(`This build reads ${name} as a number, so the value "${f.value}" does not apply.`);
+      else if (!(def.values ?? []).some((v) => v.v === f.value)) out.add(`This build doesn't know the value "${f.value}" for ${name}.`);
+    }
+    return [...out];
+  }, [catalogueInfo.cat, catalogueFields, fieldFilters]);
   const changelingsUnmatched = keepAsked && (catalogueState === "no-pointer" || catalogueState === "incomplete");
-  const typeCountsBlocked = blocking && catalogueState === "pending";
+  const typeCountsBlocked = blocking && (catalogueState === "pending" || !catalogueSettled);
   // NO POINTER AND AN INCOMPLETE CATALOGUE both say the build cannot answer; a failed read says so differently, with a retry.
   const typeCountsMissing = blocking && (catalogueState === "no-pointer" || catalogueState === "incomplete");
   const typeCountsFailed = blocking && catalogueState === "failed";
@@ -482,7 +550,7 @@ export function CardSearch({
   const matches = useMemo((): NameIndexEntry[] | null => {
     if (index === null || !asked) return [];
     if (typeCountsBlocked) return null;
-    if (typeCountsMissing || typeCountsFailed || filtersUnanswerable) return [];
+    if (typeCountsMissing || typeCountsFailed || filtersUnanswerable || unknownLines.length > 0) return [];
     if (keptIds === undefined) return null;
     const base = baseEntries;
     if (base === null) return null;
@@ -526,7 +594,7 @@ export function CardSearch({
         : countSort !== null ? byNumber((e) => countsBy[countSort]?.[positionOf.get(e) ?? -1])
         : byNumber((e) => e.partners ?? 0),
     );
-  }, [index, keptIds, asked, eventQuery, lists, positionOf, fitCard, baseEntries, countSort, countsBy, typeCountsBlocked, typeCountsMissing, typeCountsFailed, filtersUnanswerable]);
+  }, [index, keptIds, asked, eventQuery, lists, positionOf, fitCard, baseEntries, countSort, countsBy, typeCountsBlocked, typeCountsMissing, typeCountsFailed, filtersUnanswerable, unknownLines]);
   // WHAT "Back to the N matches" RETURNS TO: the normal list's size, without sorting it.
   const normalCount = useMemo((): number => {
     if (!showSkipped || index === null || keptIds === undefined || keptIds === null) return 0;
@@ -665,12 +733,16 @@ export function CardSearch({
             chosenSubtypes={eventQuery.subtypes}
             notTypes={eventQuery.notTypes ?? []}
             notSubtypes={eventQuery.notSubtypes ?? []}
+            anyTypes={eventQuery.orTypes ?? []}
+            anySubtypes={eventQuery.orSubtypes ?? []}
             onChange={(next) => {
-              // A NOT LIST IS ABSENT WHEN EMPTY, as the URL leaves it.
-              const { notTypes: _a, notSubtypes: _b, ...rest } = eventQuery;
+              // A NOT OR ANY-OF LIST IS ABSENT WHEN EMPTY, as the URL leaves it.
+              const { notTypes: _a, notSubtypes: _b, orTypes: _c, orSubtypes: _d, ...rest } = eventQuery;
               setEvents({ ...rest, types: next.types, subtypes: next.subtypes,
                 ...((next.notTypes?.length ?? 0) > 0 ? { notTypes: next.notTypes! } : {}),
-                ...((next.notSubtypes?.length ?? 0) > 0 ? { notSubtypes: next.notSubtypes! } : {}) });
+                ...((next.notSubtypes?.length ?? 0) > 0 ? { notSubtypes: next.notSubtypes! } : {}),
+                ...((next.anyTypes?.length ?? 0) > 0 ? { orTypes: next.anyTypes! } : {}),
+                ...((next.anySubtypes?.length ?? 0) > 0 ? { orSubtypes: next.anySubtypes! } : {}) });
             }}
           />
         );
@@ -685,17 +757,25 @@ export function CardSearch({
             all={vocabulary.keywords}
             chosen={eventQuery.keywords}
             negated={eventQuery.notKeywords ?? []}
+            anyOf={eventQuery.orKeywords ?? []}
             onChange={(next) => setEvents({ ...eventQuery, keywords: next })}
             onMove={(name, to) => {
-              const { notKeywords: _n, ...rest } = eventQuery;
-              const nots = to === "not" ? [...(eventQuery.notKeywords ?? []), name] : (eventQuery.notKeywords ?? []).filter((w) => w !== name);
-              const must = to === "not" ? eventQuery.keywords.filter((w) => w !== name) : [...eventQuery.keywords, name];
-              setEvents({ ...rest, keywords: must, ...(nots.length > 0 ? { notKeywords: nots } : {}) });
+              const { notKeywords: _n, orKeywords: _o, ...rest } = eventQuery;
+              const without = (xs: string[] | undefined) => (xs ?? []).filter((w) => w !== name);
+              const must = to === "and" ? [...without(eventQuery.keywords), name] : without(eventQuery.keywords);
+              const nots = to === "not" ? [...without(eventQuery.notKeywords), name] : without(eventQuery.notKeywords);
+              const any = to === "any" ? [...without(eventQuery.orKeywords), name] : without(eventQuery.orKeywords);
+              setEvents({ ...rest, keywords: must, ...(nots.length > 0 ? { notKeywords: nots } : {}), ...(any.length > 0 ? { orKeywords: any } : {}) });
             }}
             onRemoveNegated={(name) => {
               const { notKeywords: _n, ...rest } = eventQuery;
               const nots = (eventQuery.notKeywords ?? []).filter((w) => w !== name);
               setEvents({ ...rest, ...(nots.length > 0 ? { notKeywords: nots } : {}) });
+            }}
+            onRemoveAny={(name) => {
+              const { orKeywords: _o, ...rest } = eventQuery;
+              const any = (eventQuery.orKeywords ?? []).filter((w) => w !== name);
+              setEvents({ ...rest, ...(any.length > 0 ? { orKeywords: any } : {}) });
             }}
           />
         );
@@ -874,7 +954,7 @@ export function CardSearch({
         onOpen={() => setSentenceOpened(true)}
       />
       <div className="facets flex flex-col gap-4">
-        {shownKinds.length > 0 && (
+        {(shownKinds.length > 0 || fieldRows.length > 0) && (
           <ul className="flex flex-col gap-4 list-none p-0 m-0">
             {shownKinds.map((kind) => (
               <li key={kind} className="flex flex-wrap items-end gap-x-3 gap-y-2">
@@ -894,12 +974,29 @@ export function CardSearch({
                 </button>
               </li>
             ))}
+            {fieldRows.map((id) => {
+              const def = catalogueFields.get(id);
+              const name = def?.label ?? id;
+              return (
+                <li key={`field:${id}`} className="flex flex-wrap items-end gap-x-3 gap-y-2">
+                  <div className="min-w-0">
+                    <FieldRow id={id} field={def} filters={fieldFilters.filter((f) => f.field === id)} onChange={(next) => setFieldFilters(id, next)} />
+                  </div>
+                  <button type="button" className="chip" aria-label={`Remove the ${name} filter`} onClick={() => dropField(id)}>
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true" focusable="false">
+                      <path d="M18 6 6 18M6 6l12 12" />
+                    </svg>
+                    Remove
+                  </button>
+                </li>
+              );
+            })}
           </ul>
         )}
         {/* A NATIVE `<details>`, so the keyboard and screen-reader model is the platform's -- the
           * same reason the panel it replaces was one. It closes itself once a row is added,
           * because a menu still standing over the control it just created is in the way. */}
-        {available.length > 0 && (
+        {(
           <details
             // `relative`, AND IT IS LOAD-BEARING: `.site-search-list` below is `position:absolute`,
             // so without a positioned ancestor it resolves against the INITIAL containing block.
@@ -925,6 +1022,34 @@ export function CardSearch({
                     onClick={() => { setPending((ks) => [...ks, kind]); setMenuOpen(false); }}
                   >
                     {FILTER_LABEL[kind]}
+                  </button>
+                </li>
+              ))}
+              {/* THE CATALOGUE'S FIELDS (#1782): whatever the build holds that no row above covers, listed from its data.
+                * Labelled fields show normally; the rest are paths, so they wait behind a switch. */}
+              {catalogueInfo.state === "loading" && <li className="site-search-note">Loading more filters…</li>}
+              {catalogueInfo.state === "failed" && (
+                <li className="site-search-note">
+                  Couldn&apos;t load more filters.
+                  <button type="button" className="chip" onClick={() => setCatAttempt((n) => n + 1)}>Try again</button>
+                </li>
+              )}
+              {(menuUnlabelled.length > 0 || advanced) && (
+                <li>
+                  <label className="site-search-row cursor-pointer">
+                    <input type="checkbox" checked={advanced} onChange={(e) => setAdvanced(e.target.checked)} />
+                    Advanced fields
+                  </label>
+                </li>
+              )}
+              {[...menuLabelled, ...(advanced ? menuUnlabelled : [])].map((f) => (
+                <li key={f.id}>
+                  <button
+                    type="button"
+                    className="site-search-row w-full text-left"
+                    onClick={() => { setFieldRows((rs) => [...rs, f.id]); setMenuOpen(false); }}
+                  >
+                    {f.label ?? f.id}
                   </button>
                 </li>
               ))}
@@ -999,14 +1124,19 @@ export function CardSearch({
         ? <p role="status" className="text-(--muted)">{effectUnanswerable
           ? "This site's card data predates the ability filters. Remove the ability type, how often and amount filters to search again."
           : "This site's card data can't answer one of those events. Remove it to search again."}</p>
+        : unknownLines.length > 0
+        // AN UNKNOWN IS NOT AN EMPTY ANSWER (#1782): the link names a field or value this build lacks, said once each.
+        ? <div className="flex flex-col gap-1">
+            {unknownLines.map((line) => <p key={line} role="status" className="text-(--muted)">{line}</p>)}
+          </div>
         : typeCountsMissing
         // NO ANSWER IS NOT AN EMPTY ANSWER: an artifact built without the search catalogue cannot count types.
-        ? <p role="status" className="text-(--muted)">This build can&apos;t answer type counts yet.</p>
+        ? <p role="status" className="text-(--muted)">{typeQuestion ? "This build can't answer type counts yet." : "This build can't answer one of those filters yet."}</p>
         : typeCountsFailed
         // A FAILED READ IS NOT "THIS BUILD CANNOT": it may work next time, so it offers the retry.
         ? <div className="flex flex-wrap items-center gap-3">
-            <p role="status" className="text-(--muted)">Couldn&apos;t load type data. Try again.</p>
-            <button type="button" className="chip" onClick={() => { setResolved(null); setAttempt((n) => n + 1); }}>Try again</button>
+            <p role="status" className="text-(--muted)">{typeQuestion ? "Couldn't load type data. Try again." : "Couldn't load filter data. Try again."}</p>
+            <button type="button" className="chip" onClick={() => { setResolved(null); setAttempt((n) => n + 1); setCatAttempt((n) => n + 1); }}>Try again</button>
           </div>
         : filtersUnanswerable
         ? <p role="status" className="text-(--muted)">This build can&apos;t answer one of those filters yet.</p>
