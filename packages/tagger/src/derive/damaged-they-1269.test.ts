@@ -1,6 +1,6 @@
 import { describe, expect, test } from "vitest";
 import { deriveAsCorpus } from "../derive-worker.js";
-import { actionRecipients, damagedPlayerRead } from "./recipient.js";
+import { actionRecipients, damagedPlayerActsEveryTime, damagedPlayerRead } from "./recipient.js";
 import fixtures from "./damaged-they-1269.fixtures.json" with { type: "json" };
 
 /** #1269: the card's own damage hit a player, and the clause names that player without "that player" -- "they lose half their life" (Unstoppable Slasher), "they mill two cards" (Rex), "The player gets another poison counter" (Sabertooth Cobra) --
@@ -61,11 +61,31 @@ describe("guards: a 'they' that is not the damaged player keeps its reading", ()
     expect(damagedPlayerRead("Whenever this creature deals combat damage to a player, draw a card. Scry 1. They lose 1 life.", { triggerIsSelf: true })).toContain("They lose");
     expect(damagedPlayerRead("Whenever this creature deals combat damage to a player, draw a card. (They lose 1 life.)", { triggerIsSelf: true })).toContain("(They lose");
   });
-  test("Mind Bomb: 'each player ... they' with no damage trigger", () => {
+  test("Mind Bomb and Tibalt's Trickery have no damage trigger, so their 'they' is never read (real cards; this guard cannot fail from damagedPlayerRead, which exits at once)", () => {
     expect(controls("Mind Bomb", "discard").every((x) => x !== "opp")).toBe(true);
-  });
-  test("Tibalt's Trickery: a 'they' that names a player who may be you stays any", () => {
     for (const c of controls("Tibalt's Trickery", "cast")) expect(c).not.toBe("opp");
   });
   test("Elder Mastery: 'enchanted creature deals damage' can be an opponent's creature, so its discard stays any", () => expect(controls("Elder Mastery", "discard")).toEqual(["any"]));
+});
+
+// SYNTHETIC: no corpus card prints these. They pin the two refusals inside `damagedPlayerActsEveryTime`, each isolated from the other.
+describe("damagedPlayerActsEveryTime refusals (synthetic)", () => {
+  const ctx = { triggerIsSelf: true };
+  const head = "Whenever this creature deals combat damage to a player, ";
+  test("control: two stored discards, each a 'that player' cue, no 'you discard' -> read", () => {
+    expect(damagedPlayerActsEveryTime(head + "that player discards a card. Then that player discards a card.", "discard", 2, ctx)).toBe(true);
+  });
+  test("a printed 'you discard' refuses, though both stored discards have a cue", () => {
+    expect(damagedPlayerActsEveryTime(head + "that player discards a card. Then that player discards a card. You discard a card.", "discard", 2, ctx)).toBe(false);
+  });
+  test("fewer 'that player' cues than stored actions refuses (n >= stored)", () => {
+    expect(damagedPlayerActsEveryTime(head + "that player discards a card at random.", "discard", 2, ctx)).toBe(false);
+  });
+});
+
+describe("KNOWN GAP (CEILING in recipient.ts): a cue-verb 'they' that means permanents (synthetic, 0 corpus lines today)", () => {
+  test("'create two Soldier tokens. They get a +1/+1 counter' is read as the player", () => {
+    const t = "Whenever this creature deals combat damage to a player, create two Soldier tokens. They get a +1/+1 counter.";
+    expect(damagedPlayerRead(t, { triggerIsSelf: true })).toContain("that player get a +1/+1 counter");
+  });
 });

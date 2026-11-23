@@ -297,7 +297,7 @@ export interface ActorContext { triggerIsSelf?: boolean; cardName?: string }
  *  "a creature deals combat damage to a player, they ..." can be you, and keeps `any`.
  *  A "they" counts only when (a) a cue verb follows it (not "They have", "they pay"), (b) it sits outside parentheses (reminder text), (c) no more than one sentence end lies between the damage phrase and it ("... that player gets a poison counter. The player gets
  *  another"), and (d) nothing between names another actor: you, each, target, an opponent, a player other than "that player" / "the player" ("you may pay {X}. If you do, they ...", "each player ... they"), or a controller.
- *  CEILING: the one damaged player; a "they" that follows a second sentence, or an actor named between, stays `any`, as does "they" before a verb that has no cue (exile, pay). */
+ *  CEILING: the one damaged player; a "they" that follows a second sentence, or an actor named between, stays `any`, as does "they" before a verb that has no cue (exile, pay). A cue-verb "they" that means PERMANENTS ("create two tokens. They get a +1/+1 counter"), with no actor named between, is read as the player (0 corpus lines today; pinned in damaged-they-1269.test.ts). */
 const DAMAGE_TO_PLAYER = / damage to (?:a player|an opponent)\b/i;
 const THEY_ACTS = new RegExp(`\\b(?:they|the player)(?=\\s+${ADVERB}(?:creates?|draws?|searc(?:h|hes)|mills?|loses?|gains?|gets?|puts?|sacrifices?|discards?|casts?)\\b)`, "gi");
 const OTHER_ACTOR = /\b(?:you|your|each|target|opponents?|players?|controllers?)\b/i;
