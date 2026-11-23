@@ -929,6 +929,10 @@ export interface GameEvent {
   /** THIS `leaves` IS A TUCK: a permanent put into its owner's library (Condemn, Oust, Teferi, Hero of Dominaria -3). It left the battlefield, so a leaves payoff hears it, but the
    *  owner's quality ladder puts it BELOW a bounce (exile > destroy / sacrifice > bounce > tuck), which `quality.ts` `permanenceOf` reads. Set by derive (`actionEmits`); never by the LLM. */
   tuck?: true;
+  /** THIS DEATH IS ONLY SOMETIMES (#1734, owner ruling 2026-11-22: "marked conditional"): the `dies` a non-combat damage emit records for the creatures it hits. Damage kills only what its amount allows (CR 704.5g: lethal damage is damage
+   *  at least equal to toughness), so unlike a destroy the card does not promise the death. The matcher weighs a reason built on it below a certain one (`Reason.strength`, `Reason.conditional`), the way a gated effect it cannot read weighs
+   *  `UNREAD_WEIGHT`. Set by derive (`damageDeathFill`); never by the LLM. Carried to the graveyard fill the death implies. */
+  conditional?: true;
   /** THIS REMOVAL IS OF THE PERMANENT THE SAME CLAUSE PUT ONTO THE BATTLEFIELD (#1513): "Return target creature card from your graveyard to the battlefield. ... Exile it at the beginning of the next end step" (Dawn of the Dead, Whip of Erebos),
    *  "... Sacrifice that creature ..." (Footsteps of the Goryo), "... Return that creature to its owner's hand ..." (Zara, Ilharg). That permanent was not cast, so a card whose leave trigger exists only when it was cast
    *  (`Ability.castOnly`) is never what the removal takes. Set by derive on the `exiled` / `leaves` / `sacrifice` / `dies` emits of the pronoun's action; never by the LLM. */

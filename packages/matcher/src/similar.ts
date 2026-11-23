@@ -245,14 +245,16 @@ function sigOf(card: SimilarCard): CardSig {
     if (isRefusedTrigger(a)) continue;
     // AN ABILITY THAT EMITS NOTHING still does something (pump, debuff, mana): its effect kind rides along as a pseudo-output that
     // never gates but counts as an extra or missing effect.
-    if (!a.emits || a.emits.length === 0) {
+    // A death damage may cause (#1734, `GameEvent.conditional`) is no output of the card: two burn spells are alike by their damage.
+    const sure = (a.emits ?? []).filter((e) => e.conditional !== true);
+    if (sure.length === 0) {
       const kind = a.effect?.kind;
       if (kind && !EMITTED_ELSEWHERE.has(kind)) { const k = `${EFFECT_PREFIX}${kind}`; if (!outputs.has(k)) outputs.set(k, { verb: k, subject: { control: "any", token: null } } as unknown as GameEvent); }
       continue;
     }
     const costVerbs = costVerbsOf(a, onCast);
     const own = new Map<string, Output>();
-    for (const e of a.emits) for (const k of splitKey(eventKey(e))) { const o = outputOf(e, k, e.subject.self !== true && costVerbs.has(e.verb)); if (!own.has(o.key)) own.set(o.key, o); }
+    for (const e of sure) for (const k of splitKey(eventKey(e))) { const o = outputOf(e, k, e.subject.self !== true && costVerbs.has(e.verb)); if (!own.has(o.key)) own.set(o.key, o); }
     for (const o of own.values()) if (!outputs.has(o.key)) outputs.set(o.key, o.event);
     abilities.push({
       kind: factKindOf(a),

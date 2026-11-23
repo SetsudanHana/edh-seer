@@ -97,10 +97,13 @@ export interface Reason {
    *  reads this to tell a deck's 35 lands apart from the fetchlands that actually feed landfall.
    *  Set by the structured matcher; unset by the flat engine. */
   impliedProducer?: boolean;
-  /** HOW MUCH OF A FULL REASON THIS ONE IS, in (0, 1]; absent means exactly 1. Set only by the base-P/T pairs (owner ruling 2026-11-09, #1572): a set of base power and toughness
+  /** HOW MUCH OF A FULL REASON THIS ONE IS, in (0, 1]; absent means exactly 1. Set by the base-P/T pairs (owner ruling 2026-11-09, #1572) and by a reason built on a conditional death (`conditional`, #1734): a set of base power and toughness
    *  upgrades a small creature more than a big one, so its strength falls as the creature's own power rises. A narrow exception to the "strategy" edge model (2026-09-10), which
    *  weighs every reason 1: `impactWeightOf` multiplies it in, and `impactEdgeWeight` still keeps the best reason per tag. */
   strength?: number;
+  /** THE EVENT THIS REASON IS BUILT ON HAPPENS ONLY SOMETIMES (#1734, owner 2026-11-22): damage at creatures records the death of the ones it hits (`GameEvent.conditional`), and damage kills only what its amount allows. The reason is weighed
+   *  by `strength` (below a certain one) and carried for the UI, which does not render it yet; a certain reason on the same tag outranks it. Written only as `true`. */
+  conditional?: true;
 }
 
 /**

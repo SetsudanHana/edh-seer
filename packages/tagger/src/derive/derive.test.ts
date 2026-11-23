@@ -8150,7 +8150,7 @@ describe("the dealer of damage is typed from the sentence's printed subject (#14
     // Form of the Dinosaur: "that creature" is the target creature an opponent controls.
     const fod = deriveAbilities([{ id: 2, abilityType: "triggered", trigger: { event: "upkeep", subject: "your upkeep", control: "you" }, actions: [{ verb: "deal-damage", object: "target creature an opponent controls", amount: "15" }, { verb: "deal-damage", object: "you", amount: "equal to its power" }] }] as never, "Form of the Dinosaur",
       { 2: "At the beginning of your upkeep, this enchantment deals 15 damage to target creature an opponent controls and that creature deals damage equal to its power to you." }).abilities;
-    expect(fod.flatMap((x) => (x.emits ?? []).map((e) => e.dealer))[1]).toEqual({ control: "opp", token: null, type: "creature" });
+    expect(fod.flatMap((x) => (x.emits ?? []).filter((e) => e.conditional !== true).map((e) => e.dealer))[1]).toEqual({ control: "opp", token: null, type: "creature" });
     // Halana: "that creature" is the creature you control that entered.
     const hal = deriveAbilities([{ id: 2, abilityType: "triggered", trigger: { event: "enters", subject: "another creature you control", control: "you" }, actions: [{ verb: "deal-damage", object: "target creature", amount: "equal to its power" }] }] as never, "Halana, Kessig Ranger",
       { 2: "Whenever another creature you control enters, you may pay {2}. When you do, that creature deals damage equal to its power to target creature." }).abilities;

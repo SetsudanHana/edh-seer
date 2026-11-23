@@ -279,7 +279,9 @@ export function buildCensus(
     const authored = new Set(
       (tags.abilities ?? []).flatMap((a) => a.emits ?? []).map((e) => JSON.stringify(normalizeZoneEvent(e))),
     );
-    for (const e of producerEvents(tags)) collect(prodShapes, e, i, authored.has(JSON.stringify(e)));
+    // A DEATH DAMAGE MAY CAUSE (#1734, `GameEvent.conditional`) IS NO SUPPLIER HERE: availability counts the cards a deck can rely on to put the event on the board.
+    // CEILING: conditional suppliers are not counted in availability (`deckAvailability`), so a deck whose only death producers are burn spells reads as having none; the matcher still pairs them, at a weight.
+    for (const e of producerEvents(tags)) if (e.conditional !== true) collect(prodShapes, e, i, authored.has(JSON.stringify(e)));
     for (const a of tags.abilities ?? []) {
       if (!a.trigger) continue;
       for (const v of a.trigger.verbs) {

@@ -418,7 +418,7 @@ export function eventVerbPhrase(key: string): string {
   return VERB_PHRASES[verb] ?? `${verb.replace(/-/g, " ")}s`;
 }
 
-interface EmitLike { verb: string; subject: { self?: boolean; ref?: "trigger" | "sentence"; control?: string; token?: boolean | null; subtype?: string | string[]; type?: string | string[]; fromZone?: string } }
+interface EmitLike { verb: string; conditional?: true; subject: { self?: boolean; ref?: "trigger" | "sentence"; control?: string; token?: boolean | null; subtype?: string | string[]; type?: string | string[]; fromZone?: string } }
 
 /** THE EFFECT READ OFF WHAT THE ABILITY DOES, when derive left its kind blank (#647 item 5). 5,480
  *  of 67,734 reasons on the 71 decks ended "<card> triggers" and wore "what it does isn't read yet"
@@ -428,7 +428,8 @@ interface EmitLike { verb: string; subject: { self?: boolean; ref?: "trigger" | 
  *  wants, and they keep the fallback. A FLICKER is an exile whose clause returns the card (Displacer
  *  Kitten's return is a sibling ability of the same clause), never "exiles a permanent you control". */
 export function emitPhrase(emits: readonly EmitLike[], triggerObject: "it" | "itself" = "it"): string | null {
-  const has = (v: string) => emits.find((e) => e.verb === v);
+  // A DEATH DAMAGE MAY CAUSE (#1734) is not what the ability does: a fight or a bite "deals damage", it does not "kill".
+  const has = (v: string) => emits.find((e) => e.verb === v && e.conditional !== true);
   const noun = (e: EmitLike, own = true): string => {
     if (e.subject.self === true) return "itself";
     // THE TRIGGERING OBJECT ITSELF (#823): Mari exiles the creature that died, not "a creature an

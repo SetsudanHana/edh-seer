@@ -10,7 +10,7 @@ const rowOf = (name: string) => {
   const f = (fixtures as unknown as Record<string, Fx>)[name]!;
   return deriveAsCorpus({ doc: { oracleId: name, name, canonical: f.canonical ?? [], segmentHash: f.segmentHash } as never, source: f.source, isToken: false });
 };
-const emits = (name: string, verb: string) => rowOf(name).tags.abilities.flatMap((a) => a.emits ?? []).filter((e) => e.verb === verb);
+const emits = (name: string, verb: string) => rowOf(name).tags.abilities.flatMap((a) => a.emits ?? []).filter((e) => e.verb === verb && e.conditional !== true); // a damage emit's conditional death (#1734) is not the destroy under test
 
 describe("a per-opponent choice is one permanent each, not a mass", () => {
   test("Ultimate Magic: Meteor: the chosen artifact or land has no mass scope", () => {

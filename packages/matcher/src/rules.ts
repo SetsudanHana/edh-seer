@@ -754,6 +754,8 @@ function clauseHolds(clause: RuleClause, dc: DeckCard, set: RuleSet): boolean {
         && (clause.notFlickered !== true || !(dc.tags?.abilities ?? []).some((f) => f.effect.kind === "flicker" && f.clause === a.clause && f.delayedUntil === undefined && f.returnIf !== true && f.effect.subject?.control !== "opp"))
         && (a.emits ?? []).some((e) =>
           clause.verbs.includes(e.verb)
+          // A DEATH DAMAGE MAY CAUSE IS NO REMOVAL ROLE (#1734, `GameEvent.conditional`): a damage ability's role is its effect kind (owner 2026-10-22, #1294); the fill is for the pair channels only.
+          && e.conditional !== true
           && (clause.abilityKind === undefined || clause.abilityKind.includes(a.effect.kind))
           && (clause.edict !== true || e.subject.edict === true)
           && (clause.notViaCraft !== true || e.subject.viaCraft !== true)
@@ -764,7 +766,7 @@ function clauseHolds(clause: RuleClause, dc: DeckCard, set: RuleSet): boolean {
             || !(dc.tags?.abilities ?? []).some((f) => f !== a && f.clause === a.clause && (f.emits ?? []).some((g) => g.subject.scope === "target")))
           && (clause.notCountedOppKill !== true || e.subject.control !== "opp" || !KILL_VERBS.includes(e.verb) || ((a.amount === undefined || !/^\d+$/.test(a.amount)) && (e.subject.selection !== "counted" || sacrificesHalf(dc.card.oracleText))))
           && (clause.notBesideTargetedKill !== true || !KILL_VERBS.includes(e.verb) || !(dc.tags?.abilities ?? []).some((f) => f !== a && f.clause === a.clause
-            && (f.emits ?? []).some((g) => g.subject.scope === "target" && KILL_VERBS.includes(g.verb))))
+            && (f.emits ?? []).some((g) => g.subject.scope === "target" && KILL_VERBS.includes(g.verb) && g.conditional !== true)))
           && (clause.notBlinkedBack !== true || !(dc.tags?.abilities ?? []).some((f) => f.effect.kind === "flicker" && f.returnIf !== true && f.effect.subject?.control !== "opp"
             && (f.delayedUntil === undefined ? f.clause === a.clause : f.delayedUntil === "next-end-step" || f.delayedUntil === "next-upkeep")))
           && (clause.notVictimMay !== true || e.victimMay !== true)
