@@ -394,9 +394,16 @@ export function CardSearch({
     const list = catalogueCtx?.namedLists["creature"]?.values;
     return list === undefined ? [] : (eventQuery.notSubtypes ?? []).filter((n) => list.includes(n));
   }, [catalogueCtx, eventQuery.notSubtypes]);
-  const blocking = countsAsked || countSort !== null || (eventQuery.keepChangelings === true && hiddenTypeNames.length > 0);
   const catalogueState: "none" | "pending" | "ready" | "no-pointer" | "failed" | "incomplete" =
     needKey === null ? "none" : resolvedNow === null ? "pending" : resolvedNow.state;
+  // KEEPING CHANGELINGS WITH A NOT SUBTYPE CANNOT BE ANSWERED WITHOUT THE CREATURE LIST, so until it is known the page
+  // waits (loading line) or says the read failed (retry): a list that quietly lost the changeling the link asked to keep
+  // is a wrong answer. Once the list is known it blocks only for a NOT that is a creature type. With no pointer the list
+  // can never be known: it is shown without them, and says so (`changelingsUnmatched`).
+  const keepAsked = eventQuery.keepChangelings === true && notSubtypesAsked;
+  const keepUnresolved = keepAsked && (catalogueState === "pending" || catalogueState === "failed");
+  const blocking = countsAsked || countSort !== null || keepUnresolved || (keepAsked && hiddenTypeNames.length > 0);
+  const changelingsUnmatched = keepAsked && (catalogueState === "no-pointer" || catalogueState === "incomplete");
   const typeCountsBlocked = blocking && catalogueState === "pending";
   // NO POINTER AND AN INCOMPLETE CATALOGUE both say the build cannot answer; a failed read says so differently, with a retry.
   const typeCountsMissing = blocking && (catalogueState === "no-pointer" || catalogueState === "incomplete");
@@ -1098,6 +1105,9 @@ export function CardSearch({
                 </p>
                 <button type="button" className="chip" onClick={() => setEvents({ ...eventQuery, keepChangelings: true })}>Show them</button>
               </div>
+            )}
+            {changelingsUnmatched && !blocking && (
+              <p className="text-(--muted) text-sm">Changelings can&apos;t be matched on this build.</p>
             )}
             {eventQuery.keepChangelings === true && hiddenTypeNames.length > 0 && (
               <div className="flex flex-wrap items-center gap-x-3 gap-y-2">

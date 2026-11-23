@@ -238,3 +238,37 @@ test("the never chip and the must chip have names of their own, each holding its
   expect(screen.getByRole("button", { name: "not: leave out creature" })).toHaveTextContent("not");
   expect(screen.getByRole("button", { name: "Remove creature" })).toBeInTheDocument();
 });
+
+// ---- keep + a creature NOT must never silently drop the changeling --------------------------------------------------
+const KEEP_BORG = "/cards?type=creature&notsubtype=borg&changelings=keep";
+
+test("keep + a creature NOT while the catalogue is pending: the loading line, never a list without the changeling", async () => {
+  let open!: () => void;
+  const gate = new Promise<void>((r) => { open = r; });
+  atUrl(KEEP_BORG, loaderOf(CATALOGUE, gate));
+  expect(await screen.findByText("reading what cards do")).toBeInTheDocument();
+  expect(screen.queryByRole("list", { name: "Results" })).toBeNull();
+  open();
+  await screen.findByRole("link", { name: /Mirror Changeling/ });
+  expect(names().some((n) => /Mirror Changeling/.test(n))).toBe(true);
+});
+
+test("keep + a creature NOT with a failed catalogue: the retry line, not a list that lost the changeling", async () => {
+  atUrl(KEEP_BORG, scripted({ failCatalogue: () => true }));
+  expect(await screen.findByText("Couldn't load type data. Try again.")).toBeInTheDocument();
+  expect(screen.queryByRole("list", { name: "Results" })).toBeNull();
+  expect(screen.getByRole("button", { name: "Try again" })).toBeInTheDocument();
+});
+
+test("keep + a creature NOT on a build with no pointer: the list, and a line saying changelings cannot be matched", async () => {
+  atUrl(KEEP_BORG, scripted({ noPointer: true }));
+  expect(await screen.findByText("Changelings can't be matched on this build.")).toBeInTheDocument();
+  await screen.findByRole("link", { name: /Elf Trio/ });
+  expect(names().some((n) => /Mirror Changeling/.test(n))).toBe(false);
+});
+
+test("keep + a non-creature NOT on a build with no pointer still lists everything (nothing was dropped)", async () => {
+  atUrl("/cards?type=creature&notsubtype=forest&changelings=keep", scripted({ noPointer: true }));
+  await screen.findByRole("link", { name: /Elf Trio/ });
+  expect(names()).toHaveLength(5);
+});
