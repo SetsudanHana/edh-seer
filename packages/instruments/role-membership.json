@@ -14417,7 +14417,6 @@
 "Skullcage": ["role:burn","wincon:burn"],
 "Skullclamp": ["role:draw","wincon:voltron"],
 "Skullcrack": ["answer:planeswalker","role:burn","role:targetedRemoval","wincon:burn"],
-"Skullknocker Ogre": ["role:draw"],
 "Skullmane Baku": ["answer:creature","role:targetedRemoval"],
 "Skullmulcher": ["role:draw"],
 "Skullport Merchant": ["role:draw","role:ramp"],

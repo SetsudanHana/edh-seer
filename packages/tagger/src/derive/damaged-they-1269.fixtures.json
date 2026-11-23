@@ -1,0 +1,1556 @@
+{
+ "Unstoppable Slasher": {
+  "source": {
+   "_id": "6662968e-ca9e-454c-be44-24ad10e43d3e",
+   "name": "Unstoppable Slasher",
+   "typeLine": "Creature \u2014 Zombie Assassin",
+   "oracleText": "Deathtouch\nWhenever this creature deals combat damage to a player, they lose half their life, rounded up.\nWhen this creature dies, if it had no counters on it, return it to the battlefield tapped under its owner's control with two stun counters on it.",
+   "keywords": [
+    "Deathtouch"
+   ],
+   "colors": [
+    "B"
+   ],
+   "manaValue": 3,
+   "colorIdentity": [
+    "B"
+   ],
+   "power": "2",
+   "toughness": "3",
+   "tags": {
+    "produces": [
+     "tribe:zombie",
+     "tribe-nontoken:zombie",
+     "tribe:assassin",
+     "tribe-nontoken:assassin"
+    ],
+    "cares": [
+     "creature-death",
+     "sacrifice-event"
+    ]
+   },
+   "searchNames": [
+    "unstoppable slasher"
+   ],
+   "edhrecRank": 1577,
+   "manaCost": "{2}{B}",
+   "layout": "normal",
+   "legalities": {
+    "standard": "legal",
+    "future": "not_legal",
+    "historic": "legal",
+    "timeless": "legal",
+    "gladiator": "legal",
+    "pioneer": "legal",
+    "modern": "legal",
+    "legacy": "legal",
+    "pauper": "not_legal",
+    "vintage": "legal",
+    "penny": "legal",
+    "commander": "legal",
+    "oathbreaker": "legal",
+    "standardbrawl": "legal",
+    "brawl": "legal",
+    "competitivebrawl": "legal",
+    "alchemy": "legal",
+    "paupercommander": "not_legal",
+    "duel": "legal",
+    "oldschool": "not_legal",
+    "premodern": "not_legal",
+    "predh": "not_legal",
+    "tlr": "legal"
+   },
+   "releasedAt": "2024-09-27",
+   "gameChanger": false,
+   "reserved": false,
+   "artCrop": "https://cards.scryfall.io/art_crop/front/c/7/c78da035-6b5b-4136-9ab6-f622b64fdc54.jpg?1783909475"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Deathtouch",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "damage-dealt",
+     "subject": "this creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "lose-life",
+      "object": "target player",
+      "amount": "half their life, rounded up",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "dies",
+     "subject": "this creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "return",
+      "object": "this creature",
+      "fromZone": "graveyard",
+      "toZone": "battlefield",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "tap",
+      "object": "this creature",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "add-counter",
+      "object": "stun counter",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "2",
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "480dd3e78942e44141cb209e1601de6323854b79288677fb273f745ce3269546"
+ },
+ "Infesting Radroach": {
+  "source": {
+   "_id": "064f371c-e4f2-423b-9f35-443191dfbb4c",
+   "name": "Infesting Radroach",
+   "typeLine": "Creature \u2014 Insect Mutant",
+   "oracleText": "Flying\nThis creature can't block.\nWhenever this creature deals combat damage to a player, they get that many rad counters.\nWhenever an opponent mills a nonland card, if this creature is in your graveyard, you may return it to your hand.",
+   "keywords": [
+    "Flying",
+    "Mill"
+   ],
+   "colors": [
+    "B"
+   ],
+   "manaValue": 3,
+   "colorIdentity": [
+    "B"
+   ],
+   "power": "2",
+   "toughness": "2",
+   "tags": {
+    "produces": [
+     "tribe:insect",
+     "tribe-nontoken:insect",
+     "tribe:mutant",
+     "tribe-nontoken:mutant"
+    ],
+    "cares": [
+     "graveyard"
+    ]
+   },
+   "searchNames": [
+    "infesting radroach"
+   ],
+   "edhrecRank": 5127,
+   "manaCost": "{2}{B}",
+   "layout": "normal",
+   "legalities": {
+    "standard": "not_legal",
+    "future": "not_legal",
+    "historic": "not_legal",
+    "timeless": "not_legal",
+    "gladiator": "not_legal",
+    "pioneer": "not_legal",
+    "modern": "not_legal",
+    "legacy": "legal",
+    "pauper": "not_legal",
+    "vintage": "legal",
+    "penny": "not_legal",
+    "commander": "legal",
+    "oathbreaker": "legal",
+    "standardbrawl": "not_legal",
+    "brawl": "not_legal",
+    "competitivebrawl": "not_legal",
+    "alchemy": "not_legal",
+    "paupercommander": "not_legal",
+    "duel": "legal",
+    "oldschool": "not_legal",
+    "premodern": "not_legal",
+    "predh": "not_legal",
+    "tlr": "legal"
+   },
+   "releasedAt": "2024-03-08",
+   "gameChanger": false,
+   "reserved": false,
+   "allParts": [
+    {
+     "component": "combo_piece",
+     "name": "Infesting Radroach",
+     "typeLine": "Creature \u2014 Insect Mutant",
+     "printingId": "b18a4355-5645-4af3-a16a-7fe49d0d5aab"
+    },
+    {
+     "component": "combo_piece",
+     "name": "Radiation",
+     "typeLine": "Card",
+     "printingId": "0886657d-afb0-4f1f-9af7-960724793077"
+    }
+   ],
+   "artCrop": "https://cards.scryfall.io/art_crop/front/5/b/5b51b691-e226-44c9-b7cb-26f19c060597.jpg?1783912408"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Flying",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "cant",
+      "object": "block",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "damage-dealt",
+     "subject": "this creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "add-counter",
+      "object": "rad",
+      "amount": "equal to the damage dealt",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 4,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "milled",
+     "subject": "a nonland card",
+     "control": "opponent"
+    },
+    "actions": [
+     {
+      "verb": "return",
+      "object": "this creature",
+      "fromZone": "graveyard",
+      "toZone": "hand",
+      "optional": true
+     }
+    ]
+   }
+  ],
+  "segmentHash": "7824e7fc7f060f9e6028c8da15a6b40b245a358cf7b2670598b3ad0534bf52f4"
+ },
+ "Glowing One": {
+  "source": {
+   "_id": "b30eae2a-bc1c-45a3-93ae-e1c30d26797c",
+   "name": "Glowing One",
+   "typeLine": "Creature \u2014 Zombie Mutant",
+   "oracleText": "Deathtouch\nWhenever this creature deals combat damage to a player, they get four rad counters.\nWhenever a player mills a nonland card, you gain 1 life.",
+   "keywords": [
+    "Mill",
+    "Deathtouch"
+   ],
+   "colors": [
+    "G"
+   ],
+   "manaValue": 3,
+   "colorIdentity": [
+    "G"
+   ],
+   "power": "2",
+   "toughness": "2",
+   "tags": {
+    "produces": [
+     "lifegain",
+     "tribe:zombie",
+     "tribe-nontoken:zombie",
+     "tribe:mutant",
+     "tribe-nontoken:mutant"
+    ],
+    "cares": []
+   },
+   "searchNames": [
+    "glowing one"
+   ],
+   "edhrecRank": 4635,
+   "manaCost": "{2}{G}",
+   "layout": "normal",
+   "legalities": {
+    "standard": "not_legal",
+    "future": "not_legal",
+    "historic": "not_legal",
+    "timeless": "not_legal",
+    "gladiator": "not_legal",
+    "pioneer": "not_legal",
+    "modern": "not_legal",
+    "legacy": "legal",
+    "pauper": "not_legal",
+    "vintage": "legal",
+    "penny": "not_legal",
+    "commander": "legal",
+    "oathbreaker": "legal",
+    "standardbrawl": "not_legal",
+    "brawl": "not_legal",
+    "competitivebrawl": "not_legal",
+    "alchemy": "not_legal",
+    "paupercommander": "not_legal",
+    "duel": "legal",
+    "oldschool": "not_legal",
+    "premodern": "not_legal",
+    "predh": "not_legal",
+    "tlr": "legal"
+   },
+   "releasedAt": "2024-03-08",
+   "gameChanger": false,
+   "reserved": false,
+   "allParts": [
+    {
+     "component": "combo_piece",
+     "name": "Radiation",
+     "typeLine": "Card",
+     "printingId": "0886657d-afb0-4f1f-9af7-960724793077"
+    },
+    {
+     "component": "combo_piece",
+     "name": "Glowing One",
+     "typeLine": "Creature \u2014 Zombie Mutant",
+     "printingId": "b8b3537a-e44a-47ff-9687-c2172738aeed"
+    }
+   ],
+   "artCrop": "https://cards.scryfall.io/art_crop/front/a/1/a1e36b92-aa88-4536-aebc-7e84a10d73fe.jpg?1783912398"
+  }
+ },
+ "Rex, Cyber-Hound": {
+  "source": {
+   "_id": "7ad52f9c-48d8-486f-90b7-73ce5cb3b9db",
+   "name": "Rex, Cyber-Hound",
+   "typeLine": "Legendary Artifact Creature \u2014 Robot Dog",
+   "oracleText": "Whenever Rex deals combat damage to a player, they mill two cards and you get {E}{E} (two energy counters).\nPay {E}{E}: Choose target creature card in a graveyard. Exile it with a brain counter on it. Activate only as a sorcery.\nRex has all activated abilities of all cards in exile with brain counters on them.",
+   "keywords": [
+    "Mill"
+   ],
+   "colors": [
+    "U",
+    "W"
+   ],
+   "manaValue": 3,
+   "colorIdentity": [
+    "U",
+    "W"
+   ],
+   "power": "2",
+   "toughness": "2",
+   "tags": {
+    "produces": [
+     "graveyard",
+     "tribe:robot",
+     "tribe-nontoken:robot",
+     "tribe:dog",
+     "tribe-nontoken:dog"
+    ],
+    "cares": []
+   },
+   "searchNames": [
+    "rex cyberhound"
+   ],
+   "edhrecRank": 10122,
+   "manaCost": "{1}{W}{U}",
+   "layout": "normal",
+   "legalities": {
+    "standard": "not_legal",
+    "future": "not_legal",
+    "historic": "not_legal",
+    "timeless": "not_legal",
+    "gladiator": "not_legal",
+    "pioneer": "not_legal",
+    "modern": "not_legal",
+    "legacy": "legal",
+    "pauper": "not_legal",
+    "vintage": "legal",
+    "penny": "not_legal",
+    "commander": "legal",
+    "oathbreaker": "legal",
+    "standardbrawl": "not_legal",
+    "brawl": "not_legal",
+    "competitivebrawl": "not_legal",
+    "alchemy": "not_legal",
+    "paupercommander": "not_legal",
+    "duel": "legal",
+    "oldschool": "not_legal",
+    "premodern": "not_legal",
+    "predh": "not_legal",
+    "tlr": "legal"
+   },
+   "releasedAt": "2024-03-08",
+   "gameChanger": false,
+   "reserved": false,
+   "allParts": [
+    {
+     "component": "combo_piece",
+     "name": "Rex, Cyber-Hound",
+     "typeLine": "Legendary Artifact Creature \u2014 Robot Dog",
+     "printingId": "539a969b-18ae-4958-b4bc-32b2ac3d4295"
+    },
+    {
+     "component": "combo_piece",
+     "name": "Energy Reserve",
+     "typeLine": "Card",
+     "printingId": "2a794202-875f-4397-a8de-9722c8d78448"
+    }
+   ],
+   "artCrop": "https://cards.scryfall.io/art_crop/front/d/a/dae95822-d4a9-4698-bd11-c504414fc160.jpg?1783912385"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "damage-dealt",
+     "subject": "Rex, combat damage to a player",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "mill",
+      "object": "them",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "2",
+      "optional": false
+     },
+     {
+      "verb": "add-mana",
+      "object": "{E}{E}",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "exile",
+      "object": "target creature card in a graveyard",
+      "fromZone": "graveyard",
+      "toZone": "exile",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "add-counter",
+      "object": "brain",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "grant-ability",
+      "object": "all activated abilities of all cards in exile with brain counters on them",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "ffa2b6216a8dea4c39a43bcdac4ac03c229310f34327ad435b3a46363edeb9ef"
+ },
+ "Sabertooth Cobra": {
+  "source": {
+   "_id": "115c7ca7-c27b-43ca-9281-be6913e90059",
+   "name": "Sabertooth Cobra",
+   "typeLine": "Creature \u2014 Snake",
+   "oracleText": "Whenever this creature deals damage to a player, that player gets a poison counter. The player gets another poison counter at the beginning of their next upkeep unless they pay {2} before that step. (A player with ten or more poison counters loses the game.)",
+   "keywords": [],
+   "colors": [
+    "G"
+   ],
+   "manaValue": 3,
+   "colorIdentity": [
+    "G"
+   ],
+   "power": "2",
+   "toughness": "2",
+   "tags": {
+    "produces": [
+     "tribe:snake",
+     "tribe-nontoken:snake"
+    ],
+    "cares": []
+   },
+   "searchNames": [
+    "sabertooth cobra"
+   ],
+   "edhrecRank": 20273,
+   "manaCost": "{2}{G}",
+   "layout": "normal",
+   "legalities": {
+    "standard": "not_legal",
+    "future": "not_legal",
+    "historic": "not_legal",
+    "timeless": "not_legal",
+    "gladiator": "not_legal",
+    "pioneer": "not_legal",
+    "modern": "not_legal",
+    "legacy": "legal",
+    "pauper": "legal",
+    "vintage": "legal",
+    "penny": "not_legal",
+    "commander": "legal",
+    "oathbreaker": "legal",
+    "standardbrawl": "not_legal",
+    "brawl": "not_legal",
+    "competitivebrawl": "not_legal",
+    "alchemy": "not_legal",
+    "paupercommander": "legal",
+    "duel": "legal",
+    "oldschool": "not_legal",
+    "premodern": "legal",
+    "predh": "legal",
+    "tlr": "legal"
+   },
+   "releasedAt": "1996-10-08",
+   "gameChanger": false,
+   "reserved": false,
+   "allParts": [
+    {
+     "component": "combo_piece",
+     "name": "Poison Counter",
+     "typeLine": "Card",
+     "printingId": "8a9cb417-8709-4336-be36-2fb0cea31fe1"
+    }
+   ],
+   "artCrop": "https://cards.scryfall.io/art_crop/front/4/8/48ead72b-f3f5-4065-a33c-0992cf1fdb34.jpg?1783947060"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "damage-dealt",
+     "subject": "this creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "add-counter",
+      "object": "poison",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     },
+     {
+      "verb": "add-counter",
+      "object": "poison",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false,
+      "unless": {
+       "cost": "{2}",
+       "payer": "opponent"
+      }
+     }
+    ]
+   }
+  ],
+  "segmentHash": "5a15408f8ef48d1c4a2ad0f37f97019a40fed0f89bc68f029b6263172153f2e5"
+ },
+ "Mirko Vosk, Mind Drinker": {
+  "source": {
+   "_id": "469da932-8186-4e54-a858-cfc72c4ded96",
+   "name": "Mirko Vosk, Mind Drinker",
+   "typeLine": "Legendary Creature \u2014 Vampire",
+   "oracleText": "Flying\nWhenever Mirko Vosk deals combat damage to a player, that player reveals cards from the top of their library until they reveal four land cards, then puts those cards into their graveyard.",
+   "keywords": [
+    "Flying"
+   ],
+   "colors": [
+    "B",
+    "U"
+   ],
+   "manaValue": 5,
+   "colorIdentity": [
+    "B",
+    "U"
+   ],
+   "power": "2",
+   "toughness": "4",
+   "tags": {
+    "produces": [
+     "tribe:vampire",
+     "tribe-nontoken:vampire"
+    ],
+    "cares": []
+   },
+   "searchNames": [
+    "mirko vosk mind drinker"
+   ],
+   "edhrecRank": 10675,
+   "manaCost": "{3}{U}{B}",
+   "layout": "normal",
+   "legalities": {
+    "standard": "not_legal",
+    "future": "not_legal",
+    "historic": "not_legal",
+    "timeless": "not_legal",
+    "gladiator": "not_legal",
+    "pioneer": "legal",
+    "modern": "legal",
+    "legacy": "legal",
+    "pauper": "not_legal",
+    "vintage": "legal",
+    "penny": "legal",
+    "commander": "legal",
+    "oathbreaker": "legal",
+    "standardbrawl": "not_legal",
+    "brawl": "not_legal",
+    "competitivebrawl": "not_legal",
+    "alchemy": "not_legal",
+    "paupercommander": "not_legal",
+    "duel": "legal",
+    "oldschool": "not_legal",
+    "premodern": "not_legal",
+    "predh": "not_legal",
+    "tlr": "not_legal"
+   },
+   "releasedAt": "2013-05-03",
+   "gameChanger": false,
+   "reserved": false,
+   "artCrop": "https://cards.scryfall.io/art_crop/front/d/3/d37cdd3e-4303-4391-aff4-4a543e65a836.jpg?1783940025"
+  }
+ },
+ "Balshan Beguiler": {
+  "source": {
+   "_id": "928a7fbc-ba34-42a9-947e-0f3bf1cba152",
+   "name": "Balshan Beguiler",
+   "typeLine": "Creature \u2014 Human Wizard",
+   "oracleText": "Whenever this creature deals combat damage to a player, that player reveals the top two cards of their library. You choose one of those cards and put it into their graveyard.",
+   "keywords": [],
+   "colors": [
+    "U"
+   ],
+   "manaValue": 3,
+   "colorIdentity": [
+    "U"
+   ],
+   "power": "1",
+   "toughness": "1",
+   "tags": {
+    "produces": [
+     "tribe:human",
+     "tribe-nontoken:human",
+     "tribe:wizard",
+     "tribe-nontoken:wizard"
+    ],
+    "cares": []
+   },
+   "searchNames": [
+    "balshan beguiler"
+   ],
+   "edhrecRank": 31046,
+   "manaCost": "{2}{U}",
+   "layout": "normal",
+   "legalities": {
+    "standard": "not_legal",
+    "future": "not_legal",
+    "historic": "not_legal",
+    "timeless": "not_legal",
+    "gladiator": "not_legal",
+    "pioneer": "not_legal",
+    "modern": "not_legal",
+    "legacy": "legal",
+    "pauper": "not_legal",
+    "vintage": "legal",
+    "penny": "legal",
+    "commander": "legal",
+    "oathbreaker": "legal",
+    "standardbrawl": "not_legal",
+    "brawl": "not_legal",
+    "competitivebrawl": "not_legal",
+    "alchemy": "not_legal",
+    "paupercommander": "not_legal",
+    "duel": "legal",
+    "oldschool": "not_legal",
+    "premodern": "legal",
+    "predh": "legal",
+    "tlr": "legal"
+   },
+   "releasedAt": "2001-10-01",
+   "gameChanger": false,
+   "reserved": false,
+   "artCrop": "https://cards.scryfall.io/art_crop/front/5/d/5d977da2-4024-4c7b-b557-e89564f8d465.jpg?1783945264"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "damage-dealt",
+     "subject": "this creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "put",
+      "object": "one of those cards",
+      "fromZone": "library",
+      "toZone": "graveyard",
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "dcf890890f7c0da28e16976124f5837457e86f42134c0d5a0035b2627c798369"
+ },
+ "Elder Mastery": {
+  "source": {
+   "_id": "f99f44b4-a88f-403b-bbc8-bf1a45557124",
+   "name": "Elder Mastery",
+   "typeLine": "Enchantment \u2014 Aura",
+   "oracleText": "Enchant creature\nEnchanted creature gets +3/+3 and has flying.\nWhenever enchanted creature deals damage to a player, that player discards two cards.",
+   "keywords": [
+    "Enchant"
+   ],
+   "colors": [
+    "B",
+    "R",
+    "U"
+   ],
+   "manaValue": 6,
+   "colorIdentity": [
+    "B",
+    "R",
+    "U"
+   ],
+   "power": null,
+   "toughness": null,
+   "tags": {
+    "produces": [
+     "enchantment",
+     "aura"
+    ],
+    "cares": [
+     "ramp"
+    ]
+   },
+   "searchNames": [
+    "elder mastery"
+   ],
+   "edhrecRank": 25384,
+   "manaCost": "{3}{U}{B}{R}",
+   "layout": "normal",
+   "legalities": {
+    "standard": "not_legal",
+    "future": "not_legal",
+    "historic": "not_legal",
+    "timeless": "not_legal",
+    "gladiator": "not_legal",
+    "pioneer": "not_legal",
+    "modern": "legal",
+    "legacy": "legal",
+    "pauper": "not_legal",
+    "vintage": "legal",
+    "penny": "not_legal",
+    "commander": "legal",
+    "oathbreaker": "legal",
+    "standardbrawl": "not_legal",
+    "brawl": "not_legal",
+    "competitivebrawl": "not_legal",
+    "alchemy": "not_legal",
+    "paupercommander": "not_legal",
+    "duel": "legal",
+    "oldschool": "not_legal",
+    "premodern": "not_legal",
+    "predh": "legal",
+    "tlr": "not_legal"
+   },
+   "releasedAt": "2011-09-02",
+   "gameChanger": false,
+   "reserved": false,
+   "artCrop": "https://cards.scryfall.io/art_crop/front/5/8/58cc3ec9-b4ad-4106-b5e9-66ee58e90150.jpg?1783941009"
+  }
+ },
+ "Yidris, Maelstrom Wielder": {
+  "source": {
+   "_id": "9efe8aff-9a7d-4397-b5fd-c1a0fad7c15f",
+   "name": "Yidris, Maelstrom Wielder",
+   "typeLine": "Legendary Creature \u2014 Ogre Wizard",
+   "oracleText": "Trample\nWhenever Yidris deals combat damage to a player, as you cast spells from your hand this turn, they gain cascade. (When you cast the spell, exile cards from the top of your library until you exile a nonland card that costs less. You may cast it without paying its mana cost. Put the exiled cards on the bottom in a random order.)",
+   "keywords": [
+    "Trample"
+   ],
+   "colors": [
+    "B",
+    "G",
+    "R",
+    "U"
+   ],
+   "manaValue": 4,
+   "colorIdentity": [
+    "B",
+    "G",
+    "R",
+    "U"
+   ],
+   "power": "5",
+   "toughness": "4",
+   "tags": {
+    "produces": [
+     "tribe:ogre",
+     "tribe-nontoken:ogre",
+     "tribe:wizard",
+     "tribe-nontoken:wizard"
+    ],
+    "cares": []
+   },
+   "searchNames": [
+    "yidris maelstrom wielder"
+   ],
+   "edhrecRank": 9280,
+   "manaCost": "{U}{B}{R}{G}",
+   "layout": "normal",
+   "legalities": {
+    "standard": "not_legal",
+    "future": "not_legal",
+    "historic": "not_legal",
+    "timeless": "not_legal",
+    "gladiator": "not_legal",
+    "pioneer": "not_legal",
+    "modern": "not_legal",
+    "legacy": "legal",
+    "pauper": "not_legal",
+    "vintage": "legal",
+    "penny": "not_legal",
+    "commander": "legal",
+    "oathbreaker": "legal",
+    "standardbrawl": "not_legal",
+    "brawl": "not_legal",
+    "competitivebrawl": "not_legal",
+    "alchemy": "not_legal",
+    "paupercommander": "not_legal",
+    "duel": "legal",
+    "oldschool": "not_legal",
+    "premodern": "not_legal",
+    "predh": "not_legal",
+    "tlr": "not_legal"
+   },
+   "releasedAt": "2016-11-11",
+   "gameChanger": false,
+   "reserved": false,
+   "artCrop": "https://cards.scryfall.io/art_crop/front/c/2/c219dd22-433c-4f6a-a0c4-fae12239291c.jpg?1783937081"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Trample",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "damage-dealt",
+     "subject": "Yidris",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "grant-ability",
+      "object": "spells cast from your hand this turn gain cascade",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "87badcfd432a09f731fb91020f65534fbab778596c0c39649cf981e9d6221313"
+ },
+ "Tibalt's Trickery": {
+  "source": {
+   "_id": "6623cb85-fb1e-4561-8b21-0977c25096c2",
+   "name": "Tibalt's Trickery",
+   "typeLine": "Instant",
+   "oracleText": "Counter target spell. Choose 1, 2, or 3 at random. Its controller mills that many cards, then exiles cards from the top of their library until they exile a nonland card with a different name than that spell. They may cast that card without paying its mana cost. Then they put the exiled cards on the bottom of their library in a random order.",
+   "keywords": [
+    "Mill"
+   ],
+   "colors": [
+    "R"
+   ],
+   "manaValue": 2,
+   "colorIdentity": [
+    "R"
+   ],
+   "power": null,
+   "toughness": null,
+   "tags": {
+    "produces": [
+     "cast:instant"
+    ],
+    "cares": []
+   },
+   "searchNames": [
+    "tibalts trickery",
+    "ya viene el coco"
+   ],
+   "edhrecRank": 601,
+   "manaCost": "{1}{R}",
+   "layout": "normal",
+   "legalities": {
+    "standard": "not_legal",
+    "future": "not_legal",
+    "historic": "banned",
+    "timeless": "restricted",
+    "gladiator": "legal",
+    "pioneer": "legal",
+    "modern": "banned",
+    "legacy": "legal",
+    "pauper": "not_legal",
+    "vintage": "legal",
+    "penny": "legal",
+    "commander": "legal",
+    "oathbreaker": "legal",
+    "standardbrawl": "not_legal",
+    "brawl": "legal",
+    "competitivebrawl": "legal",
+    "alchemy": "not_legal",
+    "paupercommander": "not_legal",
+    "duel": "legal",
+    "oldschool": "not_legal",
+    "premodern": "not_legal",
+    "predh": "not_legal",
+    "tlr": "legal"
+   },
+   "releasedAt": "2021-02-05",
+   "gameChanger": false,
+   "reserved": false,
+   "artCrop": "https://cards.scryfall.io/art_crop/front/d/d/dd921e27-3e08-438c-bec2-723226d35175.jpg?1783928223"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "counter-spell",
+      "object": "target spell",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "mill",
+      "object": "target spell's controller",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1, 2, or 3 at random",
+      "optional": false
+     },
+     {
+      "verb": "exile",
+      "object": "cards from the top of target spell's controller's library until they exile a nonland card with a different name than that spell",
+      "fromZone": "library",
+      "toZone": "exile",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "cast",
+      "object": "the exiled nonland card with a different name than that spell",
+      "fromZone": "exile",
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     },
+     {
+      "verb": "put",
+      "object": "the exiled cards",
+      "fromZone": "exile",
+      "toZone": "library",
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "bd9be71dee47220b5ebcae0b5d8d9e3e95a612089e47e73bea86098633a1ed38"
+ },
+ "Skullknocker Ogre": {
+  "source": {
+   "_id": "980a0d4d-b070-46c1-be8d-31bdda0d1c33",
+   "name": "Skullknocker Ogre",
+   "typeLine": "Creature \u2014 Ogre",
+   "oracleText": "Whenever this creature deals damage to an opponent, that player discards a card at random. If the player does, they draw a card.",
+   "keywords": [],
+   "colors": [
+    "R"
+   ],
+   "manaValue": 4,
+   "colorIdentity": [
+    "R"
+   ],
+   "power": "4",
+   "toughness": "3",
+   "tags": {
+    "produces": [
+     "card-draw",
+     "tribe:ogre",
+     "tribe-nontoken:ogre"
+    ],
+    "cares": []
+   },
+   "searchNames": [
+    "skullknocker ogre"
+   ],
+   "edhrecRank": 29697,
+   "manaCost": "{3}{R}",
+   "layout": "normal",
+   "legalities": {
+    "standard": "not_legal",
+    "future": "not_legal",
+    "historic": "legal",
+    "timeless": "legal",
+    "gladiator": "legal",
+    "pioneer": "legal",
+    "modern": "legal",
+    "legacy": "legal",
+    "pauper": "not_legal",
+    "vintage": "legal",
+    "penny": "legal",
+    "commander": "legal",
+    "oathbreaker": "legal",
+    "standardbrawl": "not_legal",
+    "brawl": "legal",
+    "competitivebrawl": "legal",
+    "alchemy": "not_legal",
+    "paupercommander": "not_legal",
+    "duel": "legal",
+    "oldschool": "not_legal",
+    "premodern": "not_legal",
+    "predh": "not_legal",
+    "tlr": "not_legal"
+   },
+   "releasedAt": "2019-10-04",
+   "gameChanger": false,
+   "reserved": false,
+   "artCrop": "https://cards.scryfall.io/art_crop/front/d/f/dfa89e28-c0a9-4b76-b0d5-8dcaa75bfd59.jpg?1783932617"
+  }
+ },
+ "Doomsday Specter": {
+  "source": {
+   "_id": "5811effb-5010-44b9-bb97-9d7eb358327f",
+   "name": "Doomsday Specter",
+   "typeLine": "Creature \u2014 Specter",
+   "oracleText": "Flying\nWhen this creature enters, return a blue or black creature you control to its owner's hand.\nWhenever this creature deals combat damage to a player, look at that player's hand and choose a card from it. The player discards that card.",
+   "keywords": [
+    "Flying"
+   ],
+   "colors": [
+    "B",
+    "U"
+   ],
+   "manaValue": 4,
+   "colorIdentity": [
+    "B",
+    "U"
+   ],
+   "power": "2",
+   "toughness": "3",
+   "tags": {
+    "produces": [
+     "tribe:specter",
+     "tribe-nontoken:specter"
+    ],
+    "cares": []
+   },
+   "searchNames": [
+    "doomsday specter"
+   ],
+   "edhrecRank": 23344,
+   "manaCost": "{2}{U}{B}",
+   "layout": "normal",
+   "legalities": {
+    "standard": "not_legal",
+    "future": "not_legal",
+    "historic": "not_legal",
+    "timeless": "not_legal",
+    "gladiator": "not_legal",
+    "pioneer": "not_legal",
+    "modern": "not_legal",
+    "legacy": "legal",
+    "pauper": "not_legal",
+    "vintage": "legal",
+    "penny": "not_legal",
+    "commander": "legal",
+    "oathbreaker": "legal",
+    "standardbrawl": "not_legal",
+    "brawl": "not_legal",
+    "competitivebrawl": "not_legal",
+    "alchemy": "not_legal",
+    "paupercommander": "not_legal",
+    "duel": "legal",
+    "oldschool": "not_legal",
+    "premodern": "legal",
+    "predh": "legal",
+    "tlr": "not_legal"
+   },
+   "releasedAt": "2001-02-05",
+   "gameChanger": false,
+   "reserved": false,
+   "artCrop": "https://cards.scryfall.io/art_crop/front/8/5/85206cc1-5484-40c6-b11d-b8d6fad4fc5c.jpg?1783945608"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Flying",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "this creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "return",
+      "object": "a blue or black creature you control",
+      "fromZone": "battlefield",
+      "toZone": "hand",
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "damage-dealt",
+     "subject": "this creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "discard",
+      "object": "a card from that player's hand",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "958518bc5397fe2e492b6319854570f4ec132d9403965b83f26a8421a834dd52"
+ },
+ "Tomb Blade": {
+  "source": {
+   "_id": "c857de66-f4e0-4e97-ad01-fac623af8225",
+   "name": "Tomb Blade",
+   "typeLine": "Artifact Creature \u2014 Necron",
+   "oracleText": "Flying\nWhenever this creature deals combat damage to a player, that player loses life equal to the number of creatures they control unless they sacrifice a creature of their choice.\nUnearth {6}{B}{B}",
+   "keywords": [
+    "Flying",
+    "Unearth"
+   ],
+   "colors": [
+    "B"
+   ],
+   "manaValue": 6,
+   "colorIdentity": [
+    "B"
+   ],
+   "power": "5",
+   "toughness": "4",
+   "tags": {
+    "produces": [
+     "tribe:necron",
+     "tribe-nontoken:necron"
+    ],
+    "cares": [
+     "graveyard",
+     "ramp"
+    ]
+   },
+   "searchNames": [
+    "tomb blade"
+   ],
+   "edhrecRank": 17038,
+   "manaCost": "{4}{B}{B}",
+   "layout": "normal",
+   "legalities": {
+    "standard": "not_legal",
+    "future": "not_legal",
+    "historic": "not_legal",
+    "timeless": "not_legal",
+    "gladiator": "not_legal",
+    "pioneer": "not_legal",
+    "modern": "not_legal",
+    "legacy": "legal",
+    "pauper": "not_legal",
+    "vintage": "legal",
+    "penny": "not_legal",
+    "commander": "legal",
+    "oathbreaker": "legal",
+    "standardbrawl": "not_legal",
+    "brawl": "not_legal",
+    "competitivebrawl": "not_legal",
+    "alchemy": "not_legal",
+    "paupercommander": "not_legal",
+    "duel": "legal",
+    "oldschool": "not_legal",
+    "premodern": "not_legal",
+    "predh": "not_legal",
+    "tlr": "not_legal"
+   },
+   "releasedAt": "2022-10-07",
+   "gameChanger": false,
+   "reserved": false,
+   "artCrop": "https://cards.scryfall.io/art_crop/front/2/f/2f5f2e19-41ce-40c6-9732-d0f88ad6735f.jpg?1783920902"
+  }
+ },
+ "Etali, Primal Conqueror // Etali, Primal Sickness": {
+  "source": {
+   "_id": "7514e401-7aa1-405d-9f7a-312b4e630cc2",
+   "name": "Etali, Primal Conqueror // Etali, Primal Sickness",
+   "typeLine": "Legendary Creature \u2014 Elder Dinosaur // Legendary Creature \u2014 Phyrexian Elder Dinosaur",
+   "oracleText": "Trample\nWhen Etali enters, each player exiles cards from the top of their library until they exile a nonland card. You may cast any number of spells from among the nonland cards exiled this way without paying their mana costs.\n{9}{G/P}: Transform Etali. Activate only as a sorcery.\n//\nTrample, indestructible\nWhenever Etali deals combat damage to a player, they get that many poison counters. (A player with ten or more poison counters loses the game.)",
+   "keywords": [
+    "Indestructible",
+    "Transform",
+    "Trample"
+   ],
+   "colors": [
+    "R",
+    "G"
+   ],
+   "manaValue": 7,
+   "colorIdentity": [
+    "G",
+    "R"
+   ],
+   "power": null,
+   "toughness": null,
+   "tags": {
+    "produces": [
+     "tribe:elder",
+     "tribe-nontoken:elder",
+     "tribe:dinosaur",
+     "tribe-nontoken:dinosaur",
+     "tribe:legendary",
+     "tribe-nontoken:legendary",
+     "tribe:creature",
+     "tribe-nontoken:creature",
+     "tribe:\u2014",
+     "tribe-nontoken:\u2014",
+     "tribe:phyrexian",
+     "tribe-nontoken:phyrexian"
+    ],
+    "cares": [
+     "ramp"
+    ]
+   },
+   "searchNames": [
+    "etali primal conqueror etali primal sickness",
+    "etali primal conqueror"
+   ],
+   "edhrecRank": 822,
+   "layout": "transform",
+   "legalities": {
+    "standard": "not_legal",
+    "future": "not_legal",
+    "historic": "legal",
+    "timeless": "legal",
+    "gladiator": "legal",
+    "pioneer": "legal",
+    "modern": "legal",
+    "legacy": "legal",
+    "pauper": "not_legal",
+    "vintage": "legal",
+    "penny": "legal",
+    "commander": "legal",
+    "oathbreaker": "legal",
+    "standardbrawl": "not_legal",
+    "brawl": "legal",
+    "competitivebrawl": "legal",
+    "alchemy": "not_legal",
+    "paupercommander": "not_legal",
+    "duel": "legal",
+    "oldschool": "not_legal",
+    "premodern": "not_legal",
+    "predh": "not_legal",
+    "tlr": "not_legal"
+   },
+   "releasedAt": "2023-04-21",
+   "gameChanger": false,
+   "reserved": false,
+   "allParts": [
+    {
+     "component": "combo_piece",
+     "name": "Poison Counter",
+     "typeLine": "Card",
+     "printingId": "8a9cb417-8709-4336-be36-2fb0cea31fe1"
+    },
+    {
+     "component": "combo_piece",
+     "name": "Etali, Primal Conqueror // Etali, Primal Sickness",
+     "typeLine": "Legendary Creature \u2014 Elder Dinosaur // Legendary Creature \u2014 Phyrexian Elder Dinosaur",
+     "printingId": "3e97c609-3932-4428-96d4-1c97e61f0abb"
+    }
+   ],
+   "faces": [
+    {
+     "name": "Etali, Primal Conqueror",
+     "typeLine": "Legendary Creature \u2014 Elder Dinosaur",
+     "oracleText": "Trample\nWhen Etali enters, each player exiles cards from the top of their library until they exile a nonland card. You may cast any number of spells from among the nonland cards exiled this way without paying their mana costs.\n{9}{G/P}: Transform Etali. Activate only as a sorcery.",
+     "colors": [
+      "R"
+     ],
+     "manaCost": "{5}{R}{R}",
+     "power": "7",
+     "toughness": "7",
+     "artCrop": "https://cards.scryfall.io/art_crop/front/9/5/95c14c4d-6c16-4826-8d93-d89ad04aee09.jpg?1783916997"
+    },
+    {
+     "name": "Etali, Primal Sickness",
+     "typeLine": "Legendary Creature \u2014 Phyrexian Elder Dinosaur",
+     "oracleText": "Trample, indestructible\nWhenever Etali deals combat damage to a player, they get that many poison counters. (A player with ten or more poison counters loses the game.)",
+     "colors": [
+      "G",
+      "R"
+     ],
+     "manaCost": "",
+     "power": "11",
+     "toughness": "11",
+     "colorIndicator": [
+      "G",
+      "R"
+     ],
+     "artCrop": "https://cards.scryfall.io/art_crop/back/9/5/95c14c4d-6c16-4826-8d93-d89ad04aee09.jpg?1783916997"
+    }
+   ]
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Trample",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "Etali",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "exile",
+      "object": "cards from the top of each player's library until they exile a nonland card",
+      "fromZone": "library",
+      "toZone": "exile",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "cast",
+      "object": "any number of nonland cards exiled this way",
+      "fromZone": "exile",
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "transform",
+      "object": "Etali",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 4,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Trample, indestructible",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 5,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "damage-dealt",
+     "subject": "Etali",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "add-counter",
+      "object": "poison",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "that many",
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "cb8c6dd31787288c31ef9cc176738e0eab92f0531922fc93f23abb8650847f5a"
+ },
+ "Mind Bomb": {
+  "source": {
+   "_id": "fad1562d-0ab9-4a3f-b80a-476d8132f66d",
+   "name": "Mind Bomb",
+   "typeLine": "Sorcery",
+   "oracleText": "Each player may discard up to three cards. Mind Bomb deals damage to each player equal to 3 minus the number of cards they discarded this way.",
+   "keywords": [],
+   "colors": [
+    "U"
+   ],
+   "manaValue": 1,
+   "colorIdentity": [
+    "U"
+   ],
+   "power": null,
+   "toughness": null,
+   "tags": {
+    "produces": [
+     "cast:sorcery"
+    ],
+    "cares": []
+   },
+   "searchNames": [
+    "mind bomb"
+   ],
+   "edhrecRank": 18217,
+   "manaCost": "{U}",
+   "layout": "normal",
+   "legalities": {
+    "standard": "not_legal",
+    "future": "not_legal",
+    "historic": "not_legal",
+    "timeless": "not_legal",
+    "gladiator": "not_legal",
+    "pioneer": "not_legal",
+    "modern": "not_legal",
+    "legacy": "legal",
+    "pauper": "not_legal",
+    "vintage": "legal",
+    "penny": "not_legal",
+    "commander": "legal",
+    "oathbreaker": "legal",
+    "standardbrawl": "not_legal",
+    "brawl": "not_legal",
+    "competitivebrawl": "not_legal",
+    "alchemy": "not_legal",
+    "paupercommander": "not_legal",
+    "duel": "legal",
+    "oldschool": "legal",
+    "premodern": "legal",
+    "predh": "legal",
+    "tlr": "legal"
+   },
+   "releasedAt": "1997-03-24",
+   "gameChanger": false,
+   "reserved": false,
+   "artCrop": "https://cards.scryfall.io/art_crop/front/3/c/3c46d040-58c2-4f7a-8b66-fea33fcb0e11.jpg?1783946945"
+  }
+ }
+}

@@ -114,9 +114,9 @@ const CUES: [string, RegExp][] = [
  *  separate from the creature's) could damage you, and "that player" would be you; not modelled. Likewise a
  *  non-combat "deals damage to a player" from your own creature (Marsh Viper, Pit Scorpion) is read as an opponent
  *  though a self-aimed ping could hit you.
- *  CEILING: residue still at `any`, which still feeds "whenever you ..." payoffs: "they" wordings after the card's own
- *  damage (Glowing One, Infesting Radroach, Unstoppable Slasher, Rex); a clause with two actions of one verb, where
- *  `actorFor` refuses (Sabertooth Cobra); and the "reveals ... puts into graveyard" mill (Mirko Vosk, Balshan Beguiler). */
+ *  The "they" / "the player" wordings of the same damaged player are read by `damagedPlayerRead`, and a clause with two actions of one verb that
+ *  the damaged player does every time by `damagedPlayerActsEveryTime` (#1269). The "reveals ... puts into their graveyard" mill (Mirko Vosk,
+ *  Balshan Beguiler) was already an opponent's since #1663 (`mill-owner.ts`). */
 export function damagedPlayerIsOpponent(clauseText: string, triggerIsSelf: boolean, cardName?: string): boolean {
   // SCANNED, NOT MATCHED: `^\s*(?:whenever|when)\s+(.+?)\s+deals?\s+combat damage…` backtracks
   // polynomially on runs of spaces (CodeQL js/polynomial-redos), so the shape is read with string search.
@@ -292,7 +292,50 @@ export function pronounActs(clauseText: string, verb: string): boolean {
 /** What the caller knows about the clause's trigger, for "that player" after damage (#1263). */
 export interface ActorContext { triggerIsSelf?: boolean; cardName?: string }
 
-export function actionRecipients(clauseText: string, ctx: ActorContext = {}): Record<string, Control> {
+/** THE DAMAGED PLAYER BY ANOTHER NAME (#1269): after the card's own damage to a player, "they lose half their life" (Unstoppable Slasher, Glowing One, Infesting Radroach, Rex) and "The player gets another poison counter" (Sabertooth Cobra) name the
+ *  same player "that player" does. Returns the clause text with those words written "that player", so every cue and `controlOf` read them as they read #1263's: an opponent. Unchanged unless the clause is a damage trigger of ours (`damagedPlayerIsOpponent`):
+ *  "a creature deals combat damage to a player, they ..." can be you, and keeps `any`.
+ *  A "they" counts only when (a) a cue verb follows it (not "They have", "they pay"), (b) it sits outside parentheses (reminder text), (c) no more than one sentence end lies between the damage phrase and it ("... that player gets a poison counter. The player gets
+ *  another"), and (d) nothing between names another actor: you, each, target, an opponent, a player other than "that player" / "the player" ("you may pay {X}. If you do, they ...", "each player ... they"), or a controller.
+ *  CEILING: the one damaged player; a "they" that follows a second sentence, or an actor named between, stays `any`, as does "they" before a verb that has no cue (exile, pay). A cue-verb "they" that means PERMANENTS ("create two tokens. They get a +1/+1 counter"), with no actor named between, is read as the player (0 corpus lines today; pinned in damaged-they-1269.test.ts). */
+const DAMAGE_TO_PLAYER = / damage to (?:a player|an opponent)\b/i;
+const THEY_ACTS = new RegExp(`\\b(?:they|the player)(?=\\s+${ADVERB}(?:creates?|draws?|searc(?:h|hes)|mills?|loses?|gains?|gets?|puts?|sacrifices?|discards?|casts?)\\b)`, "gi");
+const OTHER_ACTOR = /\b(?:you|your|each|target|opponents?|players?|controllers?)\b/i;
+export function damagedPlayerRead(clauseText: string, ctx: ActorContext = {}): string {
+  if (!/\b(?:they|the player)\b/i.test(clauseText) || !damagedPlayerIsOpponent(clauseText, ctx.triggerIsSelf ?? false, ctx.cardName)) return clauseText;
+  const dmg = DAMAGE_TO_PLAYER.exec(clauseText);
+  if (!dmg) return clauseText;
+  const head = clauseText.slice(0, dmg.index + dmg[0].length);
+  const tail = clauseText.slice(head.length);
+  const read = tail.replace(THEY_ACTS, (word, at: number) => {
+    const between = tail.slice(0, at);
+    if ((between.match(/\(/g)?.length ?? 0) !== (between.match(/\)/g)?.length ?? 0)) return word;
+    if ((between.match(/[.!?](?=\s)/g)?.length ?? 0) > 1) return word;
+    if (OTHER_ACTOR.test(between.replace(/\b(?:that|the) player\b/gi, " "))) return word;
+    return "that player";
+  });
+  return head + read;
+}
+
+/** TWO ACTIONS OF ONE VERB, EVERY ONE THE DAMAGED PLAYER'S (#1269): Sabertooth Cobra's "that player gets a poison counter. The player gets another poison counter at the beginning of their next upkeep" stores two counter placements, which `actorFor` refuses.
+ *  When the clause is a damage trigger of ours and every cue match of the verb names "that player" (after `damagedPlayerRead`), at least as many as the clause stores, and no "you <verb>" is printed, each stored action is that player's.
+ *  CEILING: counted over the printed words; a cue the grammar cannot match is not counted, and the clause is refused. */
+export function damagedPlayerActsEveryTime(clauseText: string, verb: string, stored: number, ctx: ActorContext = {}): boolean {
+  const cue = CUES.find(([v]) => v === verb)?.[1];
+  const stem = STEMS[verb];
+  if (!cue || !damagedPlayerIsOpponent(clauseText, ctx.triggerIsSelf ?? false, ctx.cardName)) return false;
+  const text = damagedPlayerRead(clauseText, ctx);
+  if (stem && new RegExp(`\\byou\\s+${ADVERB}${stem}`, "i").test(text)) return false;
+  let n = 0;
+  for (const m of text.matchAll(new RegExp(cue.source, "gi"))) {
+    if (m[1]!.toLowerCase() !== "that player") return false;
+    n++;
+  }
+  return n >= stored;
+}
+
+export function actionRecipients(printed: string, ctx: ActorContext = {}): Record<string, Control> {
+  const clauseText = damagedPlayerRead(printed, ctx);
   const out: Record<string, Control> = {};
   for (const [verb, re] of CUES) {
     const m = re.exec(clauseText) ?? (verb === "create" && (clauseText.match(/\bcreates?\b/gi)?.length ?? 0) === 1 ? CREATE_JOINED.exec(clauseText) : null);
