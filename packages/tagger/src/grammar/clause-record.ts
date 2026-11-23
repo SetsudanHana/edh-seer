@@ -207,6 +207,9 @@ function actionsOf(readings: ActionReading[], selfTrigger: string | undefined, t
   // zone is the antecedent's (Retraced Image).
   let revealedFrom: string | null = null;
   let revealedUntil = false, untilClass: string | undefined;
+  // #1330: a dropped reveal of a card that is not the card itself ("reveal the top card of your library", "reveal a card ... from outside the game"): the "it" after it is THAT card, not the trigger's own card.
+  // CEILING: a reveal whose words open with "it" / "them" / "this" / "that" / "~" names no other card; a looked-at card (`lookedAt`, "look at the top card ... you may reveal it and put it into your hand") is read the same way.
+  let revealedOther = false;
   // A folded pronoun animate carries its unfolded readings (`alt`): used in its place when the pronoun is not the card itself.
   const work = [...readings];
   for (let wi = 0; wi < work.length; wi++) {
@@ -219,14 +222,15 @@ function actionsOf(readings: ActionReading[], selfTrigger: string | undefined, t
     const r: ActionReading = becomesHead === "it" ? { ...reading, phrase: "it" } : reading;
     // "Reveal it" is bookkeeping the store drops (canonicalize's DROPPED_VERBS).
     // "reveal the top card of your library. If it's a land card, put it onto the battlefield" (Thrasios).
-    if (r.verb === "reveal") { const rv = r.phrase ?? r.text ?? ""; revealedUntil = / until (?:you|they) reveal /i.test(rv); untilClass = untilClassOf(rv); revealedFrom = /\b(?:in|from) your hand\b/i.test(rv) ? "hand" : /\b(?:top (?:\w+ )?cards? of|cards from the top of) (?:your|their) library\b/i.test(rv) ? "library" : null; continue; }
+    if (r.verb === "reveal") { const rv = r.phrase ?? r.text ?? ""; revealedUntil = / until (?:you|they) reveal /i.test(rv); untilClass = untilClassOf(rv); revealedOther = !/^(?:it|them|this|that|~)\b|^~/i.test(rv); revealedFrom = /\b(?:in|from) your hand\b/i.test(rv) ? "hand" : /\b(?:top (?:\w+ )?cards? of|cards from the top of) (?:your|their) library\b/i.test(rv) ? "library" : null; continue; }
     // "When this creature blocks, return IT": with nothing before it, "it" is the card itself, written
     // as the trigger names it ("this creature"), which derive's self and type readings key on.
     // As derive's grammar switch writes a player verb's object: a named actor ("target player mills")
     // is the object, a back-referenced one ("that player") or none leaves the printed words.
     // "At the beginning of your end step, if THIS CREATURE didn't enter ..., return IT" (Cactuar): a
     // first "it" with no trigger object to name is the clause's own "this creature".
-    const selfIt = out.length === 0 && !selfTrigger && selfWord !== "this" && /^it$/i.test(objectWords(r)) && !r.actor
+    const otherCard = revealedOther || r.lookedAt !== undefined;
+    const selfIt = out.length === 0 && !otherCard && !selfTrigger && selfWord !== "this" && /^it$/i.test(objectWords(r)) && !r.actor
       && (triggerSubject === undefined || /^(?:you|each player|each opponent)$/i.test(triggerSubject));
     // "put that card on top" (Enlightened Tutor): on top of YOUR library, as the store writes it.
     // "Target player takes an extra turn" (Walk the Aeons): the player is the object, as stored.
@@ -240,10 +244,10 @@ function actionsOf(readings: ActionReading[], selfTrigger: string | undefined, t
     // verbs' fallback object "you" would put both halves on you (#1395), so they read `each player`.
     const object = (r.verb === "gain-life" || r.verb === "lose-life") && r.actor?.control === "any" && r.actor.scope === "each" && r.actor.text === undefined && !words ? "each player"
       : PLAYER_VERBS.has(r.verb) ? (r.actor?.text !== undefined && !(r.verb === "blight" && /^you$/i.test(r.actor.text)) && (r.actor.scope !== "that" || /'s (?:controller|owner)$/i.test(r.actor.text)) ? r.actor.text : words || "you")
-      : selfTrigger && out.length === 0 && /^(?:it|itself)$/i.test(words) ? selfTrigger
+      : selfTrigger && out.length === 0 && !otherCard && /^(?:it|itself)$/i.test(words) ? selfTrigger
       // "this creature becomes prepared", "it explores" (Jenny): a subject action of the card itself.
       : !words && r.object?.self === true ? selfTrigger ?? selfWord
-      : !words && selfTrigger && r.object?.ref && out.length === 0 ? selfTrigger
+      : !words && selfTrigger && r.object?.ref && out.length === 0 && !otherCard ? selfTrigger
       // "defending player exiles two permanents THEY control": the actor's, as the store names it.
       // "target player exiles a card from THEIR graveyard" (Scrabbling Claws): the actor's, as the store names it.
       : r.actor?.text && r.actor.control !== "you" ? words.replace(/\bthey control$/i, `${r.actor.text} controls`).replace(/\btheir (graveyard|hand|library)\b/i, `${r.actor.text}'s $1`) : words;
