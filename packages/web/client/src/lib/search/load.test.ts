@@ -1,7 +1,7 @@
 import { describe, expect, test, vi } from "vitest";
 import { evaluate, type Node } from "./evaluate.js";
 import { coreContext } from "./from-event-query.js";
-import { createSearchLoader, fieldsOf, withCatalogue } from "./load.js";
+import { createSearchLoader, fieldsOf, resolveCatalogue, withCatalogue } from "./load.js";
 import { encodePostings } from "./postings.js";
 
 const vocab = { types: ["creature"], subtypes: ["elf"], keywords: [] };
@@ -126,5 +126,31 @@ describe("the search loader", () => {
     await withCatalogue(coreContext(rows, vocab), b, readQ);
     const urls = f.mock.calls.map((c) => String(c[0]));
     expect(urls).toContain("/static/v1/search/s-new/read.json");
+  });
+
+  describe("resolveCatalogue says what happened, and is ready only when everything needed is there", () => {
+    test("ready: the field's group and the list are both present", async () => {
+      const loader = createSearchLoader("/static", stub() as unknown as typeof fetch);
+      const r = await resolveCatalogue(coreContext(rows, vocab), loader, { and: [readQ, listQ] });
+      expect(r.state).toBe("ready");
+    });
+    test("no search pointer is its own state", async () => {
+      const f = stub({ "/static/manifest.json": { version: "v1" } });
+      const r = await resolveCatalogue(coreContext(rows, vocab), createSearchLoader("/static", f as unknown as typeof fetch), listQ);
+      expect(r.state).toBe("no-pointer");
+    });
+    test("a failed manifest, catalogue or group is `failed`, not no-pointer", async () => {
+      for (const url of ["/static/manifest.json", "/static/v1/search/s-abc/catalogue.json", "/static/v1/search/s-abc/read.json"]) {
+        const f = stub({ [url]: null });
+        const r = await resolveCatalogue(coreContext(rows, vocab), createSearchLoader("/static", f as unknown as typeof fetch), { and: [readQ, listQ] });
+        expect(r.state, url).toBe("failed");
+      }
+    });
+    test("a loaded catalogue that does not supply a needed field or list is not ready", async () => {
+      const missingField = await resolveCatalogue(coreContext(rows, vocab), createSearchLoader("/static", stub() as unknown as typeof fetch), { field: "nonesuch", op: "has", value: "x" });
+      expect(missingField.state).toBe("incomplete");
+      const missingList = await resolveCatalogue(coreContext(rows, vocab), createSearchLoader("/static", stub() as unknown as typeof fetch), { field: "st", op: "countIn", list: "nonesuch" });
+      expect(missingList.state).toBe("incomplete");
+    });
   });
 });

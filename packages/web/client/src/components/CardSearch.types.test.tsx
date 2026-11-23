@@ -5,11 +5,12 @@ import { expect, test, vi } from "vitest";
 import { CardSearch } from "./CardSearch.js";
 import type { NameIndexEntry } from "../lib/partners.js";
 import type { Catalogue } from "../lib/search/catalogue.js";
-import type { SearchLoader } from "../lib/search/load.js";
+import { createSearchLoader, type SearchLoader } from "../lib/search/load.js";
+import { encodePostings } from "../lib/search/postings.js";
 
 /** #1782: NOT on the type rows, the five type counts, and the changeling note. Every row carries `t`, as a
  *  real non-thin row does. */
-const VOCAB = { types: ["creature", "land"], subtypes: ["borg", "elf", "human", "wizard", "forest"], keywords: [] };
+const VOCAB = { types: ["creature", "land", "kindred", "instant"], subtypes: ["borg", "elf", "human", "wizard", "forest"], keywords: [] };
 const row = (slug: string, name: string, identity: string[], s: number[], extra: Partial<NameIndexEntry> = {}): NameIndexEntry =>
   ({ slug, name, identity, commander: false, t: [0], s, ...extra });
 const INDEX: NameIndexEntry[] = [
@@ -125,10 +126,10 @@ test("a query with no NOT subtype and no count never reads the catalogue", async
 
 test("a chip's and/not control moves a word between must and never, in the URL", async () => {
   const spy = atUrl("/cards?type=creature", loaderOf(CATALOGUE));
-  await userEvent.click(await screen.findByRole("button", { name: "Leave out creature" }));
+  await userEvent.click(await screen.findByRole("button", { name: "not: leave out creature" }));
   await waitFor(() => expect(spy.search).toContain("nottype=creature"));
   expect(spy.search).not.toMatch(/[?&]type=/);
-  await userEvent.click(await screen.findByRole("button", { name: "Require creature" }));
+  await userEvent.click(await screen.findByRole("button", { name: "must: require creature" }));
   await waitFor(() => expect(spy.search).toMatch(/[?&]type=creature/));
   expect(spy.search).not.toContain("nottype");
 });
@@ -148,4 +149,92 @@ test("the order offers the five counts", async () => {
   for (const label of ["Card types, all faces", "Card types, front face", "Supertypes", "Subtypes", "Creature types"]) {
     expect(within(order).getByRole("option", { name: label })).toBeInTheDocument();
   }
+});
+
+// ---- review fixes -------------------------------------------------------------------------------------------------
+
+/** A real loader over a scripted fetch, so a failure is a failure of the transport and not of a stub. */
+function scripted(over: { noPointer?: boolean; failCatalogue?: () => boolean; failFaces?: () => boolean } = {}) {
+  const catalogue = {
+    ...CATALOGUE,
+    groups: { faces: { file: "faces.json", fields: [{ id: "tFront", kind: "set" as const, fallback: "t" }] } },
+  };
+  const fetchImpl = vi.fn(async (u: string | URL | Request) => {
+    const url = String(u);
+    const ok = (body: unknown) => ({ ok: true, json: async () => body }) as Response;
+    const no = { ok: false, json: async () => ({}) } as Response;
+    if (url.endsWith("manifest.json")) return ok(over.noPointer ? { version: "v" } : { version: "v", search: "s-x" });
+    if (url.endsWith("catalogue.json")) return over.failCatalogue?.() ? no : ok(catalogue);
+    if (url.endsWith("faces.json")) return over.failFaces?.() ? no : ok({ fields: { tFront: { kind: "set", values: {}, fallback: "t", overrides: encodePostings([]) } } });
+    return no;
+  });
+  return createSearchLoader("/static", fetchImpl as unknown as typeof fetch);
+}
+
+test("a failed faces fetch is said, never an empty list, and Try again recovers", async () => {
+  let down = true;
+  atUrl("/cards?type=creature&fronttypesmin=1", scripted({ failFaces: () => down }));
+  expect(await screen.findByText("Couldn't load type data. Try again.")).toBeInTheDocument();
+  expect(screen.queryByRole("list", { name: "Results" })).toBeNull();
+  expect(screen.queryByText(/No card matches/)).toBeNull();
+  down = false;
+  await userEvent.click(screen.getByRole("button", { name: "Try again" }));
+  await screen.findByRole("link", { name: /Elf Trio/ });
+  expect(names()).toHaveLength(5);
+});
+
+test("a catalogue that fails once and then loads is retried by the chip", async () => {
+  let calls = 0;
+  atUrl("/cards?type=creature&creaturetypesmin=3", scripted({ failCatalogue: () => ++calls === 1 }));
+  expect(await screen.findByText("Couldn't load type data. Try again.")).toBeInTheDocument();
+  await userEvent.click(screen.getByRole("button", { name: "Try again" }));
+  await screen.findByRole("link", { name: /Elf Trio/ });
+  expect(screen.queryByText(/Couldn't load/)).toBeNull();
+});
+
+test("no search pointer and a failed fetch say different things", async () => {
+  atUrl("/cards?type=creature&creaturetypesmin=3", scripted({ noPointer: true }));
+  expect(await screen.findByText("This build can't answer type counts yet.")).toBeInTheDocument();
+  expect(screen.queryByRole("button", { name: "Try again" })).toBeNull();
+});
+
+test("keeping changelings with a NOT that is not a creature type does not wait for, or need, the catalogue", async () => {
+  atUrl("/cards?type=creature&notsubtype=forest&changelings=keep", scripted({ noPointer: true }));
+  await screen.findByRole("link", { name: /Elf Trio/ });
+  expect(names()).toHaveLength(5);
+  expect(screen.queryByText(/can't answer/)).toBeNull();
+});
+
+test("a kindred instant changeling sorted by subtypes says every creature type, never 377", async () => {
+  const rows = [
+    row("crib", "Crib Swap Like", ["W"], [0, 1, 2, 3], { t: [3, 2] }),
+    row("plain", "Plain Elf", ["W"], [1, 2]),
+  ];
+  function Page() {
+    return <CardSearch load={async () => rows} vocabulary={async () => VOCAB} searchLoader={loaderOf(CATALOGUE)} />;
+  }
+  render(<MemoryRouter initialEntries={["/cards?notsubtype=forest&changelings=keep&notsubtype=borg&sort=subtypes"]}><Routes><Route path="/cards" element={<Page />} /></Routes></MemoryRouter>);
+  await screen.findByRole("link", { name: /Plain Elf/ });
+  // the borg NOT is forgiven for the changeling, so it is listed, first, with its words and not a number
+  expect(names()[0]).toMatch(/Crib Swap Like/);
+  expect(screen.getByText("every creature type")).toBeInTheDocument();
+  expect(document.body.textContent).not.toMatch(/\b\d{3} /);
+});
+
+test("the note names every creature type that was NOT-ed, with the right articles", async () => {
+  atUrl("/cards?type=creature&notsubtype=borg&notsubtype=elf", loaderOf(CATALOGUE));
+  expect(await screen.findByText("1 changeling hidden: a changeling is every creature type, so it is also a Borg and an Elf.")).toBeInTheDocument();
+});
+
+test("three creature types read as a list", async () => {
+  atUrl("/cards?type=creature&notsubtype=borg&notsubtype=elf&notsubtype=human", loaderOf(CATALOGUE));
+  expect(await screen.findByText(/so it is also a Borg, an Elf and a Human\.$/)).toBeInTheDocument();
+});
+
+test("the never chip and the must chip have names of their own, each holding its visible word (WCAG 2.5.3)", async () => {
+  atUrl("/cards?type=creature&nottype=land", loaderOf(CATALOGUE));
+  expect(await screen.findByRole("button", { name: "Remove never land" })).toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "must: require land" })).toHaveTextContent("must");
+  expect(screen.getByRole("button", { name: "not: leave out creature" })).toHaveTextContent("not");
+  expect(screen.getByRole("button", { name: "Remove creature" })).toBeInTheDocument();
 });

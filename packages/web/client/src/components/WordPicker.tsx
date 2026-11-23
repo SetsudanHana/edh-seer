@@ -82,7 +82,7 @@ export function WordPicker(
                 </svg>
               </button>
               {onMove && (
-                <button type="button" className="chip" aria-label={`Leave out ${name}`} onClick={() => onMove(name, "not")}>not</button>
+                <button type="button" className="chip" aria-label={`not: leave out ${name}`} onClick={() => onMove(name, "not")}>not</button>
               )}
             </li>
           ))}
@@ -92,7 +92,7 @@ export function WordPicker(
               <button
                 type="button"
                 className="chip capitalize line-through decoration-(--muted)"
-                aria-label={`Remove ${name}`}
+                aria-label={`Remove never ${name}`}
                 onClick={() => onRemoveNegated?.(name)}
               >
                 <span className="no-underline">never</span> {name}
@@ -101,7 +101,7 @@ export function WordPicker(
                 </svg>
               </button>
               {onMove && (
-                <button type="button" className="chip" aria-label={`Require ${name}`} onClick={() => onMove(name, "and")}>must</button>
+                <button type="button" className="chip" aria-label={`must: require ${name}`} onClick={() => onMove(name, "and")}>must</button>
               )}
             </li>
           ))}

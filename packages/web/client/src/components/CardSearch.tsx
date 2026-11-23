@@ -4,7 +4,7 @@ import { useSearchParams } from "react-router";
 import { identityMask, inIdentityOf } from "@edh-seer/matcher/partners-core";
 import { matchNames, needleOf } from "../lib/name-match.js";
 import { coreContext, evaluateEventQuery, fromEventQuery, rowCountsOf, typeCountSpec, withEveryCreatureType } from "../lib/search/from-event-query.js";
-import { createSearchLoader, fieldsOf, withCatalogue, type SearchLoader } from "../lib/search/load.js";
+import { createSearchLoader, fieldsOf, resolveCatalogue, type CatalogueResolution, type SearchLoader } from "../lib/search/load.js";
 import type { EvalContext, Node } from "../lib/search/evaluate.js";
 import { TypeCountRow } from "./TypeCountRow.js";
 import { sharedEventFrequency, sharedEventMembers, sharedNameIndex, sharedNameIndexVocabulary, type EventFrequencyFile, type EventMembers, type NameIndexEntry } from "../lib/partners.js";
@@ -117,6 +117,18 @@ const FILTER_LABEL: Record<FilterKind, string> = {
   abilityKind: "Ability type",
   repeats: "How often",
   amount: "Amount",
+};
+
+/** "a Borg", "an Elf": the indefinite article by the first letter, which holds for every creature type except the
+ *  rare vowel read as a consonant (Unicorn, Urzan...), so the vowels counted are a, e, i and o. */
+const aType = (name: string): string => {
+  const word = name.replace(/\b\w/g, (c) => c.toUpperCase());
+  return `${/^[aeio]/i.test(word) ? "an" : "a"} ${word}`;
+};
+/** "a Borg", "a Borg and an Elf", "a Borg, an Elf and a Goblin". */
+const aTypes = (names: readonly string[]): string => {
+  const all = names.map(aType);
+  return all.length <= 1 ? (all[0] ?? "") : `${all.slice(0, -1).join(", ")} and ${all[all.length - 1]}`;
 };
 
 /** The panel's rows: every kind but the two events, which the sentence asks. */
@@ -340,57 +352,76 @@ export function CardSearch({
   const countSort = TYPE_COUNTS.some((c) => c.sort === orderKey) ? (orderKey as TypeCountSort) : null;
   const countsAsked = TYPE_COUNTS.some((c) => eventQuery[c.min] !== undefined || eventQuery[c.max] !== undefined);
   const notSubtypesAsked = (eventQuery.notSubtypes?.length ?? 0) > 0;
-  const blocking = countsAsked || countSort !== null || (eventQuery.keepChangelings === true && notSubtypesAsked);
   // THE KEY IS WHAT IS NEEDED, not the whole question: moving a mana-value bound must not look like a new
-  // catalogue request and flash the loading line.
+  // catalogue request and flash the loading line. `fields|lists`; the every-creature-type flag is built here, not fetched.
   const needKey = useMemo((): string | null => {
-    if (!blocking && !notSubtypesAsked) return null;
-    const fields = new Set<string>(blocking ? fieldsOf(fromEventQuery(eventQuery, mode)) : []);
-    if (countSort !== null) fields.add(typeCountSpec[countSort].field);
-    return [...fields].sort().join(",") || "-";
-  }, [blocking, notSubtypesAsked, eventQuery, mode, countSort]);
-  const [resolved, setResolved] = useState<{ core: EvalContext; key: string; ctx: EvalContext; ok: boolean } | null>(null);
+    if (!countsAsked && countSort === null && !notSubtypesAsked) return null;
+    const node = fromEventQuery(eventQuery, mode);
+    const fields = new Set(fieldsOf(node).filter((f) => f !== "everyCreatureType"));
+    const lists = new Set(["creature", ...(JSON.stringify(node).match(/"list":"(\w+)"/g) ?? []).map((m) => m.slice(8, -1))]);
+    if (countSort !== null) {
+      fields.add(typeCountSpec[countSort].field);
+      const l = typeCountSpec[countSort].list;
+      if (l) lists.add(l);
+    }
+    return `${[...fields].sort().join(",")}|${[...lists].sort().join(",")}`;
+  }, [countsAsked, countSort, notSubtypesAsked, eventQuery, mode]);
+  const [resolved, setResolved] = useState<{ core: EvalContext; key: string; ctx: EvalContext; state: CatalogueResolution["state"] } | null>(null);
+  // THE RETRY CHIP: bumping it runs the read again. A failed read is shown, and the loader keeps nothing of it.
+  const [attempt, setAttempt] = useState(0);
   const resolveLoader = useMemo(() => searchLoader ?? createSearchLoader("/static"), [searchLoader]);
   useEffect(() => {
     if (searchContext === null || index === null || needKey === null) return;
     let live = true;
     // A LATE ANSWER FOR A QUESTION THE READER HAS SINCE CHANGED IS DROPPED: `live` ends with this effect, and the
     // answer is also keyed by the question and the rows it was built from.
-    const need: Node = { and: [{ field: "st", op: "countIn", list: "creature" },
-      ...needKey.split(",").filter((f) => f !== "-").map((field): Node => ({ field, op: "has", value: "-" }))] };
-    void withCatalogue(searchContext, resolveLoader, need).then((ctx) => {
+    const [fieldPart = "", listPart = ""] = needKey.split("|");
+    const need: Node = { and: [
+      ...listPart.split(",").filter(Boolean).map((list): Node => ({ field: "t", op: "countIn", list })),
+      ...fieldPart.split(",").filter(Boolean).map((field): Node => ({ field, op: "has", value: "-" })),
+    ] };
+    void resolveCatalogue(searchContext, resolveLoader, need).then((r) => {
       if (!live) return;
-      const ok = ctx !== searchContext;
-      setResolved({ core: searchContext, key: needKey, ok, ctx: ok ? withEveryCreatureType(ctx, index, vocabulary) : ctx });
+      setResolved({ core: searchContext, key: needKey, state: r.state, ctx: r.state === "ready" ? withEveryCreatureType(r.ctx, index, vocabulary) : r.ctx });
     });
     return () => { live = false; };
-  }, [searchContext, index, vocabulary, needKey, resolveLoader]);
+  }, [searchContext, index, vocabulary, needKey, resolveLoader, attempt]);
   const resolvedNow = resolved !== null && resolved.core === searchContext && resolved.key === needKey ? resolved : null;
-  const catalogueState: "none" | "pending" | "ready" | "missing" =
-    needKey === null ? "none" : resolvedNow === null ? "pending" : resolvedNow.ok ? "ready" : "missing";
-  const typeCountsBlocked = blocking && catalogueState === "pending";
-  const typeCountsMissing = blocking && catalogueState === "missing";
-  const catalogueCtx = resolvedNow?.ok === true ? resolvedNow.ctx : null;
-  const evalCtx = blocking ? catalogueCtx : searchContext;
-  const characteristicMask = useMemo((): Uint8Array | null => {
-    if (index === null || evalCtx === null) return null;
-    const res = evaluateEventQuery(index, vocabulary, eventQuery, mode, { commandersOnly: commanderMode, context: evalCtx });
-    const mask = new Uint8Array(index.length);
-    if (res.ok) for (const r of res.rows) mask[r] = 1;
-    return mask;
-  }, [index, evalCtx, vocabulary, eventQuery, mode, commanderMode]);
-  // THE SAME QUESTION WITH CHANGELINGS KEPT, to count what the NOT creature type hid. Only when it could differ.
-  const hiddenTypeName = useMemo((): string | null => {
+  const catalogueCtx = resolvedNow?.state === "ready" ? resolvedNow.ctx : null;
+  // KEEPING CHANGELINGS ONLY MATTERS FOR A NOT THAT IS A CREATURE TYPE, which the catalogue's list says. Until it has
+  // loaded that is unknown, and unknown is not blocking: the list answers from the rows meanwhile.
+  const hiddenTypeNames = useMemo((): string[] => {
     const list = catalogueCtx?.namedLists["creature"]?.values;
-    return list === undefined ? null : (eventQuery.notSubtypes ?? []).find((n) => list.includes(n)) ?? null;
+    return list === undefined ? [] : (eventQuery.notSubtypes ?? []).filter((n) => list.includes(n));
   }, [catalogueCtx, eventQuery.notSubtypes]);
-  const keepMask = useMemo((): Uint8Array | null => {
-    if (index === null || catalogueCtx === null || hiddenTypeName === null) return null;
-    const res = evaluateEventQuery(index, vocabulary, { ...eventQuery, keepChangelings: true }, mode, { commandersOnly: commanderMode, context: catalogueCtx });
+  const blocking = countsAsked || countSort !== null || (eventQuery.keepChangelings === true && hiddenTypeNames.length > 0);
+  const catalogueState: "none" | "pending" | "ready" | "no-pointer" | "failed" | "incomplete" =
+    needKey === null ? "none" : resolvedNow === null ? "pending" : resolvedNow.state;
+  const typeCountsBlocked = blocking && catalogueState === "pending";
+  // NO POINTER AND AN INCOMPLETE CATALOGUE both say the build cannot answer; a failed read says so differently, with a retry.
+  const typeCountsMissing = blocking && (catalogueState === "no-pointer" || catalogueState === "incomplete");
+  const typeCountsFailed = blocking && catalogueState === "failed";
+  const evalCtx = blocking ? catalogueCtx : searchContext;
+  // A CANNOT-ANSWER IS NOT A ZERO MASK: it is said, and the list is not drawn.
+  const characteristic = useMemo((): { mask: Uint8Array | null; cannotAnswer: boolean } => {
+    if (index === null || evalCtx === null) return { mask: null, cannotAnswer: false };
+    const res = evaluateEventQuery(index, vocabulary, eventQuery, mode, { commandersOnly: commanderMode, context: evalCtx });
+    if (!res.ok) return { mask: null, cannotAnswer: true };
     const mask = new Uint8Array(index.length);
-    if (res.ok) for (const r of res.rows) mask[r] = 1;
+    for (const r of res.rows) mask[r] = 1;
+    return { mask, cannotAnswer: false };
+  }, [index, evalCtx, vocabulary, eventQuery, mode, commanderMode]);
+  const characteristicMask = characteristic.mask;
+  const filtersUnanswerable = characteristic.cannotAnswer;
+  // THE SAME QUESTION WITH CHANGELINGS KEPT, to count what the NOT creature type hid.
+  const keepMask = useMemo((): Uint8Array | null => {
+    if (index === null || catalogueCtx === null || hiddenTypeNames.length === 0) return null;
+    const res = evaluateEventQuery(index, vocabulary, { ...eventQuery, keepChangelings: true }, mode, { commandersOnly: commanderMode, context: catalogueCtx });
+    if (!res.ok) return null;
+    const mask = new Uint8Array(index.length);
+    for (const r of res.rows) mask[r] = 1;
     return mask;
-  }, [index, catalogueCtx, hiddenTypeName, vocabulary, eventQuery, mode, commanderMode]);
+  }, [index, catalogueCtx, hiddenTypeNames, vocabulary, eventQuery, mode, commanderMode]);
   const fitCard = useCallback((entries: NameIndexEntry[], using: Uint8Array | null = characteristicMask): NameIndexEntry[] => {
     if (using === null) return [];
     const named = needle.length === 0 ? entries : matchNames(entries, { query });
@@ -444,7 +475,7 @@ export function CardSearch({
   const matches = useMemo((): NameIndexEntry[] | null => {
     if (index === null || !asked) return [];
     if (typeCountsBlocked) return null;
-    if (typeCountsMissing) return [];
+    if (typeCountsMissing || typeCountsFailed || filtersUnanswerable) return [];
     if (keptIds === undefined) return null;
     const base = baseEntries;
     if (base === null) return null;
@@ -488,7 +519,7 @@ export function CardSearch({
         : countSort !== null ? byNumber((e) => countsBy[countSort]?.[positionOf.get(e) ?? -1])
         : byNumber((e) => e.partners ?? 0),
     );
-  }, [index, keptIds, asked, eventQuery, lists, positionOf, fitCard, baseEntries, countSort, countsBy, typeCountsBlocked, typeCountsMissing]);
+  }, [index, keptIds, asked, eventQuery, lists, positionOf, fitCard, baseEntries, countSort, countsBy, typeCountsBlocked, typeCountsMissing, typeCountsFailed, filtersUnanswerable]);
   // WHAT "Back to the N matches" RETURNS TO: the normal list's size, without sorting it.
   const normalCount = useMemo((): number => {
     if (!showSkipped || index === null || keptIds === undefined || keptIds === null) return 0;
@@ -964,6 +995,14 @@ export function CardSearch({
         : typeCountsMissing
         // NO ANSWER IS NOT AN EMPTY ANSWER: an artifact built without the search catalogue cannot count types.
         ? <p role="status" className="text-(--muted)">This build can&apos;t answer type counts yet.</p>
+        : typeCountsFailed
+        // A FAILED READ IS NOT "THIS BUILD CANNOT": it may work next time, so it offers the retry.
+        ? <div className="flex flex-wrap items-center gap-3">
+            <p role="status" className="text-(--muted)">Couldn&apos;t load type data. Try again.</p>
+            <button type="button" className="chip" onClick={() => { setResolved(null); setAttempt((n) => n + 1); }}>Try again</button>
+          </div>
+        : filtersUnanswerable
+        ? <p role="status" className="text-(--muted)">This build can&apos;t answer one of those filters yet.</p>
         : matches === null
         ? <p className="eyebrow text-(--muted)">reading what cards do</p>
         : (
@@ -1052,15 +1091,15 @@ export function CardSearch({
             </div>
             {/* A CHANGELING IS EVERY CREATURE TYPE (CR 702.73a), so "not a Borg" hides it, and that is said, with the way
               * back. The count is of the cards the rest of the question would have kept. */}
-            {hiddenChangelings > 0 && hiddenTypeName !== null && (
+            {hiddenChangelings > 0 && hiddenTypeNames.length > 0 && (
               <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
                 <p className="text-(--muted) text-sm">
-                  {`${hiddenChangelings.toLocaleString("en-US")} ${hiddenChangelings === 1 ? "changeling" : "changelings"} hidden: a changeling is every creature type, so it is also a ${hiddenTypeName.replace(/\b\w/g, (c) => c.toUpperCase())}.`}
+                  {`${hiddenChangelings.toLocaleString("en-US")} ${hiddenChangelings === 1 ? "changeling" : "changelings"} hidden: a changeling is every creature type, so it is also ${aTypes(hiddenTypeNames)}.`}
                 </p>
                 <button type="button" className="chip" onClick={() => setEvents({ ...eventQuery, keepChangelings: true })}>Show them</button>
               </div>
             )}
-            {eventQuery.keepChangelings === true && hiddenTypeName !== null && (
+            {eventQuery.keepChangelings === true && hiddenTypeNames.length > 0 && (
               <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
                 <p className="text-(--muted) text-sm">Changelings are included, though a changeling is every creature type.</p>
                 <button
@@ -1117,8 +1156,11 @@ export function CardSearch({
                 for (const c of TYPE_COUNTS) {
                   const n = countsBy[c.sort]?.[pos];
                   if (n === undefined) continue;
-                  caption.push(c.sort === "creaturetypes" && everyCreatureType.has(pos)
-                    ? "every creature type" : `${n} ${c.unit}${n === 1 ? "" : "s"}`);
+                  // A CHANGELING HOLDS EVERY CREATURE TYPE, so both its creature-type and its subtype count are that list's
+                  // length; neither is printed as a number.
+                  const every = (c.sort === "creaturetypes" || c.sort === "subtypes") && everyCreatureType.has(pos);
+                  const piece = every ? "every creature type" : `${n} ${c.unit}${n === 1 ? "" : "s"}`;
+                  if (!caption.includes(piece)) caption.push(piece);
                 }
                 return (
                   <li key={e.slug} className="min-w-0">

@@ -226,30 +226,30 @@ describe("the five type counts", () => {
 });
 
 describe("a changeling is every creature type (CR 702.73a)", () => {
-  const tv = { types: ["creature"], subtypes: ["elf", "human", "borg"], keywords: [] };
+  const tv = { types: ["creature"], subtypes: ["elf", "human", "borg", "forest"], keywords: [] };
   const lists = { creature: { values: ["elf", "human", "borg"] } };
   const crows = [
-    { identity: [], t: [0], s: [0, 1, 2] }, // 0 changeling
-    { identity: [], t: [0], s: [0, 2] },    // 1 borg elf
-    { identity: [], t: [0], s: [0, 1] },    // 2 elf human
+    { identity: [], t: [0], s: [0, 1, 2, 3] }, // 0 changeling that also carries a NON-creature subtype
+    { identity: [], t: [0], s: [0, 2] },       // 1 borg elf
+    { identity: [], t: [0], s: [0, 1] },       // 2 elf human
+    { identity: [], t: [0], s: [0, 1, 3] },    // 3 three subtypes but borg is missing: NOT every creature type
   ];
   const base: EventQuery = { produce: [], consume: [], colours: [], types: [], subtypes: [], keywords: [], cardColours: [], notSubtypes: ["borg"] };
   const ctx = withEveryCreatureType(coreContext(crows, tv, { namedLists: lists }), crows, tv);
   const run = (q: EventQuery) => evaluate(fromEventQuery(q, "cards", { vocab: tv, creatureTypes: new Set(lists.creature.values) }), ctx);
 
-  test("the every-creature-type view flags only the row that holds the whole list", () => {
+  test("the every-creature-type view needs ALL of the list: three subtypes with one creature type missing is not a changeling", () => {
     expect(evaluate({ field: "everyCreatureType", op: "has", value: "true" }, ctx)).toEqual({ ok: true, rows: [0] });
   });
   test("not <creature type> hides it by default, and keeps it with keepChangelings", () => {
-    expect(run(base)).toEqual({ ok: true, rows: [2] });
-    expect(run({ ...base, keepChangelings: true })).toEqual({ ok: true, rows: [0, 2] });
+    expect(run(base)).toEqual({ ok: true, rows: [2, 3] });
+    expect(run({ ...base, keepChangelings: true })).toEqual({ ok: true, rows: [0, 2, 3] });
   });
-  test("keepChangelings leaves a non-creature subtype alone", () => {
-    const forest = { ...tv, subtypes: [...tv.subtypes, "forest"] };
-    const fr = [...crows, { identity: [], t: [0], s: [3] }];
-    const c2 = withEveryCreatureType(coreContext(fr, forest, { namedLists: lists }), fr, forest);
-    const res = evaluate(fromEventQuery({ ...base, notSubtypes: ["forest"], keepChangelings: true }, "cards", { vocab: forest, creatureTypes: new Set(lists.creature.values) }), c2);
-    expect(res).toEqual({ ok: true, rows: [0, 1, 2] });
+  test("keepChangelings only forgives a CREATURE type: a changeling carrying a NOT-ed non-creature subtype stays out", () => {
+    const res = run({ ...base, notSubtypes: ["forest"], keepChangelings: true });
+    expect(res).toEqual({ ok: true, rows: [1, 2] });
+    // and with both, the creature-type one is forgiven but the forest still excludes it
+    expect(run({ ...base, notSubtypes: ["borg", "forest"], keepChangelings: true })).toEqual({ ok: true, rows: [2] });
   });
 });
 
