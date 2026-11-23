@@ -9560,7 +9560,6 @@
 "Magus of the Scroll": ["answer:creature","answer:planeswalker","role:burn","role:targetedRemoval","wincon:burn"],
 "Magus of the Vineyard": ["role:ramp"],
 "Magus of the Wheel": ["role:draw"],
-"Magus of the Will": ["role:ramp"],
 "Maha, Its Feathers Night": ["wincon:stompy"],
 "Mahadi, Emporium Master": ["role:ramp"],
 "Mai, Scornful Striker": ["role:burn","wincon:burn"],

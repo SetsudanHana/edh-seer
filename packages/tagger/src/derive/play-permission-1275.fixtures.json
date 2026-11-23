@@ -1,0 +1,257 @@
+{
+ "Magus of the Will": {
+  "source": {
+   "name": "Magus of the Will",
+   "typeLine": "Creature — Human Wizard",
+   "oracleText": "{2}{B}, {T}, Exile this creature: Until end of turn, you may play lands and cast spells from your graveyard. If a card would be put into your graveyard from anywhere this turn, exile that card instead.",
+   "keywords": [],
+   "colors": [
+    "B"
+   ],
+   "manaValue": 3,
+   "colorIdentity": [
+    "B"
+   ],
+   "power": "3",
+   "toughness": "3",
+   "manaCost": "{2}{B}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "exile",
+      "object": "this creature",
+      "fromZone": "battlefield",
+      "toZone": "exile",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "exile",
+      "object": "cards",
+      "fromZone": "graveyard",
+      "toZone": "exile",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "put",
+      "object": "lands and spells from your graveyard",
+      "fromZone": "graveyard",
+      "toZone": "battlefield",
+      "amount": null,
+      "optional": true
+     }
+    ]
+   }
+  ],
+  "segmentHash": "7f1fe91252b7fe9e56f78123475897af899bc3134d772bb53cf4de8b57e3c8d2"
+ },
+ "Crucible of Worlds": {
+  "source": {
+   "name": "Crucible of Worlds",
+   "typeLine": "Artifact",
+   "oracleText": "You may play lands from your graveyard.",
+   "keywords": [],
+   "colors": [],
+   "manaValue": 3,
+   "colorIdentity": [],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{3}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "play",
+      "object": "lands from your graveyard",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     }
+    ]
+   }
+  ],
+  "segmentHash": "78a9b679f36aaad4a54341a881db1f1c892b455b0b3a9e95dcb672cfe40f73b7"
+ },
+ "Splendid Reclamation": {
+  "source": {
+   "name": "Splendid Reclamation",
+   "typeLine": "Sorcery",
+   "oracleText": "Return all land cards from your graveyard to the battlefield tapped.",
+   "keywords": [],
+   "colors": [
+    "G"
+   ],
+   "manaValue": 4,
+   "colorIdentity": [
+    "G"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{3}{G}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "return",
+      "object": "all land cards from your graveyard",
+      "fromZone": "graveyard",
+      "toZone": "battlefield",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "tap",
+      "object": "all land cards from your graveyard",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "7d5d519dd84b8b1c66e4e2f0ecc823407b16c5717d75f1e0efa472f039edc040"
+ },
+ "Yawgmoth's Will": {
+  "source": {
+   "name": "Yawgmoth's Will",
+   "typeLine": "Sorcery",
+   "oracleText": "Until end of turn, you may play lands and cast spells from your graveyard.\nIf a card would be put into your graveyard from anywhere this turn, exile that card instead.",
+   "keywords": [],
+   "colors": [
+    "B"
+   ],
+   "manaValue": 3,
+   "colorIdentity": [
+    "B"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{2}{B}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "play",
+      "object": "lands from your graveyard",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     },
+     {
+      "verb": "cast",
+      "object": "spells from your graveyard",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "exile",
+      "object": "that card",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "cc3d9946454e88341194e18cf46c783d05f7304ab4d5a0e4fae0e70725ac6b2b"
+ },
+ "Gaea's Will": {
+  "source": {
+   "name": "Gaea's Will",
+   "typeLine": "Sorcery",
+   "oracleText": "Suspend 4—{G}\nUntil end of turn, you may play lands and cast spells from your graveyard.\nIf a card would be put into your graveyard from anywhere this turn, exile that card instead.",
+   "keywords": [
+    "Suspend"
+   ],
+   "colors": [
+    "G"
+   ],
+   "manaValue": 0,
+   "colorIdentity": [
+    "G"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "none"
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "play",
+      "object": "lands from your graveyard",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     },
+     {
+      "verb": "cast",
+      "object": "spells from your graveyard",
+      "fromZone": "graveyard",
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "exile",
+      "object": "that card",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "c33e5a0d1ab3f5928518d13c75230f4d37c5424172ecd8c5cf77f8ad3378581a"
+ }
+}
