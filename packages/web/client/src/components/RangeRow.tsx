@@ -10,8 +10,10 @@ import { useId } from "react";
  *  ONE CONTROL, THREE ROWS. Mana value, power and toughness are the same question about different
  *  numbers, so they are the same control with a different label. */
 export function RangeRow(
-  { label, min, max, ceiling = 15, onChange }: {
+  { label, description, min, max, ceiling = 15, onChange }: {
     label: string;
+    /** One plain-language line under the label. */
+    description?: string;
     min: number | undefined;
     max: number | undefined;
     /** Highest offered bound. 15 covers Emrakul and every printed power; a reader wanting more
@@ -30,6 +32,7 @@ export function RangeRow(
   return (
     <div className="flex flex-col gap-1">
       <span className="eyebrow" id={`${id}-label`}>{label}</span>
+      {description && <p className="text-(--muted) text-sm max-w-[65ch]">{description}</p>}
       <div className="flex flex-wrap items-center gap-2" role="group" aria-labelledby={`${id}-label`}>
         <label className="flex items-center gap-2">
           <span className="text-(--muted) text-sm">from</span>

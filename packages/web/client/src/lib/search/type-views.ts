@@ -126,3 +126,108 @@ export function sparseFront(full: SetColumn, base: SetColumn): SetColumn {
     totals: new Map([...full.values].map(([v, rs]) => [v, rs.length])),
   };
 }
+
+/** THE SUBTYPES OF EACH CARD'S BEST FACE, as a SPARSE column over `st` (owner decision, #1782): a two-faced card counts the
+ *  creature types of the one face with the most, not the union of both ("Tiefling Druid // Bird Bear" is 2, not 4: what the
+ *  card can be on the battlefield). `faces` is what the shard carries per row (`tags.characteristics.faces[].subtypes`);
+ *  a transform card may list only its front. Ties go to the earlier face. A row with no faces data answers as `st` does, and so
+ *  does a changeling (it holds every creature type, CR 702.73a, whatever its faces print). Only rows whose best face
+ *  differs from their `st` are stored. */
+export function sparseBestFace(
+  index: TypeIndex, faces: ReadonlyMap<number, readonly (readonly string[])[]>, creatureList: readonly string[],
+): SetColumn {
+  const creature = new Set(creatureList);
+  const codeOf = new Map(index.subtypes.map((s, i) => [s, i]));
+  const required = creatureList.filter((c) => codeOf.has(c)).map((c) => codeOf.get(c)!);
+  const values = new Map<string, number[]>();
+  const overrides: number[] = [];
+  index.cards.forEach((row, i) => {
+    const fs = faces.get(i);
+    if (!fs || fs.length === 0) return;
+    const have = new Set(row.s ?? []);
+    if (required.length > 0 && required.every((c) => have.has(c))) return;
+    let best = fs[0]!;
+    for (const f of fs) if (f.filter((v) => creature.has(v)).length > best.filter((v) => creature.has(v)).length) best = f;
+    const mine = [...new Set(best)].sort();
+    const whole = [...have].map((c) => index.subtypes[c]!).sort();
+    if (mine.join(",") === whole.join(",")) return;
+    overrides.push(i);
+    for (const v of mine) add(values, v, i);
+  });
+  return { kind: "set", path: "stBest", group: "faces", fallback: "st", overrides, values: sortedMap(values) };
+}
+
+/** The subtypes of every face of a printed type line ("A — X Y // B — Z"): the part after the em dash of each `" // "` half,
+ *  matched against the known subtype names, longest run of words first so "time lord" stays one type. A word no name covers
+ *  stands alone; a half with no em dash has none. Never a plain split on spaces. */
+export function faceSubtypesFromTypeLine(typeLine: string, known: ReadonlySet<string>): string[][] {
+  return typeLine.split(" // ").map((half) => {
+    const at = half.indexOf("\u2014");
+    if (at < 0) return [];
+    const words = half.slice(at + 1).trim().toLowerCase().split(/\s+/).filter(Boolean);
+    const out: string[] = [];
+    for (let i = 0; i < words.length;) {
+      let n = words.length - i;
+      while (n > 1 && !known.has(words.slice(i, i + n).join(" "))) n--;
+      out.push(words.slice(i, i + n).join(" "));
+      i += n;
+    }
+    return out;
+  });
+}
+
+/** The faces a row's best face is chosen from: the listed ones, unless the shard lists FEWER faces than the printed type line
+ *  has halves (a transform card often lists only its front), when every face comes from its half of the type line. */
+export function completeFaces(listed: readonly (readonly string[])[] | undefined, typeLine: string | undefined, known: ReadonlySet<string>, hasTypes = true): string[][] | undefined {
+  const parts = typeLine ? typeLine.split(" // ").length : 0;
+  // A thin row (no `t`) is outside every type count: it is not given creature types its row does not carry.
+  if (hasTypes && typeLine && parts > 1 && (listed?.length ?? 0) < parts) return faceSubtypesFromTypeLine(typeLine, known);
+  return listed && listed.length > 0 ? listed.map((f) => [...f]) : undefined;
+}
+
+/** A column from a row's integer codes into a table (`t`, `s`, `k`): the row carries codes, the view names them.
+ *  A code with no name in the table (the tables load apart from the rows) is skipped, never stored as "undefined". */
+export function buildCodeView(path: string, table: readonly string[], codes: readonly (readonly number[] | undefined)[]): SetColumn {
+  const m = new Map<string, number[]>();
+  codes.forEach((cs, i) => {
+    for (const c of cs ?? []) {
+      const name = table[c];
+      if (name !== undefined) add(m, name, i);
+    }
+  });
+  return { kind: "set", path, group: "types", values: sortedMap(m) };
+}
+
+const COLOUR_BITS: readonly (readonly [string, number])[] = [["W", 1], ["U", 2], ["B", 4], ["R", 8], ["G", 16]];
+
+/** The card's own colours (`c`, a WUBRG bitmask; absent = colourless) as a set of W/U/B/R/G. A colourless card is in no
+ *  list, so "colourless" is `count c max 0`. Callers build it only when the rows carry `c` at all. */
+export function buildColourView(masks: readonly (number | undefined)[]): SetColumn {
+  const m = new Map<string, number[]>();
+  masks.forEach((mask, i) => {
+    if (!mask) return;
+    for (const [name, bit] of COLOUR_BITS) if (mask & bit) add(m, name, i);
+  });
+  return { kind: "set", path: "c", group: "types", values: sortedMap(m) };
+}
+
+/** Rows holding EVERY creature type (a changeling, CR 702.73a), as the `everyCreatureType` flag. Needs the creature list, which
+ *  only the catalogue carries, so it is built once that has loaded. A row counts when its subtypes include every list
+ *  member the subtype table knows. */
+export function buildEveryCreatureTypeView(
+  subtypeTable: readonly string[], creatureList: readonly string[], codes: readonly (readonly number[] | undefined)[],
+): SetColumn {
+  const inTable = new Set(subtypeTable);
+  const required = creatureList.filter((c) => inTable.has(c));
+  const need = new Set(required.map((c) => subtypeTable.indexOf(c)));
+  const rows: number[] = [];
+  if (need.size > 0) {
+    codes.forEach((cs, i) => {
+      if (!cs || cs.length < need.size) return;
+      const have = new Set(cs);
+      for (const c of need) if (!have.has(c)) return;
+      rows.push(i);
+    });
+  }
+  return { kind: "set", path: "everyCreatureType", group: "types", values: new Map(rows.length ? [["true", rows]] : []) };
+}

@@ -620,9 +620,9 @@ test("the remove button is still the way a row goes away", async () => {
  *  looking for the biggest thing they can play -- and a card that prints no power (or prints `*`,
  *  which the index omits the same way) sorts LAST under both, never as a pretend zero. */
 const STATS: NameIndexEntry[] = [
-  { slug: "a-wall", name: "A Wall", identity: [], commander: false, pow: 0, tou: 4 },
-  { slug: "big-beater", name: "Big Beater", identity: [], commander: false, pow: 7, tou: 2 },
-  { slug: "no-power", name: "No Power", identity: [], commander: false },
+  { slug: "a-wall", name: "A Wall", identity: [], commander: false, t: [0], pow: 0, tou: 4 },
+  { slug: "big-beater", name: "Big Beater", identity: [], commander: false, t: [0], pow: 7, tou: 2 },
+  { slug: "no-power", name: "No Power", identity: [], commander: false, t: [0] },
 ];
 const resultNames = () => within(screen.getByRole("list", { name: "Results" }))
   .getAllByRole("link").map((a) => a.textContent);

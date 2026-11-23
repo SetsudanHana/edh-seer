@@ -1,10 +1,16 @@
 import { useCallback, useEffect, useMemo, useState, useRef } from "react";
 import { isPattern, narrowingOf, verbOfKey } from "@edh-seer/matcher/event-pattern";
 import { useSearchParams } from "react-router";
-import { identityKeyOf, identityMask, inIdentityOf } from "@edh-seer/matcher/partners-core";
+import { identityMask, inIdentityOf } from "@edh-seer/matcher/partners-core";
 import { matchNames, needleOf } from "../lib/name-match.js";
+import { coreContext, evaluateEventQuery, fromEventQuery, rowCountsOf, typeCountSpec, withEveryCreatureType } from "../lib/search/from-event-query.js";
+import { BESPOKE_FIELDS, createSearchLoader, fieldsOf, resolveCatalogue, type CatalogueResolution, type SearchLoader } from "../lib/search/load.js";
+import type { Catalogue, CatalogueField } from "../lib/search/catalogue.js";
+import type { EvalContext, Node } from "../lib/search/evaluate.js";
+import { TypeCountRow } from "./TypeCountRow.js";
+import { FieldRow } from "./FieldRow.js";
 import { sharedEventFrequency, sharedEventMembers, sharedNameIndex, sharedNameIndexVocabulary, type EventFrequencyFile, type EventMembers, type NameIndexEntry } from "../lib/partners.js";
-import { compileCharacteristics, coloursFit, eventsFromParams, eventsToParams, filterKindsOf, factFilterOf, orderOf, withoutFilterKind, EFFECT_KINDS, FILTER_KINDS, NATURAL_DIR, type EventQuery, type FilterKind } from "../lib/facets.js";
+import { eventsFromParams, eventsToParams, filterKindsOf, factFilterOf, orderOf, withoutFilterKind, EFFECT_KINDS, FILTER_KINDS, NATURAL_DIR, TYPE_COUNTS, type EventQuery, type FieldFilter, type FilterKind, type TypeCountSort } from "../lib/facets.js";
 import { BY_WHAT_IT_IS, TIMING_UNKNOWN, effectCaption } from "../lib/effect-caption.js";
 import { isEmptyFilter } from "@edh-seer/matcher/member-facts";
 import { membersPassing, unjudgedLeftOut } from "../lib/effect-filter.js";
@@ -103,6 +109,7 @@ const FILTER_LABEL: Record<FilterKind, string> = {
   // contrast, and the two sit next to each other in the menu where the pair reads as a pair.
   cardColours: "Color",
   typeline: "Type line",
+  typeCounts: "Number of types",
   keywords: "Keywords",
   mv: "Mana value",
   power: "Power",
@@ -113,6 +120,15 @@ const FILTER_LABEL: Record<FilterKind, string> = {
   repeats: "How often",
   amount: "Amount",
 };
+
+/** "Borg", "Borg and Elf", "Borg, Elf and Human": the NOT-ed creature types, capitalised the way the tiles say them. */
+const typeNames = (names: readonly string[]): string => {
+  const all = names.map((n) => n.replace(/\b\w/g, (c) => c.toUpperCase()));
+  return all.length <= 1 ? (all[0] ?? "") : `${all.slice(0, -1).join(", ")} and ${all[all.length - 1]}`;
+};
+
+/** ONE EMPTY LIST, so a query with no catalogue rows keeps the identity of what depends on it. */
+const NO_FILTERS: readonly FieldFilter[] = [];
 
 /** The panel's rows: every kind but the two events, which the sentence asks. */
 const ROW_KINDS = FILTER_KINDS.filter((k) => k !== "produce" && k !== "consume");
@@ -125,11 +141,15 @@ const NO_TARGET: ReadonlySet<string> = new Set(["gain-life", "lose-life"]);
 export function CardSearch({
   load = sharedNameIndex, frequency = sharedEventFrequency, members = sharedEventMembers,
   vocabulary: loadVocabulary = sharedNameIndexVocabulary,
+  searchLoader,
   peekLoad, hash, replace, mode = "cards",
 }: {
   load?: (baseUrl: string) => Promise<NameIndexEntry[]>;
   /** The type, subtype and keyword tables the rows' codes index into. */
   vocabulary?: (baseUrl: string) => Promise<{ types: string[]; subtypes: string[]; keywords: string[] }>;
+  /** The search catalogue's loader: named lists and the faces group, read only when a question needs them (type counts,
+   *  the changeling note). Tests pass their own; the page reads `/static`. */
+  searchLoader?: SearchLoader;
   /** The counts every picker row prints, asked for on the first search interaction only. */
   frequency?: (baseUrl: string) => Promise<EventFrequencyFile>;
   /** One event's cards, one fetch per event the reader actually picked. */
@@ -221,12 +241,57 @@ export function CardSearch({
   const eventAsked = terms.some((t) => t.op !== "not");
   const available = ROW_KINDS.filter((k) => !shownKinds.includes(k) && (eventAsked || !EFFECT_KINDS.includes(k)));
   const [menuOpen, setMenuOpen] = useState(false);
+  // THE CATALOGUE'S OWN ROWS (#1782): fields no bespoke row covers, each a row drawn from the catalogue entry. The ids in
+  // the URL, then the ones added and not yet filled (as `pending` does for the kinds). The catalogue is read when the
+  // menu opens or the link names one of these fields, never otherwise; their group files only once a row holds a value.
+  const fieldFilters = eventQuery.fieldFilters ?? NO_FILTERS;
+  const genericAsked = fieldFilters.length > 0;
+  const [fieldRows, setFieldRows] = useState<string[]>([]);
+  const [advanced, setAdvanced] = useState(false);
+  const resolveLoader = useMemo(() => searchLoader ?? createSearchLoader("/static"), [searchLoader]);
+  const [catalogueInfo, setCatalogueInfo] = useState<{ state: "idle" | "loading" | "ready" | "none" | "failed"; cat: Catalogue | null }>({ state: "idle", cat: null });
+  const [catAttempt, setCatAttempt] = useState(0);
+  // A MENU WITH NO KIND LEFT HAS ONLY THE CATALOGUE TO OFFER, so it is read without waiting for the menu to open.
+  const wantCatalogue = menuOpen || genericAsked || available.length === 0;
+  useEffect(() => {
+    if (!wantCatalogue) return;
+    let live = true;
+    setCatalogueInfo((prev) => (prev.state === "ready" || prev.state === "none" ? prev : { state: "loading", cat: null }));
+    resolveLoader.catalogue().then(
+      (cat) => { if (live) setCatalogueInfo(cat ? { state: "ready", cat } : { state: "none", cat: null }); },
+      () => { if (live) setCatalogueInfo({ state: "failed", cat: null }); },
+    );
+    return () => { live = false; };
+  }, [wantCatalogue, resolveLoader, catAttempt]);
+  const idsInQuery = useMemo(() => [...new Set(fieldFilters.map((f) => f.field))], [fieldFilters]);
+  useEffect(() => {
+    setFieldRows((rs) => (idsInQuery.every((id) => rs.includes(id)) ? rs : [...new Set([...rs, ...idsInQuery])]));
+  }, [idsInQuery]);
+  const catalogueFields = useMemo(
+    () => new Map((catalogueInfo.cat ? Object.values(catalogueInfo.cat.groups).flatMap((g) => g.fields) : []).map((f) => [f.id, f] as const)),
+    [catalogueInfo.cat]);
+  const dropField = (id: string): void => {
+    const rest = fieldFilters.filter((f) => f.field !== id);
+    const { fieldFilters: _f, ...without } = eventQuery;
+    setEffects(rest.length > 0 ? { ...without, fieldFilters: rest } : without);
+    setFieldRows((rs) => rs.filter((r) => r !== id));
+  };
+  const setFieldFilters = (id: string, next: FieldFilter[]): void => {
+    const all = [...fieldFilters.filter((f) => f.field !== id), ...next];
+    const { fieldFilters: _f, ...without } = eventQuery;
+    setEffects(all.length > 0 ? { ...without, fieldFilters: all } : without);
+  };
   // REMOVING A ROW CLEARS ITS QUESTION AND FORGETS THE ROW. Doing only the first would leave an
   // empty control standing where a reader had just said they were finished with it.
   const dropKind = (kind: FilterKind): void => {
     setEffects(withoutFilterKind(eventQuery, kind));
     setPending((ks) => ks.filter((k) => k !== kind));
   };
+  const offeredFields = useMemo((): CatalogueField[] => [...catalogueFields.values()]
+    .filter((f) => !BESPOKE_FIELDS.has(f.id) && !fieldRows.includes(f.id)), [catalogueFields, fieldRows]);
+  const isLabelled = (f: CatalogueField): boolean => f.label !== undefined && f.label !== f.id;
+  const menuLabelled = useMemo(() => offeredFields.filter(isLabelled).sort((a, b) => a.label!.localeCompare(b.label!, "en")), [offeredFields]);
+  const menuUnlabelled = useMemo(() => offeredFields.filter((f) => !isLabelled(f)).sort((a, b) => a.id.localeCompare(b.id, "en")), [offeredFields]);
   useEffect(() => {
     let live = true;
     void load("/static").then((i) => { if (live) setIndex(i); });
@@ -283,10 +348,7 @@ export function CardSearch({
   // THE EFFECT ROWS ARE NOT A QUESTION ON THEIR OWN: they narrow the events, and with none asked an
   // "Amount 1 to 1" link would otherwise draw the whole index as its answer.
   const asked = needle.length > 0 || chosenKeys.length > 0
-    || filterKindsOf(eventQuery).some((k) => !EFFECT_KINDS.includes(k));
-  // ONCE PER INDEX, not once per pass: `some` over 25,582 rows is cheap but it is not free, and
-  // the answer only changes when a different artifact loads.
-  const carriesColours = useMemo(() => (index ?? []).some((e) => e.c !== undefined), [index]);
+    || filterKindsOf(eventQuery).some((k) => !EFFECT_KINDS.includes(k)) || genericAsked;
   // A ROW'S POSITION IN THE INDEX, which is what the event lists hold. Once per artifact.
   const positionOf = useMemo(() => new Map((index ?? []).map((e, i) => [e, i] as const)), [index]);
 
@@ -313,24 +375,143 @@ export function CardSearch({
       : membersPassing(lists.get(t.key)!, t.side, factFilterOf(eventQuery, t.side))!));
   }, [chosenKeys, lists, terms, eventQuery, effectUnanswerable]);
   // THE CARD-LEVEL PREDICATES, ONE RULE FOR THE LIST AND FOR THE "left out" COUNT: the name, the
-  // commander toggle, the colours and what the card is. `identityKeyOf` spells colourless "C" and
-  // `coloursFit` spells it "", the same normalisation the facet rows carried. Getting it wrong would
-  // make every colourless card answer only the `C` chip, which is the opposite of the fits-in ruling.
-  // Compiled ONCE per pass: the names become codes here, not inside the filter, or a chosen subtype
-  // costs a 488-entry scan per card on every keystroke. WHETHER THIS ARTIFACT CAN ANSWER A COLOUR
-  // QUESTION AT ALL is read off the rows rather than assumed: a missing `c` is colourless on a fresh
-  // artifact and meaningless on an old one, and the deploy ships `static-out/` without rebuilding it.
-  const fitCard = useCallback((entries: NameIndexEntry[]): NameIndexEntry[] => {
+  // commander toggle, the colours and what the card is. The characteristics are evaluated ONCE per
+  // question as an AST over views of the index rows (`lib/search`), the same evaluator every search
+  // surface uses; this pass only looks each row up. The commander toggle joins as a `rows` leaf.
+  //
+  // WHAT THE ARTIFACT CAN ANSWER IS READ OFF THE ROWS rather than assumed: a missing `c` is colourless
+  // on a fresh artifact and meaningless on an old one, and the deploy ships `static-out/` without
+  // rebuilding it. The views leave `c` out of an artifact whose rows never carry it, so a colour
+  // question there is cannot-answer -- and a cannot-answer shows no cards, as it always did.
+  // A THIN ROW (no `t`) HAS NO MANA VALUE and is out of every mana-value range (#1789); it used to
+  // read as 0 and showed up under "MV <= 2".
+  // A NAME THE VOCABULARY DOES NOT KNOW MATCHES NOTHING, and the tables load asynchronously, so a
+  // filter chosen before they arrive keeps the list empty rather than showing cards that do not answer it.
+  const searchContext = useMemo(() => (index === null ? null : coreContext(index, vocabulary)), [index, vocabulary]);
+  // WHAT NEEDS THE CATALOGUE (#1782). The five type counts read named lists (and the faces group for the front face),
+  // so they, an order by one of them, and keeping changelings cannot answer from the rows alone: the page waits and
+  // shows its loading line, never an empty or an unfiltered list. A NOT creature type answers from the rows (the
+  // changeling is simply a card with every type); the catalogue is read only to say how many changelings that hid.
+  const orderKey = orderOf(eventQuery);
+  const countSort = TYPE_COUNTS.some((c) => c.sort === orderKey) ? (orderKey as TypeCountSort) : null;
+  const countsAsked = TYPE_COUNTS.some((c) => eventQuery[c.min] !== undefined || eventQuery[c.max] !== undefined);
+  const notSubtypesAsked = (eventQuery.notSubtypes?.length ?? 0) > 0;
+  // A MUST OR ANY-OF SUBTYPE reads the creature list too, only to say on a changeling's tile why it matched (it is every
+  // creature type). That is decoration: it never blocks the list, which answers from the rows.
+  const subtypeAsked = eventQuery.subtypes.length > 0 || (eventQuery.orSubtypes?.length ?? 0) > 0;
+  // THE KEY IS WHAT IS NEEDED, not the whole question: moving a mana-value bound must not look like a new
+  // catalogue request and flash the loading line. `fields|lists`; the every-creature-type flag is built here, not fetched.
+  const needKey = useMemo((): string | null => {
+    if (!countsAsked && countSort === null && !notSubtypesAsked && !genericAsked && !subtypeAsked) return null;
+    const node = fromEventQuery(eventQuery, mode);
+    const fields = new Set(fieldsOf(node).filter((f) => f !== "everyCreatureType"));
+    const lists = new Set([...(countsAsked || countSort !== null || notSubtypesAsked || subtypeAsked ? ["creature"] : []), ...(JSON.stringify(node).match(/"list":"(\w+)"/g) ?? []).map((m) => m.slice(8, -1))]);
+    if (countSort !== null) {
+      fields.add(typeCountSpec[countSort].field);
+      const l = typeCountSpec[countSort].list;
+      if (l) lists.add(l);
+    }
+    return `${[...fields].sort().join(",")}|${[...lists].sort().join(",")}`;
+  }, [countsAsked, countSort, notSubtypesAsked, subtypeAsked, genericAsked, eventQuery, mode]);
+  const [resolved, setResolved] = useState<{ core: EvalContext; key: string; ctx: EvalContext; state: CatalogueResolution["state"] } | null>(null);
+  // THE RETRY CHIP: bumping it runs the read again. A failed read is shown, and the loader keeps nothing of it.
+  const [attempt, setAttempt] = useState(0);
+  useEffect(() => {
+    if (searchContext === null || index === null || needKey === null) return;
+    let live = true;
+    // A LATE ANSWER FOR A QUESTION THE READER HAS SINCE CHANGED IS DROPPED: `live` ends with this effect, and the
+    // answer is also keyed by the question and the rows it was built from.
+    const [fieldPart = "", listPart = ""] = needKey.split("|");
+    const need: Node = { and: [
+      ...listPart.split(",").filter(Boolean).map((list): Node => ({ field: "t", op: "countIn", list })),
+      ...fieldPart.split(",").filter(Boolean).map((field): Node => ({ field, op: "has", value: "-" })),
+    ] };
+    void resolveCatalogue(searchContext, resolveLoader, need).then((r) => {
+      if (!live) return;
+      setResolved({ core: searchContext, key: needKey, state: r.state, ctx: r.state === "ready" ? withEveryCreatureType(r.ctx, index, vocabulary) : r.ctx });
+    });
+    return () => { live = false; };
+  }, [searchContext, index, vocabulary, needKey, resolveLoader, attempt]);
+  const resolvedNow = resolved !== null && resolved.core === searchContext && resolved.key === needKey ? resolved : null;
+  const catalogueCtx = resolvedNow?.state === "ready" ? resolvedNow.ctx : null;
+  // KEEPING CHANGELINGS ONLY MATTERS FOR A NOT THAT IS A CREATURE TYPE, which the catalogue's list says. Until it has
+  // loaded that is unknown, and unknown is not blocking: the list answers from the rows meanwhile.
+  const hiddenTypeNames = useMemo((): string[] => {
+    const list = catalogueCtx?.namedLists["creature"]?.values;
+    return list === undefined ? [] : (eventQuery.notSubtypes ?? []).filter((n) => list.includes(n));
+  }, [catalogueCtx, eventQuery.notSubtypes]);
+  const catalogueState: "none" | "pending" | "ready" | "no-pointer" | "failed" | "incomplete" =
+    needKey === null ? "none" : resolvedNow === null ? "pending" : resolvedNow.state;
+  // KEEPING CHANGELINGS WITH A NOT SUBTYPE CANNOT BE ANSWERED WITHOUT THE CREATURE LIST, so until it is known the page
+  // waits (loading line) or says the read failed (retry): a list that quietly lost the changeling the link asked to keep
+  // is a wrong answer. Once the list is known it blocks only for a NOT that is a creature type. With no pointer the list
+  // can never be known: it is shown without them, and says so (`changelingsUnmatched`).
+  const keepAsked = eventQuery.keepChangelings === true && notSubtypesAsked;
+  const keepUnresolved = keepAsked && (catalogueState === "pending" || catalogueState === "failed");
+  const blocking = countsAsked || countSort !== null || keepUnresolved || (keepAsked && hiddenTypeNames.length > 0) || genericAsked;
+  // WHICH QUESTION THE WORDS ARE ABOUT: type counts and the changeling note have their own, a catalogue row the general one.
+  const typeQuestion = countsAsked || countSort !== null || keepAsked;
+  // A LINK'S FIELD IS JUDGED AGAINST THE CATALOGUE ITSELF, so the page waits for it too: an incomplete read must not say
+  // "can't answer" for a moment and "doesn't know" the next.
+  const catalogueSettled = !genericAsked || catalogueInfo.state === "ready" || catalogueInfo.state === "none" || catalogueInfo.state === "failed";
+  // WHAT A LINK ASKS THAT THE CATALOGUE DOES NOT HOLD: a field, a value of a set field, or the wrong kind of question for
+  // the field. One line each, said where the answer would be; the list is not drawn (an unknown is not an empty answer).
+  const unknownLines = useMemo((): string[] => {
+    const out = new Set<string>();
+    // AN ANY-OF OR NOT WORD THE VOCABULARY LACKS is said, not ignored: the group would otherwise answer with the words it knows
+    // and look complete. A table that has not loaded yet knows nothing, so it is not judged.
+    for (const [kind, words, table] of [
+      ["type", [...eventQuery.types, ...(eventQuery.orTypes ?? []), ...(eventQuery.notTypes ?? [])], vocabulary.types],
+      ["subtype", [...eventQuery.subtypes, ...(eventQuery.orSubtypes ?? []), ...(eventQuery.notSubtypes ?? [])], vocabulary.subtypes],
+      ["keyword", [...eventQuery.keywords, ...(eventQuery.orKeywords ?? []), ...(eventQuery.notKeywords ?? [])], vocabulary.keywords],
+    ] as const) {
+      if (table.length === 0) continue;
+      for (const w of words) if (!table.includes(w)) out.add(`This build doesn't know the ${kind} "${w}".`);
+    }
+    if (catalogueInfo.cat !== null) {
+      for (const f of fieldFilters) {
+        const def = catalogueFields.get(f.field);
+        const name = def ? (def.label ?? f.field) : f.field;
+        if (!def) out.add(`This build doesn't know ${f.field}.`);
+        else if (f.op === "range") { if (def.kind !== "number") out.add(`This build reads ${name} as a list of values, so a range does not apply.`); }
+        else if (def.kind !== "set") out.add(`This build reads ${name} as a number, so the value "${f.value}" does not apply.`);
+        // A VALUE THE REGISTRY HAS A LABEL FOR IS KNOWN even when no card holds it in this build (the build drops empty values).
+        else if (!(def.values ?? []).some((v) => v.v === f.value) && !(f.value in (def.valueLabels ?? {}))) out.add(`This build doesn't know the value "${f.value}" for ${name}.`);
+      }
+    }
+    return [...out];
+  }, [catalogueInfo.cat, catalogueFields, fieldFilters, eventQuery.types, eventQuery.subtypes, eventQuery.keywords, eventQuery.orTypes, eventQuery.orSubtypes, eventQuery.orKeywords, vocabulary]);
+  const changelingsUnmatched = keepAsked && (catalogueState === "no-pointer" || catalogueState === "incomplete");
+  const typeCountsBlocked = blocking && (catalogueState === "pending" || !catalogueSettled);
+  // NO POINTER AND AN INCOMPLETE CATALOGUE both say the build cannot answer; a failed read says so differently, with a retry.
+  const typeCountsMissing = blocking && (catalogueState === "no-pointer" || catalogueState === "incomplete");
+  const typeCountsFailed = blocking && catalogueState === "failed";
+  const evalCtx = blocking ? catalogueCtx : searchContext;
+  // A CANNOT-ANSWER IS NOT A ZERO MASK: it is said, and the list is not drawn.
+  const characteristic = useMemo((): { mask: Uint8Array | null; cannotAnswer: boolean } => {
+    if (index === null || evalCtx === null) return { mask: null, cannotAnswer: false };
+    const res = evaluateEventQuery(index, vocabulary, eventQuery, mode, { commandersOnly: commanderMode, context: evalCtx });
+    if (!res.ok) return { mask: null, cannotAnswer: true };
+    const mask = new Uint8Array(index.length);
+    for (const r of res.rows) mask[r] = 1;
+    return { mask, cannotAnswer: false };
+  }, [index, evalCtx, vocabulary, eventQuery, mode, commanderMode]);
+  const characteristicMask = characteristic.mask;
+  const filtersUnanswerable = characteristic.cannotAnswer;
+  // THE SAME QUESTION WITH CHANGELINGS KEPT, to count what the NOT creature type hid.
+  const keepMask = useMemo((): Uint8Array | null => {
+    if (index === null || catalogueCtx === null || hiddenTypeNames.length === 0) return null;
+    const res = evaluateEventQuery(index, vocabulary, { ...eventQuery, keepChangelings: true }, mode, { commandersOnly: commanderMode, context: catalogueCtx });
+    if (!res.ok) return null;
+    const mask = new Uint8Array(index.length);
+    for (const r of res.rows) mask[r] = 1;
+    return mask;
+  }, [index, catalogueCtx, hiddenTypeNames, vocabulary, eventQuery, mode, commanderMode]);
+  const fitCard = useCallback((entries: NameIndexEntry[], using: Uint8Array | null = characteristicMask): NameIndexEntry[] => {
+    if (using === null) return [];
     const named = needle.length === 0 ? entries : matchNames(entries, { query });
-    const identityOf = (e: NameIndexEntry): string => {
-      const key = identityKeyOf(e.identity);
-      return key === "C" ? "" : key;
-    };
-    const fitsCharacteristics = compileCharacteristics(eventQuery, { ...vocabulary, colours: carriesColours });
-    return named.filter((e) => (!commanderMode || e.commander)
-      && coloursFit(identityOf(e), colours, mode)
-      && fitsCharacteristics(e));
-  }, [needle, query, eventQuery, vocabulary, carriesColours, commanderMode, colours, mode]);
+    return named.filter((e) => using[positionOf.get(e) ?? -1] === 1);
+  }, [needle, query, characteristicMask, positionOf]);
   // HOW MANY CARDS THE FILTERS COULD NOT JUDGE (review of 160d353): on an asked event by what they
   // are -- cast, entering, lifelink -- rather than by an ability. Left out, and said so.
   // THE CARDS THE FILTERS LEFT OUT, as index rows (before the card predicates). The count, and the
@@ -349,13 +530,40 @@ export function CardSearch({
 
   // ONE RULE WITH THE HEADER FIELD. `matchNames` is the rule; this page adds the commander and
   // colour predicates the header does not offer, and the events narrow that answer by position.
-  const matches = useMemo((): NameIndexEntry[] | null => {
-    if (index === null || !asked) return [];
-    if (keptIds === undefined) return null;
-    const base = showSkipped ? leftOut : keptIds === null ? index
+  // THE ROWS THE EVENTS (AND A SKIPPED VIEW) LEAVE, before the card-level predicates.
+  const baseEntries = useMemo((): NameIndexEntry[] | null => {
+    if (index === null || !asked || keptIds === undefined) return null;
+    return showSkipped ? leftOut : keptIds === null ? index
       : (keptIds.keep === null ? index : [...keptIds.keep].map((id) => index[id]))
         .filter((e): e is NameIndexEntry => e !== undefined)
         .filter((e) => keptIds.drop.size === 0 || !keptIds.drop.has(positionOf.get(e) ?? -1));
+  }, [index, asked, keptIds, showSkipped, leftOut, positionOf]);
+  // HOW MANY CHANGELINGS A NOT-CREATURE-TYPE HID: those the same question answers once they are kept, minus those it answers now.
+  const hiddenChangelings = useMemo((): number => {
+    if (baseEntries === null || keepMask === null || eventQuery.keepChangelings === true) return 0;
+    return fitCard(baseEntries, keepMask).length - fitCard(baseEntries).length;
+  }, [baseEntries, keepMask, fitCard, eventQuery.keepChangelings]);
+  // WHAT EACH COUNT SAYS OF EACH ROW, for the order and for the tile's own line.
+  const countsBy = useMemo((): Partial<Record<TypeCountSort, Uint32Array>> => {
+    if (catalogueCtx === null) return {};
+    const out: Partial<Record<TypeCountSort, Uint32Array>> = {};
+    for (const c of TYPE_COUNTS) {
+      const wanted = c.sort === countSort || (c.sort === "creaturetypes" && (eventQuery.creatureTypesMin !== undefined || eventQuery.creatureTypesMax !== undefined));
+      const v = wanted ? rowCountsOf(catalogueCtx, c.sort) : null;
+      if (v) out[c.sort] = v;
+    }
+    return out;
+  }, [catalogueCtx, countSort, eventQuery.creatureTypesMin, eventQuery.creatureTypesMax]);
+  const everyCreatureType = useMemo(
+    () => new Set(catalogueCtx?.columns.get("everyCreatureType") ? (catalogueCtx.columns.get("everyCreatureType") as { values: Map<string, number[]> }).values.get("true") ?? [] : []),
+    [catalogueCtx]);
+  const matches = useMemo((): NameIndexEntry[] | null => {
+    if (index === null || !asked) return [];
+    if (typeCountsBlocked) return null;
+    if (typeCountsMissing || typeCountsFailed || filtersUnanswerable || unknownLines.length > 0) return [];
+    if (keptIds === undefined) return null;
+    const base = baseEntries;
+    if (base === null) return null;
     const kept = fitCard(base);
     // AMONG CARDS THAT ALL ANSWER THE QUESTION, THE BETTER-CONNECTED ONE FIRST (owner 2026-09-17),
     // and that stays the default. The other two orders exist so a reader can ESCAPE that ranking:
@@ -393,9 +601,10 @@ export function CardSearch({
         : order === "mv" ? byNumber((e) => e.mv ?? 0)
         : order === "pow" ? byNumber((e) => e.pow)
         : order === "tou" ? byNumber((e) => e.tou)
+        : countSort !== null ? byNumber((e) => countsBy[countSort]?.[positionOf.get(e) ?? -1])
         : byNumber((e) => e.partners ?? 0),
     );
-  }, [index, keptIds, asked, eventQuery, lists, positionOf, fitCard, showSkipped, leftOut]);
+  }, [index, keptIds, asked, eventQuery, lists, positionOf, fitCard, baseEntries, countSort, countsBy, typeCountsBlocked, typeCountsMissing, typeCountsFailed, filtersUnanswerable, unknownLines]);
   // WHAT "Back to the N matches" RETURNS TO: the normal list's size, without sorting it.
   const normalCount = useMemo((): number => {
     if (!showSkipped || index === null || keptIds === undefined || keptIds === null) return 0;
@@ -532,7 +741,19 @@ export function CardSearch({
             subtypes={vocabulary.subtypes}
             chosenTypes={eventQuery.types}
             chosenSubtypes={eventQuery.subtypes}
-            onChange={(next) => setEvents({ ...eventQuery, types: next.types, subtypes: next.subtypes })}
+            notTypes={eventQuery.notTypes ?? []}
+            notSubtypes={eventQuery.notSubtypes ?? []}
+            anyTypes={eventQuery.orTypes ?? []}
+            anySubtypes={eventQuery.orSubtypes ?? []}
+            onChange={(next) => {
+              // A NOT OR ANY-OF LIST IS ABSENT WHEN EMPTY, as the URL leaves it.
+              const { notTypes: _a, notSubtypes: _b, orTypes: _c, orSubtypes: _d, ...rest } = eventQuery;
+              setEvents({ ...rest, types: next.types, subtypes: next.subtypes,
+                ...((next.notTypes?.length ?? 0) > 0 ? { notTypes: next.notTypes! } : {}),
+                ...((next.notSubtypes?.length ?? 0) > 0 ? { notSubtypes: next.notSubtypes! } : {}),
+                ...((next.anyTypes?.length ?? 0) > 0 ? { orTypes: next.anyTypes! } : {}),
+                ...((next.anySubtypes?.length ?? 0) > 0 ? { orSubtypes: next.anySubtypes! } : {}) });
+            }}
           />
         );
       /* KEYWORDS ARE A TYPEAHEAD, NOT CHIPS, for the same reason the subtypes are: 811 of them.
@@ -545,7 +766,27 @@ export function CardSearch({
             placeholder="Flying, trample, deathtouch…"
             all={vocabulary.keywords}
             chosen={eventQuery.keywords}
+            negated={eventQuery.notKeywords ?? []}
+            anyOf={eventQuery.orKeywords ?? []}
             onChange={(next) => setEvents({ ...eventQuery, keywords: next })}
+            onMove={(name, to) => {
+              const { notKeywords: _n, orKeywords: _o, ...rest } = eventQuery;
+              const without = (xs: string[] | undefined) => (xs ?? []).filter((w) => w !== name);
+              const must = to === "and" ? [...without(eventQuery.keywords), name] : without(eventQuery.keywords);
+              const nots = to === "not" ? [...without(eventQuery.notKeywords), name] : without(eventQuery.notKeywords);
+              const any = to === "any" ? [...without(eventQuery.orKeywords), name] : without(eventQuery.orKeywords);
+              setEvents({ ...rest, keywords: must, ...(nots.length > 0 ? { notKeywords: nots } : {}), ...(any.length > 0 ? { orKeywords: any } : {}) });
+            }}
+            onRemoveNegated={(name) => {
+              const { notKeywords: _n, ...rest } = eventQuery;
+              const nots = (eventQuery.notKeywords ?? []).filter((w) => w !== name);
+              setEvents({ ...rest, ...(nots.length > 0 ? { notKeywords: nots } : {}) });
+            }}
+            onRemoveAny={(name) => {
+              const { orKeywords: _o, ...rest } = eventQuery;
+              const any = (eventQuery.orKeywords ?? []).filter((w) => w !== name);
+              setEvents({ ...rest, ...(any.length > 0 ? { orKeywords: any } : {}) });
+            }}
           />
         );
       /* WHAT THE CARD IS, which is NOT the identity row above it. 1,751 of 32,334 cards answer the
@@ -573,6 +814,8 @@ export function CardSearch({
             })}
           </fieldset>
         );
+      case "typeCounts":
+        return <TypeCountRow query={eventQuery} onChange={setEvents} />;
       case "mv":
         return (
           <RangeRow
@@ -721,7 +964,7 @@ export function CardSearch({
         onOpen={() => setSentenceOpened(true)}
       />
       <div className="facets flex flex-col gap-4">
-        {shownKinds.length > 0 && (
+        {(shownKinds.length > 0 || fieldRows.length > 0) && (
           <ul className="flex flex-col gap-4 list-none p-0 m-0">
             {shownKinds.map((kind) => (
               <li key={kind} className="flex flex-wrap items-end gap-x-3 gap-y-2">
@@ -741,12 +984,29 @@ export function CardSearch({
                 </button>
               </li>
             ))}
+            {fieldRows.map((id) => {
+              const def = catalogueFields.get(id);
+              const name = def?.label ?? id;
+              return (
+                <li key={`field:${id}`} className="flex flex-wrap items-end gap-x-3 gap-y-2">
+                  <div className="min-w-0">
+                    <FieldRow id={id} field={def} filters={fieldFilters.filter((f) => f.field === id)} onChange={(next) => setFieldFilters(id, next)} />
+                  </div>
+                  <button type="button" className="chip" aria-label={`Remove the ${name} filter`} onClick={() => dropField(id)}>
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true" focusable="false">
+                      <path d="M18 6 6 18M6 6l12 12" />
+                    </svg>
+                    Remove
+                  </button>
+                </li>
+              );
+            })}
           </ul>
         )}
         {/* A NATIVE `<details>`, so the keyboard and screen-reader model is the platform's -- the
           * same reason the panel it replaces was one. It closes itself once a row is added,
           * because a menu still standing over the control it just created is in the way. */}
-        {available.length > 0 && (
+        {(available.length > 0 || offeredFields.length > 0 || catalogueInfo.state === "loading" || catalogueInfo.state === "failed") && (
           <details
             // `relative`, AND IT IS LOAD-BEARING: `.site-search-list` below is `position:absolute`,
             // so without a positioned ancestor it resolves against the INITIAL containing block.
@@ -772,6 +1032,34 @@ export function CardSearch({
                     onClick={() => { setPending((ks) => [...ks, kind]); setMenuOpen(false); }}
                   >
                     {FILTER_LABEL[kind]}
+                  </button>
+                </li>
+              ))}
+              {/* THE CATALOGUE'S FIELDS (#1782): whatever the build holds that no row above covers, listed from its data.
+                * Labelled fields show normally; the rest are paths, so they wait behind a switch. */}
+              {catalogueInfo.state === "loading" && <li className="site-search-note">Loading more filters…</li>}
+              {catalogueInfo.state === "failed" && (
+                <li className="site-search-note">
+                  Couldn&apos;t load more filters.
+                  <button type="button" className="chip" onClick={() => setCatAttempt((n) => n + 1)}>Try again</button>
+                </li>
+              )}
+              {(menuUnlabelled.length > 0 || advanced) && (
+                <li>
+                  <label className="site-search-row cursor-pointer">
+                    <input type="checkbox" checked={advanced} onChange={(e) => setAdvanced(e.target.checked)} />
+                    Advanced fields
+                  </label>
+                </li>
+              )}
+              {[...menuLabelled, ...(advanced ? menuUnlabelled : [])].map((f) => (
+                <li key={f.id}>
+                  <button
+                    type="button"
+                    className="site-search-row w-full text-left"
+                    onClick={() => { setFieldRows((rs) => [...rs, f.id]); setMenuOpen(false); }}
+                  >
+                    {f.label ?? f.id}
                   </button>
                 </li>
               ))}
@@ -846,6 +1134,22 @@ export function CardSearch({
         ? <p role="status" className="text-(--muted)">{effectUnanswerable
           ? "This site's card data predates the ability filters. Remove the ability type, how often and amount filters to search again."
           : "This site's card data can't answer one of those events. Remove it to search again."}</p>
+        : unknownLines.length > 0
+        // AN UNKNOWN IS NOT AN EMPTY ANSWER (#1782): the link names a field or value this build lacks, said once each.
+        ? <div className="flex flex-col gap-1">
+            {unknownLines.map((line) => <p key={line} role="status" className="text-(--muted)">{line}</p>)}
+          </div>
+        : typeCountsMissing
+        // NO ANSWER IS NOT AN EMPTY ANSWER: an artifact built without the search catalogue cannot count types.
+        ? <p role="status" className="text-(--muted)">{typeQuestion ? "This build can't answer type counts yet." : "This build can't answer one of those filters yet."}</p>
+        : typeCountsFailed
+        // A FAILED READ IS NOT "THIS BUILD CANNOT": it may work next time, so it offers the retry.
+        ? <div className="flex flex-wrap items-center gap-3">
+            <p role="status" className="text-(--muted)">{typeQuestion ? "Couldn't load type data. Try again." : "Couldn't load filter data. Try again."}</p>
+            <button type="button" className="chip" onClick={() => { setResolved(null); setAttempt((n) => n + 1); setCatAttempt((n) => n + 1); }}>Try again</button>
+          </div>
+        : filtersUnanswerable
+        ? <p role="status" className="text-(--muted)">This build can&apos;t answer one of those filters yet.</p>
         : matches === null
         ? <p className="eyebrow text-(--muted)">reading what cards do</p>
         : (
@@ -916,6 +1220,7 @@ export function CardSearch({
                     <option value="mv">Mana value</option>
                     <option value="pow">Power</option>
                     <option value="tou">Toughness</option>
+                    {TYPE_COUNTS.map((c) => <option key={c.sort} value={c.sort}>{c.label}</option>)}
                     <option value="name">Name</option>
                   </select>
                 </label>
@@ -931,6 +1236,28 @@ export function CardSearch({
                 </select>
               </div>
             </div>
+            {/* A CHANGELING IS EVERY CREATURE TYPE (CR 702.73a), so "not a Borg" hides it, and that is said, with the way
+              * back. The count is of the cards the rest of the question would have kept. */}
+            {hiddenChangelings > 0 && hiddenTypeNames.length > 0 && (
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+                <p className="text-(--muted) text-sm">
+                  {`${hiddenChangelings.toLocaleString("en-US")} ${hiddenChangelings === 1 ? "changeling" : "changelings"} hidden: a changeling has every creature type, ${typeNames(hiddenTypeNames)} included.`}
+                </p>
+                <button type="button" className="chip" onClick={() => setEvents({ ...eventQuery, keepChangelings: true })}>Show them</button>
+              </div>
+            )}
+            {changelingsUnmatched && !blocking && (
+              <p className="text-(--muted) text-sm">Changelings can&apos;t be matched on this build.</p>
+            )}
+            {eventQuery.keepChangelings === true && hiddenTypeNames.length > 0 && (
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+                <p className="text-(--muted) text-sm">{`Changelings shown, though each has every creature type, ${typeNames(hiddenTypeNames)} included.`}</p>
+                <button
+                  type="button" className="chip"
+                  onClick={() => { const { keepChangelings: _k, ...rest } = eventQuery; setEvents(rest); }}
+                >Hide them</button>
+              </div>
+            )}
             {/* IDENTITY IS THE ROW'S DIFFERENTIATOR. Fifty near-identical lines of blue text is a
               * list nobody scans; the mana symbols give the eye something that varies, and they are
               * the one thing a player reads before the name when choosing a card. Present colours
@@ -974,6 +1301,20 @@ export function CardSearch({
                   if (why === "") return termWords(t);
                   return oneTermQuery ? why : `${termWords(t)} (${why.replaceAll(" · ", ", ")})`;
                 });
+                // A COUNT THE LIST IS ORDERED OR FILTERED BY IS SAID ON THE TILE. A changeling holds every creature type, so
+                // its number (all 377) would read as a fact about the card; it says what it is instead.
+                // A CHANGELING MATCHED BY A SUBTYPE WORD says why: it is every creature type, so it is an Elf and a Human and
+                // whatever else was asked (the Shapeshifter in an "Elf or Human" list had nothing to explain it).
+                if (subtypeAsked && everyCreatureType.has(pos) && !caption.includes("every creature type")) caption.push("every creature type");
+                for (const c of TYPE_COUNTS) {
+                  const n = countsBy[c.sort]?.[pos];
+                  if (n === undefined) continue;
+                  // A CHANGELING HOLDS EVERY CREATURE TYPE, so both its creature-type and its subtype count are that list's
+                  // length; neither is printed as a number.
+                  const every = (c.sort === "creaturetypes" || c.sort === "subtypes") && everyCreatureType.has(pos);
+                  const piece = every ? "every creature type" : `${n} ${c.unit}${n === 1 ? "" : "s"}`;
+                  if (!caption.includes(piece)) caption.push(piece);
+                }
                 return (
                   <li key={e.slug} className="min-w-0">
                     <CardTile

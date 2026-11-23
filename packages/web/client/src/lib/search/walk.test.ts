@@ -104,6 +104,21 @@ test("catalogue carries stamps, counts and registry labels", () => {
   });
 });
 
+test("registry value labels reach the catalogue field, and a field without them carries none", () => {
+  const reg = registry({ fields: { "tags.abilities.kind": { label: "Ability kind", valueLabels: { static: "always on" } } } });
+  const { catalogue } = buildCatalogue({ version: "v", deriveVersion: 1, registry: reg, walk: walkRecords(fixture(), reg) });
+  const fields = catalogue.groups["read"]!.fields;
+  expect(fields.find((f) => f.id === "tags.abilities.kind")).toMatchObject({ valueLabels: { static: "always on" } });
+  expect(fields.find((f) => f.id === "tags.clauseSource")).not.toHaveProperty("valueLabels");
+});
+
+test("a registry description reaches the catalogue field", () => {
+  const reg = registry({ fields: { "tags.abilities.kind": { label: "Ability kind", description: "What sort of ability it is." } } });
+  const { catalogue } = buildCatalogue({ version: "v", deriveVersion: 1, registry: reg, walk: walkRecords(fixture(), reg) });
+  expect(catalogue.groups["read"]!.fields.find((f) => f.id === "tags.abilities.kind")).toMatchObject({ description: "What sort of ability it is." });
+  expect(catalogue.groups["read"]!.fields.find((f) => f.id === "tags.clauseSource")).not.toHaveProperty("description");
+});
+
 test("a path with string and number leaves keeps the numbers as set members and is reported as mixed", () => {
   const recs = [rec(0, { amount: "all" }), rec(1, { amount: 3 }), rec(2, { amount: [2, "x"] })];
   const r = walkRecords(recs, registry());
