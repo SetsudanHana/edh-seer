@@ -1,0 +1,94 @@
+// The /cards and /commanders characteristic filter, as an AST over views of the name-index rows.
+// One evaluator for the page and for every later search surface (#1782). The event terms are still
+// computed by the existing code and join as `rows` leaves.
+import type { EventQuery } from "../facets.js";
+import { evaluate, type EvalContext, type EvalResult, type Node } from "./evaluate.js";
+import { buildCodeView, buildColourView, buildIdentityView, buildNumberViews } from "./type-views.js";
+import type { Column } from "./walk.js";
+
+export type PageMode = "cards" | "commanders";
+
+/** The name-index row fields the core views read. A structural subset of `NameIndexEntry`. */
+export interface CoreRow {
+  identity: readonly string[];
+  commander?: boolean;
+  t?: number[];
+  s?: number[];
+  k?: number[];
+  mv?: number;
+  pow?: number;
+  tou?: number;
+  c?: number;
+}
+
+export interface CoreVocab { types: readonly string[]; subtypes: readonly string[]; keywords: readonly string[] }
+
+/** Views over the rows already in the browser: t, st, k, mv, pow, tou, id, and `c` when the rows carry it.
+ *  Nothing here needs the search catalogue. `c` is left OUT of an artifact whose rows never carry it: a
+ *  missing `c` means colourless on a fresh artifact and means nothing on an old one, so the field
+ *  is unknown there and a colour question cannot be answered (silent wrong answer: "Colourless" = whole corpus). */
+export function coreColumns(rows: readonly CoreRow[], vocab: CoreVocab): Map<string, Column> {
+  const cols: Column[] = [
+    buildCodeView("t", vocab.types, rows.map((r) => r.t)),
+    buildCodeView("st", vocab.subtypes, rows.map((r) => r.s)),
+    buildCodeView("k", vocab.keywords, rows.map((r) => r.k)),
+    ...buildNumberViews(rows),
+    buildIdentityView(rows),
+  ];
+  if (rows.some((r) => r.c !== undefined)) cols.push(buildColourView(rows.map((r) => r.c)));
+  return new Map(cols.map((c) => [c.path, c]));
+}
+
+/** The core views as an evaluation context. Named lists and catalogue-only fields are absent until the
+ *  caller adds them, so a question about them answers cannot-answer rather than empty. */
+export function coreContext(
+  rows: readonly CoreRow[], vocab: CoreVocab,
+  extra?: { columns?: Iterable<Column>; namedLists?: EvalContext["namedLists"] },
+): EvalContext {
+  const columns = coreColumns(rows, vocab);
+  for (const c of extra?.columns ?? []) if (!columns.has(c.path)) columns.set(c.path, c);
+  return { rowCount: rows.length, columns, namedLists: extra?.namedLists ?? {} };
+}
+
+const WUBRG = ["W", "U", "B", "R", "G"];
+
+/** The characteristic half of an EventQuery as an AST, matching `compileCharacteristics` + `coloursFit`:
+ *  identity `within` (cards) or `exactly` (commanders), `C` = colourless only on both; card colours "at
+ *  least these", `C` exclusive. Event and effect terms are not here: they join as `rows` leaves. */
+export function fromEventQuery(
+  q: Pick<EventQuery, "colours" | "types" | "subtypes" | "keywords" | "cardColours"
+    | "mvMin" | "mvMax" | "powMin" | "powMax" | "touMin" | "touMax">,
+  mode: PageMode,
+): Node {
+  const and: Node[] = [];
+  if (q.colours.length > 0) {
+    if (q.colours.includes("C")) and.push({ field: "id", op: "exactly", value: [] });
+    else and.push({ field: "id", op: mode === "commanders" ? "exactly" : "within", value: q.colours });
+  }
+  for (const v of q.types) and.push({ field: "t", op: "has", value: v });
+  for (const v of q.subtypes) and.push({ field: "st", op: "has", value: v });
+  for (const v of q.keywords) and.push({ field: "k", op: "has", value: v });
+  if (q.cardColours.length > 0) {
+    if (q.cardColours.includes("C")) and.push({ field: "c", op: "count", max: 0 });
+    else for (const v of q.cardColours) if (WUBRG.includes(v)) and.push({ field: "c", op: "has", value: v });
+    // An unknown letter alone asks nothing, as before; but an artifact without `c` still cannot answer.
+    if (!and.some((n) => "field" in n && n.field === "c")) and.push({ field: "c", op: "count", min: 0 });
+  }
+  for (const [field, min, max] of [["mv", q.mvMin, q.mvMax], ["pow", q.powMin, q.powMax], ["tou", q.touMin, q.touMax]] as const) {
+    if (min === undefined && max === undefined) continue;
+    and.push({ field, op: "cmp", ...(min !== undefined ? { min } : {}), ...(max !== undefined ? { max } : {}) });
+  }
+  return { and };
+}
+
+/** Evaluate the characteristics (and, on the commanders page, the commander toggle) over the rows. */
+export function evaluateEventQuery(
+  rows: readonly CoreRow[], vocab: CoreVocab, q: Parameters<typeof fromEventQuery>[0], mode: PageMode,
+  opts: { commandersOnly?: boolean; context?: EvalContext } = {},
+): EvalResult {
+  const ctx = opts.context ?? coreContext(rows, vocab);
+  const node = fromEventQuery(q, mode);
+  if (!opts.commandersOnly) return evaluate(node, ctx);
+  const commanders = rows.flatMap((r, i) => (r.commander ? [i] : []));
+  return evaluate({ and: [{ op: "rows", rows: commanders }, node] }, ctx);
+}

@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useMemo, useState, useRef } from "react";
 import { isPattern, narrowingOf, verbOfKey } from "@edh-seer/matcher/event-pattern";
 import { useSearchParams } from "react-router";
-import { identityKeyOf, identityMask, inIdentityOf } from "@edh-seer/matcher/partners-core";
+import { identityMask, inIdentityOf } from "@edh-seer/matcher/partners-core";
 import { matchNames, needleOf } from "../lib/name-match.js";
+import { coreContext, evaluateEventQuery } from "../lib/search/from-event-query.js";
 import { sharedEventFrequency, sharedEventMembers, sharedNameIndex, sharedNameIndexVocabulary, type EventFrequencyFile, type EventMembers, type NameIndexEntry } from "../lib/partners.js";
-import { compileCharacteristics, coloursFit, eventsFromParams, eventsToParams, filterKindsOf, factFilterOf, orderOf, withoutFilterKind, EFFECT_KINDS, FILTER_KINDS, NATURAL_DIR, type EventQuery, type FilterKind } from "../lib/facets.js";
+import { eventsFromParams, eventsToParams, filterKindsOf, factFilterOf, orderOf, withoutFilterKind, EFFECT_KINDS, FILTER_KINDS, NATURAL_DIR, type EventQuery, type FilterKind } from "../lib/facets.js";
 import { BY_WHAT_IT_IS, TIMING_UNKNOWN, effectCaption } from "../lib/effect-caption.js";
 import { isEmptyFilter } from "@edh-seer/matcher/member-facts";
 import { membersPassing, unjudgedLeftOut } from "../lib/effect-filter.js";
@@ -284,9 +285,6 @@ export function CardSearch({
   // "Amount 1 to 1" link would otherwise draw the whole index as its answer.
   const asked = needle.length > 0 || chosenKeys.length > 0
     || filterKindsOf(eventQuery).some((k) => !EFFECT_KINDS.includes(k));
-  // ONCE PER INDEX, not once per pass: `some` over 25,582 rows is cheap but it is not free, and
-  // the answer only changes when a different artifact loads.
-  const carriesColours = useMemo(() => (index ?? []).some((e) => e.c !== undefined), [index]);
   // A ROW'S POSITION IN THE INDEX, which is what the event lists hold. Once per artifact.
   const positionOf = useMemo(() => new Map((index ?? []).map((e, i) => [e, i] as const)), [index]);
 
@@ -313,24 +311,31 @@ export function CardSearch({
       : membersPassing(lists.get(t.key)!, t.side, factFilterOf(eventQuery, t.side))!));
   }, [chosenKeys, lists, terms, eventQuery, effectUnanswerable]);
   // THE CARD-LEVEL PREDICATES, ONE RULE FOR THE LIST AND FOR THE "left out" COUNT: the name, the
-  // commander toggle, the colours and what the card is. `identityKeyOf` spells colourless "C" and
-  // `coloursFit` spells it "", the same normalisation the facet rows carried. Getting it wrong would
-  // make every colourless card answer only the `C` chip, which is the opposite of the fits-in ruling.
-  // Compiled ONCE per pass: the names become codes here, not inside the filter, or a chosen subtype
-  // costs a 488-entry scan per card on every keystroke. WHETHER THIS ARTIFACT CAN ANSWER A COLOUR
-  // QUESTION AT ALL is read off the rows rather than assumed: a missing `c` is colourless on a fresh
-  // artifact and meaningless on an old one, and the deploy ships `static-out/` without rebuilding it.
+  // commander toggle, the colours and what the card is. The characteristics are evaluated ONCE per
+  // question as an AST over views of the index rows (`lib/search`), the same evaluator every search
+  // surface uses; this pass only looks each row up. The commander toggle joins as a `rows` leaf.
+  //
+  // WHAT THE ARTIFACT CAN ANSWER IS READ OFF THE ROWS rather than assumed: a missing `c` is colourless
+  // on a fresh artifact and meaningless on an old one, and the deploy ships `static-out/` without
+  // rebuilding it. The views leave `c` out of an artifact whose rows never carry it, so a colour
+  // question there is cannot-answer -- and a cannot-answer shows no cards, as it always did.
+  // A THIN ROW (no `t`) HAS NO MANA VALUE and is out of every mana-value range (#1789); it used to
+  // read as 0 and showed up under "MV <= 2".
+  // A NAME THE VOCABULARY DOES NOT KNOW MATCHES NOTHING, and the tables load asynchronously, so a
+  // filter chosen before they arrive keeps the list empty rather than showing cards that do not answer it.
+  const searchContext = useMemo(() => (index === null ? null : coreContext(index, vocabulary)), [index, vocabulary]);
+  const characteristicMask = useMemo((): Uint8Array | null => {
+    if (index === null || searchContext === null) return null;
+    const res = evaluateEventQuery(index, vocabulary, eventQuery, mode, { commandersOnly: commanderMode, context: searchContext });
+    const mask = new Uint8Array(index.length);
+    if (res.ok) for (const r of res.rows) mask[r] = 1;
+    return mask;
+  }, [index, searchContext, vocabulary, eventQuery, mode, commanderMode]);
   const fitCard = useCallback((entries: NameIndexEntry[]): NameIndexEntry[] => {
+    if (characteristicMask === null) return [];
     const named = needle.length === 0 ? entries : matchNames(entries, { query });
-    const identityOf = (e: NameIndexEntry): string => {
-      const key = identityKeyOf(e.identity);
-      return key === "C" ? "" : key;
-    };
-    const fitsCharacteristics = compileCharacteristics(eventQuery, { ...vocabulary, colours: carriesColours });
-    return named.filter((e) => (!commanderMode || e.commander)
-      && coloursFit(identityOf(e), colours, mode)
-      && fitsCharacteristics(e));
-  }, [needle, query, eventQuery, vocabulary, carriesColours, commanderMode, colours, mode]);
+    return named.filter((e) => characteristicMask[positionOf.get(e) ?? -1] === 1);
+  }, [needle, query, characteristicMask, positionOf]);
   // HOW MANY CARDS THE FILTERS COULD NOT JUDGE (review of 160d353): on an asked event by what they
   // are -- cast, entering, lifelink -- rather than by an ability. Left out, and said so.
   // THE CARDS THE FILTERS LEFT OUT, as index rows (before the card predicates). The count, and the

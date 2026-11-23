@@ -11,7 +11,9 @@ export type Node =
   | { field: string; op: "cmp"; min?: number; max?: number }
   /** Colour identity as a set column of W/U/B/R/G: `within` = subset (fits in), `exactly` = equal. */
   | { field: string; op: "within"; value: string[] }
-  | { field: string; op: "exactly"; value: string[] };
+  | { field: string; op: "exactly"; value: string[] }
+  /** Rows a caller already computed elsewhere (event membership, the commander toggle), so they combine in this evaluator. */
+  | { op: "rows"; rows: ReadonlySet<number> | readonly number[] };
 
 export interface EvalContext {
   rowCount: number;
@@ -73,6 +75,10 @@ function run(node: Node, ctx: EvalContext): Uint8Array {
   if ("not" in node) {
     const m = run(node.not, ctx);
     for (let i = 0; i < n; i++) out[i] = m[i] ? 0 : 1;
+    return out;
+  }
+  if (node.op === "rows") {
+    for (const r of node.rows) if (r >= 0 && r < n) out[r] = 1;
     return out;
   }
   if (node.op === "cmp") {

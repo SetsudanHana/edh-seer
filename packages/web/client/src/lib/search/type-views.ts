@@ -126,3 +126,29 @@ export function sparseFront(full: SetColumn, base: SetColumn): SetColumn {
     totals: new Map([...full.values].map(([v, rs]) => [v, rs.length])),
   };
 }
+
+/** A column from a row's integer codes into a table (`t`, `s`, `k`): the row carries codes, the view names them.
+ *  A code with no name in the table (the tables load apart from the rows) is skipped, never stored as "undefined". */
+export function buildCodeView(path: string, table: readonly string[], codes: readonly (readonly number[] | undefined)[]): SetColumn {
+  const m = new Map<string, number[]>();
+  codes.forEach((cs, i) => {
+    for (const c of cs ?? []) {
+      const name = table[c];
+      if (name !== undefined) add(m, name, i);
+    }
+  });
+  return { kind: "set", path, group: "types", values: sortedMap(m) };
+}
+
+const COLOUR_BITS: readonly (readonly [string, number])[] = [["W", 1], ["U", 2], ["B", 4], ["R", 8], ["G", 16]];
+
+/** The card's own colours (`c`, a WUBRG bitmask; absent = colourless) as a set of W/U/B/R/G. A colourless card is in no
+ *  list, so "colourless" is `count c max 0`. Callers build it only when the rows carry `c` at all. */
+export function buildColourView(masks: readonly (number | undefined)[]): SetColumn {
+  const m = new Map<string, number[]>();
+  masks.forEach((mask, i) => {
+    if (!mask) return;
+    for (const [name, bit] of COLOUR_BITS) if (mask & bit) add(m, name, i);
+  });
+  return { kind: "set", path: "c", group: "types", values: sortedMap(m) };
+}
