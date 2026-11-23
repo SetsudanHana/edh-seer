@@ -1,4 +1,5 @@
 import type { CardTags, GameEvent, SubjectFilter } from "@edh-seer/tagger";
+import { CONDITIONAL_FILL_STRENGTH } from "./conditional-fill.js";
 import { isZonedCardGrant } from "./subject.js";
 // THE SUBPATH, NOT THE PACKAGE ROOT. `static-lookup.ts` pulls this module into the BROWSER, and
 // tagger's barrel reaches `otags/functional.ts`, which `readFileSync`s a JSON file at import
@@ -644,7 +645,9 @@ export function poolPartnersFor(
       taken++;
       const reasons = directedReasons(subject, c, h, { tokensMediate: false });
       if (reasons.length === 0) continue;
-      out.push({ name: c.card.name, score: specificity(key, freq), event: key, tags: code(reasons) });
+      // A pair that rests only on a conditional death (#1734) ranks below a sure one at the same specificity.
+      const sure = reasons.some((r) => r.conditional !== true);
+      out.push({ name: c.card.name, score: specificity(key, freq) * (sure ? 1 : CONDITIONAL_FILL_STRENGTH), event: key, tags: code(reasons) });
     }
   }
   return out;

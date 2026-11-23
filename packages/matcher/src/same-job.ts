@@ -92,7 +92,7 @@ const ANSWER_ROLES: ReadonlySet<Role> = new Set(["targetedRemoval", "stackIntera
 /** LIMITS ON WHAT AN ANSWER MAY TARGET, as the tags record them: Thraben Exorcism's Spirit and disturb. */
 const LIMITS = ["subtype", "keyword", "colors", "stats", "legendary", "supertype", "named"] as const;
 function subjects(d: DeckCard, role: Role): Subject[] {
-  return roleAbilities(d, role).flatMap((a) => (a.emits ?? []).filter((e) => e.subject.control !== "you").map((e) => e.subject as unknown as Subject));
+  return roleAbilities(d, role).flatMap((a) => (a.emits ?? []).filter((e) => e.conditional !== true && e.subject.control !== "you").map((e) => e.subject as unknown as Subject));
 }
 type Subject = Record<string, unknown>;
 /** What an answer hits, as card types. */
@@ -478,7 +478,7 @@ export function sameGroup(cut: DeckCard, add: DeckCard, role: Role): boolean {
 export function effectsOf(d: DeckCard, role: Role): Set<string> {
   const out = new Set(roleAbilities(d, role).flatMap((a) => {
     const kind = a.effect?.kind ?? "";
-    const emits = (a.emits ?? []).map((e) => `${kind}|${e.verb}|${e.subject.control ?? ""}`);
+    const emits = (a.emits ?? []).filter((e) => e.conditional !== true).map((e) => `${kind}|${e.verb}|${e.subject.control ?? ""}`);
     return emits.length > 0 ? emits : [kind];
   }));
   if (role === "protection") for (const r of protects(d)) out.add(`protects|${r}`);

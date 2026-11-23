@@ -3,7 +3,10 @@ import { deriveAsCorpus } from "@edh-seer/tagger/derive-worker";
 import type { CardTags } from "@edh-seer/tagger";
 import { impactEdgeWeight, impactWeightOf, loadImpactWeights } from "@edh-seer/engine";
 import { loadHierarchy } from "./index.js";
-import { pairReasonsAcrossFaces } from "./edges.js";
+import { cardThemeTags, pairReasonsAcrossFaces } from "./edges.js";
+import { ingredients, ROLES } from "./quality.js";
+import { buildCensus } from "./census.js";
+import { poolPartnersFor, supplyForms, supplyKeysOf } from "./partners-core.js";
 import type { DeckCard } from "./types.js";
 import fixtures from "./fixtures/damage-fill-1734.json" with { type: "json" };
 
@@ -20,6 +23,7 @@ const dc = (name: string): DeckCard => {
 const fillEmits = (name: string) => dc(name).tags!.abilities.flatMap((a) => a.emits ?? []).filter((e) => (e.verb === "dies" || e.verb === "enters-graveyard") && e.subject.control !== "you");
 const reasons = (p: string, c: string) => pairReasonsAcrossFaces(dc(p), dc(c), H, {});
 const W = loadImpactWeights();
+const H2 = H;
 
 describe("damage at creatures records a conditional fill (#1734)", () => {
   test.each([["Goblin Bombardment", "opp"], ["Siege-Gang Commander", "opp"], ["Skred", "opp"], ["Devastating Dreams", "any"], ["Rupture", "any"], ["Flame Sweep", "any"], ["Pestilence", "any"]])("%s derives a conditional dies fill of control %s", (name, control) => {
@@ -72,5 +76,49 @@ describe("damage at creatures records a conditional fill (#1734)", () => {
   test("a sweep hits your own creatures too (as a destroy sweep does): it feeds 'a creature you control dies', conditionally", () => {
     const rs = reasons("Devastating Dreams", "Zulaport Cutthroat").filter((r) => r.conditional === true);
     expect(rs.length).toBeGreaterThan(0);
+  });
+
+  // Review fixes (round 2).
+  const stripped = (name: string): DeckCard => { const d = dc(name); return { ...d, tags: { ...d.tags!, abilities: d.tags!.abilities.map((a) => ({ ...a, emits: (a.emits ?? []).filter((e) => e.conditional !== true) })) } }; };
+  const fills = (name: string) => dc(name).tags!.abilities.flatMap((a) => a.emits ?? []).filter((e) => e.conditional === true);
+  const CARDS = ["Goblin Bombardment", "Siege-Gang Commander", "Devastating Dreams", "Rupture", "Niv-Mizzet, Parun", "Pyrite Spellbomb", "Silver Bolt", "Skred", "Pestilence", "Lightning Bolt", "Chandra, Awakened Inferno"];
+  test("a conditional death changes no quality ingredient of any role (the extraValue `others` filter read it as an opponent-facing ability)", () => {
+    for (const n of CARDS) for (const r of ROLES) expect(ingredients(dc(n), r), `${n} ${r}`).toEqual(ingredients(stripped(n), r));
+    expect(ingredients(dc("Goblin Bombardment"), "targetedRemoval").extraValue).toBe(ingredients(stripped("Goblin Bombardment"), "targetedRemoval").extraValue);
+  });
+  test("a conditional death is no theme tag of its card (a sweep's `dies:creature` is not an aristocrats card)", () => {
+    expect([...cardThemeTags(dc("Pestilence").tags!)].filter((t) => t.startsWith("dies:creature"))).toEqual([...cardThemeTags(stripped("Pestilence").tags!)].filter((t) => t.startsWith("dies:creature")));
+  });
+  test("a conditional death is no supplier in the census", () => {
+    const row = (c: ReturnType<typeof buildCensus>) => c.producers.filter((r) => r.key.startsWith("dies") || r.key.startsWith("enters-graveyard")).map((r) => `${r.key}:${r.cards}`).sort();
+    expect(row(buildCensus([dc("Pestilence").tags!], H2))).toEqual(row(buildCensus([stripped("Pestilence").tags!], H2)));
+  });
+  test("a pool pair built only on a conditional death ranks below a certain one at equal specificity", () => {
+    const ranked = new Map<string, DeckCard[]>();
+    for (const n of ["Skred", "Murder"]) for (const k of supplyKeysOf(dc(n)).flatMap(supplyForms)) ranked.set(k, [dc("Massacre Wurm")]);
+    const diesRows = (n: string) => poolPartnersFor(dc(n), ranked, {}, H2, new Set());
+    const cond = diesRows("Skred"), sure = diesRows("Murder");
+    expect(cond.length).toBeGreaterThan(0); expect(sure.length).toBeGreaterThan(0);
+    expect(Math.max(...cond.map((r) => r.score))).toBeLessThan(Math.min(...sure.map((r) => r.score)));
+  });
+  test("a rider that exiles what dies is read where it applies: 'dealt damage this way' in the damage's own paragraph, 'dealt damage by <the card>' anywhere", () => {
+    // Chandra's -3 has no rider (her -X does): the sweep keeps its fill, the -X's target does not.
+    expect(fills("Chandra, Awakened Inferno").map((e) => `${e.subject.control}/${e.subject.scope}`)).toEqual(["any/each"]);
+    for (const n of ["Torch the Tower", "Frostwielder", "Kumano, Master Yamabushi", "Demonfire", "Kumano Faces Kakkazan // Etching of Kumano", "Anger of the Gods"]) expect(fills(n), n).toEqual([]);
+  });
+  test.each(["Tail Swipe", "Beastie Beatdown", "Cinderheart Giant", "Mega Flare"])("%s: damage at a creature an opponent controls with no scope keeps its stated opponent: an opp fill", (n) => {
+    expect(fills(n).length).toBeGreaterThan(0);
+    expect(fills(n).every((e) => e.subject.control === "opp")).toBe(true);
+  });
+  test("a sure and a conditional reason with one tag and text are one claim: the sure one", () => {
+    for (const c of ["Blood Artist", "Massacre Wurm", "Wight of Precinct Six"]) {
+      const rs = reasons("Silver Bolt", c);
+      const sure = new Set(rs.filter((r) => r.conditional !== true).map((r) => `${r.tag}\0${r.text}`));
+      expect(rs.filter((r) => r.conditional === true && sure.has(`${r.tag}\0${r.text}`)), c).toEqual([]);
+    }
+  });
+  test("a card with a sure and a conditional fill reads as the sure one: Silver Bolt -> Wight of Precinct Six carries no conditional reason (the certain-first order)", () => {
+    expect(reasons("Silver Bolt", "Wight of Precinct Six").length).toBeGreaterThan(0);
+    expect(reasons("Silver Bolt", "Wight of Precinct Six").filter((r) => r.conditional === true)).toEqual([]);
   });
 });

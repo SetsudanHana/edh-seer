@@ -988,19 +988,37 @@ function attachHead(object: string): string | undefined {
   return SELF_REFERENCE.test(head) ? head : undefined;
 }
 
-/** "If a creature dealt damage this way would die this turn, exile it instead" (Anger of the Gods, Fiery Justice's kin): the creature never dies, so the damage fills no graveyard. */
+/** "If a creature dealt damage this way would die this turn, exile it instead" (Anger of the Gods, Chandra's -X): the creature never dies, so the damage fills no graveyard. */
 const DEATH_EXILED_INSTEAD = /\bwould die\b[^.]*\bexile\b[^.]*\binstead\b/i;
+
+/** DOES THE SAME SOURCE'S RIDER EXILE WHAT ITS DAMAGE KILLS? Two printed forms, read where each applies:
+ *  - "dealt damage THIS WAY would die ..., exile it instead" belongs to the damage sentence before it, so it is read on that ability's own clause (Chandra, Awakened Inferno's -X has it, her -3 in the next clause has not);
+ *  - "a creature dealt damage BY THIS CREATURE / BY <the card> this turn would die, exile it instead" (Frostwielder, Kumano, Torch the Tower) is a line of its own that governs every damage the card deals, so it is read on the card's lines.
+ *  CEILING: a rider worded another way, and one that governs only some of a card's damage sources, is not read; a card with two damage sources and a by-source rider is silent for both. */
+function exilesWhatDies(clauseText: string | undefined, cardText: string | undefined, cardName: string | undefined): boolean {
+  if (DEATH_EXILED_INSTEAD.test(clauseText ?? "")) return true;
+  const name = (cardName ?? "").toLowerCase();
+  const shortName = name.split(",")[0]!.split(" // ")[0]!;
+  for (const line of (cardText ?? "").toLowerCase().split("\n")) {
+    const at = line.indexOf("dealt damage by ");
+    if (at < 0) continue;
+    const who = line.slice(at + "dealt damage by ".length);
+    if (!(who.startsWith("this ") || who.startsWith("it ") || (shortName !== "" && who.startsWith(shortName)))) continue;
+    if (DEATH_EXILED_INSTEAD.test(who)) return true;
+  }
+  return false;
+}
 
 /** THE DEATH A DAMAGE EMIT MAY CAUSE (#1734, owner ruling 2026-11-22, option 2 "marked conditional"). Damage at creatures kills the ones whose toughness it reaches (CR 704.5g), so every non-combat damage emit at a creature
  *  (a target, "each creature", "any target") records the `dies` of the creatures it hits, flagged `conditional` so the matcher weighs it below a destroy's. Without it Goblin Bombardment, Siege-Gang Commander,
  *  Devastating Dreams and Rupture never paired with an opponent-death or opponent-graveyard payoff (Massacre Wurm, Wight of Precinct Six).
  *  CONTROL follows the destroy precedent (`REMOVAL_VERBS`, derive.ts): a TARGETED hit with no stated controller is aimed at an opponent's creature (`opp`); a sweep ("each creature") keeps `any`, since it hits your own creatures as a destroy sweep does;
  *  a stated controller is kept, and a creature you control gets no fill. Players, planeswalkers and the card itself get none.
- *  CEILING: the fill is conditional even when the source has deathtouch (CR 702.2b: damage from a deathtouch source destroys any creature it hits), which would make it certain; no corpus card is both (4 oracle texts print deathtouch and a damage verb, Bow of Nylea, Sorin, Imperious Bloodlord, Garruk Relentless and Stingerquill Charm, and in none is the damage's source the deathtouch one).
+ *  CEILING: the fill is conditional even when the source has deathtouch (CR 702.2b: damage from a deathtouch source destroys any creature it hits), which would make it certain. No deathtouch reader is built; two cards are known under-weighted by it, Undercity Uprising ("Creatures you control gain deathtouch until end of turn. Then target creature you control fights ...") and The Curse of Fenric (chapter III: a Mutant, the 3/3 deathtouch token of chapter I, fights Fenric).
  *  CEILING: damage a creature is later regenerated from or prevented from, or that an indestructible creature survives, is not read; the fill is conditional on the amount alone.
- *  CEILING: only the printed "would die ... exile it instead" rider is read as no death; a card that exiles what dies of it in another sentence's words still records the fill. */
-function damageDeathFill(events: readonly GameEvent[], clauseText: string | undefined, cardText: string | undefined): GameEvent[] {
-  if (DEATH_EXILED_INSTEAD.test(`${clauseText ?? ""} ${cardText ?? ""}`)) return [];
+ */
+function damageDeathFill(events: readonly GameEvent[], clauseText: string | undefined, cardText: string | undefined, cardName: string | undefined): GameEvent[] {
+  if (exilesWhatDies(clauseText, cardText, cardName)) return [];
   const out: GameEvent[] = [];
   for (const e of events) {
     const s = e.subject;
@@ -1500,6 +1518,6 @@ export function actionEmits(action: Action, clauseText?: string, opts: { self?: 
       }
     }
   }
-  if (action.verb === "deal-damage" || action.verb === "fight") events.push(...damageDeathFill(events, clauseText, opts.cardText));
+  if (action.verb === "deal-damage" || action.verb === "fight") events.push(...damageDeathFill(events, clauseText, opts.cardText, opts.cardName));
   return events;
 }

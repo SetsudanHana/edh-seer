@@ -102,7 +102,7 @@ export interface Reason {
    *  weighs every reason 1: `impactWeightOf` multiplies it in, and `impactEdgeWeight` still keeps the best reason per tag. */
   strength?: number;
   /** THE EVENT THIS REASON IS BUILT ON HAPPENS ONLY SOMETIMES (#1734, owner 2026-11-22): damage at creatures records the death of the ones it hits (`GameEvent.conditional`), and damage kills only what its amount allows. The reason is weighed
-   *  by `strength` (below a certain one) and displayed as conditional; a certain reason on the same tag outranks it. Written only as `true`. */
+   *  by `strength` (below a certain one) and carried for the UI, which does not render it yet; a certain reason on the same tag outranks it. Written only as `true`. */
   conditional?: true;
 }
 

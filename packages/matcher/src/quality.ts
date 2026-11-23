@@ -173,7 +173,7 @@ export function ingredients(d: DeckCard, role: Role): Ingredients {
   if (abilities.length === 0) return {};
   // A WIPE IS SCORED ON ITS MASS MODE OR NOT AT ALL: Cyclonic Rift's overload and Vandalblast's are not
   // derived, and scoring their cheap targeted half put both at the top of the wipes (final review).
-  if (role === "boardWipe" && !abilities.some((a) => (a.emits ?? []).some((e) => e.subject.scope === "all" || e.subject.scope === "each"))) return {};
+  if (role === "boardWipe" && !abilities.some((a) => (a.emits ?? []).some((e) => e.conditional !== true && (e.subject.scope === "all" || e.subject.scope === "each")))) return {};
   const out: Ingredients = {};
   // THE ROLE ABILITY'S OWN FACE decides, else the first face: a modal spell // land is a spell for its
   // role, and a land (legendary or snow included, Boseiju) has no mana value to compare.
@@ -216,7 +216,7 @@ export function ingredients(d: DeckCard, role: Role): Ingredients {
   // A `targeting-ban` (#1423) is no extra value either: it derived blank before its kind, and counting it would move every card that prints one (Shielding Plax, Spellbane Centaur) with no ruling to say it should.
   // A `to-hand` ability (#1302: Sea Gate Oracle's look-and-take, Dark Confidant's reveal) IS extra value: it is real card advantage, so it counts here like any other kind.
   const others = all.filter((a) => !abilities.includes(a) && a.effect.kind !== "" && !NOT_EXTRA_VALUE.has(a.effect.kind)
-    && !(a.emits ?? []).some((e) => e.subject.control === "opp"));
+    && !(a.emits ?? []).some((e) => e.conditional !== true && e.subject.control === "opp")); // a death damage may cause (#1734) is no opponent-facing ability
   const types = (d.tags?.characteristics.types ?? []).map((t) => t.toLowerCase());
   out.extraValue = (types.includes("creature") ? 1 : 0) + (others.length > 0 ? 1 : 0);
   // A GATED MANA LINE IS A RESTRICTION TOO (owner 2026-10-13, #1169: "gated is conditional same as lands, so it should impact the card quality"): Mox Jasper makes mana only with a Dragon, Sceptre
@@ -224,14 +224,14 @@ export function ingredients(d: DeckCard, role: Role): Ingredients {
   // credits it in a deck that meets the gate (goldfish, Karsten, the swaps' protection).
   if (role === "ramp") out.restriction = /can.t be spent|spend this mana only/i.test(d.card.oracleText ?? "") || cardLines(d).some((l) => l.gate !== null) ? 1 : 0;
   if (ANSWERS.has(role)) {
-    const subjects = abilities.flatMap((a) => (a.emits ?? []).filter((e) => e.subject.control !== "you").map((e) => e.subject));
+    const subjects = abilities.flatMap((a) => (a.emits ?? []).filter((e) => e.conditional !== true && e.subject.control !== "you").map((e) => e.subject));
     if (subjects.length > 0) out.breadth = Math.max(...subjects.map(breadthOf));
     const perm = abilities.map(permanenceOf).filter((p): p is number => p !== undefined);
     if (perm.length > 0 && role !== "stackInteraction") out.permanence = Math.max(...perm);
     // CEILING: an overloaded or otherwise alternate one-sided mode (Cyclonic Rift) is not derived, so
     // such a card reads as its targeted half; upgrade path: derive the overload as its own ability.
     if (role === "boardWipe") {
-      const all = abilities.flatMap((a) => a.emits ?? []).filter((e) => e.subject.scope === "all");
+      const all = abilities.flatMap((a) => a.emits ?? []).filter((e) => e.conditional !== true && e.subject.scope === "all");
       if (all.length > 0) out.oneSided = all.every((e) => e.subject.control === "opp") ? 1 : 0;
     }
   }

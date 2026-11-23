@@ -386,6 +386,8 @@ function themeTags(tags: CardTags, keepRockEntry: boolean): Set<string> {
     }
     for (const e of a.emits ?? []) {
       if (opponentsPermanent(e.subject)) continue;
+      // A DEATH DAMAGE MAY CAUSE (#1734, `GameEvent.conditional`) CREDITS NO THEME: a burn spell or a damage sweep is not an aristocrats card, and its `dies:creature` key moved a deck's theme count.
+      if (e.conditional === true) continue;
       // AN ORIGIN-ONLY CAST CREDITS NO THEME (#1665 review): its key `cast:spell` is the plain cast triggers' key, and they do not hear it, so counting it moved 25 decks' `cast:spell` theme count.
       if (e.originOnly === true) continue;
       const t = normalizeZoneEvent(e);
@@ -1677,7 +1679,9 @@ export function dedupeReasons(reasons: Reason[]): Reason[] {
     if (m && at2 !== undefined) out[at2] = { ...out[at2]!, magnitude: m };
     if (at2 !== undefined) joinScopeInto(out, at2, r);
   }
-  return out;
+  // A CONDITIONAL REASON IS THE SAME CLAIM AS A SURE ONE WITH ITS TAG AND TEXT (#1734): a card whose damage and destroy both fill the graveyard (Silver Bolt) says "a creature dies thanks to it" once, as the sure one.
+  const sure = new Set(out.filter((r) => r.conditional !== true).map((r) => `${r.tag}\u0000${r.text}`));
+  return out.filter((r) => r.conditional !== true || !sure.has(`${r.tag}\u0000${r.text}`));
 }
 
 /** A collapsed reason keeps the sides both readings hit (#721): `you` + `opp` is `any`. */

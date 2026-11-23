@@ -180,7 +180,7 @@ const TESTED: Record<string, string> = {
 };
 /** A reading in a comment, no fixture. Each carries where the reading lives. */
 const PROSE: Record<string, string> = {
-  "702.2b": "emits.ts damageDeathFill — a deathtouch source's damage destroys any creature it hits: read as a CEILING (the fill stays conditional, #1734); no corpus card with printed deathtouch is a damage dealer",
+  "702.2b": "emits.ts damageDeathFill — a deathtouch source's damage destroys any creature it hits: read as a CEILING (the fill stays conditional, #1734); known under-weighted: Undercity Uprising (grants deathtouch, then a fight) and The Curse of Fenric (chapter III, a deathtouch Mutant fights Fenric)",
   "702.37": "CEILING note on putsFaceDown: a morph card cast face down is a cast, not a put, and is not marked (#1682)",
   "301.5d": "CEILING note on damagedPlayerIsOpponent: an Equipment's controller is separate from the equipped creature's; not modelled",
   "100.2a": "schema: the CR's own numbering for a rules reference", "104.2": "verb-accounting: win-game NOT AN EVENT",

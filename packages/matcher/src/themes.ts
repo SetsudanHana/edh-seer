@@ -23,6 +23,7 @@ function authoredSurplusTags(tags: CardTags): Set<string> {
   const out = new Set<string>();
   for (const a of tags.abilities) {
     for (const emit of a.emits ?? []) {
+      if (emit.conditional === true) continue; // a death damage may cause (#1734) is no surplus
       const e = normalizeZoneEvent(emit);
       for (const k of supplyTagKeys(e, tags.characteristics?.types)) out.add(k);
     }

@@ -23,7 +23,7 @@
         "timing": 0.5
       },
       "pairs": 1159,
-      "heldOutAccuracy": 0.4375052043345993,
+      "heldOutAccuracy": 0.43620836370634525,
       "baselineAccuracy": 0.5621885450201562,
       "fallbackAccuracy": 0.6252452890574511,
       "fallback": true
@@ -56,15 +56,15 @@
     },
     "targetedRemoval": {
       "weights": {
-        "manaValue": -0.38072215893157174,
-        "frequency": 0.020979108551091835,
-        "timing": 1.1993694917731237,
-        "breadth": 0.8145591168383203,
-        "permanence": 0.025087339817017256,
-        "extraValue": 1.551732625604365
+        "manaValue": -0.3801506271789453,
+        "frequency": 0.02059891766815055,
+        "timing": 1.2121041158145682,
+        "breadth": 0.8130140874868925,
+        "permanence": 0.024889030760513617,
+        "extraValue": 1.5524957204125958
       },
       "pairs": 277,
-      "heldOutAccuracy": 0.755340956708536,
+      "heldOutAccuracy": 0.7337563641586962,
       "baselineAccuracy": 0.6872736288221336,
       "fallbackAccuracy": 0.7876045617747692,
       "fallback": false
