@@ -777,7 +777,8 @@ import { castClassFromPrint, castIsOnlyACondition, castsYourOwnCard } from "./ca
 // 590: #1323 -- energy (CR 107.14: {E} is one energy counter, paying it removes one) is read in every printed wording. `isEnergyObject` takes a quantity + the symbols or the word + an optional count ("one energy", "energy", "energy equal to the number of creatures you control", "X {E}", "an amount of {E}", "1 energy counter"; a linear word walk, not a regex); `energyReading` / `energyRewrite` (verb-words.ts) read an `add-mana` or `gain-life` action of energy as the gain it is (`gain-life` "you get {E}" with a clause that prints no gain and no life becomes the add-mana of {E}) and a payment ("you may pay eight {E}", Blaster Hulk) as a `remove-counter` of energy (`counter-removed`). Census (Mongo, 145 cards printing {E} or "energy", 2 of them not energy): counter-added 116 -> 129 cards, counter-removed 3 -> 4, no energy emit 29 -> 16 (the rest: a payment only in a cost or keyword cost, no action, "you get {E}" filed `other`, a consumer, or not energy); 14 cards change (Roil Cartographer, Peema Trailblazer, Scurry of Gremlins, Blaster Hulk, the seven gain-life energy cards, Aetherworks Marvel and Aetherflux Conduit no longer a mana-generation, Aethersphere Harvester no longer a lifegain); unclaimed actions 4,808 -> 4,797 (11 fixed); event-match pairs (changed rows): gained 22,167, lost 215 -- counter-added +1,180 -118, gain-life -97 (Aethersphere Harvester's false lifegain x lifegain payoffs), scales +20,962 (Scurry of Gremlins' energy equal to its creatures), copies +23, static +2; role-ratchet gained 0, lost 0.
 // 591: #1616 -- The Prima Vista: the stored cast that is really its animate sentence now derives from the grammar (triage label)
 // 592: #1325 -- 'open an Attraction' (CR 701.51b, CR 717.1) is the put of an artifact Attraction you control (an enters, not a token): the model's `other | open an Attraction` (15 commander-legal cards, derived nothing) and `investigate | an Attraction` (Seasoned Buttoneer, Myra the Magnificent, The Most Dangerous Gamer, derived a Clue-shaped create-token and a token Attraction of any controller) both read it. `investigate` joins GUARDED_VERBS: of 142 commander-legal investigate actions only those 4 print no investigate/clue word anywhere on the card.
-export const DERIVE_VERSION = 592;
+// 593: #1354 -- a tapped-token creation's companion tap is silent, not unclaimed (CR 110.5b)
+export const DERIVE_VERSION = 593;
 
 /** "a nonland card from target opponent's graveyard or hand" (#1592): the object of a stored hand-or-graveyard pick. */
 const GRAVEYARD_OR_HAND_PICK = /\bfrom (?:target opponent|target player|that player|that opponent|an opponent)'s (?:graveyard or hand|hand or graveyard)$/i;
@@ -4059,6 +4060,8 @@ export function deriveAbilities(
       const tapObject = (action.object ?? "").trim().toLowerCase();
       const tapMadeHere = action.verb === "tap" && actionIdx > 0 && (clause.actions ?? []).slice(0, actionIdx).some((a, i) =>
         a.verb === "create" && (tapObject === (a.object ?? "").trim().toLowerCase()
+          // the create keeps its "for each ..." tail, the tap names the token alone (Covetous Elegy)
+          || (a.object ?? "").trim().toLowerCase().startsWith(`${tapObject} for each `)
           || ((PRONOUN_OBJECT.test(tapObject) || CREATED_TOKEN_REF.test(tapObject)) && sourceOf(actionIdx).to === "action" && (sourceOf(actionIdx) as { action: number }).action === i)
           || (CREATED_TOKEN_REF.test(tapObject) && sourceOf(actionIdx).to !== "action")));
       // CEILING: a token created tapped is recognised by the word "tapped" ANYWHERE in the effect text, not by
@@ -4246,6 +4249,9 @@ export function deriveAbilities(
         // SILENT BY DESIGN, NOT UNCLAIMED (#1502): the temporary-token rider ("Exile it at the beginning of the next end step", `temporaryRider` above) derives no event of its own, and its home is the maker's
         // `leaves` / `exiled` emits of this same clause (added once the maker's emits are attached). Only when the maker carries them: a rider whose maker was refused (a granted ability) stays unclaimed.
         if (temporaryRider && abilities.slice(before).some((a) => a.temporary === true && (a.emits ?? []).some((e) => e.verb === "leaves" || e.verb === "dies"))) continue;
+        // SILENT BY DESIGN, NOT UNCLAIMED (#1354): the companion `tap` of a token created tapped ("create a tapped Treasure token") taps nothing; the token ARRIVES tapped (CR 110.5b) and the creation
+        // already says so in its own object. `tapsCreated` is the same guard that withholds its `taps` emit above.
+        if (tapsCreated) continue;
         unclaimed.push(action); continue;
       }
 
