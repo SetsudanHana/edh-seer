@@ -3388,7 +3388,7 @@ test("a grant to creature TOKENS keeps its token subject; a grant to creatures s
 });
 
 // RECALL v4 SACRIFICE FAMILY (2026-09-09).
-test("a cost sacrifice is the controller's even when the effect names other players (CR 701.17a)", () => {
+test("a cost sacrifice is the controller's even when the effect names other players (CR 701.21a)", () => {
   const text = "Any number of target players each lose 2 life and sacrifice a creature of their choice. You add {B}{B} and draw a card.";
   const { abilities } = deriveAbilities([{
     id: 1, abilityType: "activated",

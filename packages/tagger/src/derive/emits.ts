@@ -670,7 +670,7 @@ function leftTheBattlefield(a: Action, s: SubjectFilter, self: boolean): boolean
  *  objects in the clause corpus, **6,503 (96.6%) name no player at all** — but "destroy target
  *  permanent" and "tap target creature" name no player either and are routinely aimed at an
  *  OPPONENT'S permanent. Only the verbs below are ones the rules pin to the controller: you may
- *  sacrifice only what you control (CR 701.17a), an unqualified draw/mill/discard/scry/surveil is
+ *  sacrifice only what you control (CR 701.21a), an unqualified draw/mill/discard/scry/surveil is
  *  the controller's, mana goes to the controller's pool, a created token is the controller's
  *  (CR 111.2), and a search is of your own library.
  *
