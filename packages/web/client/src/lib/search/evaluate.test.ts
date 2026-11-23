@@ -61,3 +61,43 @@ test("an unknown field, list, or a numeric field is cannot-answer, never empty o
   const num: Column = { kind: "number", path: "n", group: "g", rows: [0], min: [1], max: [1] };
   expect(evaluate({ field: "n", op: "count" }, { ...ctx, columns: new Map([["n", num]]) })).toMatchObject({ ok: false });
 });
+
+// ---- numeric comparisons and colour identity (task 2) ----
+import { buildIdentityView, buildNumberViews } from "./type-views.js";
+
+const rows2 = [
+  { identity: ["W", "U"], mv: 3, pow: 2, tou: 2 },
+  { identity: [], mv: undefined, pow: 0, tou: 1 },
+  { identity: ["W", "U", "G"], mv: 5, pow: undefined, tou: undefined },
+  { identity: ["B"], mv: 1, pow: 4, tou: 4 },
+];
+const numCtx: EvalContext = {
+  rowCount: rows2.length,
+  columns: new Map<string, Column>([...buildNumberViews(rows2), buildIdentityView(rows2)].map((c) => [c.path, c])),
+  namedLists: {},
+};
+
+test("number views: absent mv is 0 (as facets.ts), absent pow/tou stays absent", () => {
+  const pow = numCtx.columns.get("pow")!;
+  expect(pow).toMatchObject({ kind: "number", rows: [0, 1, 3], min: [2, 0, 4] });
+  expect(numCtx.columns.get("mv")).toMatchObject({ rows: [0, 1, 2, 3], min: [3, 0, 5, 1] });
+});
+
+test("cmp: bounds are inclusive, and an absent power matches neither pow<=3 nor pow>=0", () => {
+  expect(evaluate({ field: "pow", op: "cmp", max: 3 }, numCtx)).toEqual({ ok: true, rows: [0, 1] });
+  expect(evaluate({ field: "pow", op: "cmp", min: 0 }, numCtx)).toEqual({ ok: true, rows: [0, 1, 3] });
+  expect(evaluate({ field: "mv", op: "cmp", min: 3, max: 5 }, numCtx)).toEqual({ ok: true, rows: [0, 2] });
+});
+
+test("id within is fits-in (colourless fits everywhere), exactly is equality", () => {
+  expect(evaluate({ field: "id", op: "within", value: ["W", "U", "G"] }, numCtx)).toEqual({ ok: true, rows: [0, 1, 2] });
+  expect(evaluate({ field: "id", op: "within", value: ["W", "U"] }, numCtx)).toEqual({ ok: true, rows: [0, 1] });
+  expect(evaluate({ field: "id", op: "exactly", value: ["U", "W"] }, numCtx)).toEqual({ ok: true, rows: [0] });
+  expect(evaluate({ field: "id", op: "exactly", value: [] }, numCtx)).toEqual({ ok: true, rows: [1] });
+});
+
+test("cmp on a set field and has on a number field are cannot-answer", () => {
+  expect(evaluate({ field: "id", op: "cmp", min: 1 }, numCtx)).toMatchObject({ ok: false });
+  expect(evaluate({ field: "pow", op: "has", value: "2" }, numCtx)).toMatchObject({ ok: false });
+  expect(evaluate({ field: "pow", op: "within", value: ["W"] }, numCtx)).toMatchObject({ ok: false });
+});

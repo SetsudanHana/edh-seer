@@ -1,4 +1,4 @@
-import { encodePostings } from "./postings.js";
+import { decodePostings, encodePostings } from "./postings.js";
 import type { NamedList, SearchRegistry } from "./registry.js";
 import type { Column, WalkResult } from "./walk.js";
 
@@ -18,6 +18,9 @@ export interface CatalogueGroup {
   /** Payload file inside the search directory; null = served by name-index.json (no new bytes). */
   file: string | null;
   fields: CatalogueField[];
+  /** Set by the build once the payload is serialised. */
+  bytes?: number;
+  gzipBytes?: number;
 }
 
 export interface Catalogue {
@@ -73,7 +76,7 @@ export function buildCatalogue(input: BuildInput): { catalogue: Catalogue; paylo
   const groups: Record<string, CatalogueGroup> = {};
   const payloads: Record<string, GroupPayload> = {};
   if (input.core?.length) {
-    groups["core"] = { file: null, fields: input.core.map((c) => describe(c, registry)) };
+    groups["types"] = { file: null, fields: input.core.map((c) => describe(c, registry)) };
   }
   for (const col of input.walk.columns.values()) {
     const g = (groups[col.group] ??= { file: `${col.group}.json`, fields: [] });
@@ -90,4 +93,21 @@ export function buildCatalogue(input: BuildInput): { catalogue: Catalogue; paylo
     },
     payloads,
   };
+}
+
+/** Rebuild columns from a group payload: what a client does after fetching the group file. */
+export function decodeGroup(group: CatalogueGroup, payload: GroupPayload): Column[] {
+  const out: Column[] = [];
+  for (const f of group.fields) {
+    const p = payload.fields[f.id];
+    if (!p) continue;
+    if (p.kind === "set") {
+      const values = new Map<string, number[]>();
+      for (const [v, b64] of Object.entries(p.values)) values.set(v, decodePostings(b64));
+      out.push({ kind: "set", path: f.id, group: "", values });
+    } else {
+      out.push({ kind: "number", path: f.id, group: "", rows: decodePostings(p.rows), min: p.min, max: p.max });
+    }
+  }
+  return out;
 }

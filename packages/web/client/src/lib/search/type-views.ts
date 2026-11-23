@@ -1,6 +1,6 @@
 // Type fields as views over name-index rows: no new row bytes. `t` and `st` are read from the row
 // codes; `tFront` needs the derived per-face data, supplied by the caller.
-import type { SetColumn } from "./walk.js";
+import type { NumberColumn, SetColumn } from "./walk.js";
 
 export interface IndexRow {
   t?: number[];
@@ -50,9 +50,47 @@ export function buildTypeViews(index: TypeIndex, opts: TypeViewOptions): SetColu
     }
   });
   return [
-    { kind: "set", path: "t", group: "core", values: sortedMap(t) },
-    { kind: "set", path: "st", group: "core", values: sortedMap(st) },
-    { kind: "set", path: "tFront", group: "core", values: sortedMap(tFront) },
-    { kind: "set", path: "everyCreatureType", group: "core", values: sortedMap(every) },
+    { kind: "set", path: "t", group: "types", values: sortedMap(t) },
+    { kind: "set", path: "st", group: "types", values: sortedMap(st) },
+    { kind: "set", path: "tFront", group: "types", values: sortedMap(tFront) },
+    { kind: "set", path: "everyCreatureType", group: "types", values: sortedMap(every) },
   ];
+}
+
+export interface NumericRow {
+  identity?: readonly string[];
+  mv?: number;
+  pow?: number;
+  tou?: number;
+}
+
+function numberView(path: string, rows: readonly NumericRow[], pick: (r: NumericRow) => number | undefined): NumberColumn {
+  const out: NumberColumn = { kind: "number", path, group: "types", rows: [], min: [], max: [] };
+  rows.forEach((r, i) => {
+    const v = pick(r);
+    if (v === undefined) return;
+    out.rows.push(i);
+    out.min.push(v);
+    out.max.push(v);
+  });
+  return out;
+}
+
+/** mv, pow, tou from name-index rows. An absent `mv` is 0 (what the artifact means by omitting it);
+ *  an absent pow/tou stays absent: 242 cards print `*`/`X` and the engine says nothing (facets.ts). */
+export function buildNumberViews(rows: readonly NumericRow[]): NumberColumn[] {
+  return [
+    numberView("mv", rows, (r) => r.mv ?? 0),
+    numberView("pow", rows, (r) => r.pow),
+    numberView("tou", rows, (r) => r.tou),
+  ];
+}
+
+/** Colour identity as a set of W/U/B/R/G; a colourless card is in no list. */
+export function buildIdentityView(rows: readonly NumericRow[]): SetColumn {
+  const m = new Map<string, number[]>();
+  rows.forEach((r, i) => {
+    for (const c of r.identity ?? []) add(m, c, i);
+  });
+  return { kind: "set", path: "id", group: "types", values: sortedMap(m) };
 }

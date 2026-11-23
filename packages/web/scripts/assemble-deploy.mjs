@@ -18,7 +18,7 @@ import { join } from "node:path";
 import { createHash } from "node:crypto";
 import { fileURLToPath } from "node:url";
 import { serviceWorkerSource } from "./sw-template.mjs";
-import { staticDeriveProblem } from "./check-static-derive.mjs";
+import { staticDeriveProblem, staticSearchProblem } from "./check-static-derive.mjs";
 
 const repoRoot = fileURLToPath(new URL("../../../", import.meta.url));
 const staticOut = join(repoRoot, "static-out");
@@ -43,6 +43,12 @@ if (!existsSync(staticOut)) {
 const staleStatic = staticDeriveProblem(repoRoot);
 if (staleStatic) {
   console.error(staleStatic);
+  process.exit(1);
+}
+// THE SEARCH ARTIFACT MUST BE BUILT FROM THIS static-out (#1781): `build:search` runs before this in `npm run deploy`.
+const staleSearch = staticSearchProblem(repoRoot);
+if (staleSearch) {
+  console.error(staleSearch);
   process.exit(1);
 }
 if (!existsSync(join(dist, "index.html"))) {

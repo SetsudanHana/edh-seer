@@ -26,6 +26,8 @@ export interface SearchRegistry {
   /** group name -> path prefixes it owns. */
   groups: Record<string, string[]>;
   namedLists: Record<string, NamedList>;
+  /** Gzip byte budgets per group, plus `catalogue`. The build fails on a breach. */
+  budgets?: Record<string, number>;
   /** Path ids (exact or prefix) that never become fields. */
   deny: string[];
 }
