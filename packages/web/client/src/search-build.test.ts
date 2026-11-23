@@ -3,11 +3,16 @@ import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, writeFil
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { expect, test } from "vitest";
+import { decodeGroup, type Catalogue } from "./lib/search/catalogue.js";
+import { evaluate, type EvalContext } from "./lib/search/evaluate.js";
+import { buildIdentityView, buildNumberViews, buildTypeViews } from "./lib/search/type-views.js";
+import type { Column } from "./lib/search/walk.js";
 
 const SCRIPT = join(import.meta.dirname, "../../scripts/build-search.mts");
 const REGISTRY = join(import.meta.dirname, "../../scripts/search-registry.json");
 
-/** A tiny static-out: 5 cards. Row 0 changeling, 1 Borg, 2 three-type WUG, 3 two-type, 4 a land with no record. */
+/** A tiny static-out: 6 cards. Row 0 changeling, 1 Borg, 2 three-type WUG, 3 two-type (null tags), 4 a land with no record,
+ *  5 a DFC whose t is creature+land but whose FRONT is only a creature. */
 function fakeStatic(): string {
   const root = mkdtempSync(join(tmpdir(), "search-build-"));
   const v = join(root, "v-t");
@@ -22,6 +27,7 @@ function fakeStatic(): string {
       row("Trio", [0], [1, 2, 3], { identity: ["W", "U", "G"], pow: 2, tou: 2 }),
       row("Duo", [0], [1, 2]),
       row("Wood", [1], [4], { identity: [] }),
+      row("Umara", [0, 1], []),
     ],
   }));
   const entry = (name: string, tags: unknown) => ({ card: { name, edhrecRank: 1 }, tags });
@@ -31,6 +37,7 @@ function fakeStatic(): string {
     trio: entry("Trio", { clauseSource: "grammar" }),
     "trio alias": entry("Trio", { clauseSource: "grammar" }),
     duo: entry("Duo", null),
+    umara: entry("Umara", { clauseSource: "grammar", characteristics: { faces: [{ types: ["creature"] }, { types: ["land"] }] } }),
   }));
   return root;
 }
@@ -45,7 +52,7 @@ test("build promotes search/s-<hash>, keeps the other manifest keys, and --verif
   expect(m.precons).toBe("p-keep");
   expect(m.search).toMatch(/^s-[0-9a-f]{12}$/);
   const dir = join(root, "v-t", "search", m.search);
-  expect(readdirSync(dir).sort()).toEqual(["catalogue.json", "read.json"]);
+  expect(readdirSync(dir).sort()).toEqual(["catalogue.json", "faces.json", "read.json"]);
   const cat = JSON.parse(readFileSync(join(dir, "catalogue.json"), "utf8"));
   expect(cat).toMatchObject({ formatVersion: 1, version: "v-t", deriveVersion: 9 });
   expect(cat.groups.read.bytes).toBeGreaterThan(0);
@@ -53,7 +60,9 @@ test("build promotes search/s-<hash>, keeps the other manifest keys, and --verif
   expect(cat.groups.types.file).toBeNull();
   expect(cat.namedLists.creature.values).toEqual(["borg", "elf", "human", "wizard"]);
   const read = cat.groups.read.fields.find((f: { id: string }) => f.id === "read");
-  expect(read.values).toEqual([{ v: "grammar", n: 2 }, { v: "model", n: 1 }, { v: "unread", n: 2 }]);
+  expect(read.values).toEqual([{ v: "grammar", n: 3 }, { v: "model", n: 1 }, { v: "no-record", n: 1 }, { v: "unread", n: 1 }]);
+  expect(r.stdout).toMatch(/no record: Wood/);
+  expect(cat.groups.faces.gzipBytes).toBeGreaterThan(0);
   const v = run(["--static", root, "--verify"]);
   expect(v.status, v.stderr + v.stdout).toBe(0);
   expect(v.stdout).toMatch(/results: 1\b/);
@@ -84,4 +93,67 @@ test("a budget breach exits non-zero and promotes nothing", () => {
   expect(r.stderr).toMatch(/budget/i);
   expect(manifest(root).search).toBeUndefined();
   expect(existsSync(join(root, "v-t", "search", ".staging"))).toBe(false);
+});
+
+/** What a client does: the name-index views plus the fetched group files, through the catalogue. */
+function clientColumns(root: string): EvalContext {
+  const m = manifest(root);
+  const dir = join(root, "v-t", "search", m.search);
+  const cat = JSON.parse(readFileSync(join(dir, "catalogue.json"), "utf8")) as Catalogue;
+  const index = JSON.parse(readFileSync(join(root, "v-t", "name-index.json"), "utf8"));
+  const columns = new Map<string, Column>();
+  for (const c of [...buildTypeViews(index, { creatureList: cat.namedLists["creature"]!.values }), ...buildNumberViews(index.cards), buildIdentityView(index.cards)]) columns.set(c.path, c);
+  columns.delete("tFront"); // the index carries no face data: tFront comes only from the faces group
+  for (const g of Object.values(cat.groups)) {
+    if (!g.file) continue;
+    for (const c of decodeGroup(g, JSON.parse(readFileSync(join(dir, g.file), "utf8")))) columns.set(c.path, c);
+  }
+  return { rowCount: index.cards.length, columns, namedLists: cat.namedLists };
+}
+
+test("tFront from the BUILT artifact: a DFC whose front lacks a type in t does not match it", () => {
+  const root = fakeStatic();
+  expect(run(["--static", root, "--creatures", "borg,elf,human,wizard", "--lands", "forest"]).status).toBe(0);
+  const ctx = clientColumns(root);
+  expect(evaluate({ field: "tFront", op: "has", value: "land" }, ctx)).toEqual({ ok: true, rows: [4] });
+  expect(evaluate({ field: "t", op: "has", value: "land" }, ctx)).toEqual({ ok: true, rows: [4, 5] });
+  expect(evaluate({ field: "tFront", op: "has", value: "creature" }, ctx)).toEqual({ ok: true, rows: [0, 1, 2, 3, 5] });
+  const cat = JSON.parse(readFileSync(join(root, "v-t", "search", manifest(root).search, "catalogue.json"), "utf8")) as Catalogue;
+  const f = cat.groups["faces"]!.fields.find((x) => x.id === "tFront")!;
+  expect(f.fallback).toBe("t");
+  expect(f.values).toEqual([{ v: "creature", n: 5 }, { v: "land", n: 1 }]);
+});
+
+function withRegistry(root: string, edit: (reg: any) => void): string[] {
+  const reg = JSON.parse(readFileSync(REGISTRY, "utf8"));
+  edit(reg);
+  const p = join(root, "edited.json");
+  writeFileSync(p, JSON.stringify(reg));
+  return ["--registry", p, "--creatures", "borg", "--lands", "forest"];
+}
+
+test("a budget that names no group fails the build, and promotes nothing", () => {
+  const root = fakeStatic();
+  const r = run(["--static", root, ...withRegistry(root, (g) => { g.budgets.nonesuch = 10_000; })]);
+  expect(r.status).not.toBe(0);
+  expect(r.stderr).toMatch(/budget.*nonesuch.*no group/i);
+  expect(manifest(root).search).toBeUndefined();
+});
+
+test("a group with a file and no budget fails the build, and promotes nothing", () => {
+  const root = fakeStatic();
+  const r = run(["--static", root, ...withRegistry(root, (g) => { delete g.budgets.faces; })]);
+  expect(r.status).not.toBe(0);
+  expect(r.stderr).toMatch(/faces.*no budget/i);
+  expect(manifest(root).search).toBeUndefined();
+});
+
+test("--check passes on a clean registry and names a stale per-path entry; it promotes nothing", () => {
+  const root = fakeStatic();
+  const ok = run(["--static", root, "--check", ...withRegistry(root, () => {})]);
+  expect(ok.status, ok.stderr + ok.stdout).toBe(0);
+  const bad = run(["--static", root, "--check", ...withRegistry(root, (g) => { g.fields["tags.gone"] = { label: "Gone" }; })]);
+  expect(bad.status).not.toBe(0);
+  expect(bad.stderr).toMatch(/stale.*tags\.gone/i);
+  expect(manifest(root).search).toBeUndefined();
 });

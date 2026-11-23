@@ -2,10 +2,12 @@
   "threshold": 400,
   "budgets": {
     "read": 50000,
+    "faces": 20000,
     "catalogue": 100000
   },
   "groups": {
     "types": [],
+    "faces": [],
     "read": [
       "tags.clauseSource"
     ]

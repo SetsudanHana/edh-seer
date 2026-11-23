@@ -18,7 +18,7 @@ import { CREATURE_SUBTYPES, LAND_SUBTYPES } from "@edh-seer/tagger/subtypes";
 import { buildCatalogue, decodeGroup, type Catalogue, type GroupPayload } from "../client/src/lib/search/catalogue.ts";
 import { evaluate, type Node } from "../client/src/lib/search/evaluate.ts";
 import type { SearchRegistry } from "../client/src/lib/search/registry.ts";
-import { buildIdentityView, buildNumberViews, buildTypeViews, type IndexRow, type NumericRow } from "../client/src/lib/search/type-views.ts";
+import { buildIdentityView, buildNumberViews, buildTypeViews, sparseFront, type IndexRow, type NumericRow } from "../client/src/lib/search/type-views.ts";
 import { walkRecords, type Column, type SetColumn, type WalkRecord } from "../client/src/lib/search/walk.ts";
 
 const arg = (name: string) => { const i = process.argv.indexOf(name); return i >= 0 ? process.argv[i + 1] : undefined; };
@@ -82,10 +82,17 @@ function build(): void {
   }
 
   const walk = walkRecords(records, registry);
-  // THE READ STATE: grammar / model by the record's clauseSource, `unread` when there is no derived record.
-  const read = new Map<string, number[]>([["grammar", []], ["model", []], ["unread", []]]);
+  // THE READ STATE: grammar / model by the record's clauseSource; `unread` = a record whose tags are null (underived);
+  // `no-record` = a row with no shard record at all (an alias-key collision in static-out, not papered over here).
+  const read = new Map<string, number[]>([["grammar", []], ["model", []], ["no-record", []], ["unread", []]]);
   const source_ = new Map(records.map((r) => [r.row, (r.tags as { clauseSource?: string } | null)?.clauseSource]));
-  index.cards.forEach((_, i) => {
+  const noRecord: string[] = [];
+  index.cards.forEach((c, i) => {
+    if (!source_.has(i)) {
+      read.get("no-record")!.push(i);
+      noRecord.push(c.name);
+      return;
+    }
     const cs = source_.get(i);
     read.get(cs === "grammar" || cs === "model" ? cs : "unread")!.push(i);
   });
@@ -93,7 +100,12 @@ function build(): void {
   const readColumn: SetColumn = { kind: "set", path: "read", group: "read", values: read };
   walk.columns.set("read", readColumn);
 
-  const core = coreColumns(frontTypes, creature);
+  // tFront is NOT served by name-index (no face data there): only the rows whose front differs from `t` ship, as `faces`.
+  const all = coreColumns(frontTypes, creature);
+  const core = all.filter((c) => c.path !== "tFront");
+  const front = all.find((c) => c.path === "tFront") as SetColumn;
+  const sparse = sparseFront(front, all.find((c) => c.path === "t") as SetColumn);
+  walk.columns.set("tFront", sparse);
   const { catalogue, payloads } = buildCatalogue({ version: manifest.version, deriveVersion: manifest.deriveVersion, registry, walk, core });
 
   const files = new Map<string, string>();
@@ -112,13 +124,38 @@ function build(): void {
 
   console.log(`records ${records.length} of ${index.cards.length} rows; ${walk.columns.size} walked columns, ${core.length} core columns`);
   for (const [name, s] of Object.entries(sizes)) console.log(`  ${name.padEnd(10)} ${String(s.bytes).padStart(9)} bytes  ${String(s.gzipBytes).padStart(8)} gzip`);
+  console.log(`faces: ${sparse.overrides!.length} rows whose front types differ from t`);
+  console.log(`no record: ${noRecord.length ? noRecord.join(", ") : "none"}`);
+  console.log(`multi-valued numeric paths (cmp reads their [min,max] range, see CEILING in evaluate.ts): ${walk.multiValued.length ? walk.multiValued.join(", ") : "none"}`);
   console.log(`mixed (numbers kept as set members): ${walk.mixed.length ? walk.mixed.join(", ") : "none"}`);
   console.log(`dropped (above threshold): ${walk.dropped.length ? walk.dropped.map((d) => `${d.path} (${d.distinct})`).join(", ") : "none"}`);
 
-  const breaches = Object.entries(registry.budgets ?? {}).filter(([n, max]) => (sizes[n]?.gzipBytes ?? 0) > max);
+  // A BUDGET IS A CONTRACT BOTH WAYS: one naming no group is a typo, a group with a file and no budget is unbounded.
+  const budgets = registry.budgets ?? {};
+  const problems = [
+    ...Object.keys(budgets).filter((n) => !(n in sizes)).map((n) => `budget ${n} names no group (groups with a file: ${Object.keys(sizes).join(", ")})`),
+    ...Object.keys(sizes).filter((n) => !(n in budgets)).map((n) => `group ${n} has a file and no budget`),
+  ];
+  if (problems.length) {
+    for (const p of problems) console.error(`${p}. Nothing promoted.`);
+    process.exit(1);
+  }
+  const breaches = Object.entries(budgets).filter(([n, max]) => (sizes[n]?.gzipBytes ?? 0) > max);
   if (breaches.length) {
     for (const [n, max] of breaches) console.error(`budget breach: ${n} is ${sizes[n]!.gzipBytes} gzip bytes, budget ${max}. Nothing promoted.`);
     process.exit(1);
+  }
+
+  // `--check`: a registry per-path entry that names a path the build did not produce is a stale label.
+  if (process.argv.includes("--check")) {
+    const produced = new Set(Object.values(catalogue.groups).flatMap((g) => g.fields.map((f) => f.id)));
+    const stale = Object.keys(registry.fields).filter((p) => !produced.has(p));
+    if (stale.length) {
+      console.error(`stale registry entries (no such field in the build): ${stale.join(", ")}`);
+      process.exit(1);
+    }
+    console.log(`registry check: ${Object.keys(registry.fields).length} entries, none stale. Nothing promoted.`);
+    return;
   }
 
   const staging = join(searchRoot, ".staging");
@@ -144,19 +181,9 @@ function verify(): void {
   const dir = join(searchRoot, dirName);
   const catalogue = JSON.parse(readFileSync(join(dir, "catalogue.json"), "utf8")) as Catalogue;
   const columns = new Map<string, Column>();
-  const frontTypes = new Map<number, string[]>();
-  // tFront needs the shards (it has no payload): the client reads it from the same place the build did.
-  const rowOf = new Map(index.cards.map((c, i) => [c.name, i]));
-  for (const f of readdirSync(join(versionDir, "cards")).filter((n) => n.endsWith(".json"))) {
-    const shard = JSON.parse(readFileSync(join(versionDir, "cards", f), "utf8")) as Record<string, { card: { name: string }; tags: { characteristics?: { faces?: { types?: string[] }[] } } | null }>;
-    for (const e of Object.values(shard)) {
-      const row = rowOf.get(e.card.name);
-      const front = e.tags?.characteristics?.faces?.[0]?.types;
-      if (row !== undefined && front) frontTypes.set(row, front);
-    }
-  }
   const creature = catalogue.namedLists["creature"]!.values;
-  for (const c of coreColumns(frontTypes, [...creature])) columns.set(c.path, c);
+  // What a client has: name-index views, then the fetched groups. tFront comes only from the faces group.
+  for (const c of coreColumns(new Map(), [...creature])) if (c.path !== "tFront") columns.set(c.path, c);
   for (const [, g] of Object.entries(catalogue.groups)) {
     if (!g.file) continue;
     for (const c of decodeGroup(g, JSON.parse(readFileSync(join(dir, g.file), "utf8")) as GroupPayload)) columns.set(c.path, c);

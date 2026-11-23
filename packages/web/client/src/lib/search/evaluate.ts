@@ -32,7 +32,17 @@ function setColumn(ctx: EvalContext, id: string): SetColumn {
   const col = ctx.columns.get(id);
   if (!col) throw new CannotAnswer([`unknown field ${id}`]);
   if (col.kind !== "set") throw new CannotAnswer([`field ${id} is numeric, not a set`]);
-  return col;
+  return col.fallback ? materialise(ctx, col) : col;
+}
+
+/** A sparse column's effective values: the fallback's rows minus the overrides, plus the column's own rows. */
+function materialise(ctx: EvalContext, col: SetColumn): SetColumn {
+  const base = setColumn(ctx, col.fallback!);
+  const skip = new Set(col.overrides);
+  const values = new Map<string, number[]>();
+  for (const [v, rows] of base.values) values.set(v, rows.filter((r) => !skip.has(r)));
+  for (const [v, rows] of col.values) values.set(v, [...(values.get(v) ?? []), ...rows].sort((a, b) => a - b));
+  return { kind: "set", path: col.path, group: col.group, values };
 }
 
 function numberColumn(ctx: EvalContext, id: string): NumberColumn {
@@ -69,6 +79,9 @@ function run(node: Node, ctx: EvalContext): Uint8Array {
     const col = numberColumn(ctx, node.field);
     const lo = node.min ?? -Infinity;
     const hi = node.max ?? Infinity;
+    // CEILING: a card holding several values on one numeric path matches when its [min,max] range overlaps the
+    // bounds, not when every value does. Exact for the single-valued core views (mv/pow/tou); the build prints
+    // any walked numeric path where a card holds more than one value, so this announces itself when it matters.
     col.rows.forEach((r, i) => {
       if (col.max[i]! >= lo && col.min[i]! <= hi) out[r] = 1;
     });

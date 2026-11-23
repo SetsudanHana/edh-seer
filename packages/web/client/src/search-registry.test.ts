@@ -8,14 +8,14 @@ const registry = JSON.parse(readFileSync(join(import.meta.dirname, "../../script
 const rules = join(ROOT, "rules/MagicCompRules.txt");
 
 test("the registry owns only the read state in this slice: grammar and card.* are not walked", () => {
-  expect(Object.keys(registry.groups).sort()).toEqual(["read", "types"]);
+  expect(Object.keys(registry.groups).sort()).toEqual(["faces", "read", "types"]);
   expect(registry.groups["read"]).toEqual(["tags.clauseSource"]);
   expect(registry.groups["types"]).toEqual([]);
   expect(registry.deny).toEqual(expect.arrayContaining([...DEFAULT_DENY]));
 });
 
 test("budgets are gzip bytes for read and the catalogue", () => {
-  expect(registry.budgets).toEqual({ read: 50_000, catalogue: 100_000 });
+  expect(registry.budgets).toEqual({ read: 50_000, faces: 20_000, catalogue: 100_000 });
 });
 
 test("creature and land are named, with values supplied at build time", () => {

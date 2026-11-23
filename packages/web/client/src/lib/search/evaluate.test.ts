@@ -66,10 +66,11 @@ test("an unknown field, list, or a numeric field is cannot-answer, never empty o
 import { buildIdentityView, buildNumberViews } from "./type-views.js";
 
 const rows2 = [
-  { identity: ["W", "U"], mv: 3, pow: 2, tou: 2 },
-  { identity: [], mv: undefined, pow: 0, tou: 1 },
-  { identity: ["W", "U", "G"], mv: 5, pow: undefined, tou: undefined },
-  { identity: ["B"], mv: 1, pow: 4, tou: 4 },
+  { t: [0], identity: ["W", "U"], mv: 3, pow: 2, tou: 2 },
+  { t: [0], identity: [], mv: undefined, pow: 0, tou: 1 },
+  { t: [0], identity: ["W", "U", "G"], mv: 5, pow: undefined, tou: undefined },
+  { t: [0], identity: ["B"], mv: 1, pow: 4, tou: 4 },
+  { identity: [] }, // a thin row: no `t`, no `mv`
 ];
 const numCtx: EvalContext = {
   rowCount: rows2.length,
@@ -77,10 +78,11 @@ const numCtx: EvalContext = {
   namedLists: {},
 };
 
-test("number views: absent mv is 0 (as facets.ts), absent pow/tou stays absent", () => {
+test("number views: absent mv is 0 for a row with types, absent for a thin row; absent pow/tou stays absent", () => {
   const pow = numCtx.columns.get("pow")!;
   expect(pow).toMatchObject({ kind: "number", rows: [0, 1, 3], min: [2, 0, 4] });
   expect(numCtx.columns.get("mv")).toMatchObject({ rows: [0, 1, 2, 3], min: [3, 0, 5, 1] });
+  expect(evaluate({ field: "mv", op: "cmp", max: 0 }, numCtx)).toEqual({ ok: true, rows: [1] });
 });
 
 test("cmp: bounds are inclusive, and an absent power matches neither pow<=3 nor pow>=0", () => {
@@ -90,14 +92,28 @@ test("cmp: bounds are inclusive, and an absent power matches neither pow<=3 nor 
 });
 
 test("id within is fits-in (colourless fits everywhere), exactly is equality", () => {
-  expect(evaluate({ field: "id", op: "within", value: ["W", "U", "G"] }, numCtx)).toEqual({ ok: true, rows: [0, 1, 2] });
-  expect(evaluate({ field: "id", op: "within", value: ["W", "U"] }, numCtx)).toEqual({ ok: true, rows: [0, 1] });
+  expect(evaluate({ field: "id", op: "within", value: ["W", "U", "G"] }, numCtx)).toEqual({ ok: true, rows: [0, 1, 2, 4] });
+  expect(evaluate({ field: "id", op: "within", value: ["W", "U"] }, numCtx)).toEqual({ ok: true, rows: [0, 1, 4] });
   expect(evaluate({ field: "id", op: "exactly", value: ["U", "W"] }, numCtx)).toEqual({ ok: true, rows: [0] });
-  expect(evaluate({ field: "id", op: "exactly", value: [] }, numCtx)).toEqual({ ok: true, rows: [1] });
+  expect(evaluate({ field: "id", op: "exactly", value: [] }, numCtx)).toEqual({ ok: true, rows: [1, 4] });
 });
 
 test("cmp on a set field and has on a number field are cannot-answer", () => {
   expect(evaluate({ field: "id", op: "cmp", min: 1 }, numCtx)).toMatchObject({ ok: false });
   expect(evaluate({ field: "pow", op: "has", value: "2" }, numCtx)).toMatchObject({ ok: false });
   expect(evaluate({ field: "pow", op: "within", value: ["W"] }, numCtx)).toMatchObject({ ok: false });
+});
+
+test("a sparse column (tFront) answers from its own rows where it overrides, and from its fallback elsewhere", () => {
+  // rows 0..3 are creature, creature+land, land, creature; row 1 is a DFC whose FRONT is only a creature
+  const t: Column = { kind: "set", path: "t", group: "types", values: new Map([["creature", [0, 1, 3]], ["land", [1, 2]]]) };
+  const tFront: Column = {
+    kind: "set", path: "tFront", group: "faces", fallback: "t", overrides: [1],
+    values: new Map([["creature", [1]]]),
+  };
+  const c: EvalContext = { rowCount: 4, columns: new Map([["t", t], ["tFront", tFront]]), namedLists: {} };
+  expect(evaluate({ field: "tFront", op: "has", value: "land" }, c)).toEqual({ ok: true, rows: [2] });
+  expect(evaluate({ field: "tFront", op: "has", value: "creature" }, c)).toEqual({ ok: true, rows: [0, 1, 3] });
+  expect(evaluate({ field: "tFront", op: "count", min: 2 }, c)).toEqual({ ok: true, rows: [] });
+  expect(evaluate({ field: "tFront", op: "has", value: "land" }, { ...c, columns: new Map([["tFront", tFront]]) })).toMatchObject({ ok: false });
 });

@@ -10,6 +10,8 @@ export interface CatalogueField {
   label?: string;
   alias?: string;
   values?: { v: string; n: number }[];
+  /** Sparse set field: rows outside the payload's `overrides` answer as this field does. */
+  fallback?: string;
   min?: number;
   max?: number;
 }
@@ -32,7 +34,7 @@ export interface Catalogue {
 }
 
 export type FieldPayload =
-  | { kind: "set"; values: Record<string, string> }
+  | { kind: "set"; values: Record<string, string>; fallback?: string; overrides?: string }
   | { kind: "number"; rows: string; min: number[]; max: number[] };
 
 export interface GroupPayload {
@@ -54,7 +56,8 @@ function describe(col: Column, registry: SearchRegistry): CatalogueField {
   f.label = entry?.label ?? col.path;
   if (entry?.alias) f.alias = entry.alias;
   if (col.kind === "set") {
-    f.values = [...col.values].map(([v, rows]) => ({ v, n: rows.length }));
+    f.values = [...(col.totals ?? new Map([...col.values].map(([v, rows]) => [v, rows.length] as const)))].map(([v, n]) => ({ v, n }));
+    if (col.fallback) f.fallback = col.fallback;
   } else if (col.rows.length > 0) {
     f.min = Math.min(...col.min);
     f.max = Math.max(...col.max);
@@ -66,7 +69,7 @@ function payloadOf(col: Column): FieldPayload {
   if (col.kind === "set") {
     const values: Record<string, string> = {};
     for (const [v, rows] of col.values) values[v] = encodePostings(rows);
-    return { kind: "set", values };
+    return col.fallback ? { kind: "set", values, fallback: col.fallback, overrides: encodePostings(col.overrides ?? []) } : { kind: "set", values };
   }
   return { kind: "number", rows: encodePostings(col.rows), min: col.min, max: col.max };
 }
@@ -104,7 +107,12 @@ export function decodeGroup(group: CatalogueGroup, payload: GroupPayload): Colum
     if (p.kind === "set") {
       const values = new Map<string, number[]>();
       for (const [v, b64] of Object.entries(p.values)) values.set(v, decodePostings(b64));
-      out.push({ kind: "set", path: f.id, group: "", values });
+      const col: Column = { kind: "set", path: f.id, group: "", values };
+      if (p.fallback) {
+        col.fallback = p.fallback;
+        col.overrides = decodePostings(p.overrides ?? "");
+      }
+      out.push(col);
     } else {
       out.push({ kind: "number", path: f.id, group: "", rows: decodePostings(p.rows), min: p.min, max: p.max });
     }

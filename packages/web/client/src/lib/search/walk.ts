@@ -13,6 +13,11 @@ export interface SetColumn {
   group: string;
   /** value -> sorted unique rows */
   values: Map<string, number[]>;
+  /** A sparse column: `values` hold only the `overrides` rows; every other row answers as `fallback` does. */
+  fallback?: string;
+  overrides?: number[];
+  /** Effective per-value counts of a sparse column (what the catalogue reports). */
+  totals?: Map<string, number>;
 }
 
 export interface NumberColumn {
@@ -33,6 +38,8 @@ export interface WalkResult {
   dropped: { path: string; distinct: number }[];
   /** Paths holding both string and number leaves: numbers are kept as set members (stringified). */
   mixed: string[];
+  /** Numeric paths where some card holds more than one distinct value (`cmp` reads the [min,max] range). */
+  multiValued: string[];
 }
 
 /** Collapse array indices: leaves are collected under `a.b.c` whatever the nesting. */
@@ -56,6 +63,7 @@ interface Acc {
   numStrings: Map<string, Set<number>>;
   nums: Map<number, { min: number; max: number }>;
   hasNumber: boolean;
+  multi: boolean;
 }
 
 export function walkRecords(records: Iterable<WalkRecord>, registry: SearchRegistry): WalkResult {
@@ -88,9 +96,10 @@ export function walkRecords(records: Iterable<WalkRecord>, registry: SearchRegis
     leaves(rec.tags, "tags", visit);
     for (const [path, c] of perCard) {
       let acc = accs.get(path);
-      if (!acc) accs.set(path, (acc = { strings: new Map(), hasString: false, nums: new Map(), numStrings: new Map(), hasNumber: false }));
+      if (!acc) accs.set(path, (acc = { strings: new Map(), hasString: false, nums: new Map(), numStrings: new Map(), hasNumber: false, multi: false }));
       if (c.lo !== undefined) {
         acc.hasNumber = true;
+        if (c.lo !== c.hi) acc.multi = true;
         acc.nums.set(rec.row, { min: c.lo, max: c.hi! });
         for (const s of c.n!) {
           let rows = acc.numStrings.get(s);
@@ -112,6 +121,7 @@ export function walkRecords(records: Iterable<WalkRecord>, registry: SearchRegis
   const columns = new Map<string, Column>();
   const dropped: { path: string; distinct: number }[] = [];
   const mixed: string[] = [];
+  const multiValued: string[] = [];
   for (const [path, acc] of [...accs].sort((a, b) => (a[0] < b[0] ? -1 : 1))) {
     const group = wanted(path)!;
     if (acc.hasString) {
@@ -131,6 +141,7 @@ export function walkRecords(records: Iterable<WalkRecord>, registry: SearchRegis
       for (const v of [...acc.strings.keys()].sort()) values.set(v, [...acc.strings.get(v)!].sort((a, b) => a - b));
       columns.set(path, { kind: "set", path, group, values });
     } else if (acc.hasNumber) {
+      if (acc.multi) multiValued.push(path);
       const rows = [...acc.nums.keys()].sort((a, b) => a - b);
       columns.set(path, {
         kind: "number",
@@ -142,5 +153,5 @@ export function walkRecords(records: Iterable<WalkRecord>, registry: SearchRegis
       });
     }
   }
-  return { columns, dropped, mixed };
+  return { columns, dropped, mixed, multiValued };
 }

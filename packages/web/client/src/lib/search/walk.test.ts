@@ -120,3 +120,8 @@ test("external, internal and build-state fields never become fields, nested or n
   const { columns } = walkRecords([rec(0, tags, card)], registry({ groups: { read: ["tags"], card: ["card"] } }));
   expect([...columns.keys()].sort()).toEqual(["card.nested.ok", "tags.abilities.kind", "tags.clauseSource"]);
 });
+
+test("multiValued lists numeric paths where one card holds more than one distinct value", () => {
+  const recs = [rec(0, { amount: [2, 5], single: 1 }), rec(1, { amount: 3, single: 1 }), rec(2, { amount: [4, 4] })];
+  expect(walkRecords(recs, registry()).multiValued).toEqual(["tags.amount"]);
+});

@@ -58,6 +58,8 @@ export function buildTypeViews(index: TypeIndex, opts: TypeViewOptions): SetColu
 }
 
 export interface NumericRow {
+  /** Absent on a thin name-index row, which carries no characteristics at all. */
+  t?: number[];
   identity?: readonly string[];
   mv?: number;
   pow?: number;
@@ -76,11 +78,12 @@ function numberView(path: string, rows: readonly NumericRow[], pick: (r: Numeric
   return out;
 }
 
-/** mv, pow, tou from name-index rows. An absent `mv` is 0 (what the artifact means by omitting it);
- *  an absent pow/tou stays absent: 242 cards print `*`/`X` and the engine says nothing (facets.ts). */
+/** mv, pow, tou from name-index rows. An absent `mv` is 0 (what the artifact means by omitting it) ONLY on a row
+ *  that has `t`; a thin row (no `t`, no `mv`) says nothing, so its mv stays absent. An absent pow/tou stays
+ *  absent: 242 cards print `*`/`X` and the engine says nothing (facets.ts). */
 export function buildNumberViews(rows: readonly NumericRow[]): NumberColumn[] {
   return [
-    numberView("mv", rows, (r) => r.mv ?? 0),
+    numberView("mv", rows, (r) => (r.t === undefined ? r.mv : (r.mv ?? 0))),
     numberView("pow", rows, (r) => r.pow),
     numberView("tou", rows, (r) => r.tou),
   ];
@@ -93,4 +96,33 @@ export function buildIdentityView(rows: readonly NumericRow[]): SetColumn {
     for (const c of r.identity ?? []) add(m, c, i);
   });
   return { kind: "set", path: "id", group: "types", values: sortedMap(m) };
+}
+
+/** The front-face view as a SPARSE column over `t`: only rows whose front types differ from their `t` are stored.
+ *  Every other row answers as `t` does (name-index carries no face data, so this is what the client fetches). */
+export function sparseFront(full: SetColumn, base: SetColumn): SetColumn {
+  const key = (col: SetColumn) => {
+    const m = new Map<number, string[]>();
+    for (const [v, rows] of col.values) for (const r of rows) (m.get(r) ?? m.set(r, []).get(r)!).push(v);
+    return m;
+  };
+  const f = key(full);
+  const b = key(base);
+  const rows = new Set([...f.keys(), ...b.keys()]);
+  const overrides: number[] = [];
+  for (const r of [...rows].sort((x, y) => x - y)) {
+    const a = [...(f.get(r) ?? [])].sort().join(",");
+    const c = [...(b.get(r) ?? [])].sort().join(",");
+    if (a !== c) overrides.push(r);
+  }
+  const own = new Set(overrides);
+  const values = new Map<string, number[]>();
+  for (const [v, rs] of full.values) {
+    const kept = rs.filter((r) => own.has(r));
+    if (kept.length) values.set(v, kept);
+  }
+  return {
+    kind: "set", path: full.path, group: "faces", fallback: base.path, overrides, values,
+    totals: new Map([...full.values].map(([v, rs]) => [v, rs.length])),
+  };
 }
