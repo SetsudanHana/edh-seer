@@ -400,7 +400,6 @@ const ACTOR_VERBS: [RegExp, string, boolean][] = [
 
 /** Events with no subject at all. */
 const SUBJECTLESS: [RegExp, string, Control][] = [
-  [/^day becomes night or night becomes day$/, "day-night", "any"],
   [/^the ring tempts you$/i, "ring-tempts", "you"],
   [/^players finish voting$/, "vote", "any"],
   [/^chaos ensues$/, "other", "any"],
@@ -729,6 +728,8 @@ function bodyPlain(text: string): TriggerReading | TriggerReading[] | null {
   m = /^(?:when|whenever) (.+)$/.exec(text);
   if (!m) return null;
   const rest = m[1]!;
+  // CR 731.1: "day becomes night or night becomes day" is TWO events (#1361), as the stored answer has it: both read `day-night`, told apart by the clause record's subject text (clause-record.ts).
+  if (rest === "day becomes night or night becomes day") return [{ event: "day-night", control: "any" }, { event: "day-night", control: "any" }];
   for (const [re, event, control] of SUBJECTLESS) if (re.test(rest)) return { event, control };
   if (STATE.test(rest)) return { event: "state", control: "you", narrowing: rest };
   const along = ALONG_WITH.exec(rest);

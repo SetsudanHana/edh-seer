@@ -135,7 +135,7 @@ test("a back-reference is the object before it, not its class", () => {
 test("named-only events, state triggers and the reflexive", () => {
   expect(one("When you do")).toEqual({ event: "reflexive" });
   expect(one("When you control no Islands")).toMatchObject({ event: "state", narrowing: "you control no Islands" });
-  expect(one("Whenever day becomes night or night becomes day").event).toBe("day-night");
+  expect(events("Whenever day becomes night or night becomes day")).toEqual(["day-night", "day-night"]);
   expect(one("When you unlock this door")).toMatchObject({ event: "unlocked", subject: { self: true } });
 });
 

@@ -489,7 +489,12 @@ export function grammarClauseRecords(card: CardText): GrammarRecords {
       // ("Do You Like Squirrels? — ") or a comma in the card's name ("Wernog, Rider's Chaplain") hides it.
       // Ask it again about the text with the label cut and the name as "~".
       const multi = c.multiTrigger || (reads.length > 1 && segment(withoutAbilityWord(selfAsTilde(c.text, card.name, card.typeLine)), [], "Creature")[0]?.multiTrigger === true);
-      if (multi) for (const r of reads.slice(1)) if (r.event !== first.event) overflow.push({ id: nextId++, abilityType: type, trigger: { event: r.event, subject: second ? triggerSubjectText(`Whenever ${second}`) : record.trigger.subject, control: r.control ?? record.trigger.control ?? "any" }, actions: [] });
+      // THE DAY/NIGHT TWIN (#1361, CR 731.1): "day becomes night or night becomes day" is two triggers of ONE event, so the event test below would drop the second. The store words them by their halves.
+      const dayNight = /^when(?:ever)? (day becomes night) or (night becomes day)$/i.exec(preamble!.trim());
+      if (dayNight && reads.length === 2) {
+        record.trigger.subject = dayNight[1]!.toLowerCase();
+        overflow.push({ id: nextId++, abilityType: type, trigger: { event: first.event, subject: dayNight[2]!.toLowerCase(), control: record.trigger.control ?? "any" }, actions: [] });
+      } else if (multi) for (const r of reads.slice(1)) if (r.event !== first.event) overflow.push({ id: nextId++, abilityType: type, trigger: { event: r.event, subject: second ? triggerSubjectText(`Whenever ${second}`) : record.trigger.subject, control: r.control ?? record.trigger.control ?? "any" }, actions: [] });
     }
     let effect = labelled ? effectText(labelled.effect, card.name, card.typeLine) : effectText(c.text, card.name, card.typeLine);
     // "AFTER YOU ROLL A DIE, you may ...": no when/whenever/at, so no triggered ability -- it modifies
