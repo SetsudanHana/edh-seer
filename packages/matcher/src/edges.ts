@@ -765,6 +765,29 @@ function keyedOn(subject: SubjectFilter, found: SubjectFilter): SubjectFilter {
   return narrowed;
 }
 
+/** THE BRANCH OF AN `anyOf` TRIGGER THE PRODUCER MEETS, for the REASON'S TAG (#1764). Canoptek Spyder hears "another nontoken artifact creature or Vehicle": `themeSubjectKey` keys an `anyOf` by its FIRST
+ *  branch, so a Vehicle's own entering (Esika's Chariot) was tagged `enters:creature`, though the sentence ("When Esika's Chariot enters") is about the Vehicle branch. The key is taken from the first
+ *  branch the producer's emit satisfies, tested on the TYPE LINE alone (as `producerCanBeHeard` does): the producer's own characteristics for its own event, else the emit's type and subtype.
+ *  CEILING: when no branch is identifiable (an untyped emit meets every branch, or none is met), or the first branch is the one met, the subject is returned as it was and keys by its first branch, as before. */
+function keyedOnBranch(heard: SubjectFilter, emit: SubjectFilter, p: DeckCard, h: Hierarchy): SubjectFilter {
+  const { anyOf, ...shared } = heard;
+  if (anyOf === undefined || anyOf.length < 2) return heard;
+  const line = (x: Partial<SubjectFilter>): SubjectFilter => ({
+    control: "any", token: null,
+    ...(x.type !== undefined ? { type: x.type } : {}), ...(x.subtype !== undefined ? { subtype: x.subtype } : {}),
+    ...(x.notType !== undefined ? { notType: x.notType } : {}), ...(x.allTypes !== undefined ? { allTypes: x.allTypes } : {}),
+  });
+  let mine: SubjectFilter;
+  if (emit.self === true) { if (!p.tags) return heard; mine = characteristicsSubject(p.tags, p.card.name); }
+  else if (list(emit.type).length > 0 || list(emit.subtype).length > 0) mine = line(emit);
+  else return heard;
+  const hit = anyOf.findIndex((b) => subjectMatches(mine, line({ ...shared, ...b }), h));
+  if (hit <= 0) return heard;
+  // The branch must name a class of its own: one that keys as "any" keeps the first branch's key.
+  const branch = { ...shared, ...anyOf[hit]! } as SubjectFilter;
+  return themeSubjectKey(branch) === "any" ? heard : branch;
+}
+
 /** THE BRANCH OF AN `anyOf` THE CONSUMER ASKED FOR, for the sentence only (#750): Bloodstained Mire's
  *  "a Swamp or Mountain" reaching Valakut is the Mountain. When the consumer names none of them
  *  ("a land"), every branch stays and the noun names them all. `keyedOn` is not widened instead: it
@@ -2708,6 +2731,7 @@ function eventEdges({ p, c, h, opts, pEvents, reasons, replacementOnly, cAbiliti
   }
   // ABILITY ROUTES: which of the producer's abilities supplied each event (spec 2026-09-25).
   const origins = producerEventOrigins(p.tags);
+  const rekeyed: { at: number; was: string }[] = [];
   const realAbilities = c.tags.abilities.length;
   for (const e0 of pEvents) {
     for (const [ai, a] of cAbilities.entries()) {
@@ -2898,7 +2922,9 @@ function eventEdges({ p, c, h, opts, pEvents, reasons, replacementOnly, cAbiliti
           && p.tags && !canCarryCounters(p.tags)) continue;
         // Keyed on the type the producer's event HAS (issue #507): "an instant or sorcery spell" cast
         // as Mizzix's Mastery is `cast:sorcery`, not the first of the list.
-        const key = eventTagKey({ ...t, subject: keyedOn(t.subject, e.subject) }, c.tags?.characteristics?.types);
+        const anyOfSeen = (t.subject.anyOf?.length ?? 0) > 1;
+        const firstKey = eventTagKey({ ...t, subject: keyedOn(t.subject, e.subject) }, c.tags?.characteristics?.types);
+        const key = eventTagKey({ ...t, subject: keyedOnBranch(keyedOn(t.subject, e.subject), e.subject, p, h) }, c.tags?.characteristics?.types);
         // A PROLIFERATE DEMAND NEEDS ITS OWN PROSE. The generic grammar below would render this as
         // "When <producer> gets a counter, <consumer> triggers" — the producer does not get the
         // counter, it MAKES one, and a sorcery that proliferates never triggers. See
@@ -2918,6 +2944,7 @@ function eventEdges({ p, c, h, opts, pEvents, reasons, replacementOnly, cAbiliti
         const has = p.tags?.characteristics.keywords ?? [];
         const keywords = toProducer ? withoutNoopFlash(a.grants, p.tags)?.filter((k) => !(REDUNDANT_KEYWORDS.has(k) && has.includes(k))) : a.grants;
         if (a.grants?.length && !keywords?.length) continue;
+        const branchRekey = reasons.length;
         reasons.push({
           tag: eventReasonTag(key, t.verb, a),
           ...conditionalMark(e0),
@@ -3029,8 +3056,18 @@ function eventEdges({ p, c, h, opts, pEvents, reasons, replacementOnly, cAbiliti
           producer: p.card.name,
           impliedProducer: e.implied || undefined,
         });
+        if (key !== firstKey || anyOfSeen) rekeyed.push({ at: branchRekey, was: eventReasonTag(firstKey, t.verb, a) });
       }
     }
+  }
+  // ONE CLAIM STAYS ONE ROW (#1764): two emits meeting DIFFERENT branches of one anyOf trigger (Mizzix's Mastery's sorcery and its instant-or-sorcery cast) used to share the first branch's tag and
+  // merge in `dedupeReasons`. Rows that differ only by the branch-derived tag take the first such row's tag, so they merge as before. A row that differs in anything else stays.
+  const firstOf = new Map<string, string>();
+  for (const { at, was } of rekeyed) {
+    const claim = JSON.stringify({ ...reasons[at]!, tag: was, repeatability: undefined, impliedProducer: undefined, producerAbility: undefined, consumerAbility: undefined, magnitude: undefined, millScope: undefined, millOptional: undefined });
+    const keep = firstOf.get(claim);
+    if (keep === undefined) firstOf.set(claim, reasons[at]!.tag);
+    else reasons[at] = { ...reasons[at]!, tag: keep };
   }
 }
 

@@ -5526,7 +5526,8 @@ test("a cast consumer whose classes sit in anyOf branches narrows, and is fed by
     return c;
   };
   expect(directedReasons(spell("Counterspell", ["instant"]), alania, H).map((r) => r.tag)).toContain("cast:instant");
-  expect(directedReasons(spell("Mizzix's Mastery", ["sorcery"]), alania, H).map((r) => r.tag)).toContain("cast:instant");
+  // Keyed by the branch the producer meets (#1764): a sorcery is the second branch.
+  expect(directedReasons(spell("Mizzix's Mastery", ["sorcery"]), alania, H).map((r) => r.tag)).toContain("cast:sorcery");
   expect(directedReasons(spell("Otter", ["creature"], ["otter"]), alania, H).some((r) => r.tag.startsWith("cast:"))).toBe(true);
   expect(directedReasons(spell("Grizzly Bears", ["creature"], ["bear"]), alania, H).some((r) => r.tag.startsWith("cast:"))).toBe(false);
 });
