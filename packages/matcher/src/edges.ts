@@ -2016,7 +2016,27 @@ function nounSide(e: GameEvent, triggerVerb: string): SubjectFilter {
   return (triggerVerb === "non-combat-damage" || triggerVerb === "combat-damage" || triggerVerb === "lose-life") && e.dealer !== undefined ? e.dealer : e.subject;
 }
 
+/** THE TYPE THE REASON'S TAG KEYS ON (#1235). `enters:creature` claims a CREATURE entering, so the sentence may name the producer only when
+ *  the producer can be that creature. The emit's own type cannot say it: "put a permanent card onto the battlefield" (Mole Module, a Vehicle; Karn
+ *  Liberated) and a list the trigger heard two members of ("artifact or creature") both let any artifact "be" the creature. The key is the one
+ *  `eventTagKey` gives the trigger keyed on the emit, so the tag and the noun agree. A trigger with a branch or a subtype names more than a type
+ *  and is left to the paths below, as is the producer's own entering (`self`: the producer is that object, whatever it is). */
+const HEARD_KEY_TYPES: ReadonlySet<string> = new Set(["creature", "artifact", "enchantment", "planeswalker", "battle", "land"]);
+function refusedHeardKeyType(p: DeckCard, emit: SubjectFilter, heard: SubjectFilter, h: Hierarchy): string | undefined {
+  if (!p.tags || emit.self === true || (heard.anyOf?.length ?? 0) > 0 || list(heard.subtype).length > 0) return undefined;
+  const key = themeSubjectKey(keyedOn(heard, emit));
+  if (!HEARD_KEY_TYPES.has(key)) return undefined;
+  return subjectMatches(characteristicsSubject(p.tags, p.card.name), { control: "any", token: null, type: key as SubjectFilter["type"] }, h) ? undefined : key;
+}
+
+function refusedKeyNoun(p: DeckCard, emit: SubjectFilter, heard: SubjectFilter, h: Hierarchy): string | undefined {
+  // An emit that names a subtype ("a Treasure") or branches ("a creature or Spacecraft") is already more specific than the heard type, and keeps its own noun.
+  const key = list(emit.subtype).length > 0 || (emit.anyOf?.length ?? 0) > 0 || emit.token === true ? undefined : refusedHeardKeyType(p, emit, heard, h);
+  return key === undefined ? undefined : emitSubjectNoun({ control: emit.control, type: key as SubjectFilter["type"] });
+}
+
 function producerCanBeHeard(p: DeckCard, emit: SubjectFilter, heard: SubjectFilter, h: Hierarchy): boolean {
+  if (refusedHeardKeyType(p, emit, heard, h) !== undefined) return false;
   // A CONJUNCTION OF TYPES the trigger demands ("this creature or another ARTIFACT CREATURE dies", `allTypes`) is a fact about the object
   // that dies, and the emit's umbrella type ("target permanent you own") cannot say it: a plain Artifact is never the artifact creature (#1295).
   if (p.tags && (heard.allTypes?.length ?? 0) > 0
@@ -2980,7 +3000,10 @@ function eventEdges({ p, c, h, opts, pEvents, reasons, replacementOnly, cAbiliti
               // "could be" the Kitten and a Constellation payoff read "When Displacer Kitten enters"
               // for an ENCHANTMENT entering. See `producerCanBeHeard`.
               : producerCanBeHeard(p, nounSide(e, t.verb), t.subject, h) && nounSide(e, t.verb).player !== true && !(t.subject.notCommander === true && p.tags?.characteristics.commander === true)
-                ? undefined : emitSubjectNoun(nounSubject(nounSide(e, t.verb), t.subject))),
+                ? undefined
+                // THE TAG CLAIMS THE HEARD TYPE (#1235): when the producer could not be it, the noun is that type, not the emit's wider class
+                // ("a permanent" for Mole Module's put, where the tag is enters:creature).
+                : refusedKeyNoun(p, nounSide(e, t.verb), t.subject, h) ?? emitSubjectNoun(nounSubject(nounSide(e, t.verb), t.subject))),
           }),
           effectKind: a.effect.kind,
           repeatability: a.delayedBy === "chapter" || a.delayedBy === "spell" ? "oneshot"
