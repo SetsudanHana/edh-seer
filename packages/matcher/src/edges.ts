@@ -1309,6 +1309,9 @@ const REMOVAL_VERBS: ReadonlySet<string> = new Set(["dies", "leaves", "exiled", 
  *  counted as that demand's supply; the evidence creature itself usually supplies it, so no hole is reported for it in practice. */
 export function eventMatches(producer: GameEvent, consumer: GameEvent, h: Hierarchy, coTypes?: readonly string[]): boolean {
   if (!verbSatisfies(producer, consumer)) return false;
+  // "A SPELL OR ABILITY AN OPPONENT CONTROLS CAUSES ..." (Sacred Ground, #1277, `Trigger.cause`): every producer the deck supplies is YOURS (your Strip Mine, a fetchland's sacrifice, your own Armageddon), and none is the opponent's spell or ability the
+  // trigger waits on. A missing edge, never a wrong one. CEILING: an opponent's own Armageddon or Wasteland is no card of the deck, so a deck-mode analysis pairs nothing with such a trigger; an opponent-held token's event (`opponentHeld`) is refused with the rest.
+  if (consumer.causeIs === "opp") return false;
   if (castEntersOpponentsCard(producer, consumer)) {
     const { zone: _stack, ...onStack } = consumer.subject;
     consumer = { ...consumer, subject: onStack };
@@ -2716,7 +2719,7 @@ function eventEdges({ p, c, h, opts, pEvents, reasons, replacementOnly, cAbiliti
       for (const rawVerb of a.trigger.verbs) {
         // YOUR OWN ACTION INTO A PUNISHER OF "THAT PLAYER" IS A COST, NOT A PAYOFF (#1591): see `punishesItsActor`.
         if (e0.subject.control === "you" && punishesItsActor(a, rawVerb, c.card.oracleText)) continue;
-        const t = hostDiesAsYours(normalizeZoneEvent({ verb: rawVerb, subject: a.trigger.subject, ...(a.trigger.amount ? { amountIs: a.trigger.amount } : {}), ...(a.trigger.victim ? { victimIs: a.trigger.victim } : {}) }), a, c.tags.characteristics, cAbilitiesRaw ?? c.tags.abilities, e0, pEvents, p.card.oracleText ?? "", h, c.card.oracleText ?? "");
+        const t = hostDiesAsYours(normalizeZoneEvent({ verb: rawVerb, subject: a.trigger.subject, ...(a.trigger.amount ? { amountIs: a.trigger.amount } : {}), ...(a.trigger.victim ? { victimIs: a.trigger.victim } : {}), ...(a.trigger.cause ? { causeIs: a.trigger.cause } : {}) }), a, c.tags.characteristics, cAbilitiesRaw ?? c.tags.abilities, e0, pEvents, p.card.oracleText ?? "", h, c.card.oracleText ?? "");
         // `e` is `e0` when it matches as authored, or an untyped land put resolved against the
         // deck's lands to the subtype this trigger names (`landPutFor`); null is no match.
         const viaHost = auraHostLeaves(c.tags.characteristics, a, e0, t, h, cAbilitiesRaw ?? c.tags.abilities, pEvents, p.card.oracleText ?? "");

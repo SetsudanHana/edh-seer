@@ -13288,7 +13288,6 @@
 "Sachi, Daughter of Seshiro": ["role:ramp"],
 "Sacred Fire": ["answer:creature","answer:planeswalker","role:burn","role:targetedRemoval","wincon:burn"],
 "Sacred Foundry": ["role:lands"],
-"Sacred Ground": ["role:ramp"],
 "Sacred Guide": ["role:handFill"],
 "Sacred Mesa": ["wincon:go-wide"],
 "Sacred Peaks": ["role:lands"],

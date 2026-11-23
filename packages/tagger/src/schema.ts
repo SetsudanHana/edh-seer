@@ -975,6 +975,8 @@ export interface GameEvent {
   amountIs?: { op: "eq" | "gte"; value: number };
   /** The consumer's trigger requires the damage to be dealt to a creature (`Ability.trigger.victim`). A demand only: never on an emit. */
   victimIs?: DamageVictim;
+  /** The consumer's trigger names an OPPONENT's spell or ability as the cause (`Ability.trigger.cause`, #1277). A demand only: never on an emit. Every producer in a deck is yours, so none meets it (`eventMatches`). */
+  causeIs?: "opp";
 }
 
 /** The closed set of recognized effect.kind labels. Extraction output is normalized to this
@@ -1535,6 +1537,10 @@ export interface Ability {
      *  trigger reads like "whenever <subject> is sacrificed" -- but it follows only the sacrifice THIS card's own resolving ability just made, never another card's outlet. The matcher
      *  forms no event demand from it (the card pays its own cost); its emits still supply. Written on a `sacrifice` trigger only; only `true` is written. */
     reflexive?: true;
+    /** THE EVENT IS CAUSED BY AN OPPONENT'S SPELL OR ABILITY (#1277, owner 2026-11-23): Sacred Ground's "Whenever a spell or ability an opponent controls causes a land to be put into your graveyard from the battlefield". Only `"opp"`, only on a `dies` trigger of
+     *  a permanent YOU control, read off that printed phrase. The matcher hears no producer that you control (your own Strip Mine, a fetchland's sacrifice), and `ramp.landPut` reads it: a land that returns only after an opponent took it is retention, not a land drop.
+     *  The discard family ("causes you to discard this card") is not read: those triggers stay refused. */
+    cause?: "opp";
   };
   /** THIS ABILITY CLAIMS NO CARDS, AND IS STILL AN ABILITY OF ITS KIND (#1264). One stored field for the two
    *  classes derive can decide from the card alone; the matcher reads it in one place (`claimsNothing`,
