@@ -1,0 +1,905 @@
+{
+ "Dune Drifter": {
+  "source": {
+   "_id": "b32649cb-bf5c-45fa-86f0-8bf4e8555f06",
+   "name": "Dune Drifter",
+   "typeLine": "Artifact — Vehicle",
+   "oracleText": "When this Vehicle enters, return target artifact or creature card with mana value X or less from your graveyard to the battlefield.\nCrew 2 (Tap any number of creatures you control with total power 2 or more: This Vehicle becomes an artifact creature until end of turn.)",
+   "keywords": [
+    "Crew"
+   ],
+   "colors": [
+    "B",
+    "W"
+   ],
+   "manaValue": 2,
+   "colorIdentity": [
+    "B",
+    "W"
+   ],
+   "power": "3",
+   "toughness": "3",
+   "tags": {
+    "produces": [],
+    "cares": [
+     "graveyard"
+    ]
+   },
+   "manaCost": "{X}{W}{B}",
+   "layout": "normal",
+   "releasedAt": "2025-02-14",
+   "gameChanger": false,
+   "reserved": false
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "this",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "return",
+      "object": "target artifact or creature card with mana value X or less",
+      "fromZone": "graveyard",
+      "toZone": "battlefield",
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Crew 2",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   }
+  ],
+  "segmentHash": "4946cc9e18f947b494ceb5ab69567b7bca6134e13f20630be1add09dffe7e5a1"
+ },
+ "Mole Module": {
+  "source": {
+   "_id": "ba64d3a9-08b4-4b12-b011-e41b00815277",
+   "name": "Mole Module",
+   "typeLine": "Artifact — Vehicle",
+   "oracleText": "Menace\nWhenever this Vehicle deals combat damage to a player, mill four cards. You may put a permanent card from among them onto the battlefield.\nCrew 2",
+   "keywords": [
+    "Crew",
+    "Menace",
+    "Mill"
+   ],
+   "colors": [],
+   "manaValue": 5,
+   "colorIdentity": [],
+   "power": "6",
+   "toughness": "6",
+   "tags": {
+    "produces": [
+     "graveyard"
+    ],
+    "cares": []
+   },
+   "manaCost": "{5}",
+   "layout": "normal",
+   "releasedAt": "2026-03-06",
+   "gameChanger": false,
+   "reserved": false
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Menace",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "damage-dealt",
+     "subject": "this Vehicle",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "mill",
+      "object": "four cards",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "4",
+      "optional": false
+     },
+     {
+      "verb": "put",
+      "object": "a permanent card from among them",
+      "fromZone": "graveyard",
+      "toZone": "battlefield",
+      "amount": null,
+      "optional": true
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Crew 2",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   }
+  ],
+  "segmentHash": "b5a7fd881dda8d83e624fa8c0e2f3f9811caa2c9efa80cc0718278c0a7864fe2"
+ },
+ "The Mind Stone": {
+  "source": {
+   "_id": "b175e826-09e8-4fae-9f2e-b902f95b282d",
+   "name": "The Mind Stone",
+   "typeLine": "Legendary Artifact — Infinity Stone",
+   "oracleText": "Indestructible\n{T}: Add {W}.\n{5}{W}, {T}: Harness The Mind Stone. (Once harnessed, its ∞ ability is active.)\n∞ — At the beginning of your end step, exile up to one other target nonland permanent you control, then return that card to the battlefield under its owner's control.",
+   "keywords": [
+    "Indestructible"
+   ],
+   "colors": [
+    "W"
+   ],
+   "manaValue": 2,
+   "colorIdentity": [
+    "W"
+   ],
+   "power": null,
+   "toughness": null,
+   "tags": {
+    "produces": [
+     "blink",
+     "mana"
+    ],
+    "cares": [
+     "nontoken-etb"
+    ]
+   },
+   "manaCost": "{1}{W}",
+   "layout": "normal",
+   "releasedAt": "2026-06-26",
+   "gameChanger": false,
+   "reserved": false
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Indestructible",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "add-mana",
+      "object": "{W}",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "harness",
+      "object": "The Mind Stone",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 4,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "end-step",
+     "subject": "you",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "exile",
+      "object": "up to one other target nonland permanent you control",
+      "fromZone": "battlefield",
+      "toZone": "exile",
+      "amount": null,
+      "optional": true
+     },
+     {
+      "verb": "return",
+      "object": "that card",
+      "fromZone": "exile",
+      "toZone": "battlefield",
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "811792ecfb681c97200e07a3faebd4dda6d3590de17a36c7c73eb4a8a9438f61"
+ },
+ "Karn Liberated": {
+  "source": {
+   "_id": "0ca233f4-1b7f-4807-ab6e-2b1f5439b3db",
+   "name": "Karn Liberated",
+   "typeLine": "Legendary Planeswalker — Karn",
+   "oracleText": "+4: Target player exiles a card from their hand.\n−3: Exile target permanent.\n−14: Restart the game, leaving in exile all non-Aura permanent cards exiled with Karn. Then put those cards onto the battlefield under your control.",
+   "keywords": [],
+   "colors": [],
+   "manaValue": 7,
+   "colorIdentity": [],
+   "power": null,
+   "toughness": null,
+   "tags": {
+    "produces": [
+     "removal"
+    ],
+    "cares": [
+     "ramp"
+    ]
+   },
+   "manaCost": "{7}",
+   "layout": "normal",
+   "releasedAt": "2020-08-07",
+   "gameChanger": false,
+   "reserved": false
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "exile",
+      "object": "a card from target player's hand",
+      "fromZone": "hand",
+      "toZone": "exile",
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "exile",
+      "object": "target permanent",
+      "fromZone": "battlefield",
+      "toZone": "exile",
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "other",
+      "object": "Restart the game, leaving in exile all non-Aura permanent cards exiled with Karn",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "put",
+      "object": "those cards",
+      "fromZone": "exile",
+      "toZone": "battlefield",
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "60a7fdd3272a0748037c1256e5375022624686fc9ab656bd6f43fb985f0e3cf1"
+ },
+ "Esika's Chariot": {
+  "source": {
+   "_id": "8e7b079d-9ede-421c-bd2b-f9a5126a8e6f",
+   "name": "Esika's Chariot",
+   "typeLine": "Legendary Artifact — Vehicle",
+   "oracleText": "When Esika's Chariot enters, create two 2/2 green Cat creature tokens.\nWhenever Esika's Chariot attacks, create a token that's a copy of target token you control.\nCrew 4",
+   "keywords": [
+    "Crew"
+   ],
+   "colors": [
+    "G"
+   ],
+   "manaValue": 4,
+   "colorIdentity": [
+    "G"
+   ],
+   "power": "4",
+   "toughness": "4",
+   "tags": {
+    "produces": [
+     "token",
+     "creature-etb",
+     "sacrifice-fodder",
+     "tribe:cat",
+     "attack-trigger"
+    ],
+    "cares": []
+   },
+   "manaCost": "{3}{G}",
+   "layout": "normal",
+   "releasedAt": "2021-02-05",
+   "gameChanger": false,
+   "reserved": false,
+   "allParts": [
+    {
+     "component": "token",
+     "name": "Cat",
+     "typeLine": "Token Creature — Cat",
+     "printingId": "2e07758f-0d1c-47d9-ba5a-43bc2a7423cd"
+    },
+    {
+     "component": "token",
+     "name": "Copy",
+     "typeLine": "Token",
+     "printingId": "2115c141-f2fb-4bfd-a8b5-2943bad9f418"
+    },
+    {
+     "component": "combo_piece",
+     "name": "Esika's Chariot",
+     "typeLine": "Legendary Artifact — Vehicle",
+     "printingId": "57a7d7e5-428d-4f42-8f13-9908fc65dcb4"
+    }
+   ]
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "this",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "create",
+      "object": "two 2/2 green Cat creature tokens",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "2",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "attacks",
+     "subject": "this",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "create",
+      "object": "a token that's a copy of target token you control",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Crew 4",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   }
+  ],
+  "segmentHash": "1952849dadfda6f873ee654fd604e052e3d57801df76bfd75f5466a6b9d2bec8"
+ },
+ "Solemn Simulacrum": {
+  "source": {
+   "_id": "00c0543c-2a1f-4425-8283-4062d74a1637",
+   "name": "Solemn Simulacrum",
+   "typeLine": "Artifact Creature — Golem",
+   "oracleText": "When this creature enters, you may search your library for a basic land card, put that card onto the battlefield tapped, then shuffle.\nWhen this creature dies, you may draw a card.",
+   "keywords": [],
+   "colors": [],
+   "manaValue": 4,
+   "colorIdentity": [],
+   "power": "2",
+   "toughness": "2",
+   "tags": {
+    "produces": [
+     "ramp",
+     "land-etb",
+     "mana",
+     "card-draw",
+     "tribe:golem",
+     "tribe-nontoken:golem"
+    ],
+    "cares": [
+     "creature-death",
+     "sacrifice-event"
+    ]
+   },
+   "manaCost": "{4}",
+   "layout": "normal",
+   "releasedAt": "2026-06-26",
+   "gameChanger": false,
+   "reserved": false
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "this creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "search",
+      "object": "your library for a basic land card",
+      "fromZone": "library",
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     },
+     {
+      "verb": "put",
+      "object": "that card",
+      "fromZone": "library",
+      "toZone": "battlefield",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "tap",
+      "object": "that card",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "shuffle",
+      "object": "your library",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "dies",
+     "subject": "this creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "draw",
+      "object": "a card",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": true
+     }
+    ]
+   }
+  ],
+  "segmentHash": "82cfa3a74e06c11961b4c6f34d6ec700d3390c5ab02bf251dacb05d36f4d0088"
+ },
+ "Soul Warden": {
+  "source": {
+   "_id": "f3fad295-1af2-4ecc-8546-b121ad6be27b",
+   "name": "Soul Warden",
+   "typeLine": "Creature — Human Cleric",
+   "oracleText": "Whenever another creature enters, you gain 1 life.",
+   "keywords": [],
+   "colors": [
+    "W"
+   ],
+   "manaValue": 1,
+   "colorIdentity": [
+    "W"
+   ],
+   "power": "1",
+   "toughness": "1",
+   "tags": {
+    "produces": [
+     "lifegain",
+     "tribe:human",
+     "tribe-nontoken:human",
+     "tribe:cleric",
+     "tribe-nontoken:cleric"
+    ],
+    "cares": [
+     "creature-etb"
+    ]
+   },
+   "manaCost": "{W}",
+   "layout": "normal",
+   "releasedAt": "2017-03-17",
+   "gameChanger": false,
+   "reserved": false
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "another creature",
+     "control": "any"
+    },
+    "actions": [
+     {
+      "verb": "gain-life",
+      "object": "you",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "c6dd2e9a2507cc07b1ff22e1f0d3ddc65160ac0a577e2aaa2cfd144e174c4f70"
+ },
+ "Weftstalker Ardent": {
+  "source": {
+   "_id": "926d52a5-4db1-46ce-9567-17c28bf56ae7",
+   "name": "Weftstalker Ardent",
+   "typeLine": "Creature — Drix Artificer",
+   "oracleText": "Whenever another creature or artifact you control enters, this creature deals 1 damage to each opponent.\nWarp {R} (You may cast this card from your hand for its warp cost. Exile this creature at the beginning of the next end step, then you may cast it from exile on a later turn.)",
+   "keywords": [
+    "Warp"
+   ],
+   "colors": [
+    "R"
+   ],
+   "manaValue": 3,
+   "colorIdentity": [
+    "R"
+   ],
+   "power": "2",
+   "toughness": "3",
+   "tags": {
+    "produces": [
+     "tribe:drix",
+     "tribe-nontoken:drix",
+     "tribe:artificer",
+     "tribe-nontoken:artificer"
+    ],
+    "cares": []
+   },
+   "manaCost": "{2}{R}",
+   "layout": "normal",
+   "releasedAt": "2025-08-01",
+   "gameChanger": false,
+   "reserved": false
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "another creature or artifact you control",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "deal-damage",
+      "object": "each opponent",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Warp {R}",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   }
+  ],
+  "segmentHash": "3c4f52d452eead9f03f8ff3a3d00973418fa7671e9b627f5cebc783a4f48f6fa"
+ },
+ "Reckless Fireweaver": {
+  "source": {
+   "_id": "180e1a7e-890d-477c-80a5-da8a5f2857b3",
+   "name": "Reckless Fireweaver",
+   "typeLine": "Creature — Human Artificer",
+   "oracleText": "Whenever an artifact you control enters, this creature deals 1 damage to each opponent.",
+   "keywords": [],
+   "colors": [
+    "R"
+   ],
+   "manaValue": 2,
+   "colorIdentity": [
+    "R"
+   ],
+   "power": "1",
+   "toughness": "3",
+   "tags": {
+    "produces": [
+     "tribe:human",
+     "tribe-nontoken:human",
+     "tribe:artificer",
+     "tribe-nontoken:artificer"
+    ],
+    "cares": []
+   },
+   "manaCost": "{1}{R}",
+   "layout": "normal",
+   "releasedAt": "2016-09-30",
+   "gameChanger": false,
+   "reserved": false
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "an artifact you control",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "deal-damage",
+      "object": "each opponent",
+      "amount": "1",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   }
+  ],
+  "segmentHash": "00d1df4a146fe7a0083618bc3329857872667b06db880f9d747bc0a118908271"
+ },
+ "Mirror of Life Trapping": {
+  "source": {
+   "_id": "3ec7ae18-b203-49bd-95f9-ad5482459a23",
+   "name": "Mirror of Life Trapping",
+   "typeLine": "Artifact",
+   "oracleText": "Whenever a creature enters, if it was cast, exile it, then return all other permanent cards exiled with this artifact to the battlefield under their owners' control.",
+   "keywords": [],
+   "colors": [],
+   "manaValue": 4,
+   "colorIdentity": [],
+   "power": null,
+   "toughness": null,
+   "tags": {
+    "produces": [
+     "blink"
+    ],
+    "cares": [
+     "creature-etb",
+     "nontoken-etb"
+    ]
+   },
+   "manaCost": "{4}",
+   "layout": "normal",
+   "releasedAt": "2022-06-10",
+   "gameChanger": false,
+   "reserved": false
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "a creature",
+     "control": "any"
+    },
+    "actions": [
+     {
+      "verb": "exile",
+      "object": "it",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "return",
+      "object": "all other permanent cards exiled with this artifact",
+      "fromZone": "exile",
+      "toZone": "battlefield",
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "ae3878750d4b47f0e8cab0226c23d90bd85ae606fbcf175209d9574a87da4f67"
+ },
+ "Aether Barrier": {
+  "source": {
+   "_id": "0fe602b7-9f88-4d3d-af24-7790df867ed5",
+   "name": "Aether Barrier",
+   "typeLine": "Enchantment",
+   "oracleText": "Whenever a player casts a creature spell, that player sacrifices a permanent of their choice unless they pay {1}.",
+   "keywords": [],
+   "colors": [
+    "U"
+   ],
+   "manaValue": 3,
+   "colorIdentity": [
+    "U"
+   ],
+   "power": null,
+   "toughness": null,
+   "tags": {
+    "produces": [
+     "enchantment"
+    ],
+    "cares": []
+   },
+   "manaCost": "{2}{U}",
+   "layout": "normal",
+   "releasedAt": "2000-02-14",
+   "gameChanger": false,
+   "reserved": false
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "cast",
+     "subject": "a creature spell",
+     "control": "any"
+    },
+    "actions": [
+     {
+      "verb": "sacrifice",
+      "object": "a permanent of their choice",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false,
+      "unless": {
+       "cost": "{1}",
+       "payer": "controller"
+      }
+     }
+    ]
+   }
+  ],
+  "segmentHash": "ebda806caba991417b94176be6ea97d516b11e2146b30a71f14818c6cbb6ef79"
+ },
+ "Adarkar Valkyrie": {
+  "source": {
+   "_id": "2932baae-bdf1-455a-9ac4-23ba1f83e7e1",
+   "name": "Adarkar Valkyrie",
+   "typeLine": "Snow Creature — Angel",
+   "oracleText": "Flying, vigilance\n{T}: When target creature other than this creature dies this turn, return that card to the battlefield under your control.",
+   "keywords": [
+    "Flying",
+    "Vigilance"
+   ],
+   "colors": [
+    "W"
+   ],
+   "manaValue": 6,
+   "colorIdentity": [
+    "W"
+   ],
+   "power": "4",
+   "toughness": "5",
+   "tags": {
+    "produces": [
+     "tribe:angel",
+     "tribe-nontoken:angel"
+    ],
+    "cares": [
+     "creature-death",
+     "sacrifice-event",
+     "ramp"
+    ]
+   },
+   "manaCost": "{4}{W}{W}",
+   "layout": "normal",
+   "releasedAt": "2018-08-10",
+   "gameChanger": false,
+   "reserved": false
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Flying, vigilance",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "activated",
+    "trigger": {
+     "event": "dies",
+     "subject": "target creature other than this creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "return",
+      "object": "that card",
+      "fromZone": "graveyard",
+      "toZone": "battlefield",
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "fe177238b4cbffc2d5e3f5282f2a3736a16a440c4eb0035b5a5adbd25f8d92d6"
+ }
+}
