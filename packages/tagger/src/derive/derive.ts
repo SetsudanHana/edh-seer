@@ -4462,7 +4462,7 @@ export function deriveAbilities(
           }
         }
       }
-      // A COST SACRIFICE IS THE CONTROLLER'S (CR 701.17a): "{T}, Sacrifice two other creatures" eats
+      // A COST SACRIFICE IS THE CONTROLLER'S (CR 701.21a): "{T}, Sacrifice two other creatures" eats
       // your creatures whatever the effect goes on to do to "any number of target players". The
       // sentence-wide actor default below refuses when the clause names another player, which is
       // exactly Priest of Forgotten Gods' shape, so the cost's own sacrifice -- the FIRST sacrifice

@@ -6,7 +6,7 @@
  *  ledger is ratcheted against the source: a citation the ledger does not know fails, and a ledger
  *  row nothing cites any more fails, so the list cannot drift in either direction. The matcher has
  *  a twin (`packages/matcher/src/rules-invariants.test.ts`). */
-import { readdirSync, readFileSync, statSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { expect, test } from "vitest";
@@ -15,7 +15,11 @@ import { actionEmits } from "./emits.js";
 import { actionEffectKind } from "./effect-kind.js";
 import { emblemRecipient } from "../emblem.js";
 
-const ASSERTED = new Set(["104.3", "106.12a", "111.1", "111.2", "114.1", "114.2", "601.2f", "603.8", "603.12", "614", "701.5", "701.17a", "701.22b", "704.5g"]);
+const ASSERTED = new Set(["104.3", "106.12a", "111.1", "111.2", "114.1", "114.2", "601.2f", "603.8", "603.12", "614", "701.5", "701.21a", "701.22b", "704.5g"]);
+/** WHAT EACH ASSERTED RULE IS ABOUT: a word the rule's own text (or its parent rule's title) must contain. #1316: the sacrifice test cited 701.17a, which is MILL; 701.21a is Sacrifice. A test title that names a rule number says nothing the file checks, so the meaning is written down beside the number and read back from the Comprehensive Rules. */
+const ASSERTED_MEANING: Record<string, string> = {
+  "104.3": "lose", "106.12a": "tapped for mana", "111.1": "token", "111.2": "token", "114.1": "emblem", "114.2": "emblem", "601.2f": "cost", "603.8": "trigger", "603.12": "reflexive", "614": "replacement", "701.5": "cast", "701.21a": "sacrifice", "701.22b": "scry", "704.5g": "damage",
+};
 const TESTED: Record<string, string> = {
   "111.3": "grammar/named-tokens-1671.test.ts — a named token's characteristics are the ones its reminder prints (Black Lotus, Lord of the Pit, Scryb Sprites, Akroma, Baneslayer Angel; #1671)",
   "202.2": "grammar/named-tokens-1671.test.ts — the named token's colour is the colour of the mana symbols of the cost its reminder prints (#1671)",
@@ -118,8 +122,8 @@ const TESTED: Record<string, string> = {
   "602.1a": "payment.test.ts — an activation cost is read part by part into payment, an unread part kept verbatim",
   "602.2b": "derive/mana-lines.test.ts — an activated ability that targets (Deathrite Shaman, Red Death, Shipwrecker) holds only while a legal target exists, so its mana line is gated on it (#1188)",
   "605.1a": "derive.test.ts — a mana ability's amount is the mana its object adds (Sol Ring 2, Talisman 1, Gilded Lotus 3)",
+  "701.17a": "derive/emits.test.ts — mill is the TOP cards of a library into the graveyard: a searched put or an exile of the top is no mill, and the keyword action's own wording is a mill (#1444, Jace, Telepath Unbound)",
   "701.9a": "grammar/action.test.ts — only a card in a hand is discarded, so 'they discard it' straight after a hand pick is the picked card (Binding Negotiation, #1592)",
-  "701.21a": "payment.test.ts — a sacrifice in a cost is of your own permanents, so its class is control you; grammar/other-actor-1676.test.ts — so is the sacrifice paid \"unless you sacrifice\" in a sentence that names another player (Tresserhorn's Lord, Returned, #1676)",
   "702.14": "derive.test.ts — a landwalk grant names its [type]walk (Lord of Atlantis islandwalk, Vectis Gloves landwalk)",
   "702.4": "effect-kind.test.ts — Double Strike is a keyword, not the verb double (Akim, the Soaring Wind) (#1141)",
   "702.153a": "emits.test.ts / derive.test.ts — casualty N sacrifices a creature with power N or greater (Anhelo's grant, Make Disappear's keyword line)",
@@ -186,14 +190,14 @@ const PROSE: Record<string, string> = {
   "100.2a": "schema: the CR's own numbering for a rules reference", "104.2": "verb-accounting: win-game NOT AN EVENT",
   "106.4": "normalize-prompt / verb-accounting: mana-spent, add-mana",
   "107.14": "normalize-prompt ENERGY rule: {E} is a counter", "120": "derive: damage direction split by text",
-  "122": "counters — COUNTER_KINDS", "205.3": "subtypes generated from MTGJSON", "205.3g": "artifact types, unioned from the rules (gen-vocabulary withCr)", "205.3m": "creature types: the list MTGJSON's extra \"Missing\" is absent from (gen-vocabulary NOT_FREE_TEXT, tested in gen-vocabulary-core.test.ts)", "111.10": "predefined tokens pin their type (token-types.ts)", "111.10a": "a Treasure token is an artifact", "700.5": "devotion to a colour counts the pips of its own mana cost, a hybrid pip for each colour (mana-lines.test.ts, #1285)", "111.10w": "a Vibranium token taps for {C}, spendable only on artifacts (token-kinds.ts line, mana-lines.test.ts)", "111.10x": "a Heartwood token taps for {R} or {G} (token-kinds.ts line, mana-lines.test.ts)", "205.3i": "subtypes: Saga", "205.3k": "subtypes: Class",
+  "122": "counters — COUNTER_KINDS", "205.3": "subtypes generated from MTGJSON", "205.3g": "artifact types, unioned from the rules (gen-vocabulary withCr)", "205.3m": "creature types: the list MTGJSON's extra \"Missing\" is absent from (gen-vocabulary NOT_FREE_TEXT, tested in gen-vocabulary-core.test.ts)", "111.10": "predefined tokens pin their type (token-types.ts)", "111.10a": "a Treasure token is an artifact", "700.5": "devotion to a colour counts the pips of its own mana cost, a hybrid pip for each colour (mana-lines.test.ts, #1285)", "111.10w": "a Vibranium token taps for {C}, spendable only on artifacts (token-kinds.ts line, mana-lines.test.ts)", "111.10x": "a Heartwood token taps for {R} or {G} (token-kinds.ts line, mana-lines.test.ts)", "205.3i": "land types: a card with a land type is a land (emits.ts, emits.test.ts)", "205.3k": "spell types, kept out of the free-text subtypes (subtypes.ts, gen-vocabulary-core.ts)",
   "305": "lands", "305.1": "play a land is `play`, not `enters`", "307.5": "a sorcery's own text", "309": "dungeons: words, no room model",
   "400.1": "ZONES lists the seven", "400.7": "zone changes: the enters/leaves family", "406.2": "exile is a public zone",
   "500": "phase words", "500.7": "extra turn: NOT AN EVENT", "506.4": "removed from combat", "602": "activate, a word with no producer",
   "603.4": "intervening-if (ratcheted in intervening-if-ratchet.test.ts)", "603.6c": "leaves-the-battlefield reads its zone off the text",
   "603.7": "schema: `delayedBy` names what created a delayed trigger",
   "606": "loyalty abilities", "606.3": "loyalty cost is a counter change", "608": "resolves, a word", "609.7": "damage from a source",
-  "611": "continuous effects: NOT AN EVENT verbs", "613": "layers: OPEN", "613.1f": "P/T layer", "614.17": "cant: NOT AN EVENT",
+  "611": "continuous effects: NOT AN EVENT verbs", "613": "layers: OPEN", "613.1f": "layer 6: an ability-removing effect (effect-kind.ts, schema.ts)", "614.17": "cant: NOT AN EVENT",
   "615": "prevent: PARTIAL (prevention and damage-change kinds, #1469)", "615.13": "prevented, a word", "700.11": "descended", "700.12": "outlaw", "700.13": "crime", "700.14": "expend",
   "700.16": "worthy", "700.4": "dies (matcher asserts it)", "700.6": "historic is artifact, legendary or Saga (matcher subject.ts spareOf reads it for Desynchronization; conditional-sweeps.test.ts asserts it)", "700.8": "party", "700.9": "modified",
   "701.10": "double: OPEN", "701.11": "triple: OPEN", "701.12": "exchange: OPEN", "701.14": "fight emits non-combat-damage", "701.17": "mill",
@@ -238,6 +242,21 @@ test("every CR rule the tagger cites is asserted, tested elsewhere, or marked pr
   expect(cited.size).toBeGreaterThan(90);
 });
 
+const RULES = fileURLToPath(new URL("../../../../rules/MagicCompRules.txt", import.meta.url));
+// The rules file is fetched, not committed (`npx tsx research/rules/fetch-comprehensive-rules.ts`): without it the meaning cannot be read, so the check is skipped rather than guessed.
+test.skipIf(!existsSync(RULES))("every ASSERTED rule has a stated meaning, and the Comprehensive Rules say the rule is about it (#1316)", () => {
+  expect([...ASSERTED].filter((r) => !(r in ASSERTED_MEANING)).sort(), "ASSERTED with no meaning written").toEqual([]);
+  expect(Object.keys(ASSERTED_MEANING).filter((r) => !ASSERTED.has(r)).sort(), "meaning for a rule that is not ASSERTED").toEqual([]);
+  const lines = readFileSync(RULES, "utf8").split(/\r?\n/);
+  const rule = (n: string) => lines.find((l) => l.startsWith(`${n} `) || l.startsWith(`${n}. `));
+  for (const [r, word] of Object.entries(ASSERTED_MEANING)) {
+    const own = rule(r);
+    const parent = rule(r.replace(/^(\d+\.\d+).*$/, "$1"));
+    expect(own, `CR ${r} is not in the rules file`).toBeDefined();
+    expect(`${own} ${parent ?? ""}`.toLowerCase(), `CR ${r} is not about "${word}": ${own}`).toContain(word);
+  }
+});
+
 const clause = (text: string, verb: string, object: string, trigger?: { event: string; subject: string; control?: string }) => ({
   clauses: [{ id: 1, abilityType: (trigger ? "triggered" : "static") as "triggered" | "static", ...(trigger ? { trigger } : {}), actions: [{ verb, object }] }],
   texts: { 1: text },
@@ -262,7 +281,7 @@ test("CR 111.2: a created token is its creator's — the emit's control is `you`
   for (const x of e) expect(x.subject.control).toBe("you");
 });
 
-test("CR 701.17a: you may sacrifice only what you control — an unqualified sacrifice is the controller's", () => {
+test("CR 701.21a: you may sacrifice only what you control — an unqualified sacrifice is the controller's", () => {
   for (const e of actionEmits({ verb: "sacrifice", object: "a creature" }, "Sacrifice a creature.")) expect(e.subject.control).toBe("you");
   // ...and a sentence that names another player keeps its wildcard, which is what Dark Deal needs.
   expect(actionEmits({ verb: "sacrifice", object: "a creature" }, "Each player sacrifices a creature.").every((e) => e.subject.control === "any")).toBe(true);
