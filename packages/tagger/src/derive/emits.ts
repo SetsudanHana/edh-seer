@@ -3,7 +3,7 @@
  *  vocabulary, but without its `dies` emit no aristocrats edge ever forms. */
 import { lifeSetRewrite } from "./life-set.js";
 import type { Action } from "../canonicalize.js";
-import type { GameEvent, SubjectFilter, Verb } from "../schema.js";
+import type { Ability, GameEvent, SubjectFilter, Verb } from "../schema.js";
 import { controlFromRelation, counterKindOf, parseCounter, parseSubject, spellMove, stripTokenAbility, COUNT_PHRASE } from "./subject.js";
 import { LAND_SUBTYPES, SUBTYPE_TYPES } from "./subtypes.js";
 import { damageRecipient, isControllerPhrase, playerOnlyRecipient } from "./damage-recipient.js";
@@ -746,6 +746,19 @@ export const CASUALTY = /\bcasualty (\d+)\b/i;
 export const casualtySacrifice = (n: number): GameEvent => ({
   verb: "sacrifice", subject: { type: "creature", control: "you", token: null, stats: [{ metric: "power", op: "gte", value: n }] },
 });
+
+/** ASCEND (CR 702.131, #1322): the printed keyword is the producer of the city's blessing. 702.131a: on an instant or sorcery it is a spell ability; 702.131b: on a permanent it is a static ability;
+ *  either way "you get the city's blessing for the rest of the game", so it is gained once and stays (`repeats: "once"`). 702.131c: any number of players may have it, so it is YOUR designation.
+ *  Read off the keyword list, not a clause: Scryfall lists Ascend for every printer of it, the clause is an inert `none` line.
+ *  CEILING: the keyword list is the card's union over its faces, so an Ascend on one face of a multi-face card reads as the whole card's (no corpus card is one); the "ten or more permanents" condition is not modelled, the
+ *  card is read as a supplier of the blessing for any deck. */
+export const ascendAbility = (keywords: readonly string[] | undefined, types: readonly string[]): Ability | undefined =>
+  (keywords ?? []).some((k) => k.toLowerCase() === "ascend")
+    ? {
+      kind: types.some((t) => /^(?:instant|sorcery)$/i.test(t)) ? "on-cast" : "static", repeats: "once", effect: { kind: "" },
+      emits: [{ verb: "city-blessing", subject: { control: "you", token: null } }],
+    }
+    : undefined;
 
 /** The head naming a created token before "copy of": "token copies of ...", "a token that's a copy of ...". */
 export const COPY_TOKEN_HEAD = /^((?:[a-z0-9]+ ){0,3}tokens?(?: that(?:'s| are| is))?(?: a)?)\s+cop(?:y|ies)\s+of\b/i;

@@ -7901,3 +7901,26 @@ test("merging an optional and a forced mill reason keeps it forced (#1662)", () 
   }
   expect(dedupeReasons([r(true), r(true)])[0]!.millOptional).toBe(true);
 });
+
+// #1322: ASCEND SUPPLIES THE CITY'S BLESSING. The producer is a real Ascend card's derived tags (Wayward Swordtooth's source line; the
+// Ascend clause is an inert `none` line, so the emit comes from the printed keyword). The consumer is hand-built: NO corpus card
+// triggers on "you get the city's blessing" -- every reader is an "if you have it" condition (`requires.marker` blessing), which the state toggle
+// resolves and which forms no event edge. This pins that the event machinery pairs a producer with a trigger on the verb when one exists.
+describe("Ascend supplies city-blessing (#1322)", () => {
+  const withTags = (name: string, keywords: string[]): DeckCard => ({
+    card: { name, typeLine: "Creature — Dinosaur", oracleText: "", keywords, colors: [], manaValue: 3 } as unknown as DeckCard["card"],
+    tags: deriveCardTags({
+      oracleId: name, name, clauses: [], characteristics: { types: ["creature"], subtypes: ["dinosaur"], colors: [], identity: [], cmc: 3, power: "2", toughness: "2", token: false, keywords },
+    } as never),
+  });
+  const consumer = (): DeckCard => base("Blessing Reader", [{
+    kind: "triggered", trigger: { verbs: ["city-blessing"], subject: { control: "you", token: null } }, effect: { kind: "draw-card" },
+  }]);
+  test("an Ascend card pairs with a city-blessing trigger", () => {
+    const reasons = directedReasons(withTags("Wayward Swordtooth", ["Ascend"]), consumer(), H);
+    expect(reasons.some((r) => r.tag.startsWith("city-blessing"))).toBe(true);
+  });
+  test("a card without Ascend does not", () => {
+    expect(directedReasons(withTags("Plain Dino", []), consumer(), H)).toEqual([]);
+  });
+});
