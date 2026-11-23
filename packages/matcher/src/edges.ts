@@ -3556,18 +3556,29 @@ const BASIC_LAND_TYPES: readonly string[] = ["plains", "island", "swamp", "mount
 const NOT_A_BATTLEFIELD_READER: ReadonlySet<string> = new Set(["search", "graveyard-recursion", "play-from-top", "cost-reduction", "type-grant", "animate", "token-generation", "create-token", "token-doubling"]);
 /** Trigger events about a card in a HAND, LIBRARY or GRAVEYARD, which a type granted to permanents does not reach (#1570 review: Realmwright x Mary Read and Anne Bonny's "whenever you discard an Island"). */
 const OFF_BATTLEFIELD_EVENTS: ReadonlySet<string> = new Set(["discard", "draw", "mill", "search", "reveal", "enters-graveyard", "leaves-graveyard"]);
+/** THE CLASS A COUNT READS FOR A TYPE GRANT: a count that grows with its class (`scalingSubject`), or the class a colour / name / card-type count ranges over (`Effect.distinctCount`, #1680), which no `scales` edge reads.
+ *  A granted CARD TYPE adds a type to a card-type count only when the class lacks it, and the granter is a member of the class (Loot counts "other nonland permanents you control": Enchanted Evening, an Enchantment, adds no type to its own count),
+ *  so a card-type count is not fed by a granter that already is the type. */
+const countedClassOf = (a: Ability, granted: string, granter?: CardTags): SubjectFilter | undefined => {
+  if (a.effect.scalingSubject) return a.effect.scalingSubject;
+  const d = a.effect.distinctCount;
+  if (d === undefined) return undefined;
+  if (d.counts === "type" && granter !== undefined && (granter.characteristics.types ?? []).includes(granted)) return undefined;
+  return d.class;
+};
+
 /** Does the card USE the type `granted` ON THE BATTLEFIELD (derived data only; owner ruling 2026-11-08, #1568 review 2): a trigger on it ("Whenever you sacrifice a Clue", "Whenever an Equipment enters"), a cost or an effect that sacrifices
  *  or attaches it ("Sacrifice a Food", "attach target Equipment"), forage, a count of it, or a lord over it ("Foods you control have ...").
  *  Not a card that only MAKES the type, merely is one, grants the same type, or reads it in the library, a graveyard, on the stack or in a spell's cost.
  *  CEILING: an attach that derive stores as no emit (an Equipment attacher read from a keyword-grant, a reconfigure) is not read; recall is measured per type in the #1568 review. A subtype that comes from the card's own name (`named`: Food Fight) is skipped.
  *  CEILING: Bludgeon Brawl ("Each noncreature, non-Equipment artifact is an Equipment with equip {X}") derives as `animate`, not a type-grant, so it is no class grant. */
-export function usesGrantedType(tags: CardTags, granted: string): boolean {
+export function usesGrantedType(tags: CardTags, granted: string, granter?: CardTags): boolean {
   // A CARD TYPE GRANTED (Enchanted Evening's enchantments, Toph's lands) is used by what counts, triggers on, or sacrifices that type; "destroy target artifact" or an enchantress lord names it without using the grant.
   if (CARD_TYPES.has(granted)) {
     const typed = (s: Partial<SubjectFilter> | undefined): boolean => s !== undefined && s.self !== true && s.named === undefined && (s.zone === undefined || s.zone === "battlefield")
       && (Array.isArray(s.type) ? s.type : s.type ? [s.type] : []).includes(granted) && !(Array.isArray(s.type) ? s.type : [s.type]).includes("spell");
     return tags.abilities.some((a) => (a.trigger !== undefined && !a.trigger.verbs.includes("create-token") && !a.trigger.verbs.includes("cast") && typed(a.trigger.subject))
-      || typed(a.effect.scalingSubject) || typed(a.thresholdSubject) || a.payment?.sacrifice?.some((x) => typed(x.subject)) === true);
+      || typed(countedClassOf(a, granted, granter)) || typed(a.thresholdSubject) || a.payment?.sacrifice?.some((x) => typed(x.subject)) === true);
   }
   const names = (s: Partial<SubjectFilter> | undefined): boolean => s !== undefined && s.self !== true && s.named === undefined
     && !(Array.isArray(s.type) ? s.type : [s.type]).includes("spell") && (s.zone === undefined || s.zone === "battlefield") && (s.fromZone === undefined || s.fromZone === "battlefield") && (Array.isArray(s.subtype) ? s.subtype : s.subtype ? [s.subtype] : []).includes(granted);
@@ -3581,7 +3592,7 @@ export function usesGrantedType(tags: CardTags, granted: string): boolean {
     const events = a.trigger !== undefined && !a.trigger.verbs.includes("create-token") && !a.trigger.verbs.includes("cast") && !a.trigger.verbs.some((v) => OFF_BATTLEFIELD_EVENTS.has(v)) && names(a.trigger.subject);
     const lord = !maker && !granting.has(a.clause) && !isGranted && names(a.effect.subject);
     const emitted = !granting.has(a.clause) && !isGranted && a.effect.kind !== "search" && a.effect.kind !== "graveyard-recursion" && a.effect.kind !== "play-from-top" && a.emits?.some((e) => (e.verb === "sacrifice" || e.verb === "attached") && names(e.subject)) === true;
-    return events || lord || emitted || names(a.effect.scalingSubject) || names(a.thresholdSubject)
+    return events || lord || emitted || names(countedClassOf(a, granted, granter)) || names(a.thresholdSubject)
       || a.payment?.sacrifice?.some((x) => names(x.subject)) === true
       // Forage (exile three cards from your graveyard or sacrifice a Food) is read from its derived verb, in a trigger ("Whenever you forage") or an effect ("you may forage").
       || (granted === "food" && (a.trigger?.verbs.includes("forage") === true || a.emits?.some((e) => e.verb === "forage") === true || /\bforage\b/i.test(a.cost ?? "")));
@@ -3618,7 +3629,7 @@ export function usesCreatureType(tags: CardTags, card: { name: string; oracleTex
   const out = tags.abilities.some((a) => {
     const maker = (offBattlefield ? OTHER_GRANTER_OR_MAKER : NOT_A_BATTLEFIELD_READER).has(a.effect.kind) || a.emits?.some((e) => e.verb === "create-token") === true;
     return (a.trigger !== undefined && !a.trigger.verbs.includes("create-token") && (offBattlefield || !a.trigger.verbs.includes("cast")) && names(a.trigger.subject))
-      || names(a.doublesOf) || names(a.effect.scalingSubject) || names(a.thresholdSubject)
+      || names(a.doublesOf) || names(a.effect.scalingSubject ?? a.effect.distinctCount?.class) || names(a.thresholdSubject)
       || (!maker && names(a.effect.subject))
       || (!maker && (a.emits ?? []).some((e) => e.verb !== "create-token" && e.subject.token !== true && names(e.subject)))
       || a.payment?.sacrifice?.some((x) => names(x.subject)) === true;
@@ -3783,7 +3794,7 @@ function staticEdges({ p, c, h, reasons }: PairScope): void {
       };
     }
     if (classGrant?.grantsType !== undefined) {
-      if (!usesGrantedType(c.tags, classGrant.grantsType)) return undefined;
+      if (!usesGrantedType(c.tags, classGrant.grantsType, p.tags)) return undefined;
       const gt = classGrant.grantsType;
       if (creatureGrant) {
         return {

@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import { actionScaling, scalingSubject } from "./scaling.js";
+import { actionScaling, distinctCountOf, scalingSubject } from "./scaling.js";
 
 test("a count in the action's own amount names the basis it counts", () => {
   // flat carried effect.scaling on 1,781 cards; derived carried it on ZERO, so flipping TAGS_SOURCE
@@ -219,13 +219,42 @@ test("a battlefield choice of permanents you OWN keeps its board count: Leave //
   expect(actionScaling({ verb: "put", object: "any number of permanent cards from among them" })).toBeUndefined();
 });
 
-test("only the 'an amount of mana of that color equal to <characteristic count>' add (Starfleet Academy) names no class; every characteristic count that derived before keeps its subject (#1673)", () => {
-  // the add this branch newly reads: no counted class
+test("a count of DISTINCT characteristics (types / colors / names among a battlefield class) names no class; a creature-type count names the changelings only; a graveyard count keeps its class (#1680, owner ruling 2026-11-22)", () => {
+  // creature types: only a changeling (every creature type) is a member that raises the count without a type of its own (Valiant Changeling)
+  expect(scalingSubject({ verb: "cost-modify", object: "this spell", amount: "for each creature type among creatures you control" }))
+    .toMatchObject({ type: "creature", control: "you", zone: "battlefield", keyword: ["changeling"] });
+  // ...but not a count that EXCLUDES a type a changeling has: "non-Borg creatures" (Saavik, Infinite Diversity, Captain Jonathan Archer, Starfleet Academy) leaves a changeling out, as it is a Borg
+  for (const amount of ["the number of creature types among non-Borg creatures you control", "for each creature type among non-Human creatures you control"]) {
+    expect(scalingSubject({ verb: "deal-damage", object: "target creature", amount }), amount).toBeUndefined();
+  }
   expect(scalingSubject({ verb: "add-mana", object: "an amount of mana of that color", amount: "the number of creature types among non-Borg creatures you control" })).toBeUndefined();
-  // counts that derived on main keep what they had (Valiant Changeling, Saavik, Faeburrow Elder, Bloom Tender, Karn, Tarmogoyf)
-  expect(scalingSubject({ verb: "cost-modify", object: "this spell", amount: "for each creature type among creatures you control" })).toMatchObject({ type: "creature", control: "you", zone: "battlefield" });
-  expect(scalingSubject({ verb: "deal-damage", object: "target creature", amount: "the number of creature types among non-Borg creatures you control" })).toMatchObject({ type: "creature", control: "you", zone: "battlefield" });
-  expect(scalingSubject({ verb: "add-mana", object: "one mana of that color", amount: "for each color among permanents you control" })).toMatchObject({ type: "permanent", control: "you", zone: "battlefield" });
-  expect(scalingSubject({ verb: "draw", object: "a card", amount: "for each color among other artifacts you control" })).toMatchObject({ type: "artifact", control: "you", zone: "battlefield" });
-  expect(scalingSubject({ verb: "modify-pt", amount: "the number of card types among cards in all graveyards" })).toMatchObject({ zone: "graveyard" });
+  // ...and not a count that says it leaves changelings out (The Lorwyn Lizard, You and Ooze Army?), read from the whole clause, past the 60-character noun
+  expect(scalingSubject({ verb: "add-mana", object: "X mana of any one color", amount: "X" },
+    "{T}: Add X mana of any one color, where X is the number of different Lorwyn creature types among creatures you control without changeling. If you control all eight, add an additional {W}{W}{U}{U}{B}{B}{R}{R}{G}{G}.")).toBeUndefined();
+  expect(scalingSubject({ verb: "amass", object: "Oozes X", amount: "X" },
+    "Amass Oozes X, where X is the number of creature types among creatures on the battlefield. Don't count changelings. That would be ridiculous.")).toBeUndefined();
+  expect(scalingSubject({ verb: "amass", object: "Oozes", amount: "the number of creature types among creatures on the battlefield" },
+    "Amass Oozes X, where X is the number of creature types among creatures on the battlefield. Don't count changelings.")).toBeUndefined();
+  // colors / names / planeswalker types / basic land types / card types among a battlefield class: no class at all (Faeburrow Elder, Bloom Tender, Karn Gilded Guardian, Earthen Ally, Tam)
+  expect(scalingSubject({ verb: "add-mana", object: "one mana of that color", amount: "for each color among permanents you control" })).toBeUndefined();
+  expect(scalingSubject({ verb: "modify-pt", amount: "for each color among permanents you control" })).toBeUndefined();
+  expect(scalingSubject({ verb: "draw", object: "a card", amount: "for each color among other artifacts you control" })).toBeUndefined();
+  expect(scalingSubject({ verb: "modify-pt", amount: "for each color among Allies you control" })).toBeUndefined();
+  expect(scalingSubject({ verb: "proliferate", amount: "the number of planeswalker types among planeswalkers you control" })).toBeUndefined();
+  expect(scalingSubject({ verb: "modify-pt", amount: "the number of card types among other nonland permanents you control" })).toBeUndefined();
+  // a graveyard count keeps its class (Tarmogoyf: a mill raises it)
+  expect(scalingSubject({ verb: "modify-pt", amount: "the number of card types among cards in all graveyards" })).toMatchObject({ zone: "graveyard", control: "any" });
+  expect(scalingSubject({ verb: "modify-pt", amount: "the number of card types among cards in your graveyard" })).toMatchObject({ zone: "graveyard", control: "you" });
+});
+
+test("a colour / card-type / name count keeps its counted class for the type-grant reader only, in `distinctCountOf`, never as a scalingSubject (#1680)", () => {
+  expect(distinctCountOf({ verb: "draw", object: "a card", amount: "for each color among other artifacts you control" })).toMatchObject({ counts: "colour", class: { type: "artifact", control: "you" } });
+  expect(distinctCountOf({ verb: "modify-pt", amount: "for each color among Allies you control" })).toMatchObject({ counts: "colour", class: { subtype: "ally" } });
+  expect(distinctCountOf({ verb: "draw", amount: "the number of card types among other nonland permanents you control" })).toMatchObject({ counts: "type", class: { control: "you" } });
+  // a basic land type or a creature type or a planeswalker type is not raised by a type grant that adds members to the class
+  expect(distinctCountOf({ verb: "cost-modify", amount: "for each basic land type among lands you control" })).toBeUndefined();
+  expect(distinctCountOf({ verb: "cost-modify", amount: "for each creature type among creatures you control" })).toBeUndefined();
+  expect(distinctCountOf({ verb: "proliferate", amount: "the number of planeswalker types among planeswalkers you control" })).toBeUndefined();
+  // a graveyard count is a scalingSubject, not this
+  expect(distinctCountOf({ verb: "modify-pt", amount: "the number of card types among cards in all graveyards" })).toBeUndefined();
 });
