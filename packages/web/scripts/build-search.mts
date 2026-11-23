@@ -18,7 +18,7 @@ import { CREATURE_SUBTYPES, LAND_SUBTYPES } from "@edh-seer/tagger/subtypes";
 import { buildCatalogue, decodeGroup, type Catalogue, type GroupPayload } from "../client/src/lib/search/catalogue.ts";
 import { evaluate, type Node } from "../client/src/lib/search/evaluate.ts";
 import type { SearchRegistry } from "../client/src/lib/search/registry.ts";
-import { buildIdentityView, buildNumberViews, buildTypeViews, sparseFront, type IndexRow, type NumericRow } from "../client/src/lib/search/type-views.ts";
+import { buildIdentityView, buildNumberViews, buildTypeViews, sparseBestFace, sparseFront, type IndexRow, type NumericRow } from "../client/src/lib/search/type-views.ts";
 import { walkRecords, type Column, type SetColumn, type WalkRecord } from "../client/src/lib/search/walk.ts";
 
 const arg = (name: string) => { const i = process.argv.indexOf(name); return i >= 0 ? process.argv[i + 1] : undefined; };
@@ -68,9 +68,10 @@ function build(): void {
   const rowOf = new Map(index.cards.map((c, i) => [c.name, i]));
   const records: WalkRecord[] = [];
   const frontTypes = new Map<number, string[]>();
+  const faceSubtypes = new Map<number, string[][]>();
   const seen = new Set<number>();
   for (const f of readdirSync(join(versionDir, "cards")).filter((n) => n.endsWith(".json")).sort()) {
-    const shard = JSON.parse(readFileSync(join(versionDir, "cards", f), "utf8")) as Record<string, { card: { name: string }; tags: { characteristics?: { faces?: { types?: string[] }[] } } | null }>;
+    const shard = JSON.parse(readFileSync(join(versionDir, "cards", f), "utf8")) as Record<string, { card: { name: string }; tags: { characteristics?: { faces?: { types?: string[]; subtypes?: string[] }[] } } | null }>;
     for (const e of Object.values(shard)) {
       const row = rowOf.get(e.card.name);
       if (row === undefined || seen.has(row)) continue;
@@ -78,6 +79,8 @@ function build(): void {
       records.push({ row, card: e.card, tags: e.tags });
       const front = e.tags?.characteristics?.faces?.[0]?.types;
       if (front) frontTypes.set(row, front);
+      const fs = e.tags?.characteristics?.faces;
+      if (fs && fs.length > 0) faceSubtypes.set(row, fs.map((f) => f.subtypes ?? []));
     }
   }
 
@@ -106,6 +109,9 @@ function build(): void {
   const front = all.find((c) => c.path === "tFront") as SetColumn;
   const sparse = sparseFront(front, all.find((c) => c.path === "t") as SetColumn);
   walk.columns.set("tFront", sparse);
+  // stBest: the creature types of the best face, sparse over `st` and served beside tFront in the faces group.
+  const best = sparseBestFace(index, faceSubtypes, creature);
+  walk.columns.set("stBest", best);
   const { catalogue, payloads } = buildCatalogue({ version: manifest.version, deriveVersion: manifest.deriveVersion, registry, walk, core });
 
   const files = new Map<string, string>();
@@ -125,6 +131,7 @@ function build(): void {
   console.log(`records ${records.length} of ${index.cards.length} rows; ${walk.columns.size} walked columns, ${core.length} core columns`);
   for (const [name, s] of Object.entries(sizes)) console.log(`  ${name.padEnd(10)} ${String(s.bytes).padStart(9)} bytes  ${String(s.gzipBytes).padStart(8)} gzip`);
   console.log(`faces: ${sparse.overrides!.length} rows whose front types differ from t`);
+  console.log(`stBest: ${best.overrides!.length} rows whose best face differs from st`);
   console.log(`no record: ${noRecord.length ? noRecord.join(", ") : "none"}`);
   console.log(`multi-valued numeric paths (cmp reads their [min,max] range, see CEILING in evaluate.ts): ${walk.multiValued.length ? walk.multiValued.join(", ") : "none"}`);
   console.log(`mixed (numbers kept as set members): ${walk.mixed.length ? walk.mixed.join(", ") : "none"}`);
@@ -193,21 +200,29 @@ function verify(): void {
     and: [
       { field: "t", op: "has", value: "creature" },
       { not: { field: "st", op: "has", value: "borg" } },
-      { field: "st", op: "countIn", list: "creature", min: 3 },
+      { field: "stBest", op: "countIn", list: "creature", min: 3 },
       { field: "id", op: "within", value: ["W", "U", "G"] },
     ],
   };
   const res = evaluate(query, ctx);
   if (!res.ok) throw new Error(`cannot answer: ${res.cannotAnswer.join("; ")}`);
-  const st = columns.get("st") as SetColumn;
+  // The creature-type count reads the best face (`stBest`, sparse over `st`), as the page does.
+  const best = evaluate({ field: "stBest", op: "countIn", list: "creature", min: 0 }, ctx);
+  if (!best.ok) throw new Error(`cannot answer: ${best.cannotAnswer.join("; ")}`);
+  const stBest = ctx.columns.get("stBest") as SetColumn;
   const inList = new Set(creature);
   const counts = new Map<number, number>();
-  for (const [v, rows] of st.values) if (inList.has(v)) for (const r of rows) counts.set(r, (counts.get(r) ?? 0) + 1);
+  const eff = new Map<string, number[]>();
+  const stCol = columns.get("st") as SetColumn;
+  const over = new Set(stBest.overrides ?? []);
+  for (const [v, rows] of stCol.values) eff.set(v, rows.filter((r) => !over.has(r)));
+  for (const [v, rows] of stBest.values) eff.set(v, [...(eff.get(v) ?? []), ...rows]);
+  for (const [v, rows] of eff) if (inList.has(v)) for (const r of rows) counts.set(r, (counts.get(r) ?? 0) + 1);
   const ranked = [...res.rows].sort((a, b) => (counts.get(b) ?? 0) - (counts.get(a) ?? 0) || a - b);
   const every = new Set((columns.get("everyCreatureType") as SetColumn).values.get("true") ?? []);
   const changelingKw = index.keywords.indexOf("changeling");
   const kwRows = index.cards.filter((c) => changelingKw >= 0 && (c.k ?? []).includes(changelingKw)).length;
-  console.log(`query: t has creature AND NOT st has borg AND countIn(st, creature) >= 3 AND id within [W,U,G], sorted by countIn desc`);
+  console.log(`query: t has creature AND NOT st has borg AND countIn(stBest, creature) >= 3 AND id within [W,U,G], sorted by countIn desc`);
   console.log(`results: ${res.rows.length}`);
   for (const r of ranked.slice(0, 10)) console.log(`  ${index.cards[r]!.name}  (${counts.get(r)} creature types)`);
   console.log(`changelings in result: ${res.rows.filter((r) => every.has(r)).length}`);

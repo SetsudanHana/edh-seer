@@ -190,7 +190,9 @@ describe("the five type counts", () => {
     { identity: [], t: [0], s: [0, 1, 2, 3] },         // 3: every creature type
     { identity: [], t: [0, 3] },                       // 4: no subtypes
   ];
-  const ctx = coreContext(crows, tv, { namedLists: lists });
+  // The creature-type count reads stBest (sparse over st); no row's best face differs here.
+  const best = { kind: "set" as const, path: "stBest", group: "faces", fallback: "st", overrides: [] as number[], values: new Map<string, number[]>() };
+  const ctx = coreContext(crows, tv, { namedLists: lists, columns: [best] });
   const ask = (over: Partial<EventQuery>) => evaluate(fromEventQuery({ produce: [], consume: [], colours: [], types: [], subtypes: [], keywords: [], cardColours: [], ...over }, "cards", { vocab: tv }), ctx);
 
   test("card types count CR 205.2a types and not supertypes", () => {

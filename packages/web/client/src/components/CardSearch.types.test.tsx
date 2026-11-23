@@ -7,10 +7,11 @@ import type { NameIndexEntry } from "../lib/partners.js";
 import type { Catalogue } from "../lib/search/catalogue.js";
 import { createSearchLoader, type SearchLoader } from "../lib/search/load.js";
 import { encodePostings } from "../lib/search/postings.js";
+import type { Column } from "../lib/search/walk.js";
 
 /** #1782: NOT on the type rows, the five type counts, and the changeling note. Every row carries `t`, as a
  *  real non-thin row does. */
-const VOCAB = { types: ["creature", "land", "kindred", "instant"], subtypes: ["borg", "elf", "human", "wizard", "forest"], keywords: [] };
+const VOCAB = { types: ["creature", "land", "kindred", "instant"], subtypes: ["borg", "elf", "human", "wizard", "forest"], keywords: ["flying"] };
 const row = (slug: string, name: string, identity: string[], s: number[], extra: Partial<NameIndexEntry> = {}): NameIndexEntry =>
   ({ slug, name, identity, commander: false, t: [0], s, ...extra });
 const INDEX: NameIndexEntry[] = [
@@ -28,9 +29,11 @@ const CATALOGUE: Catalogue = {
     creature: { label: "Creature types", values: ["borg", "elf", "human", "wizard"] },
   },
 };
+let BEST: Column = { kind: "set", path: "stBest", group: "faces", fallback: "st", overrides: [], values: new Map() };
 const loaderOf = (cat: Catalogue | null, gate?: Promise<void>): SearchLoader => ({
   catalogue: vi.fn(async () => { await gate; return cat; }),
-  columnsFor: vi.fn(async () => []),
+  // The best-face view of the creature types: no row's best face differs from its subtypes unless a test says so.
+  columnsFor: vi.fn(async (fields: readonly string[]) => fields.includes("stBest") ? [BEST] : []),
 });
 
 const atUrl = (url: string, searchLoader: SearchLoader) => {
@@ -52,7 +55,7 @@ test("acceptance: the 3-type non-Borg is the only answer, and one changeling is 
   atUrl(ACCEPT, loaderOf(CATALOGUE));
   await screen.findByRole("link", { name: /Elf Trio/ });
   expect(names()).toHaveLength(1);
-  expect(screen.getByText("1 changeling hidden: a changeling is every creature type, so it is also a Borg.")).toBeInTheDocument();
+  expect(screen.getByText("1 changeling hidden: a changeling has every creature type, Borg included.")).toBeInTheDocument();
 });
 
 test("Show them keeps changelings: the changeling leads and says every creature type, never a number", async () => {
@@ -148,7 +151,7 @@ test("the Number of types row sets one count from the menu", async () => {
 test("the order offers the five counts", async () => {
   atUrl("/cards?type=creature", loaderOf(CATALOGUE));
   const order = await screen.findByLabelText("Order");
-  for (const label of ["Card types, all faces", "Card types, front face", "Supertypes", "Subtypes", "Creature types"]) {
+  for (const label of ["Card types, both faces", "Card types, front face only", "Supertypes", "Subtypes", "Creature types"]) {
     expect(within(order).getByRole("option", { name: label })).toBeInTheDocument();
   }
 });
@@ -159,7 +162,7 @@ test("the order offers the five counts", async () => {
 function scripted(over: { noPointer?: boolean; failCatalogue?: () => boolean; failFaces?: () => boolean } = {}) {
   const catalogue = {
     ...CATALOGUE,
-    groups: { faces: { file: "faces.json", fields: [{ id: "tFront", kind: "set" as const, fallback: "t" }] } },
+    groups: { faces: { file: "faces.json", fields: [{ id: "tFront", kind: "set" as const, fallback: "t" }, { id: "stBest", kind: "set" as const, fallback: "st" }] } },
   };
   const fetchImpl = vi.fn(async (u: string | URL | Request) => {
     const url = String(u);
@@ -167,7 +170,7 @@ function scripted(over: { noPointer?: boolean; failCatalogue?: () => boolean; fa
     const no = { ok: false, json: async () => ({}) } as Response;
     if (url.endsWith("manifest.json")) return ok(over.noPointer ? { version: "v" } : { version: "v", search: "s-x" });
     if (url.endsWith("catalogue.json")) return over.failCatalogue?.() ? no : ok(catalogue);
-    if (url.endsWith("faces.json")) return over.failFaces?.() ? no : ok({ fields: { tFront: { kind: "set", values: {}, fallback: "t", overrides: encodePostings([]) } } });
+    if (url.endsWith("faces.json")) return over.failFaces?.() ? no : ok({ fields: { tFront: { kind: "set", values: {}, fallback: "t", overrides: encodePostings([]) }, stBest: { kind: "set", values: {}, fallback: "st", overrides: encodePostings([]) } } });
     return no;
   });
   return createSearchLoader("/static", fetchImpl as unknown as typeof fetch);
@@ -225,12 +228,12 @@ test("a kindred instant changeling sorted by subtypes says every creature type, 
 
 test("the note names every creature type that was NOT-ed, with the right articles", async () => {
   atUrl("/cards?type=creature&notsubtype=borg&notsubtype=elf", loaderOf(CATALOGUE));
-  expect(await screen.findByText("1 changeling hidden: a changeling is every creature type, so it is also a Borg and an Elf.")).toBeInTheDocument();
+  expect(await screen.findByText("1 changeling hidden: a changeling has every creature type, Borg and Elf included.")).toBeInTheDocument();
 });
 
 test("three creature types read as a list", async () => {
   atUrl("/cards?type=creature&notsubtype=borg&notsubtype=elf&notsubtype=human", loaderOf(CATALOGUE));
-  expect(await screen.findByText(/so it is also a Borg, an Elf and a Human\.$/)).toBeInTheDocument();
+  expect(await screen.findByText(/a changeling has every creature type, Borg, Elf and Human included\.$/)).toBeInTheDocument();
 });
 
 test("the never chip and the must chip have names of their own, each holding its visible word (WCAG 2.5.3)", async () => {
@@ -274,4 +277,51 @@ test("keep + a non-creature NOT on a build with no pointer still lists everythin
   atUrl("/cards?type=creature&notsubtype=forest&changelings=keep", scripted({ noPointer: true }));
   await screen.findByRole("link", { name: /Elf Trio/ });
   expect(names()).toHaveLength(5);
+});
+
+test("the kept-changelings line says why they are there, naming the NOT-ed type", async () => {
+  atUrl(`${ACCEPT}&changelings=keep`, loaderOf(CATALOGUE));
+  expect(await screen.findByText("Changelings shown, though each has every creature type, Borg included.")).toBeInTheDocument();
+});
+
+test("both count labels read the same in the count select and the Order select", async () => {
+  atUrl("/cards?type=creature&cardtypesmin=1&fronttypesmin=1", loaderOf(CATALOGUE));
+  expect(await screen.findByRole("combobox", { name: "Card types, both faces, from" })).toBeInTheDocument();
+  expect(screen.getByRole("combobox", { name: "Card types, front face only, from" })).toBeInTheDocument();
+});
+
+// ---- the creature-type count reads the BEST FACE (owner decision) ----------------------------------------------------
+test("a two-faced card counts the face with the most creature types: Casal-like is 2, not 4", async () => {
+  // subtypes 0..3 = borg elf human wizard; the best face holds two of them.
+  BEST = { kind: "set", path: "stBest", group: "faces", fallback: "st", overrides: [0], values: new Map([["borg", [0]], ["elf", [0]]]) };
+  try {
+    atUrl("/cards?type=creature&creaturetypesmin=3&colors=WUG&sort=creaturetypes", loaderOf(CATALOGUE));
+    await screen.findByRole("link", { name: /Elf Trio/ });
+    // Seven of Nine (row 0) holds three creature types as a whole, two on its best face: out. Changeling and trio stay.
+    expect(names().some((n) => /Seven of Nine/.test(n))).toBe(false);
+    expect(names().some((n) => /Elf Trio/.test(n))).toBe(true);
+    // and the subtypes count (union) is untouched
+    BEST = { kind: "set", path: "stBest", group: "faces", fallback: "st", overrides: [], values: new Map() };
+  } finally {
+    BEST = { kind: "set", path: "stBest", group: "faces", fallback: "st", overrides: [], values: new Map() };
+  }
+});
+
+test("the tile of a changeling matched by a must subtype says every creature type", async () => {
+  atUrl("/cards?subtype=elf", loaderOf(CATALOGUE));
+  await screen.findByRole("link", { name: /Mirror Changeling/ });
+  expect(await screen.findByText("every creature type")).toBeInTheDocument();
+  expect(screen.getAllByText("every creature type")).toHaveLength(1);
+});
+
+test("an any-of subtype match says it too", async () => {
+  atUrl("/cards?orsubtype=elf&orsubtype=human", loaderOf(CATALOGUE));
+  await screen.findByRole("link", { name: /Mirror Changeling/ });
+  expect(await screen.findByText("every creature type")).toBeInTheDocument();
+});
+
+test.each([["type", "type"], ["subtype", "subtype"], ["keyword", "keyword"]])("an unknown MUST %s says so, with no list", async (param, kind) => {
+  atUrl(`/cards?${param}=bogus`, loaderOf(CATALOGUE));
+  expect(await screen.findByText(`This build doesn't know the ${kind} "bogus".`)).toBeInTheDocument();
+  expect(screen.queryByRole("list", { name: "Results" })).toBeNull();
 });

@@ -121,15 +121,9 @@ const FILTER_LABEL: Record<FilterKind, string> = {
   amount: "Amount",
 };
 
-/** "a Borg", "an Elf": the indefinite article by the first letter, which holds for every creature type except the
- *  rare vowel read as a consonant (Unicorn, Urzan...), so the vowels counted are a, e, i and o. */
-const aType = (name: string): string => {
-  const word = name.replace(/\b\w/g, (c) => c.toUpperCase());
-  return `${/^[aeio]/i.test(word) ? "an" : "a"} ${word}`;
-};
-/** "a Borg", "a Borg and an Elf", "a Borg, an Elf and a Goblin". */
-const aTypes = (names: readonly string[]): string => {
-  const all = names.map(aType);
+/** "Borg", "Borg and Elf", "Borg, Elf and Human": the NOT-ed creature types, capitalised the way the tiles say them. */
+const typeNames = (names: readonly string[]): string => {
+  const all = names.map((n) => n.replace(/\b\w/g, (c) => c.toUpperCase()));
   return all.length <= 1 ? (all[0] ?? "") : `${all.slice(0, -1).join(", ")} and ${all[all.length - 1]}`;
 };
 
@@ -402,20 +396,23 @@ export function CardSearch({
   const countSort = TYPE_COUNTS.some((c) => c.sort === orderKey) ? (orderKey as TypeCountSort) : null;
   const countsAsked = TYPE_COUNTS.some((c) => eventQuery[c.min] !== undefined || eventQuery[c.max] !== undefined);
   const notSubtypesAsked = (eventQuery.notSubtypes?.length ?? 0) > 0;
+  // A MUST OR ANY-OF SUBTYPE reads the creature list too, only to say on a changeling's tile why it matched (it is every
+  // creature type). That is decoration: it never blocks the list, which answers from the rows.
+  const subtypeAsked = eventQuery.subtypes.length > 0 || (eventQuery.orSubtypes?.length ?? 0) > 0;
   // THE KEY IS WHAT IS NEEDED, not the whole question: moving a mana-value bound must not look like a new
   // catalogue request and flash the loading line. `fields|lists`; the every-creature-type flag is built here, not fetched.
   const needKey = useMemo((): string | null => {
-    if (!countsAsked && countSort === null && !notSubtypesAsked && !genericAsked) return null;
+    if (!countsAsked && countSort === null && !notSubtypesAsked && !genericAsked && !subtypeAsked) return null;
     const node = fromEventQuery(eventQuery, mode);
     const fields = new Set(fieldsOf(node).filter((f) => f !== "everyCreatureType"));
-    const lists = new Set([...(countsAsked || countSort !== null || notSubtypesAsked ? ["creature"] : []), ...(JSON.stringify(node).match(/"list":"(\w+)"/g) ?? []).map((m) => m.slice(8, -1))]);
+    const lists = new Set([...(countsAsked || countSort !== null || notSubtypesAsked || subtypeAsked ? ["creature"] : []), ...(JSON.stringify(node).match(/"list":"(\w+)"/g) ?? []).map((m) => m.slice(8, -1))]);
     if (countSort !== null) {
       fields.add(typeCountSpec[countSort].field);
       const l = typeCountSpec[countSort].list;
       if (l) lists.add(l);
     }
     return `${[...fields].sort().join(",")}|${[...lists].sort().join(",")}`;
-  }, [countsAsked, countSort, notSubtypesAsked, genericAsked, eventQuery, mode]);
+  }, [countsAsked, countSort, notSubtypesAsked, subtypeAsked, genericAsked, eventQuery, mode]);
   const [resolved, setResolved] = useState<{ core: EvalContext; key: string; ctx: EvalContext; state: CatalogueResolution["state"] } | null>(null);
   // THE RETRY CHIP: bumping it runs the read again. A failed read is shown, and the loader keeps nothing of it.
   const [attempt, setAttempt] = useState(0);
@@ -464,11 +461,12 @@ export function CardSearch({
     // AN ANY-OF WORD THE VOCABULARY LACKS is said, not ignored: the group would otherwise answer with the words it knows
     // and look complete. A table that has not loaded yet knows nothing, so it is not judged.
     for (const [kind, words, table] of [
-      ["type", eventQuery.orTypes, vocabulary.types], ["subtype", eventQuery.orSubtypes, vocabulary.subtypes],
-      ["keyword", eventQuery.orKeywords, vocabulary.keywords],
+      ["type", [...eventQuery.types, ...(eventQuery.orTypes ?? [])], vocabulary.types],
+      ["subtype", [...eventQuery.subtypes, ...(eventQuery.orSubtypes ?? [])], vocabulary.subtypes],
+      ["keyword", [...eventQuery.keywords, ...(eventQuery.orKeywords ?? [])], vocabulary.keywords],
     ] as const) {
       if (table.length === 0) continue;
-      for (const w of words ?? []) if (!table.includes(w)) out.add(`This build doesn't know the ${kind} "${w}".`);
+      for (const w of words) if (!table.includes(w)) out.add(`This build doesn't know the ${kind} "${w}".`);
     }
     if (catalogueInfo.cat !== null) {
       for (const f of fieldFilters) {
@@ -482,7 +480,7 @@ export function CardSearch({
       }
     }
     return [...out];
-  }, [catalogueInfo.cat, catalogueFields, fieldFilters, eventQuery.orTypes, eventQuery.orSubtypes, eventQuery.orKeywords, vocabulary]);
+  }, [catalogueInfo.cat, catalogueFields, fieldFilters, eventQuery.types, eventQuery.subtypes, eventQuery.keywords, eventQuery.orTypes, eventQuery.orSubtypes, eventQuery.orKeywords, vocabulary]);
   const changelingsUnmatched = keepAsked && (catalogueState === "no-pointer" || catalogueState === "incomplete");
   const typeCountsBlocked = blocking && (catalogueState === "pending" || !catalogueSettled);
   // NO POINTER AND AN INCOMPLETE CATALOGUE both say the build cannot answer; a failed read says so differently, with a retry.
@@ -1243,7 +1241,7 @@ export function CardSearch({
             {hiddenChangelings > 0 && hiddenTypeNames.length > 0 && (
               <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
                 <p className="text-(--muted) text-sm">
-                  {`${hiddenChangelings.toLocaleString("en-US")} ${hiddenChangelings === 1 ? "changeling" : "changelings"} hidden: a changeling is every creature type, so it is also ${aTypes(hiddenTypeNames)}.`}
+                  {`${hiddenChangelings.toLocaleString("en-US")} ${hiddenChangelings === 1 ? "changeling" : "changelings"} hidden: a changeling has every creature type, ${typeNames(hiddenTypeNames)} included.`}
                 </p>
                 <button type="button" className="chip" onClick={() => setEvents({ ...eventQuery, keepChangelings: true })}>Show them</button>
               </div>
@@ -1253,7 +1251,7 @@ export function CardSearch({
             )}
             {eventQuery.keepChangelings === true && hiddenTypeNames.length > 0 && (
               <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-                <p className="text-(--muted) text-sm">Changelings are included, though a changeling is every creature type.</p>
+                <p className="text-(--muted) text-sm">{`Changelings shown, though each has every creature type, ${typeNames(hiddenTypeNames)} included.`}</p>
                 <button
                   type="button" className="chip"
                   onClick={() => { const { keepChangelings: _k, ...rest } = eventQuery; setEvents(rest); }}
@@ -1305,6 +1303,9 @@ export function CardSearch({
                 });
                 // A COUNT THE LIST IS ORDERED OR FILTERED BY IS SAID ON THE TILE. A changeling holds every creature type, so
                 // its number (all 377) would read as a fact about the card; it says what it is instead.
+                // A CHANGELING MATCHED BY A SUBTYPE WORD says why: it is every creature type, so it is an Elf and a Human and
+                // whatever else was asked (the Shapeshifter in an "Elf or Human" list had nothing to explain it).
+                if (subtypeAsked && everyCreatureType.has(pos) && !caption.includes("every creature type")) caption.push("every creature type");
                 for (const c of TYPE_COUNTS) {
                   const n = countsBy[c.sort]?.[pos];
                   if (n === undefined) continue;

@@ -29,6 +29,7 @@ const CAT: Catalogue = {
     types: { file: null, fields: [{ id: "t", kind: "set" }, { id: "st", kind: "set" }] },
     read: { file: "read.json", fields: [{
       id: "read", kind: "set", label: "Our reading",
+      description: "Whether our own rules could read the card's text, a language model read it, or nobody has yet.",
       valueLabels: { grammar: "read by our rules", model: "read by the model", unread: "not read yet", "no-record": "no record" },
       values: [{ v: "grammar", n: 3 }, { v: "model", n: 1 }, { v: "unread", n: 1 }],
     }] },
@@ -301,4 +302,30 @@ test("a keyword and a generic value use the same chip", async () => {
   atUrl(`/cards?keyword=flying&f=${VERB}:draw`, loaderOf());
   expect(await screen.findByRole("button", { name: "flying: must. Change mode" })).toBeInTheDocument();
   expect(await screen.findByRole("button", { name: "draw: must. Change mode" })).toBeInTheDocument();
+});
+
+test("the mode part looks tappable: a chevron, its own surface, and the chip's own 44px height", async () => {
+  atUrl("/cards?type=creature", loaderOf());
+  const mode = await screen.findByRole("button", { name: "creature: must. Change mode" });
+  expect(mode.querySelector("svg")).not.toBeNull();
+  expect(mode.querySelector("svg")?.getAttribute("aria-hidden")).toBe("true");
+  expect(mode.className).toMatch(/\bchip\b/);
+  expect(mode.className).toMatch(/bg-\(--surface-secondary\)/);
+});
+
+test("an 'or' connector sits between any-of chips, and only between them", async () => {
+  atUrl("/cards?orsubtype=elf&orsubtype=human&orsubtype=bogus", loaderOf());
+  const list = (await screen.findByRole("group", { name: "elf" })).closest("ul")!;
+  expect(within(list).getAllByText("or")).toHaveLength(2);
+});
+
+test("one any-of chip has no connector, and neither does a must beside an any-of", async () => {
+  atUrl("/cards?type=creature&orsubtype=elf", loaderOf());
+  const list = (await screen.findByRole("group", { name: "elf" })).closest("ul")!;
+  expect(within(list).queryByText("or")).toBeNull();
+});
+
+test("a field's description shows as one line under its label", async () => {
+  atUrl("/cards?f=read:grammar", loaderOf());
+  expect(await screen.findByText("Whether our own rules could read the card's text, a language model read it, or nobody has yet.")).toBeInTheDocument();
 });

@@ -9,6 +9,8 @@ export interface CatalogueField {
   kind: "set" | "number";
   label?: string;
   alias?: string;
+  /** One plain-language line under the row's label, from the registry. */
+  description?: string;
   /** Player words for values, from the registry; a value with none is shown as it is. */
   valueLabels?: Record<string, string>;
   values?: { v: string; n: number }[];
@@ -57,6 +59,7 @@ function describe(col: Column, registry: SearchRegistry): CatalogueField {
   const f: CatalogueField = { id: col.path, kind: col.kind };
   f.label = entry?.label ?? col.path;
   if (entry?.alias) f.alias = entry.alias;
+  if (entry?.description) f.description = entry.description;
   if (entry?.valueLabels && col.kind === "set") f.valueLabels = entry.valueLabels;
   if (col.kind === "set") {
     f.values = [...(col.totals ?? new Map([...col.values].map(([v, rows]) => [v, rows.length] as const)))].map(([v, n]) => ({ v, n }));

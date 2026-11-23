@@ -1,4 +1,4 @@
-import { useEffect, useId, useMemo, useRef, useState } from "react";
+import { Fragment, useEffect, useId, useMemo, useRef, useState } from "react";
 import { useListboxKeys } from "../lib/listbox-keys.js";
 
 /** A TYPEAHEAD OVER ONE VOCABULARY OF WORDS, and the only listbox on this page.
@@ -15,6 +15,13 @@ type Mode = "and" | "any" | "not";
 /** The word each mode wears on its chip. "never" for `not`, said in words so strike-through is never the only carrier. */
 const MODE_WORD: Record<Mode, string> = { and: "must", any: "any of", not: "never" };
 
+/** lucide chevron-down: the mark that says a part of the chip opens something. */
+const Chevron = (): React.JSX.Element => (
+  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
+    <path d="m6 9 6 6 6-6" />
+  </svg>
+);
+
 const Cross = (): React.JSX.Element => (
   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true" focusable="false">
     <path d="M18 6 6 18M6 6l12 12" />
@@ -22,8 +29,10 @@ const Cross = (): React.JSX.Element => (
 );
 
 export function WordPicker(
-  { label, placeholder, listLabel, all, chosen, onChange, negated = [], onMove, onRemoveNegated, anyOf, onRemoveAny, labelOf, optionText, browse = false, plain = false }: {
+  { label, description, placeholder, listLabel, all, chosen, onChange, negated = [], onMove, onRemoveNegated, anyOf, onRemoveAny, labelOf, optionText, browse = false, plain = false }: {
     label: string;
+    /** One plain-language line under the label: what the field says. */
+    description?: string;
     placeholder: string;
     /** The listbox's accessible name -- "Types and subtypes", "Keywords". */
     listLabel: string;
@@ -106,6 +115,7 @@ export function WordPicker(
   return (
     <div className="flex flex-col gap-1">
       <label className="eyebrow" htmlFor={`${listId}-field`}>{label}</label>
+      {description && <p className="text-(--muted) text-sm max-w-[65ch]">{description}</p>}
       {/* THE CHOSEN ONES ARE CHIPS, so removing one is a click rather than a re-typed field, and so
         * the ANSWERED question stays visible while the next is being asked. */}
       {(chosen.length > 0 || negated.length > 0 || anyChosen.length > 0) && (
@@ -130,17 +140,20 @@ export function WordPicker(
             ...chosen.map((name) => [name, "and"] as const),
             ...anyChosen.map((name) => [name, "any"] as const),
             ...negated.map((name) => [name, "not"] as const),
-          ]).map(([name, mode]) => {
+          ]).map(([name, mode], at, items) => {
             const word = MODE_WORD[mode];
             const open = modeOpen === name;
             const close = (): void => { setModeOpen(null); modeButton(name)?.focus(); };
             const modes = (["and", ...(anyOf !== undefined ? ["any" as const] : []), "not"] as Mode[]);
             return (
-              <li key={name} className="relative" onKeyDown={(e) => { if (e.key === "Escape" && open) { e.stopPropagation(); close(); } }}>
-                <div role="group" aria-label={say(name)} className="inline-flex items-stretch rounded-(--radius) border border-(--separator)">
+              <Fragment key={name}>
+              {/* THE OR BETWEEN ANY-OF CHIPS, plain text: "any of Elf or any of Human" is one group, not two questions. */}
+              {mode === "any" && items[at - 1]?.[1] === "any" && <li className="self-center text-sm text-(--muted)">or</li>}
+              <li className="relative" onKeyDown={(e) => { if (e.key === "Escape" && open) { e.stopPropagation(); close(); } }}>
+                <div role="group" aria-label={say(name)} className="inline-flex items-stretch overflow-hidden rounded-(--radius) border border-(--separator) divide-x divide-(--separator)">
                   <button
                     type="button"
-                    className="chip border-0 rounded-none"
+                    className="chip border-0 rounded-none bg-(--surface-secondary) text-(--foreground)"
                     data-mode-for={name}
                     aria-label={`${say(name)}: ${word}. Change mode`}
                     aria-haspopup="true"
@@ -148,6 +161,7 @@ export function WordPicker(
                     onClick={() => setModeOpen(open ? null : name)}
                   >
                     {word}
+                    <Chevron />
                   </button>
                   {/* NEVER KEEPS ITS STRIKE-THROUGH AND ITS WORD, which sits on the mode button beside it. */}
                   <span className={`flex items-center px-2 text-sm text-(--foreground) [overflow-wrap:anywhere]${caps}${mode === "not" ? " line-through decoration-(--muted)" : ""}`}>
@@ -185,6 +199,7 @@ export function WordPicker(
                   </ul>
                 )}
               </li>
+              </Fragment>
             );
           })}
         </ul>

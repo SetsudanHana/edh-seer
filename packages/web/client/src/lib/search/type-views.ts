@@ -127,6 +127,36 @@ export function sparseFront(full: SetColumn, base: SetColumn): SetColumn {
   };
 }
 
+/** THE SUBTYPES OF EACH CARD'S BEST FACE, as a SPARSE column over `st` (owner decision, #1782): a two-faced card counts the
+ *  creature types of the one face with the most, not the union of both ("Tiefling Druid // Bird Bear" is 2, not 4: what the
+ *  card can be on the battlefield). `faces` is what the shard carries per row (`tags.characteristics.faces[].subtypes`);
+ *  a transform card may list only its front. Ties go to the earlier face. A row with no faces data answers as `st` does, and so
+ *  does a changeling (it holds every creature type, CR 702.73a, whatever its faces print). Only rows whose best face
+ *  differs from their `st` are stored. */
+export function sparseBestFace(
+  index: TypeIndex, faces: ReadonlyMap<number, readonly (readonly string[])[]>, creatureList: readonly string[],
+): SetColumn {
+  const creature = new Set(creatureList);
+  const codeOf = new Map(index.subtypes.map((s, i) => [s, i]));
+  const required = creatureList.filter((c) => codeOf.has(c)).map((c) => codeOf.get(c)!);
+  const values = new Map<string, number[]>();
+  const overrides: number[] = [];
+  index.cards.forEach((row, i) => {
+    const fs = faces.get(i);
+    if (!fs || fs.length === 0) return;
+    const have = new Set(row.s ?? []);
+    if (required.length > 0 && required.every((c) => have.has(c))) return;
+    let best = fs[0]!;
+    for (const f of fs) if (f.filter((v) => creature.has(v)).length > best.filter((v) => creature.has(v)).length) best = f;
+    const mine = [...new Set(best)].sort();
+    const whole = [...have].map((c) => index.subtypes[c]!).sort();
+    if (mine.join(",") === whole.join(",")) return;
+    overrides.push(i);
+    for (const v of mine) add(values, v, i);
+  });
+  return { kind: "set", path: "stBest", group: "faces", fallback: "st", overrides, values: sortedMap(values) };
+}
+
 /** A column from a row's integer codes into a table (`t`, `s`, `k`): the row carries codes, the view names them.
  *  A code with no name in the table (the tables load apart from the rows) is skipped, never stored as "undefined". */
 export function buildCodeView(path: string, table: readonly string[], codes: readonly (readonly number[] | undefined)[]): SetColumn {

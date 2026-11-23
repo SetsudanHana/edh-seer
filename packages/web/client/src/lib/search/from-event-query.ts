@@ -58,7 +58,8 @@ export const typeCountSpec: Record<TypeCountSort, { field: string; list?: string
   fronttypes: { field: "tFront", list: "card" },
   supertypes: { field: "t", list: "super" },
   subtypes: { field: "st" },
-  creaturetypes: { field: "st", list: "creature" },
+  // THE BEST FACE, not the union (owner decision): a card counts the creature types of the face with the most.
+  creaturetypes: { field: "stBest", list: "creature" },
 };
 
 /** Per-row counts for ordering. null when the context cannot answer (no catalogue yet). */

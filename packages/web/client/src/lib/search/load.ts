@@ -17,7 +17,7 @@ export const CORE_FIELDS: ReadonlySet<string> = new Set(["t", "st", "k", "mv", "
 
 /** Fields a bespoke row already covers (the core views, the front-face types and the changeling flag): the generic menu
  *  does not offer them a second time. */
-export const BESPOKE_FIELDS: ReadonlySet<string> = new Set([...CORE_FIELDS, "tFront", "everyCreatureType"]);
+export const BESPOKE_FIELDS: ReadonlySet<string> = new Set([...CORE_FIELDS, "tFront", "stBest", "everyCreatureType"]);
 
 export function fieldsOf(node: Node, out: Set<string> = new Set()): string[] {
   if ("and" in node) node.and.forEach((n) => fieldsOf(n, out));

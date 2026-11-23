@@ -31,6 +31,7 @@ export function FieldRow(
     return (
       <RangeRow
         label={label}
+        {...(field.description ? { description: field.description } : {})}
         min={range?.min} max={range?.max}
         ceiling={Math.max(Math.min(field.max ?? 15, RANGE_CEILING), range?.min ?? 0, range?.max ?? 0)}
         onChange={(r) => onChange(r.min === undefined && r.max === undefined ? [] : [{ field: id, op: "range", ...(r.min !== undefined ? { min: r.min } : {}), ...(r.max !== undefined ? { max: r.max } : {}) }])}
@@ -53,6 +54,7 @@ export function FieldRow(
   return (
     <WordPicker
       label={label}
+      {...(field.description ? { description: field.description } : {})}
       listLabel={`${label} values`}
       placeholder={values.length <= BROWSE_UP_TO ? "Pick a value…" : "Type to find a value…"}
       all={values.map((v) => v.v)}

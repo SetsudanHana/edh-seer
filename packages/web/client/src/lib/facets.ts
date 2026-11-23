@@ -32,8 +32,8 @@ export type FieldFilter =
 /** The five type counts and their order keys. */
 export type TypeCountSort = "cardtypes" | "fronttypes" | "supertypes" | "subtypes" | "creaturetypes";
 export const TYPE_COUNTS = [
-  { sort: "cardtypes", param: "cardtypes", min: "cardTypesMin", max: "cardTypesMax", label: "Card types, all faces", unit: "card type" },
-  { sort: "fronttypes", param: "fronttypes", min: "frontTypesMin", max: "frontTypesMax", label: "Card types, front face", unit: "front-face card type" },
+  { sort: "cardtypes", param: "cardtypes", min: "cardTypesMin", max: "cardTypesMax", label: "Card types, both faces", unit: "card type" },
+  { sort: "fronttypes", param: "fronttypes", min: "frontTypesMin", max: "frontTypesMax", label: "Card types, front face only", unit: "front-face card type" },
   { sort: "supertypes", param: "supertypes", min: "supertypesMin", max: "supertypesMax", label: "Supertypes", unit: "supertype" },
   { sort: "subtypes", param: "subtypes", min: "subtypeCountMin", max: "subtypeCountMax", label: "Subtypes", unit: "subtype" },
   { sort: "creaturetypes", param: "creaturetypes", min: "creatureTypesMin", max: "creatureTypesMax", label: "Creature types", unit: "creature type" },
