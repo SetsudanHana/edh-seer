@@ -2635,7 +2635,16 @@ const UNNAMED_IS_YOU: ReadonlySet<string> = new Set(["draw", "mill", "scry", "su
  *  there is no exile action), Doomsday ('exile the rest'), Chandra, Heart of Fire's -9 derive no split. */
 const SPLITTABLE_ZONES: ReadonlySet<string> = new Set(["graveyard", "hand", "library"]);
 const FOUND_BY_SEARCH = /^(?:it|them|those cards|that card|the cards|(?:(?:all|any number of) )?cards (?:with|found)\b.*)$/i;
-const TWO_ORIGINS = /^(.+? from the battlefield) (?:or|and\/or) ([^,]+? from (?:an? |all )?graveyards?)$/i;
+/** Split at the FIRST " from the battlefield or|and/or " (an index, not a two-group regex: CodeQL js/polynomial-redos flagged the lazy pair), then the second half must end in a graveyard. */
+const TWO_ORIGINS_SEP = / from the battlefield (?:or|and\/or) /i;
+const GRAVEYARD_HALF = /^[^,]+ from (?:an? |all )?graveyards?$/i;
+function twoOrigins(object: string): [string, string] | null {
+  const m = TWO_ORIGINS_SEP.exec(object);
+  if (!m || m.index === 0) return null;
+  const first = object.slice(0, m.index + " from the battlefield".length);
+  const second = object.slice(m.index + m[0].length);
+  return GRAVEYARD_HALF.test(second) ? [first, second] : null;
+}
 const ZONE_LIST_TAIL = /\b(hands?|graveyards?|librar(?:y|ies)),? (?:and )?(hands?|graveyards?|librar(?:y|ies))$/i;
 const ZONE_OF_WORD = (w: string): string => (w.startsWith("hand") ? "hand" : w.startsWith("graveyard") ? "graveyard" : "library");
 /** The zones a clause's ONE printed search names, in order ("Search target opponent's graveyard, hand, and library for ..." stored as a single search with no origin: Slaughter Games, Pick the Brain, Invasive Surgery).
@@ -2707,9 +2716,9 @@ function splitMultiZoneExiles(clause: ClauseRecord, text?: string, cardText = ""
     }
     // TWO ORIGINS IN ONE OBJECT (#1309): "up to one other target creature from the battlefield or creature card from a graveyard" (Savior of Ollenbock) is a choice of either, so each origin is an exile of its own half's words: the battlefield one (a removal) and the
     // graveyard one (graveyard hate). The grammar leaves such an object unzoned (a single zone would drop the other half). CEILING: the halves share the printed "up to" and target words only in the first; the second names its class alone.
-    const two = a.verb === "exile" && !a.fromZone ? TWO_ORIGINS.exec((a.object ?? "").trim()) : null;
+    const two = a.verb === "exile" && !a.fromZone ? twoOrigins((a.object ?? "").trim()) : null;
     if (two) {
-      out.push({ ...a, object: two[1]!, fromZone: "battlefield" } as Action, { ...a, object: two[2]!, fromZone: "graveyard", splitFrom: true } as Action);
+      out.push({ ...a, object: two[0], fromZone: "battlefield" } as Action, { ...a, object: two[1], fromZone: "graveyard", splitFrom: true } as Action);
       changed = true; continue;
     }
     const tail = a.verb === "exile" && !a.fromZone ? ZONE_LIST_TAIL.exec((a.object ?? "").trim()) : null;
