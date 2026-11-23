@@ -458,12 +458,12 @@ export function CardSearch({
   // the field. One line each, said where the answer would be; the list is not drawn (an unknown is not an empty answer).
   const unknownLines = useMemo((): string[] => {
     const out = new Set<string>();
-    // AN ANY-OF WORD THE VOCABULARY LACKS is said, not ignored: the group would otherwise answer with the words it knows
+    // AN ANY-OF OR NOT WORD THE VOCABULARY LACKS is said, not ignored: the group would otherwise answer with the words it knows
     // and look complete. A table that has not loaded yet knows nothing, so it is not judged.
     for (const [kind, words, table] of [
-      ["type", [...eventQuery.types, ...(eventQuery.orTypes ?? [])], vocabulary.types],
-      ["subtype", [...eventQuery.subtypes, ...(eventQuery.orSubtypes ?? [])], vocabulary.subtypes],
-      ["keyword", [...eventQuery.keywords, ...(eventQuery.orKeywords ?? [])], vocabulary.keywords],
+      ["type", [...eventQuery.types, ...(eventQuery.orTypes ?? []), ...(eventQuery.notTypes ?? [])], vocabulary.types],
+      ["subtype", [...eventQuery.subtypes, ...(eventQuery.orSubtypes ?? []), ...(eventQuery.notSubtypes ?? [])], vocabulary.subtypes],
+      ["keyword", [...eventQuery.keywords, ...(eventQuery.orKeywords ?? []), ...(eventQuery.notKeywords ?? [])], vocabulary.keywords],
     ] as const) {
       if (table.length === 0) continue;
       for (const w of words) if (!table.includes(w)) out.add(`This build doesn't know the ${kind} "${w}".`);

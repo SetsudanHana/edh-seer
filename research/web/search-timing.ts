@@ -54,7 +54,7 @@ const q = eventsFromParams(new URLSearchParams(url));
 const page = async (keep: boolean) => {
   const t0 = performance.now();
   const core = coreContext(file.cards, file);
-  const need: Node = { and: [{ field: "st", op: "countIn", list: "creature", min: 0 }] };
+  const need: Node = fromEventQuery(q, "cards");
   const loaded = withEveryCreatureType(await withCatalogue(core, createSearchLoader("/static", shim), need), file.cards, file);
   const t1 = performance.now();
   const res = evaluateEventQuery(file.cards, file, keep ? { ...q, keepChangelings: true } : q, "cards", { context: loaded });

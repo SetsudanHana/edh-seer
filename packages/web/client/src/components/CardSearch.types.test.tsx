@@ -325,3 +325,9 @@ test.each([["type", "type"], ["subtype", "subtype"], ["keyword", "keyword"]])("a
   expect(await screen.findByText(`This build doesn't know the ${kind} "bogus".`)).toBeInTheDocument();
   expect(screen.queryByRole("list", { name: "Results" })).toBeNull();
 });
+
+test.each([["nottype", "type"], ["notsubtype", "subtype"], ["notkeyword", "keyword"]])("an unknown NOT word (%s) says so, with no list", async (param, kind) => {
+  atUrl(`/cards?type=creature&${param}=bogus`, loaderOf(CATALOGUE));
+  expect(await screen.findByText(`This build doesn't know the ${kind} "bogus".`)).toBeInTheDocument();
+  expect(screen.queryByRole("list", { name: "Results" })).toBeNull();
+});

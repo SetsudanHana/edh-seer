@@ -1,6 +1,6 @@
 import { describe, expect, test } from "vitest";
 import { evaluate } from "./evaluate.js";
-import { buildTypeViews, sparseBestFace } from "./type-views.js";
+import { buildTypeViews, completeFaces, faceSubtypesFromTypeLine, sparseBestFace } from "./type-views.js";
 import type { SetColumn } from "./walk.js";
 
 // subtypes: 0 tiefling, 1 druid, 2 bird, 3 bear, 4 elf, 5 shapeshifter, 6 forest (not a creature type)
@@ -68,5 +68,31 @@ describe("stBest: the creature types of the best face", () => {
     expect(c.overrides).toEqual([0, 1, 2]);
     expect(c.path).toBe("stBest");
     expect(c.group).toBe("faces");
+  });
+});
+
+describe("faces the shard lists too few of: read every face from the printed type line", () => {
+  const known = new Set(["goblin", "shaman", "saga", "time lord", "time", "lord", "human", "forest"]);
+  test("a half with no em dash has no subtypes; the back's subtypes come from its half", () => {
+    expect(faceSubtypesFromTypeLine("Enchantment \u2014 Saga // Enchantment Creature \u2014 Goblin Shaman", known)).toEqual([["saga"], ["goblin", "shaman"]]);
+    expect(faceSubtypesFromTypeLine("Instant // Land", known)).toEqual([[], []]);
+  });
+  test("a multi-word type stays one type, longest match first", () => {
+    expect(faceSubtypesFromTypeLine("Creature \u2014 Time Lord Human", known)).toEqual([["time lord", "human"]]);
+  });
+  test("a row whose listed front is [] and whose type-line back is goblin shaman counts 2", () => {
+    const idx = { types: ["creature"], subtypes: ["saga", "goblin", "shaman"], cards: [{ t: [0], s: [0, 1, 2] }] };
+    const creature = ["goblin", "shaman"];
+    const faces = completeFaces([[]], "Enchantment \u2014 Saga // Enchantment Creature \u2014 Goblin Shaman", new Set(idx.subtypes))!;
+    const best = sparseBestFace(idx, new Map([[0, faces]]), creature);
+    const st = buildTypeViews(idx, { creatureList: creature }).find((c) => c.path === "st")!;
+    const res = evaluate({ field: "stBest", op: "countIn", list: "creature", min: 2, max: 2 }, {
+      rowCount: 1, columns: new Map([["st", st], ["stBest", best]]), namedLists: { creature: { values: creature } },
+    });
+    expect(res.ok && res.rows).toEqual([0]);
+  });
+  test("a complete listing is used as listed", () => {
+    expect(completeFaces([["a"], ["b"]], "X \u2014 A // Y \u2014 B", known)).toEqual([["a"], ["b"]]);
+    expect(completeFaces(undefined, "Creature \u2014 Human", known)).toBeUndefined();
   });
 });

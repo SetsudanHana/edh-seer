@@ -18,7 +18,7 @@ import { CREATURE_SUBTYPES, LAND_SUBTYPES } from "@edh-seer/tagger/subtypes";
 import { buildCatalogue, decodeGroup, type Catalogue, type GroupPayload } from "../client/src/lib/search/catalogue.ts";
 import { evaluate, type Node } from "../client/src/lib/search/evaluate.ts";
 import type { SearchRegistry } from "../client/src/lib/search/registry.ts";
-import { buildIdentityView, buildNumberViews, buildTypeViews, sparseBestFace, sparseFront, type IndexRow, type NumericRow } from "../client/src/lib/search/type-views.ts";
+import { buildIdentityView, buildNumberViews, buildTypeViews, completeFaces, sparseBestFace, sparseFront, type IndexRow, type NumericRow } from "../client/src/lib/search/type-views.ts";
 import { walkRecords, type Column, type SetColumn, type WalkRecord } from "../client/src/lib/search/walk.ts";
 
 const arg = (name: string) => { const i = process.argv.indexOf(name); return i >= 0 ? process.argv[i + 1] : undefined; };
@@ -70,6 +70,7 @@ function build(): void {
   const frontTypes = new Map<number, string[]>();
   const faceSubtypes = new Map<number, string[][]>();
   const seen = new Set<number>();
+  const knownSubtypes = new Set([...index.subtypes, ...creature, ...land]);
   for (const f of readdirSync(join(versionDir, "cards")).filter((n) => n.endsWith(".json")).sort()) {
     const shard = JSON.parse(readFileSync(join(versionDir, "cards", f), "utf8")) as Record<string, { card: { name: string }; tags: { characteristics?: { faces?: { types?: string[]; subtypes?: string[] }[] } } | null }>;
     for (const e of Object.values(shard)) {
@@ -80,7 +81,8 @@ function build(): void {
       const front = e.tags?.characteristics?.faces?.[0]?.types;
       if (front) frontTypes.set(row, front);
       const fs = e.tags?.characteristics?.faces;
-      if (fs && fs.length > 0) faceSubtypes.set(row, fs.map((f) => f.subtypes ?? []));
+      const listed = completeFaces(fs?.map((f) => f.subtypes ?? []), (e.card as { typeLine?: string }).typeLine, knownSubtypes);
+      if (listed) faceSubtypes.set(row, listed);
     }
   }
 

@@ -157,6 +157,33 @@ export function sparseBestFace(
   return { kind: "set", path: "stBest", group: "faces", fallback: "st", overrides, values: sortedMap(values) };
 }
 
+/** The subtypes of every face of a printed type line ("A — X Y // B — Z"): the part after the em dash of each `" // "` half,
+ *  matched against the known subtype names, longest run of words first so "time lord" stays one type. A word no name covers
+ *  stands alone; a half with no em dash has none. Never a plain split on spaces. */
+export function faceSubtypesFromTypeLine(typeLine: string, known: ReadonlySet<string>): string[][] {
+  return typeLine.split(" // ").map((half) => {
+    const at = half.indexOf("\u2014");
+    if (at < 0) return [];
+    const words = half.slice(at + 1).trim().toLowerCase().split(/\s+/).filter(Boolean);
+    const out: string[] = [];
+    for (let i = 0; i < words.length;) {
+      let n = words.length - i;
+      while (n > 1 && !known.has(words.slice(i, i + n).join(" "))) n--;
+      out.push(words.slice(i, i + n).join(" "));
+      i += n;
+    }
+    return out;
+  });
+}
+
+/** The faces a row's best face is chosen from: the listed ones, unless the shard lists FEWER faces than the printed type line
+ *  has halves (a transform card often lists only its front), when every face comes from its half of the type line. */
+export function completeFaces(listed: readonly (readonly string[])[] | undefined, typeLine: string | undefined, known: ReadonlySet<string>): string[][] | undefined {
+  const parts = typeLine ? typeLine.split(" // ").length : 0;
+  if (typeLine && parts > 1 && (listed?.length ?? 0) < parts) return faceSubtypesFromTypeLine(typeLine, known);
+  return listed && listed.length > 0 ? listed.map((f) => [...f]) : undefined;
+}
+
 /** A column from a row's integer codes into a table (`t`, `s`, `k`): the row carries codes, the view names them.
  *  A code with no name in the table (the tables load apart from the rows) is skipped, never stored as "undefined". */
 export function buildCodeView(path: string, table: readonly string[], codes: readonly (readonly number[] | undefined)[]): SetColumn {
