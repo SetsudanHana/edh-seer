@@ -1,0 +1,120 @@
+{
+  "threshold": 400,
+  "budgets": {
+    "read": 50000,
+    "faces": 20000,
+    "catalogue": 100000
+  },
+  "groups": {
+    "types": [],
+    "faces": [],
+    "read": [
+      "tags.clauseSource"
+    ]
+  },
+  "fields": {
+    "t": {
+      "label": "Card types and supertypes"
+    },
+    "st": {
+      "label": "Subtypes"
+    },
+    "tFront": {
+      "label": "Front-face card types"
+    },
+    "everyCreatureType": {
+      "label": "Every creature type"
+    },
+    "mv": {
+      "label": "Mana value",
+      "sortable": true
+    },
+    "pow": {
+      "label": "Power",
+      "sortable": true
+    },
+    "tou": {
+      "label": "Toughness",
+      "sortable": true
+    },
+    "id": {
+      "label": "Colour identity"
+    },
+    "read": {
+      "label": "How the card was read"
+    },
+    "tags.clauseSource": {
+      "label": "Clause source"
+    }
+  },
+  "namedLists": {
+    "card": {
+      "label": "Card types (CR 205.2a)",
+      "field": "t",
+      "values": [
+        "artifact",
+        "battle",
+        "conspiracy",
+        "creature",
+        "dungeon",
+        "enchantment",
+        "instant",
+        "kindred",
+        "land",
+        "phenomenon",
+        "plane",
+        "planeswalker",
+        "scheme",
+        "sorcery",
+        "vanguard"
+      ]
+    },
+    "super": {
+      "label": "Supertypes (CR 205.4a)",
+      "field": "t",
+      "values": [
+        "basic",
+        "legendary",
+        "ongoing",
+        "snow",
+        "world"
+      ]
+    },
+    "creature": {
+      "label": "Creature types (CREATURE_SUBTYPES)",
+      "field": "st",
+      "values": []
+    },
+    "land": {
+      "label": "Land types (LAND_SUBTYPES)",
+      "field": "st",
+      "values": []
+    }
+  },
+  "deny": [
+    "q",
+    "card.q",
+    "tags.q",
+    "card.edhrecRank",
+    "card.edhrecSaltiness",
+    "tags.deriveVersion",
+    "tags.normalizeVersion",
+    "card.tags.produces",
+    "card.tags.cares",
+    "card._id",
+    "tags._id",
+    "tags.oracleId",
+    "tags.segmentHash",
+    "tags.schemaVersion",
+    "tags.promptVersion",
+    "tags.model",
+    "card.oracleId",
+    "edhrecRank",
+    "*._id",
+    "*.oracleId",
+    "*.printingId",
+    "*.artCrop",
+    "*.clause",
+    "*.grantedBy"
+  ]
+}
