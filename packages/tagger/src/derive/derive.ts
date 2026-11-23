@@ -771,7 +771,8 @@ import { castClassFromPrint, castIsOnlyACondition, castsYourOwnCard } from "./ca
 // 584: #1361 -- Whenever day becomes night or night becomes day is two triggers of one day-night event, worded by their halves (CR 731.1), so Sunstreak Phoenix, Brimstone Vandal and the other twin cards read from the grammar
 // 585: #1309 -- an exile object naming two origins ('up to one other target creature from the battlefield or creature card from a graveyard', Savior of Ollenbock; 'and/or ... from graveyards', Aurelia's Vindicator, Angel of Serenity) is no graveyard-only exile and gets no single zone: the grammar leaves fromZone unset (action.ts fromOf, clause-record.ts) and derive splits it into one exile per origin (`splitMultiZoneExiles`, the #1311 way): a battlefield one (the removal: exiled / leaves with `fromZone: battlefield`, target) and a graveyard one (`splitFrom`: graveyard-hate, exiled / leaves with `fromZone: graveyard`), so Savior keeps role:graveyardHate and gains role:targetedRemoval. Silent Gravestone's self-exile was already zoned to the battlefield by #1496 (guarded by exile-two-origins-1309.test.ts).
 // 586: #1275 -- Magus of the Will's stored put-to-battlefield of 'lands and spells from your graveyard' is the play it prints (land-play + cast from graveyard), no land enters
-export const DERIVE_VERSION = 586;
+// 587: #1277 -- Sacred Ground's 'a spell or ability an opponent controls causes a land to be put into your graveyard from the battlefield' derives a real dies trigger of your land carrying the new Ability.trigger.cause: opp (owner 2026-11-23). eventMatches refuses every producer for a cause-opp trigger (all deck producers are yours); ramp.landPut refuses an enters whose ref-trigger is opp-caused, so Sacred Ground leaves Ramp (owner 2026-10-17). The recursion keeps the returned land's class. Discard family stays refused.
+export const DERIVE_VERSION = 587;
 
 /** "a nonland card from target opponent's graveyard or hand" (#1592): the object of a stored hand-or-graveyard pick. */
 const GRAVEYARD_OR_HAND_PICK = /\bfrom (?:target opponent|target player|that player|that opponent|an opponent)'s (?:graveyard or hand|hand or graveyard)$/i;
@@ -2564,9 +2565,17 @@ const TEMPORAL = /\b(?:next|this turn|this combat|each turn)\b/g;
  *  class inside the if, #178), "enters tapped" (`entersTapped`), an event amount ("5 or more
  *  damage", `amount`). Anything else refuses the claim (owner, 2026-10-01). */
 const CRAFT_COST_NARROWING = "while you're activating a craft ability";
+/** "Whenever a spell or ability an opponent controls causes a land to be put into your graveyard from the battlefield" (Sacred Ground, #1277, owner 2026-11-23): the one cause the vocabulary holds, `trigger.cause: "opp"`.
+ *  Only a `dies` of a permanent YOU control, read off the printed "put into your graveyard from the battlefield". CEILING: the discard family ("causes you to discard this card": Loxodon Smiter, Pure Intentions ...) stays refused; it needs its own event. */
+const OPP_CAUSED_NARROWING = "caused by a spell or ability an opponent controls";
+const PUT_INTO_YOUR_YARD_FROM_PLAY = /\bto be put into your graveyard from the battlefield\b/i;
+function opponentCaused(r: TriggerReading, text: string): boolean {
+  return r.event === "dies" && r.subject?.control === "you" && (r.narrowing ?? "").replace(/\s+/g, " ").trim() === OPP_CAUSED_NARROWING && PUT_INTO_YOUR_YARD_FROM_PLAY.test(text);
+}
 function narrowingRepresented(r: TriggerReading, text: string): boolean {
   const left = (r.narrowing ?? "").replace(TEMPORAL, "").replace(/\s+/g, " ").trim();
   if (left === "") return true;
+  if (opponentCaused(r, text)) return true;
   if (left === "tapped" && r.event === "enters") return true;
   // MARKET GNOME (#1500): the exile is a craft ability's cost, carried as `viaCraft` on the trigger's subject (see `CRAFT_COST_NARROWING`); the matcher hears only a craft exile.
   if (left === CRAFT_COST_NARROWING && r.event === "exiled") return true;
@@ -2940,7 +2949,7 @@ function withGrammarActions(clause: ClauseRecord, text: string | undefined, cost
   return { ...clause, actions: out };
 }
 
-type GrammarTrigger = { verbs: Verb[]; subject: SubjectFilter; blocker?: SubjectFilter; batched?: true; alongside?: { atLeast: number } } | { refused: string; subject?: SubjectFilter };
+type GrammarTrigger = { verbs: Verb[]; subject: SubjectFilter; blocker?: SubjectFilter; batched?: true; alongside?: { atLeast: number }; cause?: "opp" } | { refused: string; subject?: SubjectFilter };
 
 function grammarTriggersOf(text: string, cardName: string | undefined, storedEvent: string, cardText: string, enchantText: string, siblingEvents: string[], precomputed?: TriggerReading[], curse?: boolean, creatureCard?: boolean, textlessSibling?: boolean): GrammarTrigger[] | null {
   // An Aura's "enchanted permanent" is the class its own face's Enchant line names (see subjectFrom).
@@ -3029,6 +3038,7 @@ function grammarTriggerFrom(r: TriggerReading, text: string, preamble: string, c
   if (verb === "enters" && /\btransformed\b/.test(r.narrowing ?? "")) return { refused: "enters-transformed", subject };
   if (r.condition && !classifyCondition(r.condition.text, { threshold: thresholdFor(text) !== undefined, selfDiesOnCreatureCard: verb === "dies" && subject.self === true && creatureCard === true }).represented) return { refused: `if:${r.event}`, subject };
   if (r.narrowing && !narrowingRepresented(r, text)) return { refused: `narrowing:${r.event}`, subject };
+  const oppCause = opponentCaused(r, text);
   if (verb === "exiled" && (r.narrowing ?? "").replace(/\s+/g, " ").trim() === CRAFT_COST_NARROWING) subject.viaCraft = true;
   // "Whenever a creature with deathtouch blocks or becomes blocked BY THIS CREATURE" (Mirror Shield, granted to the host): the watched creature is the OPPOSING one and the named blocker is the host or the card, so the
   // stored subject "this creature" would be a live self trigger on the wrong object. Refused rather than guessed (#1375 review).
@@ -3055,7 +3065,7 @@ function grammarTriggerFrom(r: TriggerReading, text: string, preamble: string, c
   // Only an attacking creature becomes blocked (CR 509.1h): "an attacking creature becomes blocked" states the event, not a narrowing.
   if (verb === "becomes-blocked" && subject.combat === "attacking") delete subject.combat;
   if (subject.sharesTypeWith === "self" && GRANTED_TO_COMMANDER.test(cardText)) subject.sharesTypeWith = "commander";
-  return { verbs: [verb], subject, ...(verb === "attacks" && r.alongside ? { alongside: r.alongside } : {}), ...(verb === "becomes-blocked" && r.blocker ? { blocker: r.blocker, ...(r.batched ? { batched: true as const } : {}) } : {}) };
+  return { verbs: [verb], subject, ...(oppCause ? { cause: "opp" as const } : {}), ...(verb === "attacks" && r.alongside ? { alongside: r.alongside } : {}), ...(verb === "becomes-blocked" && r.blocker ? { blocker: r.blocker, ...(r.batched ? { batched: true as const } : {}) } : {}) };
 }
 
 /** "those tokens" / "the token": not a PRONOUN_OBJECT, so it never resolves and emitted a wildcard token tap (Dog Walker). */
@@ -4264,7 +4274,8 @@ export function deriveAbilities(
       // A RECURSION OF THE TRIGGER'S OWN OBJECT HAS THAT OBJECT'S CLASS (#1253, Sacred Ground): its emits say
       // "land you control" and its effect subject said "a card in any graveyard", so every graveyard filler
       // in the deck "enabled" it. Copy the ref'd emit's class and controller onto the effect subject.
-      if (subject && effectKind === "graveyard-recursion" && refersToTrigger && !trigger) {
+      // #1277: an opponent-caused trigger (Sacred Ground) is read now, and the recursion still takes the class of the land it returns, not any card in a graveyard.
+      if (subject && effectKind === "graveyard-recursion" && refersToTrigger && (!trigger || (trigger as { cause?: string }).cause === "opp")) {
         const made = emits.find((e) => e.subject.ref === "trigger");
         if (made) {
           const src = made.subject as unknown as Record<string, unknown>, dst = subject as unknown as Record<string, unknown>;

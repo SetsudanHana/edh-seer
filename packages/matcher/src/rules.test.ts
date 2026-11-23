@@ -1749,13 +1749,14 @@ describe("ramp.landPut is derived", () => {
     expect(ruleMatches(rule, c, set)).toBe(false);
     expect(detectBuildCategories([c]).get("ramp")?.has("x")).toBe(true);
   });
-  test("Sacred Ground is NOT refused: its derive has no trigger to tell a retention from a drop (CEILING, #1277, owner ruling 2026-10-17)", () => {
-    // The real shape: an `enters` with `ref: "trigger"` on an ability that has NO trigger. Pinned so the day the derive gains the trigger and the rule refuses it, this test flips.
-    const sacred: DeckCard = {
+  test("Sacred Ground IS refused: its trigger is caused by an opponent, so its return is retention (owner ruling 2026-10-17, #1277)", () => {
+    const sacred = (cause?: "opp"): DeckCard => ({
       card: { name: "Sacred Ground", oracleText: "", typeLine: "Enchantment" } as Card,
-      tags: { abilities: [{ effect: { kind: "graveyard-recursion" }, emits: [{ verb: "enters", subject: { control: "you", token: null, type: "land", fromZone: "graveyard", ref: "trigger" } }] }] } as never,
-    };
-    expect(ruleMatches(rule, sacred, set)).toBe(true);
+      tags: { abilities: [{ trigger: { verbs: ["dies"], subject: { control: "you", token: null, type: "land" }, ...(cause ? { cause } : {}) }, effect: { kind: "graveyard-recursion" }, emits: [{ verb: "enters", subject: { control: "you", token: null, type: "land", fromZone: "graveyard", ref: "trigger" } }] }] } as never,
+    });
+    expect(ruleMatches(rule, sacred("opp"), set)).toBe(false);
+    // The same return after a death of ANY cause (your own sacrifice) is a drop (Desert Warfare), so the cause is what refuses it.
+    expect(ruleMatches(rule, sacred(), set)).toBe(true);
   });
   test("allOf and not compose inside a rule", () => {
     const yes: Rule = { id: "a", match: [{ op: "allOf", clauses: [{ op: "emits", verbs: ["enters"] }, { op: "not", clause: { op: "emits", verbs: ["dies"] } }] }] };

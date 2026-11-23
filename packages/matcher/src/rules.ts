@@ -222,6 +222,8 @@ export type RuleClause =
       reachesClass?: string;
       /** With `reachesClass`: a BARE SUBTYPE ("Aura", "Equipment", "Saga") names its class (`BARE_SUBTYPE_CLASS`). Opt-in, on the artifact and enchantment rules of the destroy, exile, tuck and bounce answers (owner 2026-11-13: Seedling Charm). The damage answers have no artifact or enchantment rule, so there is nothing to turn on. */
       bareSubtype?: true;
+      /** The emit points back at its ability's trigger (`ref: "trigger"`) and that trigger is CAUSED BY AN OPPONENT (`Ability.trigger.cause`, #1277): Sacred Ground's "return that card to the battlefield" after an opponent's spell or ability put your land into your graveyard. Retention of a land you had, never a land drop (owner 2026-10-17). */
+      afterOppCause?: true;
       /** The emit is a TUCK (`GameEvent.tuck`: a put into a library from the battlefield; Condemn, Oust). A shuffle is its own verb. */
       tuck?: true }
   /** The card's `characteristics.enchants` (the Enchant line, #1315) can be a creature: the filter, or an `anyOf` branch of it ("creature or Vehicle", "artifact or creature"), names
@@ -795,6 +797,7 @@ function clauseHolds(clause: RuleClause, dc: DeckCard, set: RuleSet): boolean {
           && (clause.fromZone === undefined || clause.fromZone.includes(e.subject.fromZone ?? null))
           && (clause.counter === undefined || (e.subject.counter !== undefined && clause.counter.includes(e.subject.counter)))
           && (clause.reachesClass === undefined || subjectReachesClass(clause.bareSubtype === true, e.subject, clause.reachesClass))
+          && (clause.afterOppCause !== true || (e.subject.ref === "trigger" && a.trigger?.cause === "opp"))
           && (clause.tuck !== true || e.tuck === true))
         && (clause.repeats === undefined || clause.repeats.includes(a.repeats ?? null)));
     case "subtype":

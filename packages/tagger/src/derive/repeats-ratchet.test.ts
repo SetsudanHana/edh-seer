@@ -100,7 +100,8 @@ const FIXTURE = new URL("repeats-refused.json", import.meta.url);
  *  opponent's library") derive refuses as a narrowing, so the rules cannot name it. 0 gone. */
 /** 2857 -> 2854 (2026-11-21, #1720, DERIVE 572): three rows gone, the textless empty `exiled` twins of God-Eternal Bontu, God-Eternal Kefnet and Ilharg, the Raze-Boar, which the fold now removes beside the covering "dies or is put into exile" clause. 0 added. */
 /** 2854 -> 2855 (#1309, DERIVE 585): one row added. Savior of Ollenbock's exile of "a creature from the battlefield or a creature card from a graveyard" is now one ability per origin (removal, graveyard hate), and both carry its "Whenever this creature trains" trigger, which the rules cannot name (it was one refused row, it is two). 0 gone. */
-const REFUSED_CAP = 2855;
+/** 2855 -> 2854 (#1277, DERIVE 587): Sacred Ground's row is gone; its "caused by a spell or ability an opponent controls" trigger is now read (`trigger.cause: opp`), so its recursion is no longer an unnamed repeat. */
+const REFUSED_CAP = 2854;
 
 /** `repeatsFor` takes THREE arguments -- `cost` feeds rules 1-2 (self-sacrifice, {T}/{Q}),
  *  `clauseText` feeds rule 3 ("once each turn"). A fixture row missing `cost` would half-disable the
