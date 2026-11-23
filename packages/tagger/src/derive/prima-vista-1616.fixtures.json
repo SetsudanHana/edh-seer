@@ -1,0 +1,160 @@
+{
+ "The Prima Vista": {
+  "oracleId": "a09d9754-a321-4018-a237-e613e915b642",
+  "typeLine": "Legendary Artifact — Vehicle",
+  "oracleText": "Flying\nWhenever you cast a noncreature spell, if at least four mana was spent to cast it, The Prima Vista becomes an artifact creature until end of turn.\nCrew 2 (Tap any number of creatures you control with total power 2 or more: This Vehicle becomes an artifact creature until end of turn.)",
+  "keywords": [
+   "Flying",
+   "Crew"
+  ],
+  "normalizeVersion": 14,
+  "segmentHash": "c37e8af8565a9f7311b98f1b747634ccb65df8b83c55286763a0088a846905ea",
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Flying",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "cast",
+     "subject": "a noncreature spell",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "cast",
+      "object": "The Prima Vista becomes an artifact creature until end of turn",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Crew 2",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   }
+  ]
+ },
+ "Mishra's Factory": {
+  "oracleId": "5963e0ef-e0bc-4611-ad4f-813a4c0eacfb",
+  "typeLine": "Land",
+  "oracleText": "{T}: Add {C}.\n{1}: This land becomes a 2/2 Assembly-Worker artifact creature until end of turn. It's still a land.\n{T}: Target Assembly-Worker creature gets +1/+1 until end of turn.",
+  "keywords": [],
+  "normalizeVersion": 13,
+  "segmentHash": "882d75bb2576e67a87b6b1b440ec268f8fa7273f59077d28be2d113822734254",
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "add-mana",
+      "object": "{C}",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "animate",
+      "object": "this",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "2/2",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "modify-pt",
+      "object": "target Assembly-Worker creature",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "+1/+1",
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Archmage Emeritus": {
+  "oracleId": "8305d576-21d8-4ce7-8eda-a7cd9793aca5",
+  "typeLine": "Creature — Human Wizard",
+  "oracleText": "Magecraft — Whenever you cast or copy an instant or sorcery spell, draw a card.",
+  "keywords": [
+   "Magecraft"
+  ],
+  "normalizeVersion": 15,
+  "segmentHash": "57ff19830d1177f4789acdc690076ac7381d5230c27de9e4cf45ed0817a9891d",
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "cast",
+     "subject": "an instant or sorcery spell",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "draw",
+      "object": "a card",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "copy",
+     "subject": "an instant or sorcery spell",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "draw",
+      "object": "a card",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   }
+  ]
+ }
+}
