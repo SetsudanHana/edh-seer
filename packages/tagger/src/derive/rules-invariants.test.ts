@@ -67,6 +67,7 @@ const TESTED: Record<string, string> = {
   "105.2a": "grammar/filter.test.ts — 'monocolored' is exactly one colour (`colorCount: mono`, #896)",
   "105.2b": "grammar/filter.test.ts — 'multicolored' is two or more colours (`colorCount: multi`, #896)",
   "110.5": "grammar/filter.test.ts — tapped/untapped is a status (`tapped`, #896)",
+  "110.5b": "derive/tapped-token-1354.test.ts — a token created tapped arrives tapped, so the companion tap of its creation is no unclaimed action (#1354)",
   "723.1": "derive/gains-control-printed.test.ts — controlling a player (Opposition Agent) is a printed control change and keeps its gains-control emit (#1318)",
   "723.3": "derive/either-or-players.test.ts — only control of the player changes, so Cruel Entertainment's two player-controls-player actions are unclaimed, not two 'you gain control' emits (#1401 G)",
   "101.2": "derive.test.ts — a \"can't\" effect on cards in graveyards (Grafdigger's Cage: cards can't enter, spells can't be cast from them) is the static `graveyard-lock` (#1266)",
