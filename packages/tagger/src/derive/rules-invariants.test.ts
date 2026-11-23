@@ -242,7 +242,8 @@ test("every CR rule the tagger cites is asserted, tested elsewhere, or marked pr
   expect(cited.size).toBeGreaterThan(90);
 });
 
-const RULES = fileURLToPath(new URL("../../../../rules/MagicCompRules.txt", import.meta.url));
+// The DIRECTORY is the URL (lint:bins accepts a fetched directory whose parent exists), the file name is joined on.
+const RULES = join(fileURLToPath(new URL("../../../../rules/", import.meta.url)), "MagicCompRules.txt");
 // The rules file is fetched, not committed (`npx tsx research/rules/fetch-comprehensive-rules.ts`): without it the meaning cannot be read, so the check is skipped rather than guessed.
 test.skipIf(!existsSync(RULES))("every ASSERTED rule has a stated meaning, and the Comprehensive Rules say the rule is about it (#1316)", () => {
   expect([...ASSERTED].filter((r) => !(r in ASSERTED_MEANING)).sort(), "ASSERTED with no meaning written").toEqual([]);
