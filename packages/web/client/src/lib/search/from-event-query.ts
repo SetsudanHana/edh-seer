@@ -156,6 +156,8 @@ export function fromEventQuery(q: CharQuery, mode: PageMode, opts: CompileOption
     const min = q[c.min]; const max = q[c.max];
     if (min === undefined && max === undefined) continue;
     const spec = typeCountSpec[c.sort];
+    // EVERY CARD HAS A CARD TYPE: a thin row (no `t`) counts 0 only because it is missing, so it is outside every count range.
+    and.push({ field: "t", op: "count", min: 1 });
     const bounds = { ...(min !== undefined ? { min } : {}), ...(max !== undefined ? { max } : {}) };
     and.push(spec.list === undefined ? { field: spec.field, op: "count", ...bounds } : { field: spec.field, op: "countIn", list: spec.list, ...bounds });
   }

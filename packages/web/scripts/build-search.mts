@@ -81,7 +81,7 @@ function build(): void {
       const front = e.tags?.characteristics?.faces?.[0]?.types;
       if (front) frontTypes.set(row, front);
       const fs = e.tags?.characteristics?.faces;
-      const listed = completeFaces(fs?.map((f) => f.subtypes ?? []), (e.card as { typeLine?: string }).typeLine, knownSubtypes);
+      const listed = completeFaces(fs?.map((f) => f.subtypes ?? []), (e.card as { typeLine?: string }).typeLine, knownSubtypes, (index.cards[row]!.t?.length ?? 0) > 0);
       if (listed) faceSubtypes.set(row, listed);
     }
   }

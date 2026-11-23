@@ -178,9 +178,10 @@ export function faceSubtypesFromTypeLine(typeLine: string, known: ReadonlySet<st
 
 /** The faces a row's best face is chosen from: the listed ones, unless the shard lists FEWER faces than the printed type line
  *  has halves (a transform card often lists only its front), when every face comes from its half of the type line. */
-export function completeFaces(listed: readonly (readonly string[])[] | undefined, typeLine: string | undefined, known: ReadonlySet<string>): string[][] | undefined {
+export function completeFaces(listed: readonly (readonly string[])[] | undefined, typeLine: string | undefined, known: ReadonlySet<string>, hasTypes = true): string[][] | undefined {
   const parts = typeLine ? typeLine.split(" // ").length : 0;
-  if (typeLine && parts > 1 && (listed?.length ?? 0) < parts) return faceSubtypesFromTypeLine(typeLine, known);
+  // A thin row (no `t`) is outside every type count: it is not given creature types its row does not carry.
+  if (hasTypes && typeLine && parts > 1 && (listed?.length ?? 0) < parts) return faceSubtypesFromTypeLine(typeLine, known);
   return listed && listed.length > 0 ? listed.map((f) => [...f]) : undefined;
 }
 

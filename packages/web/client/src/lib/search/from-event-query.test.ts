@@ -209,6 +209,14 @@ describe("the five type counts", () => {
     expect(ask({ creatureTypesMin: 3 })).toEqual({ ok: true, rows: [0, 3] });
     expect(ask({ creatureTypesMax: 0 })).toEqual({ ok: true, rows: [2, 4] });
   });
+  test("a thin row (no `t`) is outside every count range, as it is outside every mv range", () => {
+    const thinCtx = coreContext([...crows, { identity: [] }], tv, { namedLists: lists, columns: [best] }); // row 5: thin
+    const askThin = (over: Partial<EventQuery>) => evaluate(fromEventQuery({ produce: [], consume: [], colours: [], types: [], subtypes: [], keywords: [], cardColours: [], ...over }, "cards", { vocab: tv }), thinCtx);
+    expect(askThin({ cardTypesMax: 0 })).toEqual({ ok: true, rows: [] });
+    expect(askThin({ supertypesMax: 0 })).toEqual({ ok: true, rows: [0, 2, 3, 4] });
+    expect(askThin({ subtypeCountMax: 0 })).toEqual({ ok: true, rows: [4] });
+    expect(askThin({ creatureTypesMax: 0 })).toEqual({ ok: true, rows: [2, 4] });
+  });
   test("front-face count needs the faces group: without it, cannot-answer", () => {
     expect(ask({ frontTypesMin: 1 }).ok).toBe(false);
   });

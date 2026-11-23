@@ -91,6 +91,10 @@ describe("faces the shard lists too few of: read every face from the printed typ
     });
     expect(res.ok && res.rows).toEqual([0]);
   });
+  test("a thin row (no `t`) is not completed from its type line", () => {
+    expect(completeFaces(undefined, "Creature \u2014 Goblin // Creature \u2014 Shaman", known, false)).toBeUndefined();
+    expect(completeFaces([["goblin"]], "Creature \u2014 Goblin // Creature \u2014 Shaman", known, false)).toEqual([["goblin"]]);
+  });
   test("a complete listing is used as listed", () => {
     expect(completeFaces([["a"], ["b"]], "X \u2014 A // Y \u2014 B", known)).toEqual([["a"], ["b"]]);
     expect(completeFaces(undefined, "Creature \u2014 Human", known)).toBeUndefined();
