@@ -770,7 +770,8 @@ import { castClassFromPrint, castIsOnlyACondition, castsYourOwnCard } from "./ca
 // 583: #1322 -- Ascend (CR 702.131) emits city-blessing by you, once: a static ability on a permanent, a spell ability (on-cast) on an instant or sorcery, read off the printed keyword. Measured: city-blessing emitters 0 -> 27 (22 static, 5 on-cast); theme-stats gains city-blessing:any (27).
 // 584: #1361 -- Whenever day becomes night or night becomes day is two triggers of one day-night event, worded by their halves (CR 731.1), so Sunstreak Phoenix, Brimstone Vandal and the other twin cards read from the grammar
 // 585: #1309 -- an exile object naming two origins ('up to one other target creature from the battlefield or creature card from a graveyard', Savior of Ollenbock; 'and/or ... from graveyards', Aurelia's Vindicator, Angel of Serenity) is no graveyard-only exile and gets no single zone: the grammar leaves fromZone unset (action.ts fromOf, clause-record.ts) and derive splits it into one exile per origin (`splitMultiZoneExiles`, the #1311 way): a battlefield one (the removal: exiled / leaves with `fromZone: battlefield`, target) and a graveyard one (`splitFrom`: graveyard-hate, exiled / leaves with `fromZone: graveyard`), so Savior keeps role:graveyardHate and gains role:targetedRemoval. Silent Gravestone's self-exile was already zoned to the battlefield by #1496 (guarded by exile-two-origins-1309.test.ts).
-export const DERIVE_VERSION = 585;
+// 586: #1275 -- Magus of the Will's stored put-to-battlefield of 'lands and spells from your graveyard' is the play it prints (land-play + cast from graveyard), no land enters
+export const DERIVE_VERSION = 586;
 
 /** "a nonland card from target opponent's graveyard or hand" (#1592): the object of a stored hand-or-graveyard pick. */
 const GRAVEYARD_OR_HAND_PICK = /\bfrom (?:target opponent|target player|that player|that opponent|an opponent)'s (?:graveyard or hand|hand or graveyard)$/i;
@@ -2803,6 +2804,20 @@ function withPrintedZoneFacts(clause: ClauseRecord, text: string | undefined): C
   });
   return changed ? { ...clause, actions } : clause;
 }
+/** A PLAY PERMISSION THE STORE FILED AS A RETURN TO THE BATTLEFIELD (#1275): Magus of the Will's "you may play lands and cast spells from your graveyard" is stored as a `put` of "lands and spells from your graveyard" to the
+ *  battlefield, which derived a land `enters` and made the card Ramp. A spell is never put onto a battlefield, and the printed clause says "play lands" and never "battlefield": the action is the `play` it prints.
+ *  CEILING: only a `put`/`return` to the battlefield whose stored object names spells and whose clause prints "play land(s)" and no "battlefield"; one card on the corpus (census 2026-11-23: no other stored action has this shape). */
+const PRINTS_PLAY_LANDS = /\bplay (?:lands\b|a land\b)/i;
+function withPrintedLandPlay(clause: ClauseRecord, text: string | undefined): ClauseRecord {
+  if (text === undefined || !clause.actions?.length || !PRINTS_PLAY_LANDS.test(text) || /\bbattlefield\b/i.test(text)) return clause;
+  let changed = false;
+  const actions = clause.actions.map((a) => {
+    if ((a.verb !== "put" && a.verb !== "return") || a.toZone !== "battlefield" || !/\bspells?\b/i.test(a.object ?? "")) return a;
+    changed = true;
+    return { ...a, verb: "play" as const, toZone: null };
+  });
+  return changed ? { ...clause, actions } : clause;
+}
 const FOR_EACH_WHO_DOES_YOU_CREATE = /\bfor each (?:opponent|player) who does, you create\b/i;
 function withGrammarActions(clause: ClauseRecord, text: string | undefined, cost: string | undefined, cardName: string | undefined, precomputed?: ActionReading[]): ClauseRecord {
   if (!text || !clause.actions?.length) return clause;
@@ -3396,6 +3411,7 @@ export function deriveAbilities(
     // A LIFE TOTAL SET READS OFF ITS PRINTED CLAUSE (#1333, CR 119.5): a loss at an opponent / target player (Sorin Markov), "lose all but 1 life" (Soulgorger Orgg) and a genuine set's own recipient.
     clause = withLifeSetReadings(clause, rehomed ?? clauseTexts?.[clause.id]);
     clause = withPrintedZoneFacts(clause, rehomed ?? clauseTexts?.[clause.id]);
+    clause = withPrintedLandPlay(clause, rehomed ?? clauseTexts?.[clause.id]);
     clause = withPrintedPlayPermission(clause, rehomed ?? clauseTexts?.[clause.id], Object.values(clauseTexts ?? {}).filter((t) => TAKES_CARDS.test(t)));
     clause = splitMultiZoneExiles(clause, rehomed ?? clauseTexts?.[clause.id], cardText);
     clause = withBaseSetSplit(clause, rehomed ?? clauseTexts?.[clause.id]);
