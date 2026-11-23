@@ -50,6 +50,8 @@ const TESTED: Record<string, string> = {
   "608.2c": "derive.test.ts — an unnamed draw is yours; a named one is the player it names (#697)",
   "508.1a": "derive/intervening-if.test.ts — only a creature attacks, so \"if you attacked this turn\" cares about attacks:creature (#1088)",
   "701.47a": "grammar/action.test.ts + derive/emits.test.ts — amass reads as your 0/0 black Army token of its subtype, and emits it with a +1/+1 counter (#971)",
+  "701.51b": "derive/attraction-1325.test.ts — open an Attraction puts the Attraction card onto the battlefield under your control: an `enters` of an artifact Attraction that is no token (#1325)",
+  "717.1": "derive/attraction-1325.test.ts — Attraction is an artifact subtype (#1325)",
   "701.16a": "derive/emits.test.ts — investigate's token is an artifact Clue (#794)",
   "701.6a": "multi-zone-exile.test.ts — a countered spell goes to its owner's graveyard, so Quash's graveyard half keeps (#1311)",
   "903.5b": "derive.test.ts — Guardian Project's 'doesn't have the same name' is uniqueName: a singleton printed card, never a token or an any-number card (#896 task 5); multi-zone-exile.test.ts — a card found on the battlefield or in a hand has no graveyard copy (#1311)",
