@@ -7,7 +7,7 @@
  *  sat in the corpus as a vanilla bear. */
 import { graveyardOwner, selfGraveyardOwner } from "./graveyard-owner.js";
 import { lifeSetRewrite } from "./life-set.js";
-import { GUARDED_VERBS, energyRewrite, guardExempt, phaseOutFiledAsPut, playerKeywordFiledAsOther, verbPrint } from "./verb-words.js";
+import { GUARDED_VERBS, attractionOpeningRewrite, energyRewrite, guardExempt, phaseOutFiledAsPut, playerKeywordFiledAsOther, verbPrint } from "./verb-words.js";
 import type { Action, ClauseRecord } from "../canonicalize.js";
 import type { Ability, UnclaimedAction, Requirement, AbilityKind, CardTags, Characteristics, Control, SubjectFilter, Verb, EventCount } from "../schema.js";
 import { VERB_ALIASES, VERB_VOCAB } from "../schema.js";
@@ -776,7 +776,8 @@ import { castClassFromPrint, castIsOnlyACondition, castsYourOwnCard } from "./ca
 // 589: #1269 -- the card's own damaged player written 'they' / 'the player' after the damage reads opp (damagedPlayerRead: Unstoppable Slasher, Rex, Glowing One, Infesting Radroach, Etali Primal Conqueror, Skullknocker Ogre, Doomsday Specter, Tomb Blade), and a clause with two actions of one verb that player does every time (Sabertooth Cobra's two poison counters) is read opp (damagedPlayerActsEveryTime). Mirko Vosk / Balshan Beguiler's reveal-and-put mill was already opp (#1663). MEASURED (derive-impact vs 031b2764, pair-sample 0): 9 rows changed, 0 added/removed, 0 source flips; pair reasons +17 / -5,367; LOST->CLASS 393 (all consumers of YOUR discard / draw / lose-life / graveyard / creature deaths fed by an opponent's); role-ratchet lost 1 (Skullknocker Ogre -role:draw)
 // 590: #1323 -- energy (CR 107.14: {E} is one energy counter, paying it removes one) is read in every printed wording. `isEnergyObject` takes a quantity + the symbols or the word + an optional count ("one energy", "energy", "energy equal to the number of creatures you control", "X {E}", "an amount of {E}", "1 energy counter"; a linear word walk, not a regex); `energyReading` / `energyRewrite` (verb-words.ts) read an `add-mana` or `gain-life` action of energy as the gain it is (`gain-life` "you get {E}" with a clause that prints no gain and no life becomes the add-mana of {E}) and a payment ("you may pay eight {E}", Blaster Hulk) as a `remove-counter` of energy (`counter-removed`). Census (Mongo, 145 cards printing {E} or "energy", 2 of them not energy): counter-added 116 -> 129 cards, counter-removed 3 -> 4, no energy emit 29 -> 16 (the rest: a payment only in a cost or keyword cost, no action, "you get {E}" filed `other`, a consumer, or not energy); 14 cards change (Roil Cartographer, Peema Trailblazer, Scurry of Gremlins, Blaster Hulk, the seven gain-life energy cards, Aetherworks Marvel and Aetherflux Conduit no longer a mana-generation, Aethersphere Harvester no longer a lifegain); unclaimed actions 4,808 -> 4,797 (11 fixed); event-match pairs (changed rows): gained 22,167, lost 215 -- counter-added +1,180 -118, gain-life -97 (Aethersphere Harvester's false lifegain x lifegain payoffs), scales +20,962 (Scurry of Gremlins' energy equal to its creatures), copies +23, static +2; role-ratchet gained 0, lost 0.
 // 591: #1616 -- The Prima Vista: the stored cast that is really its animate sentence now derives from the grammar (triage label)
-export const DERIVE_VERSION = 591;
+// 592: #1325 -- 'open an Attraction' (CR 701.51b, CR 717.1) is the put of an artifact Attraction you control (an enters, not a token): the model's `other | open an Attraction` (15 commander-legal cards, derived nothing) and `investigate | an Attraction` (Seasoned Buttoneer, Myra the Magnificent, The Most Dangerous Gamer, derived a Clue-shaped create-token and a token Attraction of any controller) both read it. `investigate` joins GUARDED_VERBS: of 142 commander-legal investigate actions only those 4 print no investigate/clue word anywhere on the card.
+export const DERIVE_VERSION = 592;
 
 /** "a nonland card from target opponent's graveyard or hand" (#1592): the object of a stored hand-or-graveyard pick. */
 const GRAVEYARD_OR_HAND_PICK = /\bfrom (?:target opponent|target player|that player|that opponent|an opponent)'s (?:graveyard or hand|hand or graveyard)$/i;
@@ -3908,6 +3909,8 @@ export function deriveAbilities(
     }
     // AN ENERGY GAIN OR PAYMENT FILED AS MANA OR LIFE IS READ AS ENERGY (#1323, CR 107.14): see `energyRewrite`.
     if ((clause.actions ?? []).some((a) => energyRewrite(a, clauseText) !== undefined)) clause = { ...clause, actions: (clause.actions ?? []).map((a) => energyRewrite(a, clauseText) ?? a) };
+    // "OPEN AN ATTRACTION" FILED AS `other` OR AS `investigate` IS THE PUT OF AN ATTRACTION YOU CONTROL (#1325, CR 701.51b, CR 717.1): see `attractionOpeningRewrite`.
+    if ((clause.actions ?? []).some((a) => attractionOpeningRewrite(a, clauseText) !== undefined)) clause = { ...clause, actions: (clause.actions ?? []).map((a) => attractionOpeningRewrite(a, clauseText) ?? a) };
     const misfiled = new Set<Action>();
     if (GUARDED_VERBS.size > 0) {
       for (const a of clause.actions ?? []) {

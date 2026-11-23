@@ -42,7 +42,7 @@ export const VERB_WORDS: Readonly<Record<string, string>> = {
   "airbend": "airbend", "waterbend": "waterbend", "proliferate": "proliferat(?:e|es|ed)",
 };
 /** The verbs a "none" verdict drops. One family per commit (#1321); empty until each is measured. */
-export const GUARDED_VERBS: Set<string> = new Set<string>(["add-mana", "goad", "shuffle", "scry", "mill", "search", "trigger-again", "gain-life", "add-counter", "remove-counter", "transform", "prevent", "return", "roll-dice", "vote", "city-blessing"]);
+export const GUARDED_VERBS: Set<string> = new Set<string>(["add-mana", "goad", "shuffle", "scry", "mill", "search", "trigger-again", "gain-life", "add-counter", "remove-counter", "transform", "prevent", "return", "roll-dice", "vote", "city-blessing", "investigate"]);
 /** An action the guard never drops although its verb is guarded: a reading derive has for it already (an `add-mana` of {E} is the energy counter, CR 107.14, emitted as `counter-added`). */
 export function guardExempt(action: { verb?: string; object?: string }): boolean {
   return action.verb === "add-mana" && isEnergyObject(action.object ?? "");
@@ -106,6 +106,22 @@ export function verbPrint(verb: string, clauseText: string | undefined, cost: st
   }
   if (cardText === undefined || cardText === "") return "none";
   return printsVerbWord(verb, stripReminderText(cardText)) ? "card" : "none";
+}
+
+/** "OPEN AN ATTRACTION" IS ITS OWN ACTION (#1325, CR 701.51b: move the top card of your Attraction deck onto the battlefield under your control; CR 717.1: Attraction is an artifact subtype). The model files it
+ *  `other | open an Attraction` (15 commander-legal cards, which so derived nothing) or `investigate | an Attraction` (Seasoned Buttoneer, Myra the Magnificent, The Most Dangerous Gamer, which derived the
+ *  Clue's create-token plus a TOKEN Attraction of any controller). It is the `put` of an Attraction you control onto the battlefield (`attractionOpeningRewrite`): the card, not a token, and yours.
+ *  Keyed on the printed clause, reminder stripped, saying "open(s) an Attraction". CEILING: "you open an Attraction" as a TRIGGER (The Most Dangerous Gamer's second ability) is still an unknown trigger; this reads the action only. */
+export function attractionOpening(action: { verb?: string; object?: string | null }, clauseText: string | undefined): boolean {
+  const object = (action.object ?? "").trim();
+  if (action.verb === "other") return /^open an attraction$/i.test(object);
+  if (action.verb !== "investigate" || !/^(?:an? )?attractions?$/i.test(object) || clauseText === undefined) return false;
+  return /(?<![\w'])open(?:s|ed)? an? attractions?(?![\w'])/i.test(stripReminderText(clauseText));
+}
+
+/** The action an opening stands for: `put | an artifact Attraction you control` onto the battlefield, or undefined to leave the action alone. */
+export function attractionOpeningRewrite<A extends { verb?: string; object?: string | null; fromZone?: string | null; toZone?: string | null; amount?: string | null }>(action: A, clauseText: string | undefined): A | undefined {
+  return attractionOpening(action, clauseText) ? { ...action, verb: "put", object: "an artifact Attraction you control", fromZone: null, toZone: "battlefield", amount: null } : undefined;
 }
 
 /** A PHASE-OUT THE MODEL FILED AS A `put` (#1266, owner 2026-11-12: Talon Gates of Madara, "When this land enters, up to one target creature phases out." is stored `put` with no zones, so no `phases-out` emit).

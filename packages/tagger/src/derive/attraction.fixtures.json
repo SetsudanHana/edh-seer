@@ -1,0 +1,1511 @@
+{
+ "Complaints Clerk": {
+  "card": {
+   "_id": "018627e1-ba32-4452-b3d1-6c2a39759aff",
+   "name": "Complaints Clerk",
+   "typeLine": "Creature — Sloth Beast Employee",
+   "oracleText": "When this creature enters, open an Attraction. (Put the top card of your Attraction deck onto the battlefield.)\nWhenever you roll a 1, create a 1/1 white Clown Robot artifact creature token.",
+   "keywords": [
+    "Open an Attraction"
+   ],
+   "colors": [
+    "W"
+   ],
+   "colorIdentity": [
+    "W"
+   ],
+   "manaValue": 4,
+   "power": "3",
+   "toughness": "3",
+   "layout": "normal",
+   "manaCost": "{3}{W}",
+   "allParts": [
+    {
+     "component": "combo_piece",
+     "name": "Complaints Clerk",
+     "typeLine": "Creature — Sloth Beast Employee",
+     "printingId": "a74e4feb-f3d5-4122-866c-421f4f24b829"
+    },
+    {
+     "component": "token",
+     "name": "Clown Robot",
+     "typeLine": "Token Artifact Creature — Clown Robot",
+     "printingId": "7fcd324b-8325-40f3-8a02-b84102cc63ab"
+    }
+   ]
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "this creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "other",
+      "object": "open an Attraction",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "roll-dice",
+     "subject": "you roll a 1",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "create",
+      "object": "a 1/1 white Clown Robot artifact creature token",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "source": "model"
+ },
+ "Discourtesy Clerk": {
+  "card": {
+   "_id": "0aafaef7-4827-4c80-87db-060f5be803f9",
+   "name": "Discourtesy Clerk",
+   "typeLine": "Creature — Vampire Employee",
+   "oracleText": "When this creature enters, open an Attraction. (Put the top card of your Attraction deck onto the battlefield.)\nAt the beginning of your end step, if you control three or more Attractions, you draw a card and you lose 1 life.",
+   "keywords": [
+    "Open an Attraction"
+   ],
+   "colors": [
+    "B"
+   ],
+   "colorIdentity": [
+    "B"
+   ],
+   "manaValue": 4,
+   "power": "3",
+   "toughness": "2",
+   "layout": "normal",
+   "manaCost": "{3}{B}"
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "this creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "other",
+      "object": "open an Attraction",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "end-step",
+     "subject": "you",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "draw",
+      "object": "a card",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     },
+     {
+      "verb": "lose-life",
+      "object": "you",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "source": "model"
+ },
+ "Pick-a-Beeble": {
+  "card": {
+   "_id": "43ce339e-c595-4215-bdb3-d93d0808417e",
+   "name": "Pick-a-Beeble",
+   "typeLine": "Artifact — Attraction",
+   "oracleText": "Visit — Roll a six-sided die. Put a number of luck counters on Pick-a-Beeble equal to the result and create a Treasure token. Then if there are six or more luck counters on Pick-a-Beeble, claim the prize!\nPrize — Create two Treasure tokens, then sacrifice Pick-a-Beeble and open an Attraction.",
+   "keywords": [
+    "Open an Attraction",
+    "Treasure"
+   ],
+   "colors": [],
+   "colorIdentity": [],
+   "manaValue": 0,
+   "power": null,
+   "toughness": null,
+   "layout": "normal",
+   "manaCost": "",
+   "allParts": [
+    {
+     "component": "token",
+     "name": "Treasure",
+     "typeLine": "Token Artifact — Treasure",
+     "printingId": "fab1ec58-5299-4604-8feb-212a6c5e7ffd"
+    },
+    {
+     "component": "combo_piece",
+     "name": "Pick-a-Beeble",
+     "typeLine": "Artifact — Attraction",
+     "printingId": "a18088e7-9bad-40d1-af40-d9a65847d1cd"
+    }
+   ]
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "roll-dice",
+      "object": "a six-sided die",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     },
+     {
+      "verb": "add-counter",
+      "object": "luck",
+      "amount": "the result",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     },
+     {
+      "verb": "create",
+      "object": "a Treasure token",
+      "amount": "1",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     },
+     {
+      "verb": "create",
+      "object": "a Treasure token",
+      "amount": "2",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     },
+     {
+      "verb": "sacrifice",
+      "object": "Pick-a-Beeble",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     },
+     {
+      "verb": "other",
+      "object": "open an Attraction",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "create",
+      "object": "a Treasure token",
+      "amount": "2",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     },
+     {
+      "verb": "sacrifice",
+      "object": "Pick-a-Beeble",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     },
+     {
+      "verb": "other",
+      "object": "open an Attraction",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   }
+  ],
+  "source": "model"
+ },
+ "Myra the Magnificent": {
+  "card": {
+   "_id": "4f0c3154-1917-4bb5-9ba2-446943a88808",
+   "name": "Myra the Magnificent",
+   "typeLine": "Legendary Creature — Human Performer",
+   "oracleText": "Whenever you cast an instant or sorcery spell from your hand, open an Attraction.\n{X}, {T}: Exile target instant or sorcery card with mana value X from your graveyard and choose an Attraction you control that doesn't have a midway counter on it. Put a midway counter on it. For as long as that Attraction is on the battlefield, whenever you visit it, copy the exiled card. You may cast the copy without paying its mana cost.",
+   "keywords": [
+    "Open an Attraction"
+   ],
+   "colors": [
+    "R",
+    "U"
+   ],
+   "colorIdentity": [
+    "R",
+    "U"
+   ],
+   "manaValue": 4,
+   "power": "2",
+   "toughness": "4",
+   "layout": "normal",
+   "manaCost": "{2}{U}{R}"
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "cast",
+     "subject": "an instant or sorcery spell from your hand",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "investigate",
+      "object": "an Attraction",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "exile",
+      "object": "target instant or sorcery card with mana value X from your graveyard",
+      "fromZone": "graveyard",
+      "toZone": "exile",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "add-counter",
+      "object": "midway",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     },
+     {
+      "verb": "copy",
+      "object": "the exiled card",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "cast",
+      "object": "the copy",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     }
+    ]
+   }
+  ],
+  "source": "model"
+ },
+ "Soul Swindler": {
+  "card": {
+   "_id": "52d90fc8-bd72-432b-a6f8-d4bf6398c50d",
+   "name": "Soul Swindler",
+   "typeLine": "Creature — Demon Employee",
+   "oracleText": "As long as you've visited an Attraction this turn, this creature has indestructible. (Damage and effects that say \"destroy\" don't destroy it.)\nWhen this creature enters, open an Attraction. (Put the top card of your Attraction deck onto the battlefield.)",
+   "keywords": [
+    "Open an Attraction"
+   ],
+   "colors": [
+    "B"
+   ],
+   "colorIdentity": [
+    "B"
+   ],
+   "manaValue": 5,
+   "power": "5",
+   "toughness": "3",
+   "layout": "normal",
+   "manaCost": "{4}{B}"
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "grant-ability",
+      "object": "indestructible",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "this creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "other",
+      "object": "open an Attraction",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "source": "model"
+ },
+ "Coming Attraction": {
+  "card": {
+   "_id": "5d9c7ca4-f735-4bee-b03f-4c0c76ee48ed",
+   "name": "Coming Attraction",
+   "typeLine": "Sorcery",
+   "oracleText": "Search your library for a basic land card, put it onto the battlefield tapped, then shuffle. Open an Attraction. (Put the top card of your Attraction deck onto the battlefield.)",
+   "keywords": [
+    "Open an Attraction"
+   ],
+   "colors": [
+    "G"
+   ],
+   "colorIdentity": [
+    "G"
+   ],
+   "manaValue": 3,
+   "power": null,
+   "toughness": null,
+   "layout": "normal",
+   "manaCost": "{2}{G}"
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "search",
+      "object": "a basic land card",
+      "fromZone": "library",
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "put",
+      "object": "it",
+      "fromZone": "library",
+      "toZone": "battlefield",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "tap",
+      "object": "it",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "shuffle",
+      "object": "your library",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "other",
+      "object": "Open an Attraction",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "source": "model"
+ },
+ "Seasoned Buttoneer": {
+  "card": {
+   "_id": "6048a682-f218-4039-8d5e-3e5156817fb2",
+   "name": "Seasoned Buttoneer",
+   "typeLine": "Creature — Vedalken Employee",
+   "oracleText": "When this creature enters, open an Attraction. (Put the top card of your Attraction deck onto the battlefield.)",
+   "keywords": [
+    "Open an Attraction"
+   ],
+   "colors": [
+    "U"
+   ],
+   "colorIdentity": [
+    "U"
+   ],
+   "manaValue": 3,
+   "power": "2",
+   "toughness": "2",
+   "layout": "normal",
+   "manaCost": "{2}{U}"
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "this creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "investigate",
+      "object": "an Attraction",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "source": "model"
+ },
+ "Rad Rascal": {
+  "card": {
+   "_id": "66d4a218-5404-4389-b495-eaeda9a34401",
+   "name": "Rad Rascal",
+   "typeLine": "Creature — Devil Employee",
+   "oracleText": "When this creature enters, open an Attraction. (Put the top card of your Attraction deck onto the battlefield.)",
+   "keywords": [
+    "Open an Attraction"
+   ],
+   "colors": [
+    "R"
+   ],
+   "colorIdentity": [
+    "R"
+   ],
+   "manaValue": 4,
+   "power": "3",
+   "toughness": "3",
+   "layout": "normal",
+   "manaCost": "{3}{R}"
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "this creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "other",
+      "object": "open an Attraction",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "source": "model"
+ },
+ "Squirrel Squatters": {
+  "card": {
+   "_id": "7af6b952-9e53-4f5d-ba6f-d31b42e91bbe",
+   "name": "Squirrel Squatters",
+   "typeLine": "Creature — Squirrel",
+   "oracleText": "When this creature enters, open an Attraction. (Put the top card of your Attraction deck onto the battlefield.)\nWhenever this creature attacks, create a 1/1 green Squirrel creature token that's tapped and attacking for each Attraction you've visited this turn.",
+   "keywords": [
+    "Open an Attraction"
+   ],
+   "colors": [
+    "G"
+   ],
+   "colorIdentity": [
+    "G"
+   ],
+   "manaValue": 5,
+   "power": "4",
+   "toughness": "4",
+   "layout": "normal",
+   "manaCost": "{3}{G}{G}",
+   "allParts": [
+    {
+     "component": "token",
+     "name": "Squirrel",
+     "typeLine": "Token Creature — Squirrel",
+     "printingId": "0b4170e0-c899-481a-8076-cae9f3effc37"
+    },
+    {
+     "component": "combo_piece",
+     "name": "Squirrel Squatters",
+     "typeLine": "Creature — Squirrel",
+     "printingId": "cff9491e-ea18-4b80-ae27-8ce8a8eca9cb"
+    }
+   ]
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "this creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "other",
+      "object": "open an Attraction",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "attacks",
+     "subject": "this creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "create",
+      "object": "a 1/1 green Squirrel creature token that's tapped and attacking for each Attraction you've visited this turn",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "source": "model"
+ },
+ "\"Lifetime\" Pass Holder": {
+  "card": {
+   "_id": "7bf6f13a-3c90-4bda-bc84-e026828bf4d1",
+   "name": "\"Lifetime\" Pass Holder",
+   "typeLine": "Creature — Zombie Guest",
+   "oracleText": "This creature enters tapped.\nWhen this creature dies, open an Attraction.\nWhenever you roll to visit your Attractions, if you roll a 6, you may return this card from your graveyard to the battlefield.",
+   "keywords": [
+    "Roll to Visit Your Attractions",
+    "Open an Attraction"
+   ],
+   "colors": [
+    "B"
+   ],
+   "colorIdentity": [
+    "B"
+   ],
+   "manaValue": 1,
+   "power": "2",
+   "toughness": "1",
+   "layout": "normal",
+   "manaCost": "{B}"
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "tap",
+      "object": "this",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "dies",
+     "subject": "this creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "other",
+      "object": "open an Attraction",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "roll-dice",
+     "subject": "you roll to visit your Attractions",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "return",
+      "object": "this card",
+      "fromZone": "graveyard",
+      "toZone": "battlefield",
+      "amount": null,
+      "optional": true
+     }
+    ]
+   }
+  ],
+  "source": "model"
+ },
+ "Ride Guide": {
+  "card": {
+   "_id": "8772e5cc-d3f3-4d68-86e7-6c105f39930a",
+   "name": "Ride Guide",
+   "typeLine": "Creature — Human Employee",
+   "oracleText": "When this creature enters, open an Attraction. (Put the top card of your Attraction deck onto the battlefield.)",
+   "keywords": [
+    "Open an Attraction"
+   ],
+   "colors": [
+    "W"
+   ],
+   "colorIdentity": [
+    "W"
+   ],
+   "manaValue": 5,
+   "power": "4",
+   "toughness": "4",
+   "layout": "normal",
+   "manaCost": "{4}{W}"
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "this creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "other",
+      "object": "open an Attraction",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "source": "model"
+ },
+ "Spinnerette, Arachnobat": {
+  "card": {
+   "_id": "9372f286-5ea6-4abb-b695-1ad5f46efe34",
+   "name": "Spinnerette, Arachnobat",
+   "typeLine": "Legendary Creature — Spider Performer",
+   "oracleText": "Reach\nWhen Spinnerette enters, open an Attraction.\nAs long as you control three or more Attractions, Spinnerette gets +2/+0 and has menace.",
+   "keywords": [
+    "Open an Attraction",
+    "Reach"
+   ],
+   "colors": [
+    "B",
+    "G"
+   ],
+   "colorIdentity": [
+    "B",
+    "G"
+   ],
+   "manaValue": 5,
+   "power": "2",
+   "toughness": "4",
+   "layout": "normal",
+   "manaCost": "{3}{B}{G}"
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Reach",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "Spinnerette, Arachnobat",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "other",
+      "object": "open an Attraction",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "modify-pt",
+      "object": "Spinnerette, Arachnobat",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "+2/+0",
+      "optional": false
+     },
+     {
+      "verb": "grant-ability",
+      "object": "menace",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "source": "model"
+ },
+ "Quick Fixer": {
+  "card": {
+   "_id": "a4f50771-4a10-4d5d-a7c4-0e24c873a0ae",
+   "name": "Quick Fixer",
+   "typeLine": "Creature — Azra Employee",
+   "oracleText": "Menace\nWhenever this creature deals combat damage to a player, open an Attraction. (Put the top card of your Attraction deck onto the battlefield.)",
+   "keywords": [
+    "Open an Attraction",
+    "Menace"
+   ],
+   "colors": [
+    "B"
+   ],
+   "colorIdentity": [
+    "B"
+   ],
+   "manaValue": 3,
+   "power": "2",
+   "toughness": "3",
+   "layout": "normal",
+   "manaCost": "{2}{B}"
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Menace",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "damage-dealt",
+     "subject": "this creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "other",
+      "object": "open an Attraction",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "source": "model"
+ },
+ "Petting Zookeeper": {
+  "card": {
+   "_id": "ad6dd363-e1b7-4df4-b9b6-4f5c1fae3bc6",
+   "name": "Petting Zookeeper",
+   "typeLine": "Creature — Elf Employee",
+   "oracleText": "Reach\nWhen this creature enters, open an Attraction. (Put the top card of your Attraction deck onto the battlefield.)",
+   "keywords": [
+    "Open an Attraction",
+    "Reach"
+   ],
+   "colors": [
+    "G"
+   ],
+   "colorIdentity": [
+    "G"
+   ],
+   "manaValue": 3,
+   "power": "0",
+   "toughness": "4",
+   "layout": "normal",
+   "manaCost": "{2}{G}"
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Reach",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "this creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "other",
+      "object": "open an Attraction",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "source": "model"
+ },
+ "Deadbeat Attendant": {
+  "card": {
+   "_id": "ae4b00ab-25ad-4177-8b86-af8b84d67ef3",
+   "name": "Deadbeat Attendant",
+   "typeLine": "Creature — Vampire Employee",
+   "oracleText": "When this creature enters, open an Attraction. (Put the top card of your Attraction deck onto the battlefield.)",
+   "keywords": [
+    "Open an Attraction"
+   ],
+   "colors": [
+    "B"
+   ],
+   "colorIdentity": [
+    "B"
+   ],
+   "manaValue": 2,
+   "power": "1",
+   "toughness": "1",
+   "layout": "normal",
+   "manaCost": "{1}{B}"
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "this creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "other",
+      "object": "open an Attraction",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "source": "model"
+ },
+ "The Most Dangerous Gamer": {
+  "card": {
+   "_id": "dcb9337b-d5fd-4cd2-a41f-900d170a5ded",
+   "name": "The Most Dangerous Gamer",
+   "typeLine": "Legendary Creature — Human Gamer Guest",
+   "oracleText": "Deathtouch\nWhenever The Most Dangerous Gamer enters or attacks, open an Attraction.\nWhenever you open an Attraction, put a +1/+1 counter on The Most Dangerous Gamer.\nWhenever you claim the prize of an Attraction, destroy target permanent.",
+   "keywords": [
+    "Deathtouch",
+    "Open an Attraction"
+   ],
+   "colors": [
+    "B",
+    "G"
+   ],
+   "colorIdentity": [
+    "B",
+    "G"
+   ],
+   "manaValue": 4,
+   "power": "2",
+   "toughness": "2",
+   "layout": "normal",
+   "manaCost": "{2}{B}{G}"
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Deathtouch",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "The Most Dangerous Gamer",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "investigate",
+      "object": "Attraction",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "other",
+     "subject": "you open an Attraction",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "add-counter",
+      "object": "+1/+1",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 4,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "other",
+     "subject": "you claim the prize of an Attraction",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "destroy",
+      "object": "target permanent",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 201,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "attacks",
+     "subject": "The Most Dangerous Gamer",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "investigate",
+      "object": "Attraction",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "source": "model"
+ },
+ "Dee Kay, Finder of the Lost": {
+  "card": {
+   "_id": "e4a338d5-8cd5-4583-893b-ebbede2280c6",
+   "name": "Dee Kay, Finder of the Lost",
+   "typeLine": "Legendary Creature — Zombie Employee",
+   "oracleText": "When Dee Kay enters, open an Attraction.\nWhenever you roll a 2, each opponent loses 1 life and you gain 1 life.\nWhenever you roll a 4, you may tap or untap target artifact or creature.\nWhenever you roll a 6, return target creature card from your graveyard to your hand.",
+   "keywords": [
+    "Open an Attraction"
+   ],
+   "colors": [
+    "B",
+    "U"
+   ],
+   "colorIdentity": [
+    "B",
+    "U"
+   ],
+   "manaValue": 3,
+   "power": "1",
+   "toughness": "4",
+   "layout": "normal",
+   "manaCost": "{1}{U}{B}"
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "this",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "other",
+      "object": "open an Attraction",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "roll-dice",
+     "subject": "you rolling a 2",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "lose-life",
+      "object": "each opponent",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     },
+     {
+      "verb": "gain-life",
+      "object": "you",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "roll-dice",
+     "subject": "you rolling a 4",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "tap",
+      "object": "target artifact or creature",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     },
+     {
+      "verb": "untap",
+      "object": "target artifact or creature",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     }
+    ]
+   },
+   {
+    "id": 4,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "roll-dice",
+     "subject": "you rolling a 6",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "return",
+      "object": "target creature card from your graveyard",
+      "fromZone": "graveyard",
+      "toZone": "hand",
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "source": "model"
+ },
+ "Monitor Monitor": {
+  "card": {
+   "_id": "f59fe075-f507-4a2c-a65c-725ff3084bd0",
+   "name": "Monitor Monitor",
+   "typeLine": "Creature — Human Employee",
+   "oracleText": "When this creature enters, open an Attraction. (Put the top card of your Attraction deck onto the battlefield.)\nOnce each turn, you may pay {1} to reroll one or more dice you rolled.",
+   "keywords": [
+    "Open an Attraction"
+   ],
+   "colors": [
+    "U"
+   ],
+   "colorIdentity": [
+    "U"
+   ],
+   "manaValue": 4,
+   "power": "2",
+   "toughness": "5",
+   "layout": "normal",
+   "manaCost": "{2}{U}{U}"
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "this creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "other",
+      "object": "open an Attraction",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "roll-dice",
+      "object": "one or more dice you rolled",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     }
+    ]
+   }
+  ],
+  "source": "model"
+ },
+ "Draconian Gate-Bot": {
+  "card": {
+   "_id": "f73ba6ae-87c1-4e5d-ae52-59d11d7d6ba6",
+   "name": "Draconian Gate-Bot",
+   "typeLine": "Artifact Creature — Robot",
+   "oracleText": "When this creature enters, choose one —\n• Open an Attraction. (Put the top card of your Attraction deck onto the battlefield.)\n• Destroy target Attraction. (It's put into its owner's junkyard.)",
+   "keywords": [
+    "Open an Attraction"
+   ],
+   "colors": [],
+   "colorIdentity": [],
+   "manaValue": 5,
+   "power": "4",
+   "toughness": "2",
+   "layout": "normal",
+   "manaCost": "{5}"
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "this creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "none"
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "actions": [
+     {
+      "verb": "other",
+      "object": "Open an Attraction",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "triggered",
+    "actions": [
+     {
+      "verb": "destroy",
+      "object": "target Attraction",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "source": "model"
+ },
+ "Tireless Tracker": {
+  "card": {
+   "_id": "e6555cca-e608-4c87-b835-9cd47fd1f543",
+   "name": "Tireless Tracker",
+   "typeLine": "Creature — Human Scout",
+   "oracleText": "Landfall — Whenever a land you control enters, investigate. (Create a Clue token. It's an artifact with \"{2}, Sacrifice this token: Draw a card.\")\nWhenever you sacrifice a Clue, put a +1/+1 counter on this creature.",
+   "keywords": [
+    "Investigate",
+    "Landfall"
+   ],
+   "colors": [
+    "G"
+   ],
+   "colorIdentity": [
+    "G"
+   ],
+   "manaValue": 3,
+   "power": "3",
+   "toughness": "2",
+   "layout": "normal",
+   "manaCost": "{2}{G}",
+   "allParts": [
+    {
+     "component": "token",
+     "name": "Clue",
+     "typeLine": "Token Artifact — Clue",
+     "printingId": "24c80ef6-747d-47b7-8e1f-148f5dfacc32"
+    }
+   ]
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "a land you control",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "investigate",
+      "object": "a Clue",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "sacrificed",
+     "subject": "a Clue",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "add-counter",
+      "object": "+1/+1",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "source": "model"
+ },
+ "Forensic Gadgeteer": {
+  "card": {
+   "_id": "9d5917d5-4fb3-4f37-9278-e08c1f73aae5",
+   "name": "Forensic Gadgeteer",
+   "typeLine": "Creature — Vedalken Artificer Detective",
+   "oracleText": "Whenever you cast an artifact spell, investigate. (Create a Clue token. It's an artifact with \"{2}, Sacrifice this token: Draw a card.\")\nActivated abilities of artifacts you control cost {1} less to activate. This effect can't reduce the mana in that cost to less than one mana.",
+   "keywords": [
+    "Investigate"
+   ],
+   "colors": [
+    "U"
+   ],
+   "colorIdentity": [
+    "U"
+   ],
+   "manaValue": 3,
+   "power": "2",
+   "toughness": "3",
+   "layout": "normal",
+   "manaCost": "{2}{U}",
+   "allParts": [
+    {
+     "component": "token",
+     "name": "Clue",
+     "typeLine": "Token Artifact — Clue",
+     "printingId": "ef607895-d6d2-44ab-a6b4-84af55fce593"
+    },
+    {
+     "component": "combo_piece",
+     "name": "Forensic Gadgeteer",
+     "typeLine": "Creature — Vedalken Artificer Detective",
+     "printingId": "aab507e5-7bf2-4fa0-9ac0-a6aaec90de83"
+    }
+   ]
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "actions": [
+     {
+      "verb": "investigate",
+      "object": "you",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ],
+    "trigger": {
+     "event": "cast",
+     "subject": "an artifact spell",
+     "control": "you"
+    }
+   },
+   {
+    "id": 2,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "cost-modify",
+      "object": "activated abilities of artifacts you control cost {1} less to activate",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "-{1}",
+      "optional": false
+     },
+     {
+      "verb": "cant",
+      "object": "reduce the mana in that cost to less than one mana",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "source": "grammar"
+ }
+}
