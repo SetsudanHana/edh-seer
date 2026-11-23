@@ -35,3 +35,23 @@ test.each([
 ])("a player counter still feeds a proliferate or a player-counter payoff (%s -> %s)", (producer, consumer) => {
   expect(counterReasons(producer, consumer)).not.toEqual([]);
 });
+
+// #1772: a player's counter is not a counter "on Aragorn" either. The demand that names the consumer itself ("whenever you put one or more counters on Aragorn": `self`, no type stamped because the card is named)
+// slipped past the recipient-type guard above. Loading Zone ("a creature, Spacecraft, or Planet you control") is pinned beside it: it was already refused.
+test.each([
+  ["Harnessed Lightning", "Aragorn, Company Leader"],
+  ["Aether Hub", "Aragorn, Company Leader"],
+  ["Decoction Module", "Aragorn, Company Leader"],
+  ["Harnessed Lightning", "Loading Zone"],
+  ["Aether Hub", "Loading Zone"],
+])("a player counter feeds no payoff for counters on a named permanent or a list of permanent types (%s -> %s)", (producer, consumer) => {
+  expect(counterReasons(producer, consumer)).toEqual([]);
+});
+
+test("a +1/+1 counter placer still feeds the payoff for counters on Aragorn", () => {
+  expect(counterReasons("Cathars' Crusade", "Aragorn, Company Leader")).not.toEqual([]);
+});
+
+test("...and a +1/+1 counter placer feeds no player-counter payoff", () => {
+  expect(counterReasons("Cathars' Crusade", "Territorial Gorger")).toEqual([]);
+});

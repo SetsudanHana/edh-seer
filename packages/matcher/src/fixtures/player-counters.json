@@ -926,5 +926,312 @@
     ]
    }
   ]
+ },
+ "Aragorn, Company Leader": {
+  "source": {
+   "name": "Aragorn, Company Leader",
+   "typeLine": "Legendary Creature — Human Ranger",
+   "oracleText": "Whenever the Ring tempts you, if you chose a creature other than Aragorn as your Ring-bearer, put your choice of a counter from among first strike, vigilance, deathtouch, and lifelink on Aragorn.\nWhenever you put one or more counters on Aragorn, put one of each of those kinds of counters on up to one other target creature.",
+   "keywords": [
+    "Vigilance",
+    "Deathtouch"
+   ],
+   "colors": [
+    "G",
+    "W"
+   ],
+   "manaValue": 3,
+   "colorIdentity": [
+    "G",
+    "W"
+   ],
+   "power": "3",
+   "toughness": "3",
+   "layout": "normal",
+   "manaCost": "{1}{G}{W}",
+   "allParts": [
+    {
+     "component": "combo_piece",
+     "name": "Aragorn, Company Leader",
+     "typeLine": "Legendary Creature — Human Ranger",
+     "printingId": "77dfb70e-42a5-44a0-977c-320bdb75e937"
+    },
+    {
+     "component": "combo_piece",
+     "name": "The Ring // The Ring Tempts You",
+     "typeLine": "Emblem // Card",
+     "printingId": "7215460e-8c06-47d0-94e5-d1832d0218af"
+    }
+   ],
+   "gameChanger": false,
+   "commanderLegality": "legal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "ring-tempts",
+     "subject": "you",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "add-counter",
+      "object": "first strike, vigilance, deathtouch, or lifelink",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "counter-added",
+     "subject": "Aragorn",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "add-counter",
+      "object": "one of each of those kinds",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Aether Hub": {
+  "source": {
+   "name": "Aether Hub",
+   "typeLine": "Land",
+   "oracleText": "When this land enters, you get {E} (an energy counter).\n{T}: Add {C}.\n{T}, Pay {E}: Add one mana of any color.",
+   "keywords": [],
+   "colors": [],
+   "manaValue": 0,
+   "colorIdentity": [],
+   "power": null,
+   "toughness": null,
+   "layout": "normal",
+   "manaCost": "",
+   "allParts": [
+    {
+     "component": "combo_piece",
+     "name": "Energy Reserve",
+     "typeLine": "Card",
+     "printingId": "a446b9f8-cb22-408a-93ff-bee44a0dccc0"
+    }
+   ],
+   "gameChanger": false,
+   "commanderLegality": "legal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "this land",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "gain-life",
+      "object": "{E}",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "add-mana",
+      "object": "{C}",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "add-mana",
+      "object": "one mana of any color",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Decoction Module": {
+  "source": {
+   "name": "Decoction Module",
+   "typeLine": "Artifact",
+   "oracleText": "Whenever a creature you control enters, you get {E} (an energy counter).\n{4}, {T}: Return target creature you control to its owner's hand.",
+   "keywords": [],
+   "colors": [],
+   "manaValue": 2,
+   "colorIdentity": [],
+   "power": null,
+   "toughness": null,
+   "layout": "normal",
+   "manaCost": "{2}",
+   "allParts": [
+    {
+     "component": "combo_piece",
+     "name": "Energy Reserve",
+     "typeLine": "Card",
+     "printingId": "a446b9f8-cb22-408a-93ff-bee44a0dccc0"
+    }
+   ],
+   "gameChanger": false,
+   "commanderLegality": "legal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "a creature you control",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "add-mana",
+      "object": "E",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "return",
+      "object": "target creature you control",
+      "fromZone": "battlefield",
+      "toZone": "hand",
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Loading Zone": {
+  "source": {
+   "name": "Loading Zone",
+   "typeLine": "Enchantment",
+   "oracleText": "If one or more counters would be put on a creature, Spacecraft, or Planet you control, twice that many of each of those kinds of counters are put on it instead.\nWarp {G} (You may cast this card from your hand for its warp cost. Exile this enchantment at the beginning of the next end step, then you may cast it from exile on a later turn.)",
+   "keywords": [
+    "Warp"
+   ],
+   "colors": [
+    "G"
+   ],
+   "manaValue": 4,
+   "colorIdentity": [
+    "G"
+   ],
+   "power": null,
+   "toughness": null,
+   "layout": "normal",
+   "manaCost": "{3}{G}",
+   "gameChanger": false,
+   "commanderLegality": "legal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "add-counter",
+      "object": "twice that many of each of those kinds of counters",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Warp {G}",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   }
+  ]
+ },
+ "Cathars' Crusade": {
+  "source": {
+   "name": "Cathars' Crusade",
+   "typeLine": "Enchantment",
+   "oracleText": "Whenever a creature you control enters, put a +1/+1 counter on each creature you control.",
+   "keywords": [],
+   "colors": [
+    "W"
+   ],
+   "manaValue": 5,
+   "colorIdentity": [
+    "W"
+   ],
+   "power": null,
+   "toughness": null,
+   "layout": "normal",
+   "manaCost": "{3}{W}{W}",
+   "gameChanger": false,
+   "commanderLegality": "legal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "a creature you control",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "add-counter",
+      "object": "+1/+1",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
  }
 }
