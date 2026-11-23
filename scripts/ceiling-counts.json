@@ -26,7 +26,7 @@
   "packages/matcher/src/deck-math.ts": 1,
   "packages/matcher/src/deck-rules.ts": 1,
   "packages/matcher/src/edge-magnitude.ts": 1,
-  "packages/matcher/src/edges.ts": 81,
+  "packages/matcher/src/edges.ts": 82,
   "packages/matcher/src/effect-class.ts": 1,
   "packages/matcher/src/effect-gate-weight.ts": 4,
   "packages/matcher/src/faces.ts": 1,

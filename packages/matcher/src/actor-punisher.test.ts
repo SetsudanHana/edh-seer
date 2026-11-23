@@ -47,7 +47,8 @@ describe("a player PUTTING a permanent onto the battlefield is that player's act
   });
   // Not Yavimaya Dryad: "you may search your library for a Forest card, put it onto the battlefield tapped under target player's control" is YOUR put (CR 110.2a); see the CEILING on `punishesItsActor`.
   test("a permanent another player puts still pairs: Haunted Angel's black Angel for each other player, Phantasmal Sphere's blue Orb for target opponent", () => {
-    expect(into("Haunted Angel", "Nature's Wrath").map((r) => r.tag)).toContain("enters:swamp");
+    // Keyed by the branch the Angel meets (#1764): Nature's Wrath hears "a Swamp or black permanent", and a black Angel is the second branch, not a Swamp.
+    expect(into("Haunted Angel", "Nature's Wrath").map((r) => r.tag)).toContain("enters:permanent");
     expect(into("Phantasmal Sphere", "Nature's Wrath").length).toBeGreaterThan(0);
   });
   test("the predicate reads the printed 'a player puts ... that player'", () => {
