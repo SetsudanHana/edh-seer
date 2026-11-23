@@ -1,0 +1,1358 @@
+{
+ "Roil Cartographer": {
+  "card": {
+   "_id": "3cd7ef87-4cb4-42ff-842f-e9a465dab165",
+   "name": "Roil Cartographer",
+   "typeLine": "Creature — Merfolk Rogue",
+   "oracleText": "Landfall — Whenever a land you control enters, you get {E} (an energy counter).\n{T}, Pay six {E}: Draw three cards.",
+   "keywords": [
+    "Landfall"
+   ],
+   "colors": [
+    "U"
+   ],
+   "colorIdentity": [
+    "U"
+   ],
+   "manaValue": 2,
+   "power": "1",
+   "toughness": "3",
+   "layout": "normal",
+   "manaCost": "{1}{U}",
+   "allParts": [
+    {
+     "component": "combo_piece",
+     "name": "Roil Cartographer",
+     "typeLine": "Creature — Merfolk Rogue",
+     "printingId": "7b9b743b-340d-4a15-a71d-d3108adbdc45"
+    },
+    {
+     "component": "combo_piece",
+     "name": "Energy Reserve",
+     "typeLine": "Card",
+     "printingId": "1c516212-ad39-4396-8e05-ae57f100309f"
+    }
+   ]
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "a land you control",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "add-mana",
+      "object": "one energy",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "draw",
+      "object": "card",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "3",
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "source": "model"
+ },
+ "Peema Trailblazer": {
+  "card": {
+   "_id": "88600bd4-4dcc-4788-bba4-78b6cf5ad8f8",
+   "name": "Peema Trailblazer",
+   "typeLine": "Creature — Elephant Warrior",
+   "oracleText": "Trample\nWhenever this creature deals combat damage to a player, you get that many {E} (energy counters).\nExhaust — Pay six {E}: Put two +1/+1 counters on this creature. Then draw cards equal to the greatest power among creatures you control. (Activate each exhaust ability only once.)",
+   "keywords": [
+    "Trample",
+    "Exhaust"
+   ],
+   "colors": [
+    "G"
+   ],
+   "colorIdentity": [
+    "G"
+   ],
+   "manaValue": 3,
+   "power": "3",
+   "toughness": "3",
+   "layout": "normal",
+   "manaCost": "{2}{G}",
+   "allParts": [
+    {
+     "component": "combo_piece",
+     "name": "Peema Trailblazer",
+     "typeLine": "Creature — Elephant Warrior",
+     "printingId": "d813c2cc-6e31-4c3a-8b95-8f5434b2fd98"
+    },
+    {
+     "component": "combo_piece",
+     "name": "Energy Reserve",
+     "typeLine": "Card",
+     "printingId": "6a2c1fa5-deed-48ba-afe4-6c8ea8d9135e"
+    }
+   ]
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Trample",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "damage-dealt",
+     "subject": "this creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "add-mana",
+      "object": "energy",
+      "amount": "that many",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "add-counter",
+      "object": "+1/+1",
+      "amount": "2",
+      "fromZone": null,
+      "toZone": null
+     },
+     {
+      "verb": "draw",
+      "object": "cards equal to the greatest power among creatures you control",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   }
+  ],
+  "source": "model"
+ },
+ "Scurry of Gremlins": {
+  "card": {
+   "_id": "ff24d18d-9c5d-4ffe-846f-a8d568b32724",
+   "name": "Scurry of Gremlins",
+   "typeLine": "Enchantment",
+   "oracleText": "When this enchantment enters, create two 1/1 red Gremlin creature tokens. Then you get an amount of {E} (energy counters) equal to the number of creatures you control.\nPay {E}{E}{E}{E}: Creatures you control get +1/+0 and gain haste until end of turn.",
+   "keywords": [],
+   "colors": [
+    "R",
+    "W"
+   ],
+   "colorIdentity": [
+    "R",
+    "W"
+   ],
+   "manaValue": 4,
+   "power": null,
+   "toughness": null,
+   "layout": "normal",
+   "manaCost": "{2}{R}{W}",
+   "allParts": [
+    {
+     "component": "token",
+     "name": "Gremlin",
+     "typeLine": "Token Creature — Gremlin",
+     "printingId": "25b1dfdc-09cf-4b87-a6c1-a78ba51e1133"
+    },
+    {
+     "component": "combo_piece",
+     "name": "Energy Reserve",
+     "typeLine": "Card",
+     "printingId": "1c516212-ad39-4396-8e05-ae57f100309f"
+    },
+    {
+     "component": "combo_piece",
+     "name": "Scurry of Gremlins",
+     "typeLine": "Enchantment",
+     "printingId": "be4a6113-1db4-42d0-92b8-5fdc431d96ea"
+    }
+   ]
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "this enchantment",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "create",
+      "object": "two 1/1 red Gremlin creature tokens",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "add-mana",
+      "object": "energy equal to the number of creatures you control",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "modify-pt",
+      "object": "creatures you control get +1/+0 and gain haste until end of turn",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "source": "model"
+ },
+ "Blaster Hulk": {
+  "card": {
+   "_id": "4b8ca7fd-3c8e-44fe-ab0a-0ddc2f2b047c",
+   "name": "Blaster Hulk",
+   "typeLine": "Artifact Creature — Pirate",
+   "oracleText": "This spell costs {1} less to cast for each {E} (energy counter) you've paid or lost this turn.\nHaste\nWhenever this creature attacks, you get {E}{E}, then you may pay eight {E}. When you do, this creature deals 8 damage divided as you choose among up to eight targets.",
+   "keywords": [
+    "Haste"
+   ],
+   "colors": [
+    "R"
+   ],
+   "colorIdentity": [
+    "R"
+   ],
+   "manaValue": 8,
+   "power": "8",
+   "toughness": "8",
+   "layout": "normal",
+   "manaCost": "{6}{R}{R}",
+   "allParts": [
+    {
+     "component": "combo_piece",
+     "name": "Blaster Hulk",
+     "typeLine": "Artifact Creature — Pirate",
+     "printingId": "2995201b-22c7-425f-b793-fac54ad10fff"
+    },
+    {
+     "component": "combo_piece",
+     "name": "Energy Reserve",
+     "typeLine": "Card",
+     "printingId": "1c516212-ad39-4396-8e05-ae57f100309f"
+    }
+   ]
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "cost-modify",
+      "object": "casting cost reduced by 1 for each {E} you've paid or lost this turn",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Haste",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "attacks",
+     "subject": "this creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "add-mana",
+      "object": "{E}{E}",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "add-mana",
+      "object": "eight {E}",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     }
+    ]
+   },
+   {
+    "id": 4,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "other",
+     "subject": "you pay eight {E}",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "deal-damage",
+      "object": "up to eight targets",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "8 divided as you choose",
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "source": "model"
+ },
+ "Aether Hub": {
+  "card": {
+   "_id": "61c89b11-65c9-4fda-bbcd-d84de25df801",
+   "name": "Aether Hub",
+   "typeLine": "Land",
+   "oracleText": "When this land enters, you get {E} (an energy counter).\n{T}: Add {C}.\n{T}, Pay {E}: Add one mana of any color.",
+   "keywords": [],
+   "colors": [],
+   "colorIdentity": [],
+   "manaValue": 0,
+   "power": null,
+   "toughness": null,
+   "layout": "normal",
+   "manaCost": "",
+   "producedMana": [
+    "B",
+    "C",
+    "G",
+    "R",
+    "U",
+    "W"
+   ],
+   "allParts": [
+    {
+     "component": "combo_piece",
+     "name": "Energy Reserve",
+     "typeLine": "Card",
+     "printingId": "a446b9f8-cb22-408a-93ff-bee44a0dccc0"
+    }
+   ]
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "this land",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "gain-life",
+      "object": "{E}",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "add-mana",
+      "object": "{C}",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "add-mana",
+      "object": "one mana of any color",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "source": "model"
+ },
+ "Conversion Apparatus": {
+  "card": {
+   "_id": "931d3dcb-4bbb-4f1a-95e2-7e315faf4158",
+   "name": "Conversion Apparatus",
+   "typeLine": "Artifact",
+   "oracleText": "{T}: Add {C}.\n{3}, {T}: You get {E}{E}{E} (three energy counters).\n{T}, Pay {E}{E}{E}: Add three mana in any combination of colors.",
+   "keywords": [],
+   "colors": [],
+   "colorIdentity": [],
+   "manaValue": 3,
+   "power": null,
+   "toughness": null,
+   "layout": "normal",
+   "manaCost": "{3}",
+   "producedMana": [
+    "B",
+    "C",
+    "G",
+    "R",
+    "U",
+    "W"
+   ],
+   "allParts": [
+    {
+     "component": "combo_piece",
+     "name": "Conversion Apparatus",
+     "typeLine": "Artifact",
+     "printingId": "41bcf6d0-4f72-4611-b9fc-2713b70ac618"
+    },
+    {
+     "component": "combo_piece",
+     "name": "Energy Reserve",
+     "typeLine": "Card",
+     "printingId": "1c516212-ad39-4396-8e05-ae57f100309f"
+    }
+   ]
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "add-mana",
+      "object": "{C}",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "gain-life",
+      "object": "you",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "add-mana",
+      "object": "three mana in any combination of colors",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "source": "model"
+ },
+ "HELIOS One": {
+  "card": {
+   "_id": "cfb1a656-0bf1-484d-b099-33087914250b",
+   "name": "HELIOS One",
+   "typeLine": "Land",
+   "oracleText": "{T}: Add {C}.\n{1}, {T}: You get {E} (an energy counter).\n{3}, {T}, Pay X {E}, Sacrifice this land: Destroy target nonland permanent with mana value X. Activate only as a sorcery.",
+   "keywords": [],
+   "colors": [],
+   "colorIdentity": [],
+   "manaValue": 0,
+   "power": null,
+   "toughness": null,
+   "layout": "normal",
+   "manaCost": "",
+   "producedMana": [
+    "C"
+   ],
+   "allParts": [
+    {
+     "component": "combo_piece",
+     "name": "Energy Reserve",
+     "typeLine": "Card",
+     "printingId": "2a794202-875f-4397-a8de-9722c8d78448"
+    },
+    {
+     "component": "combo_piece",
+     "name": "HELIOS One",
+     "typeLine": "Land",
+     "printingId": "3fcdab6a-2656-4515-baaa-47373253b6c8"
+    }
+   ]
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "add-mana",
+      "object": "{C}",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "gain-life",
+      "object": "you",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "sacrifice",
+      "object": "this land",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "destroy",
+      "object": "target nonland permanent with mana value X",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "source": "model"
+ },
+ "Brotherhood Scribe": {
+  "card": {
+   "_id": "e22bb590-9c9a-4a99-8cd7-1dbe742f4cdd",
+   "name": "Brotherhood Scribe",
+   "typeLine": "Creature — Human Artificer",
+   "oracleText": "Metalcraft — {T}: You get {E} (an energy counter). Activate only if you control three or more artifacts.\nWhenever you get one or more {E} during your turn, creatures you control get +1/+1 until end of turn.",
+   "keywords": [
+    "Metalcraft"
+   ],
+   "colors": [
+    "W"
+   ],
+   "colorIdentity": [
+    "W"
+   ],
+   "manaValue": 2,
+   "power": "1",
+   "toughness": "3",
+   "layout": "normal",
+   "manaCost": "{1}{W}",
+   "allParts": [
+    {
+     "component": "combo_piece",
+     "name": "Energy Reserve",
+     "typeLine": "Card",
+     "printingId": "2a794202-875f-4397-a8de-9722c8d78448"
+    },
+    {
+     "component": "combo_piece",
+     "name": "Brotherhood Scribe",
+     "typeLine": "Creature — Human Artificer",
+     "printingId": "8853734f-5538-43b5-a634-e210f80b5546"
+    }
+   ]
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "gain-life",
+      "object": "1 energy counter",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "other",
+     "subject": "you get one or more energy counters during your turn",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "modify-pt",
+      "object": "creatures you control",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "+1/+1",
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "source": "model"
+ },
+ "Wrath of the Skies": {
+  "card": {
+   "_id": "21efa6f2-3e7c-4576-b5a3-0b75b2843442",
+   "name": "Wrath of the Skies",
+   "typeLine": "Sorcery",
+   "oracleText": "You get X {E} (energy counters), then you may pay any amount of {E}. Destroy each artifact, creature, and enchantment with mana value less than or equal to the amount of {E} paid this way.",
+   "keywords": [],
+   "colors": [
+    "W"
+   ],
+   "colorIdentity": [
+    "W"
+   ],
+   "manaValue": 2,
+   "power": null,
+   "toughness": null,
+   "layout": "normal",
+   "manaCost": "{X}{W}{W}",
+   "allParts": [
+    {
+     "component": "combo_piece",
+     "name": "Wrath of the Skies",
+     "typeLine": "Sorcery",
+     "printingId": "7325714a-bd27-4215-9826-3785089ffa23"
+    },
+    {
+     "component": "combo_piece",
+     "name": "Energy Reserve",
+     "typeLine": "Card",
+     "printingId": "1c516212-ad39-4396-8e05-ae57f100309f"
+    }
+   ]
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "gain-life",
+      "object": "X {E}",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     },
+     {
+      "verb": "destroy",
+      "object": "each artifact, creature, and enchantment with mana value less than or equal to the amount of {E} paid this way",
+      "optional": true,
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   }
+  ],
+  "source": "model"
+ },
+ "Solar Transformer": {
+  "card": {
+   "_id": "cb377c27-39a6-42b4-8c89-80a9a2350e81",
+   "name": "Solar Transformer",
+   "typeLine": "Artifact",
+   "oracleText": "This artifact enters tapped.\nWhen this artifact enters, you get {E}{E}{E} (three energy counters).\n{T}: Add {C}.\n{T}, Pay {E}: Add one mana of any color.",
+   "keywords": [],
+   "colors": [],
+   "colorIdentity": [],
+   "manaValue": 2,
+   "power": null,
+   "toughness": null,
+   "layout": "normal",
+   "manaCost": "{2}",
+   "producedMana": [
+    "B",
+    "C",
+    "G",
+    "R",
+    "U",
+    "W"
+   ],
+   "allParts": [
+    {
+     "component": "combo_piece",
+     "name": "Energy Reserve",
+     "typeLine": "Card",
+     "printingId": "1c516212-ad39-4396-8e05-ae57f100309f"
+    },
+    {
+     "component": "combo_piece",
+     "name": "Solar Transformer",
+     "typeLine": "Artifact",
+     "printingId": "64a2f68d-7192-407b-a59f-efa8578d9975"
+    }
+   ]
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "tap",
+      "object": "this",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "this artifact",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "gain-life",
+      "object": "you 3",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "add-mana",
+      "object": "{C}",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 4,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "add-mana",
+      "object": "one mana of any color",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "source": "model"
+ },
+ "Deadlock Trap": {
+  "card": {
+   "_id": "726c911d-6543-4400-a8fa-b8a5c9f0c15d",
+   "name": "Deadlock Trap",
+   "typeLine": "Artifact",
+   "oracleText": "This artifact enters tapped.\nWhen this artifact enters, you get {E}{E} (two energy counters).\n{T}, Pay {E}: Tap target creature or planeswalker. Its activated abilities can't be activated this turn.",
+   "keywords": [],
+   "colors": [],
+   "colorIdentity": [],
+   "manaValue": 3,
+   "power": null,
+   "toughness": null,
+   "layout": "normal",
+   "manaCost": "{3}",
+   "allParts": [
+    {
+     "component": "combo_piece",
+     "name": "Energy Reserve",
+     "typeLine": "Card",
+     "printingId": "a446b9f8-cb22-408a-93ff-bee44a0dccc0"
+    }
+   ]
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "tap",
+      "object": "this",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "this artifact",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "gain-life",
+      "object": "energy counters",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "2",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "tap",
+      "object": "target creature or planeswalker",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "cant",
+      "object": "activated abilities can't be activated",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "source": "model"
+ },
+ "Aetherworks Marvel": {
+  "card": {
+   "_id": "470ec98e-120c-446d-ade6-7d80aa836b55",
+   "name": "Aetherworks Marvel",
+   "typeLine": "Legendary Artifact",
+   "oracleText": "Whenever a permanent you control is put into a graveyard, you get {E} (an energy counter).\n{T}, Pay six {E}: Look at the top six cards of your library. You may cast a spell from among them without paying its mana cost. Put the rest on the bottom of your library in a random order.",
+   "keywords": [],
+   "colors": [],
+   "colorIdentity": [],
+   "manaValue": 4,
+   "power": null,
+   "toughness": null,
+   "layout": "normal",
+   "manaCost": "{4}",
+   "allParts": [
+    {
+     "component": "combo_piece",
+     "name": "Energy Reserve",
+     "typeLine": "Card",
+     "printingId": "a446b9f8-cb22-408a-93ff-bee44a0dccc0"
+    }
+   ]
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "dies",
+     "subject": "a permanent you control",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "add-mana",
+      "object": "energy",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "put",
+      "object": "cards from your library",
+      "fromZone": "library",
+      "toZone": "library",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "cast",
+      "object": "a spell from among the top six cards of your library",
+      "fromZone": "library",
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     }
+    ]
+   }
+  ],
+  "source": "model"
+ },
+ "Harnessed Lightning": {
+  "card": {
+   "_id": "d8dd7e7f-0053-44bb-bac0-1a08843d4c49",
+   "name": "Harnessed Lightning",
+   "typeLine": "Instant",
+   "oracleText": "Choose target creature. You get {E}{E}{E} (three energy counters), then you may pay any amount of {E}. Harnessed Lightning deals that much damage to that creature.",
+   "keywords": [],
+   "colors": [
+    "R"
+   ],
+   "colorIdentity": [
+    "R"
+   ],
+   "manaValue": 2,
+   "power": null,
+   "toughness": null,
+   "layout": "normal",
+   "manaCost": "{1}{R}",
+   "allParts": [
+    {
+     "component": "combo_piece",
+     "name": "Energy Reserve",
+     "typeLine": "Card",
+     "printingId": "a446b9f8-cb22-408a-93ff-bee44a0dccc0"
+    }
+   ]
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "add-mana",
+      "object": "{E}{E}{E}",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "deal-damage",
+      "object": "target creature",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "any amount of {E} paid",
+      "optional": true
+     }
+    ]
+   }
+  ],
+  "source": "model"
+ },
+ "Decoction Module": {
+  "card": {
+   "_id": "1daba4f6-2a7d-426a-97d1-0298a7100c45",
+   "name": "Decoction Module",
+   "typeLine": "Artifact",
+   "oracleText": "Whenever a creature you control enters, you get {E} (an energy counter).\n{4}, {T}: Return target creature you control to its owner's hand.",
+   "keywords": [],
+   "colors": [],
+   "colorIdentity": [],
+   "manaValue": 2,
+   "power": null,
+   "toughness": null,
+   "layout": "normal",
+   "manaCost": "{2}",
+   "allParts": [
+    {
+     "component": "combo_piece",
+     "name": "Energy Reserve",
+     "typeLine": "Card",
+     "printingId": "a446b9f8-cb22-408a-93ff-bee44a0dccc0"
+    }
+   ]
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "a creature you control",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "add-mana",
+      "object": "E",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "return",
+      "object": "target creature you control",
+      "fromZone": "battlefield",
+      "toZone": "hand",
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "source": "model"
+ },
+ "Aethertide Whale": {
+  "card": {
+   "_id": "53b2c8f2-db9a-4ab0-a4e8-17385b2fa3bd",
+   "name": "Aethertide Whale",
+   "typeLine": "Creature — Whale",
+   "oracleText": "Flying\nWhen this creature enters, you get six {E} (energy counters).\nPay {E}{E}{E}{E}: Return this creature to its owner's hand.",
+   "keywords": [
+    "Flying"
+   ],
+   "colors": [
+    "U"
+   ],
+   "colorIdentity": [
+    "U"
+   ],
+   "manaValue": 6,
+   "power": "6",
+   "toughness": "4",
+   "layout": "normal",
+   "manaCost": "{4}{U}{U}",
+   "allParts": [
+    {
+     "component": "combo_piece",
+     "name": "Energy Reserve",
+     "typeLine": "Card",
+     "printingId": "a446b9f8-cb22-408a-93ff-bee44a0dccc0"
+    }
+   ]
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Flying",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "this creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "other",
+      "object": "you get six {E}",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "return",
+      "object": "this creature",
+      "fromZone": "battlefield",
+      "toZone": "hand",
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "source": "model"
+ },
+ "Guide of Souls": {
+  "card": {
+   "_id": "b304ac72-7f40-40de-b8d6-6392909b6029",
+   "name": "Guide of Souls",
+   "typeLine": "Creature — Human Cleric",
+   "oracleText": "Whenever another creature you control enters, you gain 1 life and get {E} (an energy counter).\nWhenever you attack, you may pay {E}{E}{E}. When you do, put two +1/+1 counters and a flying counter on target attacking creature. It becomes an Angel in addition to its other types.",
+   "keywords": [],
+   "colors": [
+    "W"
+   ],
+   "colorIdentity": [
+    "W"
+   ],
+   "manaValue": 1,
+   "power": "1",
+   "toughness": "2",
+   "layout": "normal",
+   "manaCost": "{W}",
+   "allParts": [
+    {
+     "component": "combo_piece",
+     "name": "Energy Reserve",
+     "typeLine": "Card",
+     "printingId": "1c516212-ad39-4396-8e05-ae57f100309f"
+    },
+    {
+     "component": "combo_piece",
+     "name": "Guide of Souls",
+     "typeLine": "Creature — Human Cleric",
+     "printingId": "298de33f-cb39-47c5-9579-54d91eb34414"
+    }
+   ]
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "another creature you control",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "gain-life",
+      "object": "you",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     },
+     {
+      "verb": "other",
+      "object": "get {E}",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "attacks",
+     "subject": "you",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "none"
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "other",
+     "subject": "you pay {E}{E}{E}",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "add-counter",
+      "object": "+1/+1 counter",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "2",
+      "optional": false
+     },
+     {
+      "verb": "add-counter",
+      "object": "flying counter",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     },
+     {
+      "verb": "grant-ability",
+      "object": "target attacking creature becomes an Angel in addition to its other types",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "source": "model"
+ },
+ "Territorial Gorger": {
+  "card": {
+   "_id": "fcf9c013-7a79-42b1-8aee-6d40ff475fbf",
+   "name": "Territorial Gorger",
+   "typeLine": "Creature — Gremlin",
+   "oracleText": "Trample\nWhenever you get one or more {E} (energy counters), this creature gets +2/+2 until end of turn.",
+   "keywords": [
+    "Trample"
+   ],
+   "colors": [
+    "R"
+   ],
+   "colorIdentity": [
+    "R"
+   ],
+   "manaValue": 4,
+   "power": "2",
+   "toughness": "2",
+   "layout": "normal",
+   "manaCost": "{3}{R}",
+   "allParts": [
+    {
+     "component": "combo_piece",
+     "name": "Energy Reserve",
+     "typeLine": "Card",
+     "printingId": "a446b9f8-cb22-408a-93ff-bee44a0dccc0"
+    }
+   ]
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Trample"
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "actions": [
+     {
+      "verb": "modify-pt",
+      "object": "this creature",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "+2/+2",
+      "optional": false
+     }
+    ],
+    "trigger": {
+     "event": "counter-added",
+     "subject": "one or more {E}",
+     "control": "you"
+    }
+   }
+  ],
+  "source": "grammar"
+ }
+}
