@@ -48,6 +48,33 @@ export function guardExempt(action: { verb?: string; object?: string }): boolean
   return action.verb === "add-mana" && isEnergyObject(action.object ?? "");
 }
 
+/** WHICH WAY AN ENERGY ACTION GOES (#1323, CR 107.14: {E} is one energy counter; to pay {E} a player removes one). The model files "you get {E}" under `add-mana` and `gain-life`, and a payment
+ *  ("you may pay eight {E}") under `add-mana`. "gain": the player gets energy. "pay": the player removes it. undefined: not an energy action.
+ *  An `add-mana` or `gain-life` whose OBJECT is an energy wording is one. A `gain-life` whose object is something else ("you", "you 3") is one only when its printed clause says no gain and no life
+ *  but does say "get ... {E}" (Conversion Apparatus, Solar Transformer). Pay or get is read off the words in front of the object in the clause (the clause that says both, Blaster Hulk's, has two actions). */
+export function energyReading(action: { verb?: string; object?: string }, clauseText: string | undefined): "gain" | "pay" | undefined {
+  if (action.verb !== "add-mana" && action.verb !== "gain-life") return undefined;
+  const object = action.object ?? "";
+  const printed = stripReminderText(clauseText ?? "");
+  if (!isEnergyObject(object)) {
+    if (action.verb !== "gain-life" || printsVerbWord("gain-life", printed)) return undefined;
+    return /(?<![\w'])gets?(?![\w'])[^.]{0,40}\{e\}/i.test(printed) ? "gain" : undefined;
+  }
+  const lower = printed.toLowerCase();
+  const at = object.trim() === "" ? -1 : lower.indexOf(object.trim().toLowerCase());
+  if (at >= 0) return /(?<![\w'])pay(?:s|ing)?(?: up to| any amount of| an amount of)?\s?$/.test(lower.slice(Math.max(0, at - 32), at)) ? "pay" : "gain";
+  return /(?<![\w'])pay(?:s|ing)?(?![\w'])/.test(lower) && !/(?<![\w'])gets?(?![\w'])/.test(lower) ? "pay" : "gain";
+}
+
+/** The action an energy reading (#1323) stands for, or undefined to leave the action alone. A gain stays the `add-mana` of {E} every energy path already reads (effect kind refused, `counter-added` emit, no mana line);
+ *  a gain filed as `gain-life` becomes it, and a payment becomes the `remove-counter` of energy (`counter-removed`). */
+export function energyRewrite<A extends { verb?: string; object?: string; amount?: string | null }>(action: A, clauseText: string | undefined): A | undefined {
+  const reading = energyReading(action, clauseText);
+  if (reading === undefined) return undefined;
+  if (reading === "pay") return { ...action, verb: "remove-counter", object: "energy", amount: null };
+  return action.verb === "add-mana" ? undefined : { ...action, verb: "add-mana", object: "{E}", amount: null };
+}
+
 const SKIP = new Set(["none", "other"]);
 const wordRe = new Map<string, RegExp>();
 export function printsVerbWord(verb: string, text: string): boolean {

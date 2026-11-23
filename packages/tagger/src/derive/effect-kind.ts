@@ -320,10 +320,24 @@ const ON_TOP = /on top of (?:your|their|its owner's|a|the) librar/i;
  *  around two optional braces, so a long run of spaces that does not match backtracks quadratically
  *  (`js/polynomial-redos`, high). Stripping the braces and trimming asks the same question in one
  *  linear pass, and reads as what it means. */
-export const isEnergyObject = (object: string): boolean =>
+export const isEnergyObject = (object: string): boolean => {
   // Braces AND spaces go (DERIVE 172): the clause layer also writes "E E E", and trimming the ends
   // only left "e e e", which read as mana on 9 cards (Chthonian Nightmare, Bristling Hydra, ...).
-  /^e+$/.test(object.replace(/[{}\s]/g, "").toLowerCase());
+  if (/^e+$/.test(object.replace(/[{}\s]/g, "").toLowerCase())) return true;
+  // EVERY PRINTED WORDING (#1323): a quantity ("one energy", "eight {E}", "X {E}", "that many {E}", "an amount of {E}"), the symbols or the word
+  // ("energy", "1 energy counter"), then at most a count ("energy equal to the number of creatures you control", "{E} for each creature
+  // attacking you"). Read as a linear walk over words, not a regex: a quantity run, an energy run and a tail are three adjacent
+  // runs of one word class each, and a regex over them is the polynomial shape above.
+  const words = object.toLowerCase().replace(/[{}]/g, " ").split(/\s+/).filter((w) => w !== "");
+  let i = 0;
+  while (i < words.length && (ENERGY_QUANTITY.has(words[i]!) || /^\d+$/.test(words[i]!))) i++;
+  let symbols = 0;
+  while (i < words.length && (words[i] === "e" || words[i] === "energy" || words[i] === "counter" || words[i] === "counters")) { if (words[i]!.startsWith("e")) symbols++; i++; }
+  if (symbols === 0) return false;
+  return i === words.length || words[i] === "equal" || (words[i] === "for" && words[i + 1] === "each");
+};
+const ENERGY_QUANTITY: ReadonlySet<string> = new Set(["a", "an", "x", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "eleven", "twelve", "fifteen", "twenty", "fifty",
+  "that", "many", "amount", "of", "any", "up", "to", "the", "number", "total", "more", "additional"]);
 
 const SIMPLE: Record<string, EffectKind> = {
   create: "token-generation",
