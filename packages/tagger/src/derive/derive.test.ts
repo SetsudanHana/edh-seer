@@ -6179,11 +6179,11 @@ describe("#1266 graveyard owner on an exiled emit", () => {
     expect(e?.subject.owner).not.toBe("you");
   });
 
-  it("a battlefield half beside the graveyard half keeps the model's zone (Angel of Serenity)", () => {
-    const [e] = exiledOf([{ id: 2, abilityType: "triggered", trigger: { event: "enters", subject: "this creature", control: "you" },
+  it("a battlefield half beside the graveyard half is an exile of each origin (Angel of Serenity, #1309)", () => {
+    const es = exiledOf([{ id: 2, abilityType: "triggered", trigger: { event: "enters", subject: "this creature", control: "you" },
       actions: [{ verb: "exile", object: "up to three other target creatures from the battlefield and/or creature cards from graveyards" }] }],
     "Angel of Serenity", { 2: "When this creature enters, you may exile up to three other target creatures from the battlefield and/or creature cards from graveyards." });
-    expect(e?.subject.fromZone).toBeUndefined();
+    expect(es.map((e) => e.subject.fromZone)).toEqual(["battlefield", "graveyard"]);
   });
 
   it("a replacement rider's exile is not read as a graveyard exile here (Bosium Strip, #1306)", () => {
