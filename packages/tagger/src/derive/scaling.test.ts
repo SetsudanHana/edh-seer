@@ -219,13 +219,22 @@ test("a battlefield choice of permanents you OWN keeps its board count: Leave //
   expect(actionScaling({ verb: "put", object: "any number of permanent cards from among them" })).toBeUndefined();
 });
 
-test("only the 'an amount of mana of that color equal to <characteristic count>' add (Starfleet Academy) names no class; every characteristic count that derived before keeps its subject (#1673)", () => {
-  // the add this branch newly reads: no counted class
-  expect(scalingSubject({ verb: "add-mana", object: "an amount of mana of that color", amount: "the number of creature types among non-Borg creatures you control" })).toBeUndefined();
-  // counts that derived on main keep what they had (Valiant Changeling, Saavik, Faeburrow Elder, Bloom Tender, Karn, Tarmogoyf)
-  expect(scalingSubject({ verb: "cost-modify", object: "this spell", amount: "for each creature type among creatures you control" })).toMatchObject({ type: "creature", control: "you", zone: "battlefield" });
-  expect(scalingSubject({ verb: "deal-damage", object: "target creature", amount: "the number of creature types among non-Borg creatures you control" })).toMatchObject({ type: "creature", control: "you", zone: "battlefield" });
-  expect(scalingSubject({ verb: "add-mana", object: "one mana of that color", amount: "for each color among permanents you control" })).toMatchObject({ type: "permanent", control: "you", zone: "battlefield" });
-  expect(scalingSubject({ verb: "draw", object: "a card", amount: "for each color among other artifacts you control" })).toMatchObject({ type: "artifact", control: "you", zone: "battlefield" });
-  expect(scalingSubject({ verb: "modify-pt", amount: "the number of card types among cards in all graveyards" })).toMatchObject({ zone: "graveyard" });
+test("a count of DISTINCT characteristics (types / colors / names among a battlefield class) names no class; a creature-type count names the changelings only; a graveyard count keeps its class (#1680, owner ruling 2026-11-22)", () => {
+  // creature types: only a changeling (every creature type) is a member that raises the count without a type of its own (Valiant Changeling, Infinite Diversity, Saavik, Captain Jonathan Archer, Starfleet Academy)
+  for (const amount of ["for each creature type among creatures you control", "the number of creature types among non-Borg creatures you control"]) {
+    const s = scalingSubject({ verb: "cost-modify", object: "this spell", amount });
+    expect(s).toMatchObject({ type: "creature", control: "you", zone: "battlefield", keyword: ["changeling"] });
+  }
+  expect(scalingSubject({ verb: "add-mana", object: "an amount of mana of that color", amount: "the number of creature types among non-Borg creatures you control" }))
+    .toMatchObject({ type: "creature", keyword: ["changeling"] });
+  // colors / names / planeswalker types / basic land types / card types among a battlefield class: no class at all (Faeburrow Elder, Bloom Tender, Karn Gilded Guardian, Earthen Ally, Tam)
+  expect(scalingSubject({ verb: "add-mana", object: "one mana of that color", amount: "for each color among permanents you control" })).toBeUndefined();
+  expect(scalingSubject({ verb: "modify-pt", amount: "for each color among permanents you control" })).toBeUndefined();
+  expect(scalingSubject({ verb: "draw", object: "a card", amount: "for each color among other artifacts you control" })).toBeUndefined();
+  expect(scalingSubject({ verb: "modify-pt", amount: "for each color among Allies you control" })).toBeUndefined();
+  expect(scalingSubject({ verb: "proliferate", amount: "the number of planeswalker types among planeswalkers you control" })).toBeUndefined();
+  expect(scalingSubject({ verb: "modify-pt", amount: "the number of card types among other nonland permanents you control" })).toBeUndefined();
+  // a graveyard count keeps its class (Tarmogoyf: a mill raises it)
+  expect(scalingSubject({ verb: "modify-pt", amount: "the number of card types among cards in all graveyards" })).toMatchObject({ zone: "graveyard", control: "any" });
+  expect(scalingSubject({ verb: "modify-pt", amount: "the number of card types among cards in your graveyard" })).toMatchObject({ zone: "graveyard", control: "you" });
 });

@@ -1,0 +1,316 @@
+{
+ "Valiant Changeling": {
+  "source": {
+   "name": "Valiant Changeling",
+   "typeLine": "Creature — Shapeshifter",
+   "oracleText": "This spell costs {1} less to cast for each creature type among creatures you control. This effect can't reduce the amount of mana this spell costs by more than {5}.\nChangeling (This card is every creature type.)\nDouble strike",
+   "keywords": [
+    "Double strike",
+    "Changeling"
+   ],
+   "colors": [
+    "W"
+   ],
+   "manaValue": 7,
+   "colorIdentity": [
+    "W"
+   ],
+   "power": "3",
+   "toughness": "3",
+   "manaCost": "{5}{W}{W}",
+   "layout": "normal",
+   "_id": "65d9b8b6-5215-4037-8e50-e0ca80c5dc9e"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "cost-modify",
+      "object": "this spell costs {1} less for each creature type among creatures you control, with a maximum reduction of {5}",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Changeling",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Double strike",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   }
+  ]
+ },
+ "Grizzly Bears": {
+  "source": {
+   "name": "Grizzly Bears",
+   "typeLine": "Creature — Bear",
+   "oracleText": "",
+   "keywords": [],
+   "colors": [
+    "G"
+   ],
+   "manaValue": 2,
+   "colorIdentity": [
+    "G"
+   ],
+   "power": "2",
+   "toughness": "2",
+   "manaCost": "{1}{G}",
+   "layout": "normal",
+   "_id": "14c8f55d-d177-4c25-a931-ebeb9e6062a0"
+  },
+  "canonical": []
+ },
+ "Changeling Outcast": {
+  "source": {
+   "name": "Changeling Outcast",
+   "typeLine": "Creature — Shapeshifter",
+   "oracleText": "Changeling (This card is every creature type.)\nThis creature can't block and can't be blocked.",
+   "keywords": [
+    "Changeling"
+   ],
+   "colors": [
+    "B"
+   ],
+   "manaValue": 1,
+   "colorIdentity": [
+    "B"
+   ],
+   "power": "1",
+   "toughness": "1",
+   "manaCost": "{B}",
+   "layout": "normal",
+   "_id": "a61ef0cc-1da9-49f9-b0dc-01cf9f6205be"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Changeling",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "cant",
+      "object": "block",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     },
+     {
+      "verb": "cant",
+      "object": "be blocked",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   }
+  ]
+ },
+ "Faeburrow Elder": {
+  "source": {
+   "name": "Faeburrow Elder",
+   "typeLine": "Creature — Treefolk Druid",
+   "oracleText": "Vigilance\nThis creature gets +1/+1 for each color among permanents you control.\n{T}: For each color among permanents you control, add one mana of that color.",
+   "keywords": [
+    "Vigilance"
+   ],
+   "colors": [
+    "G",
+    "W"
+   ],
+   "manaValue": 3,
+   "colorIdentity": [
+    "G",
+    "W"
+   ],
+   "power": "0",
+   "toughness": "0",
+   "manaCost": "{1}{G}{W}",
+   "layout": "normal",
+   "_id": "70a6f08e-854d-4e2f-9d8c-c45ec3231157"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Vigilance",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "modify-pt",
+      "object": "this creature",
+      "amount": "+1/+1 for each color among permanents you control",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "add-mana",
+      "object": "one mana of each color among permanents you control",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   }
+  ]
+ },
+ "Bloom Tender": {
+  "source": {
+   "name": "Bloom Tender",
+   "typeLine": "Creature — Elf Druid",
+   "oracleText": "Vivid — {T}: For each color among permanents you control, add one mana of that color.",
+   "keywords": [
+    "Vivid"
+   ],
+   "colors": [
+    "G"
+   ],
+   "manaValue": 2,
+   "colorIdentity": [
+    "G"
+   ],
+   "power": "1",
+   "toughness": "1",
+   "manaCost": "{1}{G}",
+   "layout": "normal",
+   "_id": "0c23fefe-9891-4dd8-9bb1-eebdb3274e31"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "add-mana",
+      "object": "one mana of each color among permanents you control",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Tarmogoyf": {
+  "source": {
+   "name": "Tarmogoyf",
+   "typeLine": "Creature — Lhurgoyf",
+   "oracleText": "Tarmogoyf's power is equal to the number of card types among cards in all graveyards and its toughness is equal to that number plus 1.",
+   "keywords": [],
+   "colors": [
+    "G"
+   ],
+   "manaValue": 2,
+   "colorIdentity": [
+    "G"
+   ],
+   "power": "*",
+   "toughness": "1+*",
+   "manaCost": "{1}{G}",
+   "layout": "normal",
+   "_id": "45900b2f-f6a9-4c42-9642-008f3c1cf6dd"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "modify-pt",
+      "object": "this",
+      "amount": "equal to the number of card types among cards in all graveyards / equal to that number plus 1",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   }
+  ]
+ },
+ "Llanowar Elves": {
+  "source": {
+   "name": "Llanowar Elves",
+   "typeLine": "Creature — Elf Druid",
+   "oracleText": "{T}: Add {G}.",
+   "keywords": [],
+   "colors": [
+    "G"
+   ],
+   "manaValue": 1,
+   "colorIdentity": [
+    "G"
+   ],
+   "power": "1",
+   "toughness": "1",
+   "manaCost": "{G}",
+   "layout": "normal",
+   "_id": "68954295-54e3-4303-a6bc-fc4547a4e3a3"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "add-mana",
+      "object": "{G}",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
+ }
+}
