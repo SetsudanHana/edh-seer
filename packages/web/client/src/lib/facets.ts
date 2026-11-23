@@ -23,6 +23,16 @@ export type { RateFamily } from "@edh-seer/matcher/rate";
  *  reachable by name and on the report, and is unaskable here until AK2. Copy-spell has since
  *  become an event (`copy|spell`); the picker says which of the rest are unaskable when a player
  *  types one (`unaskable.ts`, #730). */
+/** The five type counts and their order keys. */
+export type TypeCountSort = "cardtypes" | "fronttypes" | "supertypes" | "subtypes" | "creaturetypes";
+export const TYPE_COUNTS = [
+  { sort: "cardtypes", param: "cardtypes", min: "cardTypesMin", max: "cardTypesMax", label: "Card types, all faces", unit: "card type" },
+  { sort: "fronttypes", param: "fronttypes", min: "frontTypesMin", max: "frontTypesMax", label: "Card types, front face", unit: "front-face card type" },
+  { sort: "supertypes", param: "supertypes", min: "supertypesMin", max: "supertypesMax", label: "Supertypes", unit: "supertype" },
+  { sort: "subtypes", param: "subtypes", min: "subtypeCountMin", max: "subtypeCountMax", label: "Subtypes", unit: "subtype" },
+  { sort: "creaturetypes", param: "creaturetypes", min: "creatureTypesMin", max: "creatureTypesMax", label: "Creature types", unit: "creature type" },
+] as const satisfies readonly { sort: TypeCountSort; param: string; min: keyof EventQuery; max: keyof EventQuery; label: string; unit: string }[];
+
 export interface EventQuery {
   /** Events the card can CAUSE. Every one must match. */
   produce: string[];
@@ -56,6 +66,28 @@ export interface EventQuery {
    *  two differently, which is why Scryfall splits `c:` from `id:` and why this is a second row
    *  rather than a rename -- `colors` in the URL was identity the day it shipped. */
   cardColours: string[];
+  /** NOT, ON THE THREE WORD ROWS (#1782): the card must NOT have this type, subtype or keyword. The same
+   *  `and`/`not` joining the event terms have; absent from the URL when empty (`nottype`, `notsubtype`,
+   *  `notkeyword`), so every link written before them reads as it did. */
+  notTypes?: string[];
+  notSubtypes?: string[];
+  notKeywords?: string[];
+  /** HOW MANY TYPES THE CARD HAS, as ranges, zero a real bound. Card types are CR 205.2a (kindred counts,
+   *  supertypes do not); `cardTypes` reads every face, `frontTypes` the front face only. These need the
+   *  search catalogue (named lists, the faces group). */
+  cardTypesMin?: number;
+  cardTypesMax?: number;
+  frontTypesMin?: number;
+  frontTypesMax?: number;
+  supertypesMin?: number;
+  supertypesMax?: number;
+  subtypeCountMin?: number;
+  subtypeCountMax?: number;
+  creatureTypesMin?: number;
+  creatureTypesMax?: number;
+  /** A changeling is every creature type (CR 702.73a), so a NOT-creature-type term hides it. `keep` shows it anyway
+   *  (`changelings=keep`). Not a question: a way to read the answer. */
+  keepChangelings?: boolean;
   /** MANA VALUE AS A RANGE, both ends inclusive, either end optional (owner, 2026-09-21: "not
    *  everyone looks for just X or less"). It was a bare ceiling until then, and `?mv=N` still
    *  reads as `mvMax` so no link already shared changes meaning.
@@ -95,7 +127,7 @@ export interface EventQuery {
    *  events outranking good cards -- Ashnod's Altar 242nd on "sacrifices a creature" -- and reached
    *  staples "only by already knowing their names and typing them in". `partners` is the artifact's
    *  own order, best connected first. */
-  sort?: "effect" | "partners" | "mv" | "name" | "pow" | "tou";
+  sort?: "effect" | "partners" | "mv" | "name" | "pow" | "tou" | TypeCountSort;
   /** Which end comes first. Absent means the order's own natural direction (`NATURAL_DIR`), so a
    *  link written before the control existed still reads the way it did. */
   dir?: "asc" | "desc";
@@ -105,6 +137,7 @@ export interface EventQuery {
  *  cheapest first; names A to Z. The URL carries `dir` only when the reader turned it round. */
 export const NATURAL_DIR: Record<NonNullable<EventQuery["sort"]>, "asc" | "desc"> = {
   effect: "desc", partners: "desc", mv: "asc", name: "asc", pow: "desc", tou: "desc",
+  cardtypes: "desc", fronttypes: "desc", supertypes: "desc", subtypes: "desc", creaturetypes: "desc",
 };
 
 /** THE ORDER A QUERY READS IN. A CAUSE IS MEASURED: asked what a card causes, the default is how
@@ -122,7 +155,7 @@ export function orderOf(q: EventQuery): NonNullable<EventQuery["sort"]> {
  *
  *  `does` AND `theme` ARE NOT READ. An old link carrying them lands on an unfiltered page, which
  *  is a smaller lie than answering a question the vocabulary no longer has. */
-const SORTS = new Set(["effect", "partners", "mv", "name", "pow", "tou"]);
+const SORTS = new Set(["effect", "partners", "mv", "name", "pow", "tou", "cardtypes", "fronttypes", "supertypes", "subtypes", "creaturetypes"]);
 
 /** ONE BOUND OUT OF THE URL. A BAD ONE IS NO FILTER, NOT ZERO: `?mvmax=abc` reading as "at most 0
  *  mana" would answer a question nobody asked with a confident empty list. Zero itself IS allowed,
@@ -132,6 +165,9 @@ const bound = (raw: string | null): number | undefined => {
   const n = Number(raw);
   return Number.isFinite(n) && n >= 0 ? Math.floor(n) : undefined;
 };
+
+/** The NOT params of the three word rows. */
+const WORD_NOT_PARAMS = [["notTypes", "nottype"], ["notSubtypes", "notsubtype"], ["notKeywords", "notkeyword"]] as const;
 
 /** The `or` and `not` terms' params, one per field. */
 const OPERATOR_PARAMS = [
@@ -162,6 +198,12 @@ export function eventsFromParams(p: URLSearchParams): EventQuery {
     keywords: p.getAll("keyword").filter((k) => k.length > 0),
     cardColours: [...(p.get("cardcolors") ?? "")].filter((c) => "WUBRGC".includes(c)),
     ...Object.fromEntries(Object.entries(ranges).filter(([, v]) => v !== undefined)),
+    ...Object.fromEntries(WORD_NOT_PARAMS
+      .map(([field, param]) => [field, p.getAll(param).filter((k) => k.length > 0)] as const)
+      .filter(([, v]) => v.length > 0)),
+    ...Object.fromEntries(TYPE_COUNTS.flatMap((c) => [[c.min, bound(p.get(`${c.param}min`))], [c.max, bound(p.get(`${c.param}max`))]] as const)
+      .filter(([, v]) => v !== undefined)),
+    ...(p.get("changelings") === "keep" ? { keepChangelings: true } : {}),
     ...(SORTS.has(sort) ? { sort: sort as EventQuery["sort"] } : {}),
     ...(dir === "asc" || dir === "desc" ? { dir } : {}),
     ...effectFromParams(p),
@@ -208,6 +250,8 @@ export function eventsToParams(q: EventQuery, p: URLSearchParams): URLSearchPara
   const out = new URLSearchParams(p);
   for (const k of [
     "produce", "consume", ...OPERATOR_PARAMS.map(([, param]) => param), "colors", "type", "subtype", "keyword", "cardcolors", "sort", "dir",
+    ...WORD_NOT_PARAMS.map(([, param]) => param), "changelings",
+    ...TYPE_COUNTS.flatMap((c) => [`${c.param}min`, `${c.param}max`]),
     // `mv` IS DELETED AND NEVER WRITTEN. It is read for the links that already carry it and
     // rewritten as `mvmax`, so the legacy spelling does not propagate into new ones.
     "mv", "mvmin", "mvmax", "powmin", "powmax", "toumin", "toumax",
@@ -220,6 +264,12 @@ export function eventsToParams(q: EventQuery, p: URLSearchParams): URLSearchPara
   for (const k of q.types) out.append("type", k);
   for (const k of q.subtypes) out.append("subtype", k);
   for (const k of q.keywords) out.append("keyword", k);
+  for (const [field, param] of WORD_NOT_PARAMS) for (const k of q[field] ?? []) out.append(param, k);
+  if (q.keepChangelings === true) out.set("changelings", "keep");
+  for (const c of TYPE_COUNTS) {
+    if (q[c.min] !== undefined) out.set(`${c.param}min`, String(q[c.min]));
+    if (q[c.max] !== undefined) out.set(`${c.param}max`, String(q[c.max]));
+  }
   if (q.cardColours.length > 0) out.set("cardcolors", q.cardColours.join(""));
   for (const [name, v] of [
     ["mvmin", q.mvMin], ["mvmax", q.mvMax], ["powmin", q.powMin],
@@ -384,7 +434,7 @@ export function rateLabel([floor, floorMana, ceiling, ceilingMana, delayed]: Rat
  *  without ever having to ask which was meant. Only the control merged; the params did not, so
  *  every link shared before today still opens the search it named. */
 export type FilterKind =
-  | "colours" | "cardColours" | "typeline" | "keywords"
+  | "colours" | "cardColours" | "typeline" | "typeCounts" | "keywords"
   | "mv" | "power" | "toughness"
   | "produce" | "consume"
   | "abilityKind" | "repeats" | "amount";
@@ -396,7 +446,7 @@ export const FILTER_KINDS: FilterKind[] = [
   // WHAT THE CARD IS, then what it COSTS, then what it DOES. Three groups a player already thinks
   // in, and the events last because they are the question only this engine can answer -- a reader
   // who came for them scrolls past nothing to reach them, since none of this is drawn unasked.
-  "colours", "cardColours", "typeline", "keywords",
+  "colours", "cardColours", "typeline", "typeCounts", "keywords",
   "mv", "power", "toughness",
   "produce", "consume",
   // HOW THE EVENTS HAPPEN, after the events they narrow (owner, 2026-10-24).
@@ -417,8 +467,9 @@ export function filterKindsOf(q: EventQuery): FilterKind[] {
   const asked: Record<FilterKind, boolean> = {
     colours: q.colours.length > 0,
     cardColours: q.cardColours.length > 0,
-    typeline: q.types.length > 0 || q.subtypes.length > 0,
-    keywords: q.keywords.length > 0,
+    typeline: q.types.length > 0 || q.subtypes.length > 0 || (q.notTypes?.length ?? 0) > 0 || (q.notSubtypes?.length ?? 0) > 0,
+    typeCounts: TYPE_COUNTS.some((c) => q[c.min] !== undefined || q[c.max] !== undefined),
+    keywords: q.keywords.length > 0 || (q.notKeywords?.length ?? 0) > 0,
     // EITHER END IS THE SAME ROW. "3 or more" is a range with no ceiling and still the mana value
     // question; two rows for one dimension would let a reader remove half of it.
     mv: q.mvMin !== undefined || q.mvMax !== undefined,
@@ -441,11 +492,16 @@ export function withoutFilterKind(q: EventQuery, kind: FilterKind): EventQuery {
   switch (kind) {
     case "colours": return { ...q, colours: [] };
     case "cardColours": return { ...q, cardColours: [] };
-    case "keywords": return { ...q, keywords: [] };
+    case "keywords": { const { notKeywords: _n, ...rest } = q; return { ...rest, keywords: [] }; }
     // BOTH, because one row asked both. Clearing only the one the reader last typed would leave the
     // row gone from the panel and its other param still narrowing the list, which is the shape of
     // "the filter I removed is still filtering".
-    case "typeline": return { ...q, types: [], subtypes: [] };
+    case "typeline": { const { notTypes: _a, notSubtypes: _b, ...rest } = q; return { ...rest, types: [], subtypes: [] }; }
+    case "typeCounts": {
+      const next: EventQuery = { ...q };
+      for (const c of TYPE_COUNTS) { delete next[c.min]; delete next[c.max]; }
+      return next;
+    }
     // BOTH ENDS, and by DELETING rather than setting 0: a bound of zero is a real question
     // ("power 0 to 0" asks for the Ornithopters) and this is the reader saying they have none.
     case "mv": { const { mvMin: _a, mvMax: _b, ...rest } = q; return rest; }

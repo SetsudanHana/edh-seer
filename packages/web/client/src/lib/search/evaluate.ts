@@ -54,6 +54,32 @@ function numberColumn(ctx: EvalContext, id: string): NumberColumn {
   return col;
 }
 
+function listValues(ctx: EvalContext, name: string): Set<string> {
+  const list = ctx.namedLists[name];
+  if (!list) throw new CannotAnswer([`unknown list ${name}`]);
+  return new Set(list.values);
+}
+
+function countsOver(col: SetColumn, only: Set<string> | undefined, n: number): Uint32Array {
+  const counts = new Uint32Array(n);
+  for (const [v, rows] of col.values) {
+    if (only && !only.has(v)) continue;
+    for (const r of rows) counts[r]!++;
+  }
+  return counts;
+}
+
+/** How many values of a set field each row holds (optionally only those in a named list), for ordering by a count.
+ *  null when the field or list is unknown: the same cannot-answer `evaluate` reports, never zeros. */
+export function rowCounts(ctx: EvalContext, field: string, list?: string): Uint32Array | null {
+  try {
+    return countsOver(setColumn(ctx, field), list === undefined ? undefined : listValues(ctx, list), ctx.rowCount);
+  } catch (e) {
+    if (e instanceof CannotAnswer) return null;
+    throw e;
+  }
+}
+
 function run(node: Node, ctx: EvalContext): Uint8Array {
   const n = ctx.rowCount;
   const out = new Uint8Array(n);
@@ -112,17 +138,7 @@ function run(node: Node, ctx: EvalContext): Uint8Array {
     for (const r of col.values.get(node.value) ?? []) out[r] = 1;
     return out;
   }
-  let only: Set<string> | undefined;
-  if (node.op === "countIn") {
-    const list = ctx.namedLists[node.list];
-    if (!list) throw new CannotAnswer([`unknown list ${node.list}`]);
-    only = new Set(list.values);
-  }
-  const counts = new Uint32Array(n);
-  for (const [v, rows] of col.values) {
-    if (only && !only.has(v)) continue;
-    for (const r of rows) counts[r]!++;
-  }
+  const counts = countsOver(col, node.op === "countIn" ? listValues(ctx, node.list) : undefined, n);
   const lo = node.min ?? 0;
   const hi = node.max ?? Infinity;
   for (let i = 0; i < n; i++) out[i] = counts[i]! >= lo && counts[i]! <= hi ? 1 : 0;

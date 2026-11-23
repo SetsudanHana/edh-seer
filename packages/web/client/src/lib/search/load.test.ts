@@ -77,4 +77,54 @@ describe("the search loader", () => {
     const ctx = await withCatalogue(coreContext(rows, vocab), createSearchLoader("/static", f as unknown as typeof fetch), readQ);
     expect(evaluate(readQ, ctx).ok).toBe(false);
   });
+
+  test("a failure is never cached: a thrown manifest, a missing catalogue and a failed group all retry on the next query", async () => {
+    const flaky = { manifest: true, catalogue: true, group: true };
+    const f = vi.fn(async (u: string | URL | Request) => {
+      const url = String(u);
+      if (flaky.manifest && url.endsWith("manifest.json")) throw new Error("offline");
+      if (flaky.catalogue && url.endsWith("catalogue.json")) return { ok: false, json: async () => ({}) } as Response;
+      if (flaky.group && url.endsWith("read.json")) return { ok: false, json: async () => ({}) } as Response;
+      return stub()(u);
+    });
+    const loader = createSearchLoader("/static", f as unknown as typeof fetch);
+    const ask = async () => evaluate(readQ, await withCatalogue(coreContext(rows, vocab), loader, readQ));
+    expect((await ask()).ok).toBe(false);
+    flaky.manifest = false;
+    expect((await ask()).ok).toBe(false);
+    flaky.catalogue = false;
+    expect((await ask()).ok).toBe(false); // the group fails now
+    flaky.group = false;
+    expect(await ask()).toEqual({ ok: true, rows: [0, 2] });
+  });
+
+  test("a value that merely spells `countIn` is not a list question", async () => {
+    const f = stub();
+    const loader = createSearchLoader("/static", f as unknown as typeof fetch);
+    await withCatalogue(coreContext(rows, vocab), loader, { field: "t", op: "has", value: "countIn" });
+    expect(f).not.toHaveBeenCalled();
+  });
+
+  test("a countIn leaf anywhere in the tree asks for the catalogue", async () => {
+    const f = stub();
+    const loader = createSearchLoader("/static", f as unknown as typeof fetch);
+    await withCatalogue(coreContext(rows, vocab), loader, { and: [{ not: listQ }] });
+    expect(f).toHaveBeenCalled();
+  });
+
+  test("groups are cached under the artifact directory, so a new artifact never reads an old group", async () => {
+    let dir = "s-abc";
+    const f = vi.fn(async (u: string | URL | Request) => {
+      const url = String(u);
+      if (url.endsWith("manifest.json")) return { ok: true, json: async () => ({ version: "v1", search: dir }) } as Response;
+      return stub({ [`/static/v1/search/${dir}/catalogue.json`]: catalogue, [`/static/v1/search/${dir}/read.json`]: files["/static/v1/search/s-abc/read.json"] })(u);
+    });
+    const a = createSearchLoader("/static", f as unknown as typeof fetch);
+    await withCatalogue(coreContext(rows, vocab), a, readQ);
+    dir = "s-new";
+    const b = createSearchLoader("/static", f as unknown as typeof fetch);
+    await withCatalogue(coreContext(rows, vocab), b, readQ);
+    const urls = f.mock.calls.map((c) => String(c[0]));
+    expect(urls).toContain("/static/v1/search/s-new/read.json");
+  });
 });

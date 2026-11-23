@@ -12,7 +12,7 @@ import { useListboxKeys } from "../lib/listbox-keys.js";
  *
  *  THE KEYBOARD MODEL IS THE ONE THE HEADER SEARCH ALREADY HAS, via `useListboxKeys`. */
 export function WordPicker(
-  { label, placeholder, listLabel, all, chosen, onChange }: {
+  { label, placeholder, listLabel, all, chosen, onChange, negated = [], onMove, onRemoveNegated }: {
     label: string;
     placeholder: string;
     /** The listbox's accessible name -- "Types and subtypes", "Keywords". */
@@ -20,6 +20,11 @@ export function WordPicker(
     all: string[];
     chosen: string[];
     onChange: (next: string[]) => void;
+    /** WORDS THE CARD MUST NOT HAVE (#1782), drawn struck through. Only with `onMove`, which is what makes a chip
+     *  a must/never control: moves a word between the two lists in one call, so one click is one URL write. */
+    negated?: string[];
+    onMove?: (name: string, to: "and" | "not") => void;
+    onRemoveNegated?: (name: string) => void;
   },
 ): React.JSX.Element {
   const [query, setQuery] = useState("");
@@ -33,12 +38,12 @@ export function WordPicker(
   const options = useMemo(() => {
     const q = query.trim().toLowerCase();
     if (q.length === 0) return [];
-    const taken = new Set(chosen);
+    const taken = new Set([...chosen, ...negated]);
     const free = all.filter((s) => !taken.has(s));
     const starts = free.filter((s) => s.startsWith(q));
     const contains = free.filter((s) => !s.startsWith(q) && s.includes(q));
     return [...starts, ...contains].slice(0, 8);
-  }, [all, chosen, query]);
+  }, [all, chosen, negated, query]);
 
   // DECLARED BEFORE `take` USES IT, and `take` is referenced by the hook -- so the hook's callback
   // reads `options` through the closure rather than taking the name as an argument.
@@ -61,10 +66,10 @@ export function WordPicker(
       <label className="eyebrow" htmlFor={`${listId}-field`}>{label}</label>
       {/* THE CHOSEN ONES ARE CHIPS, so removing one is a click rather than a re-typed field, and so
         * the ANSWERED question stays visible while the next is being asked. */}
-      {chosen.length > 0 && (
+      {(chosen.length > 0 || negated.length > 0) && (
         <ul className="flex flex-wrap gap-2 list-none p-0 m-0">
           {chosen.map((name) => (
-            <li key={name}>
+            <li key={name} className="flex items-center gap-1">
               <button
                 type="button"
                 className="chip capitalize"
@@ -76,6 +81,28 @@ export function WordPicker(
                   <path d="M18 6 6 18M6 6l12 12" />
                 </svg>
               </button>
+              {onMove && (
+                <button type="button" className="chip" aria-label={`Leave out ${name}`} onClick={() => onMove(name, "not")}>not</button>
+              )}
+            </li>
+          ))}
+          {negated.map((name) => (
+            <li key={`not-${name}`} className="flex items-center gap-1">
+              {/* NEVER, said in words as well as struck through: colour and a line are not the only carrier. */}
+              <button
+                type="button"
+                className="chip capitalize line-through decoration-(--muted)"
+                aria-label={`Remove ${name}`}
+                onClick={() => onRemoveNegated?.(name)}
+              >
+                <span className="no-underline">never</span> {name}
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true" focusable="false">
+                  <path d="M18 6 6 18M6 6l12 12" />
+                </svg>
+              </button>
+              {onMove && (
+                <button type="button" className="chip" aria-label={`Require ${name}`} onClick={() => onMove(name, "and")}>must</button>
+              )}
             </li>
           ))}
         </ul>

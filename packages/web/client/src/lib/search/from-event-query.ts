@@ -1,9 +1,9 @@
 // The /cards and /commanders characteristic filter, as an AST over views of the name-index rows.
 // One evaluator for the page and for every later search surface (#1782). The event terms are still
 // computed by the existing code and join as `rows` leaves.
-import type { EventQuery } from "../facets.js";
-import { evaluate, type EvalContext, type EvalResult, type Node } from "./evaluate.js";
-import { buildCodeView, buildColourView, buildIdentityView, buildNumberViews } from "./type-views.js";
+import { TYPE_COUNTS, type EventQuery, type TypeCountSort } from "../facets.js";
+import { evaluate, rowCounts, type EvalContext, type EvalResult, type Node } from "./evaluate.js";
+import { buildCodeView, buildColourView, buildEveryCreatureTypeView, buildIdentityView, buildNumberViews } from "./type-views.js";
 import type { Column } from "./walk.js";
 
 export type PageMode = "cards" | "commanders";
@@ -52,14 +52,49 @@ export function coreContext(
 
 const WUBRG = ["W", "U", "B", "R", "G"];
 
+/** What each count reads: a set field, and the named list that says which of its values count. */
+export const typeCountSpec: Record<TypeCountSort, { field: string; list?: string }> = {
+  cardtypes: { field: "t", list: "card" },
+  fronttypes: { field: "tFront", list: "card" },
+  supertypes: { field: "t", list: "super" },
+  subtypes: { field: "st" },
+  creaturetypes: { field: "st", list: "creature" },
+};
+
+/** Per-row counts for ordering. null when the context cannot answer (no catalogue yet). */
+export function rowCountsOf(ctx: EvalContext, which: TypeCountSort): Uint32Array | null {
+  const spec = typeCountSpec[which];
+  return rowCounts(ctx, spec.field, spec.list);
+}
+
+/** The context plus the every-creature-type flag, once the creature list is known. A context with no creature list is
+ *  returned as it is: `everyCreatureType` then stays unknown and a question about it is cannot-answer. */
+export function withEveryCreatureType(ctx: EvalContext, rows: readonly CoreRow[], vocab: CoreVocab): EvalContext {
+  const list = ctx.namedLists["creature"]?.values;
+  if (!list || list.length === 0) return ctx;
+  const columns = new Map(ctx.columns);
+  columns.set("everyCreatureType", buildEveryCreatureTypeView(vocab.subtypes, list, rows.map((r) => r.s)));
+  return { ...ctx, columns };
+}
+
+type CharQuery = Pick<EventQuery, "colours" | "types" | "subtypes" | "keywords" | "cardColours"
+  | "mvMin" | "mvMax" | "powMin" | "powMax" | "touMin" | "touMax"
+  | "notTypes" | "notSubtypes" | "notKeywords" | "keepChangelings"
+  | "cardTypesMin" | "cardTypesMax" | "frontTypesMin" | "frontTypesMax" | "supertypesMin" | "supertypesMax"
+  | "subtypeCountMin" | "subtypeCountMax" | "creatureTypesMin" | "creatureTypesMax">;
+
+export interface CompileOptions {
+  /** The tables the row codes name. With them, a NOT term naming a word the table does not know matches NOTHING,
+   *  because a not-yet-loaded table would otherwise let every card through. */
+  vocab?: CoreVocab;
+  /** The creature types (the catalogue's `creature` list): the subtypes `keepChangelings` is about. */
+  creatureTypes?: ReadonlySet<string>;
+}
+
 /** The characteristic half of an EventQuery as an AST, matching `compileCharacteristics` + `coloursFit`:
  *  identity `within` (cards) or `exactly` (commanders), `C` = colourless only on both; card colours "at
  *  least these", `C` exclusive. Event and effect terms are not here: they join as `rows` leaves. */
-export function fromEventQuery(
-  q: Pick<EventQuery, "colours" | "types" | "subtypes" | "keywords" | "cardColours"
-    | "mvMin" | "mvMax" | "powMin" | "powMax" | "touMin" | "touMax">,
-  mode: PageMode,
-): Node {
+export function fromEventQuery(q: CharQuery, mode: PageMode, opts: CompileOptions = {}): Node {
   const and: Node[] = [];
   if (q.colours.length > 0) {
     if (q.colours.includes("C")) and.push({ field: "id", op: "exactly", value: [] });
@@ -68,6 +103,19 @@ export function fromEventQuery(
   for (const v of q.types) and.push({ field: "t", op: "has", value: v });
   for (const v of q.subtypes) and.push({ field: "st", op: "has", value: v });
   for (const v of q.keywords) and.push({ field: "k", op: "has", value: v });
+  const never: Node = { op: "rows", rows: [] };
+  const negate = (field: string, table: readonly string[] | undefined, v: string, keepEvery: boolean): Node => {
+    if (table && !table.includes(v)) return never;
+    const has: Node = { field, op: "has", value: v };
+    return keepEvery
+      ? { or: [{ not: has }, { field: "everyCreatureType", op: "has", value: "true" }] }
+      : { not: has };
+  };
+  for (const v of q.notTypes ?? []) and.push(negate("t", opts.vocab?.types, v, false));
+  for (const v of q.notSubtypes ?? []) {
+    and.push(negate("st", opts.vocab?.subtypes, v, q.keepChangelings === true && opts.creatureTypes?.has(v) === true));
+  }
+  for (const v of q.notKeywords ?? []) and.push(negate("k", opts.vocab?.keywords, v, false));
   if (q.cardColours.length > 0) {
     if (q.cardColours.includes("C")) and.push({ field: "c", op: "count", max: 0 });
     else for (const v of q.cardColours) if (WUBRG.includes(v)) and.push({ field: "c", op: "has", value: v });
@@ -78,16 +126,24 @@ export function fromEventQuery(
     if (min === undefined && max === undefined) continue;
     and.push({ field, op: "cmp", ...(min !== undefined ? { min } : {}), ...(max !== undefined ? { max } : {}) });
   }
+  for (const c of TYPE_COUNTS) {
+    const min = q[c.min]; const max = q[c.max];
+    if (min === undefined && max === undefined) continue;
+    const spec = typeCountSpec[c.sort];
+    const bounds = { ...(min !== undefined ? { min } : {}), ...(max !== undefined ? { max } : {}) };
+    and.push(spec.list === undefined ? { field: spec.field, op: "count", ...bounds } : { field: spec.field, op: "countIn", list: spec.list, ...bounds });
+  }
   return { and };
 }
 
 /** Evaluate the characteristics (and, on the commanders page, the commander toggle) over the rows. */
 export function evaluateEventQuery(
-  rows: readonly CoreRow[], vocab: CoreVocab, q: Parameters<typeof fromEventQuery>[0], mode: PageMode,
+  rows: readonly CoreRow[], vocab: CoreVocab, q: CharQuery, mode: PageMode,
   opts: { commandersOnly?: boolean; context?: EvalContext } = {},
 ): EvalResult {
   const ctx = opts.context ?? coreContext(rows, vocab);
-  const node = fromEventQuery(q, mode);
+  const creature = ctx.namedLists["creature"]?.values;
+  const node = fromEventQuery(q, mode, { vocab, ...(creature ? { creatureTypes: new Set(creature) } : {}) });
   if (!opts.commandersOnly) return evaluate(node, ctx);
   const commanders = rows.flatMap((r, i) => (r.commander ? [i] : []));
   return evaluate({ and: [{ op: "rows", rows: commanders }, node] }, ctx);

@@ -150,3 +150,124 @@ describe("the rows leaf", () => {
     expect(and).toEqual({ ok: true, rows: [1, 5, 8, 13] });
   });
 });
+
+// ---- #1782 task 2: NOT, the five type counts, changelings ---------------------------------------------------------
+import { rowCountsOf, typeCountSpec, withEveryCreatureType } from "./from-event-query.js";
+
+describe("NOT on the word rows", () => {
+  const rows = fixtureRows(300).map((x) => ({ ...x, t: x.t ?? [] }));
+  const ctx = coreContext(rows, vocab);
+  const q0: EventQuery = { produce: [], consume: [], colours: [], types: [], subtypes: [], keywords: [], cardColours: [] };
+
+  test("matches the naive reading row for row, and composes with the positive terms", () => {
+    const res = evaluate(fromEventQuery({ ...q0, types: ["creature"], notTypes: ["land"], notSubtypes: ["elf"], notKeywords: ["flying", "trample"] }, "cards", { vocab }), ctx);
+    const want = rows.flatMap((r, i) => (r.t.includes(1) && !r.t.includes(3) && !(r.s ?? []).includes(0)
+      && !(r.k ?? []).includes(0) && !(r.k ?? []).includes(1) ? [i] : []));
+    expect(res).toEqual({ ok: true, rows: want });
+    expect(want.length).toBeGreaterThan(0);
+  });
+
+  test("a NOT name the vocabulary does not know matches nothing (a not-yet-loaded table must not show everything)", () => {
+    const empty = { types: [], subtypes: [], keywords: [] };
+    for (const over of [{ notTypes: ["land"] }, { notSubtypes: ["elf"] }, { notKeywords: ["flying"] }]) {
+      expect(evaluate(fromEventQuery({ ...q0, ...over }, "cards", { vocab: empty }), coreContext(rows, empty))).toEqual({ ok: true, rows: [] });
+    }
+  });
+});
+
+describe("the five type counts", () => {
+  // types: 0 creature 1 land 2 legendary 3 artifact; subtypes 0 elf 1 human 2 wizard 3 borg 4 forest
+  const tv = { types: ["creature", "land", "legendary", "artifact"], subtypes: ["elf", "human", "wizard", "borg", "forest"], keywords: [] };
+  const lists = {
+    card: { values: ["creature", "land", "artifact"] },
+    super: { values: ["legendary"] },
+    creature: { values: ["elf", "human", "wizard", "borg"] },
+  };
+  const crows = [
+    { identity: [], t: [0], s: [0, 1, 2] },            // 0: 1 card type, 0 super, 3 sub, 3 creature
+    { identity: [], t: [0, 2, 3], s: [0] },            // 1: 2 card types + legendary
+    { identity: [], t: [1], s: [4] },                  // 2: land forest, 0 creature types
+    { identity: [], t: [0], s: [0, 1, 2, 3] },         // 3: every creature type
+    { identity: [], t: [0, 3] },                       // 4: no subtypes
+  ];
+  const ctx = coreContext(crows, tv, { namedLists: lists });
+  const ask = (over: Partial<EventQuery>) => evaluate(fromEventQuery({ produce: [], consume: [], colours: [], types: [], subtypes: [], keywords: [], cardColours: [], ...over }, "cards", { vocab: tv }), ctx);
+
+  test("card types count CR 205.2a types and not supertypes", () => {
+    expect(ask({ cardTypesMin: 2 })).toEqual({ ok: true, rows: [1, 4] });
+    expect(ask({ cardTypesMin: 1, cardTypesMax: 1 })).toEqual({ ok: true, rows: [0, 2, 3] });
+  });
+  test("supertypes, with zero a real bound", () => {
+    expect(ask({ supertypesMin: 1 })).toEqual({ ok: true, rows: [1] });
+    expect(ask({ supertypesMax: 0 })).toEqual({ ok: true, rows: [0, 2, 3, 4] });
+  });
+  test("subtypes and creature types", () => {
+    expect(ask({ subtypeCountMin: 3 })).toEqual({ ok: true, rows: [0, 3] });
+    expect(ask({ subtypeCountMax: 0 })).toEqual({ ok: true, rows: [4] });
+    expect(ask({ creatureTypesMin: 3 })).toEqual({ ok: true, rows: [0, 3] });
+    expect(ask({ creatureTypesMax: 0 })).toEqual({ ok: true, rows: [2, 4] });
+  });
+  test("front-face count needs the faces group: without it, cannot-answer", () => {
+    expect(ask({ frontTypesMin: 1 }).ok).toBe(false);
+  });
+  test("without the catalogue's named lists every count that needs one is cannot-answer, never empty", () => {
+    const bare = coreContext(crows, tv);
+    const q: EventQuery = { produce: [], consume: [], colours: [], types: [], subtypes: [], keywords: [], cardColours: [], cardTypesMin: 1 };
+    expect(evaluate(fromEventQuery(q, "cards", { vocab: tv }), bare).ok).toBe(false);
+  });
+  test("per-row counts for the sort, and the spec table names all five", () => {
+    expect([...rowCountsOf(ctx, "creaturetypes")!]).toEqual([3, 1, 0, 4, 0]);
+    expect([...rowCountsOf(ctx, "cardtypes")!]).toEqual([1, 2, 1, 1, 2]);
+    expect([...rowCountsOf(ctx, "supertypes")!]).toEqual([0, 1, 0, 0, 0]);
+    expect([...rowCountsOf(ctx, "subtypes")!]).toEqual([3, 1, 1, 4, 0]);
+    expect(rowCountsOf(coreContext(crows, tv), "cardtypes")).toBeNull();
+    expect(Object.keys(typeCountSpec).sort()).toEqual(["cardtypes", "creaturetypes", "fronttypes", "subtypes", "supertypes"]);
+  });
+});
+
+describe("a changeling is every creature type (CR 702.73a)", () => {
+  const tv = { types: ["creature"], subtypes: ["elf", "human", "borg"], keywords: [] };
+  const lists = { creature: { values: ["elf", "human", "borg"] } };
+  const crows = [
+    { identity: [], t: [0], s: [0, 1, 2] }, // 0 changeling
+    { identity: [], t: [0], s: [0, 2] },    // 1 borg elf
+    { identity: [], t: [0], s: [0, 1] },    // 2 elf human
+  ];
+  const base: EventQuery = { produce: [], consume: [], colours: [], types: [], subtypes: [], keywords: [], cardColours: [], notSubtypes: ["borg"] };
+  const ctx = withEveryCreatureType(coreContext(crows, tv, { namedLists: lists }), crows, tv);
+  const run = (q: EventQuery) => evaluate(fromEventQuery(q, "cards", { vocab: tv, creatureTypes: new Set(lists.creature.values) }), ctx);
+
+  test("the every-creature-type view flags only the row that holds the whole list", () => {
+    expect(evaluate({ field: "everyCreatureType", op: "has", value: "true" }, ctx)).toEqual({ ok: true, rows: [0] });
+  });
+  test("not <creature type> hides it by default, and keeps it with keepChangelings", () => {
+    expect(run(base)).toEqual({ ok: true, rows: [2] });
+    expect(run({ ...base, keepChangelings: true })).toEqual({ ok: true, rows: [0, 2] });
+  });
+  test("keepChangelings leaves a non-creature subtype alone", () => {
+    const forest = { ...tv, subtypes: [...tv.subtypes, "forest"] };
+    const fr = [...crows, { identity: [], t: [0], s: [3] }];
+    const c2 = withEveryCreatureType(coreContext(fr, forest, { namedLists: lists }), fr, forest);
+    const res = evaluate(fromEventQuery({ ...base, notSubtypes: ["forest"], keepChangelings: true }, "cards", { vocab: forest, creatureTypes: new Set(lists.creature.values) }), c2);
+    expect(res).toEqual({ ok: true, rows: [0, 1, 2] });
+  });
+});
+
+describe("commandersOnly over a mixed fixture", () => {
+  const mixed: CoreRow[] = [
+    { identity: ["R"], commander: true, t: [1], mv: 2 },
+    { identity: ["R"], commander: false, t: [1], mv: 2 },
+    { identity: ["R"], commander: true, t: [3], mv: 2 },
+    { identity: ["U"], commander: true, t: [1], mv: 2 },
+    { identity: ["R"], t: [1], mv: 2 },
+  ];
+  const q = { produce: [], consume: [], colours: ["R"], types: ["creature"], subtypes: [], keywords: [], cardColours: [] } as EventQuery;
+  test("only commanders survive, and the rest of the query still applies", () => {
+    expect(evaluateEventQuery(mixed, vocab, q, "commanders", { commandersOnly: true })).toEqual({ ok: true, rows: [0] });
+    expect(evaluateEventQuery(mixed, vocab, q, "cards", { commandersOnly: false })).toEqual({ ok: true, rows: [0, 1, 4] });
+    expect(evaluateEventQuery(mixed, vocab, q, "cards", { commandersOnly: true })).toEqual({ ok: true, rows: [0] });
+  });
+  test("a row with no `commander` flag is not a commander", () => {
+    expect(evaluateEventQuery([{ identity: [], t: [1] }], vocab, { ...q, colours: [] }, "commanders", { commandersOnly: true })).toEqual({ ok: true, rows: [] });
+  });
+});

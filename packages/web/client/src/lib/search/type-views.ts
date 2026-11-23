@@ -152,3 +152,24 @@ export function buildColourView(masks: readonly (number | undefined)[]): SetColu
   });
   return { kind: "set", path: "c", group: "types", values: sortedMap(m) };
 }
+
+/** Rows holding EVERY creature type (a changeling, CR 702.73a), as the `everyCreatureType` flag. Needs the creature list, which
+ *  only the catalogue carries, so it is built once that has loaded. A row counts when its subtypes include every list
+ *  member the subtype table knows. */
+export function buildEveryCreatureTypeView(
+  subtypeTable: readonly string[], creatureList: readonly string[], codes: readonly (readonly number[] | undefined)[],
+): SetColumn {
+  const inTable = new Set(subtypeTable);
+  const required = creatureList.filter((c) => inTable.has(c));
+  const need = new Set(required.map((c) => subtypeTable.indexOf(c)));
+  const rows: number[] = [];
+  if (need.size > 0) {
+    codes.forEach((cs, i) => {
+      if (!cs || cs.length < need.size) return;
+      const have = new Set(cs);
+      for (const c of need) if (!have.has(c)) return;
+      rows.push(i);
+    });
+  }
+  return { kind: "set", path: "everyCreatureType", group: "types", values: new Map(rows.length ? [["true", rows]] : []) };
+}
