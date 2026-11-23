@@ -33,6 +33,10 @@ const basics = (n: number, name = "Forest"): DeckCard[] =>
   Array.from({ length: n }, (_, i) => card(`${name} ${i}`, "Basic Land — Forest"));
 const spells = (n: number, manaValue: number): DeckCard[] =>
   Array.from({ length: n }, (_, i) => card(`Spell ${manaValue}-${i}`, "Sorcery", manaValue));
+/** FILLER AS COPIES OF ONE NAME (#1717, #1744): `manaModel` tops every SINGLETON nonland's cast curve up to MIN_HELD_TRIALS with forced re-simulations, and a deck of ~100 distinct filler
+ *  names pays for ~100 of them. For a test that reads no filler name and no singleton `held` count, these cost a fraction of `basics`/`spells`. */
+const basicCopies = (n: number, name = "Forest"): DeckCard[] => Array.from({ length: n }, () => card(name, "Basic Land — Forest"));
+const spellCopies = (n: number, manaValue: number): DeckCard[] => Array.from({ length: n }, () => card(`Spell ${manaValue}`, "Sorcery", manaValue));
 
 /** The trial count every anchor runs at. Big enough that Monte Carlo error is well inside the
  *  tolerances below, small enough to stay in `npm test` — the 20k × 71 sweep is a bin, like every
@@ -87,8 +91,8 @@ test("A3: an all-tapped deck is the same curve shifted one turn", () => {
 // has no summoning sickness (CR 302.6 restricts creatures) and pays the turn it lands; a dork waits.
 // The two decks are identical but for that one word on the type line.
 test("A2: a rock pays the turn it lands and a dork waits one", () => {
-  const withRock = [...basics(37), real("Sol Ring"), ...spells(61, 3)];
-  const withDork = [...basics(37), real("Llanowar Elves"), ...spells(61, 3)];
+  const withRock = [...basicCopies(37), real("Sol Ring"), ...spellCopies(61, 3)];
+  const withDork = [...basicCopies(37), real("Llanowar Elves"), ...spellCopies(61, 3)];
   const rock = simulate(withRock, { trials: TRIALS, turns: 4, seed: 17 });
   const dork = simulate(withDork, { trials: TRIALS, turns: 4, seed: 17 });
 
@@ -96,7 +100,7 @@ test("A2: a rock pays the turn it lands and a dork waits one", () => {
   // cast on turn 1 off one land, the rock is already making mana and the elf is not.
   expect(pAtLeastMana(rock, 3, 2)).toBeGreaterThan(pAtLeastMana(dork, 3, 2));
   // Both beat the lands-only deck by turn 4 — the accelerant is real in each case, only later.
-  const bare = simulate([...basics(37), ...spells(62, 3)], { trials: TRIALS, turns: 4, seed: 17 });
+  const bare = simulate([...basicCopies(37), ...spellCopies(62, 3)], { trials: TRIALS, turns: 4, seed: 17 });
   expect(pAtLeastMana(rock, 5, 4)).toBeGreaterThan(pAtLeastMana(bare, 5, 4));
   expect(pAtLeastMana(dork, 5, 4)).toBeGreaterThan(pAtLeastMana(bare, 5, 4));
 }, 30000);
@@ -105,10 +109,10 @@ test("A2: a rock pays the turn it lands and a dork waits one", () => {
 // classifier's own unit tests: a slow land is tapped as the first drop and untapped later, so a deck
 // of nothing but slow lands makes strictly less mana early and catches up.
 test("C3: a conditional land is tapped early and untapped later", () => {
-  const slow = Array.from({ length: 37 }, (_, i) =>
-    card(`Sundown Pass ${i}`, "Land", 0, "This land enters tapped unless you control two or more other lands.\n{T}: Add {R} or {W}."));
-  const r = simulate([...slow, ...spells(62, 3)], { trials: TRIALS, turns: 6, seed: 19 });
-  const bare = simulate([...basics(37), ...spells(62, 3)], { trials: TRIALS, turns: 6, seed: 19 });
+  const slow = Array.from({ length: 37 }, () =>
+    card("Sundown Pass", "Land", 0, "This land enters tapped unless you control two or more other lands.\n{T}: Add {R} or {W}."));
+  const r = simulate([...slow, ...spellCopies(62, 3)], { trials: TRIALS, turns: 6, seed: 19 });
+  const bare = simulate([...basicCopies(37), ...spellCopies(62, 3)], { trials: TRIALS, turns: 6, seed: 19 });
   // Turn 1 and 2 are strictly worse — every drop enters tapped.
   expect(pAtLeastMana(r, 1, 1)).toBe(0);
   expect(pAtLeastMana(r, 2, 2)).toBeLessThan(pAtLeastMana(bare, 2, 2));
@@ -131,12 +135,12 @@ test("C3: a conditional land is tapped early and untapped later", () => {
 // and none must be worth nothing.
 // A full simulation over many seeds: 1.1 s locally, 2.5-4.4 s on a CI runner on main, against the 5 s default (timed out on #1213).
 test("accelerants are monotone in count, and three are worth less than thirteen", () => {
-  const bare = [...basics(37), ...spells(62, 3)];
+  const bare = [...basicCopies(37), ...spellCopies(62, 3)];
   const rocks = (n: number): DeckCard[] =>
-    Array.from({ length: n }, (_, i) => withTap(card(`Rock ${i}`, "Artifact", 2, "{T}: Add {C}."), ["C"]));
-  const thin = [...basics(37), ...rocks(3), ...spells(59, 3)];
+    Array.from({ length: n }, () => withTap(card("Rock", "Artifact", 2, "{T}: Add {C}."), ["C"]));
+  const thin = [...basicCopies(37), ...rocks(3), ...spellCopies(59, 3)];
   // Thirteen is the corpus MEDIAN accelerant count, so this is the shape of a real deck's dose.
-  const thick = [...basics(37), ...rocks(13), ...spells(49, 3)];
+  const thick = [...basicCopies(37), ...rocks(13), ...spellCopies(49, 3)];
   const at6 = (deck: DeckCard[]): number =>
     pAtLeastMana(simulate(deck, { trials: TRIALS, turns: 6, seed: 23 }), 6, 6);
   const [a, b, c] = [at6(bare), at6(thin), at6(thick)];
@@ -222,7 +226,7 @@ test("#1183: Sceptre of Eternal Glory taps for 1 until three same-named lands ar
   expect(manaOutput(sceptre)).toEqual({ amount: 3, needsLands: 3, sameName: true, below: 1 });
   expect(manaOutput(real("Temple of the False God"))).toEqual({ amount: 2, needsLands: 5 });
   const grey = withTap(card("Grey Rock", "Artifact", sceptre.card.manaValue ?? 4, "{T}: Add {C}."), ["C"]);
-  const run = (rock: DeckCard, lands: DeckCard[]) => simulate([...lands, rock, ...spells(61, 3)], { trials: 6_000, turns: 8, seed: 23 });
+  const run = (rock: DeckCard, lands: DeckCard[]) => simulate([...lands, rock, ...spellCopies(61, 3)], { trials: 6_000, turns: 8, seed: 23 });
   // lands that all differ in name: the gate never holds, so the Sceptre is the one-mana rock it prints beside its gate.
   const distinct = basics(37);
   expect(run(sceptre, distinct).manaAt).toEqual(run(grey, distinct).manaAt);
@@ -732,11 +736,11 @@ test("N15: a fetch removes a UNIFORMLY RANDOM land, not the first one in draw or
 // A full simulation over many seeds: 1.1 s locally, 2.3-4.4 s on a CI runner on main, against the 5 s default (timed out on #1213).
 test("N15: the simulator's fetches read the corrected policy, and it pays on a fetch-heavy deck", () => {
   const FETCH = "{T}, Pay 1 life, Sacrifice this land: Search your library for a basic land card, put it onto the battlefield, then shuffle.";
-  const fetchland = (i: number): DeckCard => ({ ...card(`Fetch ${i}`, "Land", 0, FETCH, []), tags: fetchTags({ kind: "permanent", tapped: false, reach: WUBRG }) });
+  const fetchland = (): DeckCard => ({ ...card("Fetch", "Land", 0, FETCH, []), tags: fetchTags({ kind: "permanent", tapped: false, reach: WUBRG }) });
   const deck: DeckCard[] = [
-    ...Array.from({ length: 20 }, (_, i) => fetchland(i)),
-    ...Array.from({ length: 17 }, (_, i) => card(`Forest ${i}`, "Basic Land — Forest", 0, "", ["G"])),
-    ...spells(62, 3),
+    ...Array.from({ length: 20 }, () => fetchland()),
+    ...Array.from({ length: 17 }, () => card("Forest", "Basic Land — Forest", 0, "", ["G"])),
+    ...spellCopies(62, 3),
   ];
   // MEASURED under the old earliest-land policy at this seed: 14.76%. The correction can only move
   // it UP, since taking the earliest land is what delayed the survivors.
@@ -747,9 +751,9 @@ test("N15: the simulator's fetches read the corrected policy, and it pays on a f
   // leaves it untested -- verified by mutating one site at a time. Nature's Lore, verbatim, in a
   // deck that can cast it. MEASURED under the old policy at this seed: 60.27%.
   const ramp: DeckCard[] = [
-    ...Array.from({ length: 20 }, (_, i) => real("Nature's Lore", `Lore ${i}`)),
-    ...basics(30),
-    ...spells(49, 3),
+    ...Array.from({ length: 20 }, () => real("Nature's Lore", "Lore")),
+    ...basicCopies(30),
+    ...spellCopies(49, 3),
   ];
   const withRamp = simulate(ramp, { trials: TRIALS, turns: 8, seed: 11 });
   expect(pAtLeastMana(withRamp, 6, 6)).toBeGreaterThan(0.65);
@@ -760,9 +764,9 @@ test("N15: the simulator's fetches read the corrected policy, and it pays on a f
 // multicolour decks the colour model was built for -- were an untapped land making one colourless
 // mana and thinning nothing.
 test("N2: the fetch cycle matches the gate, on its own printed text", () => {
-  const tarns = Array.from({ length: 20 }, (_, i) => real("Scalding Tarn", `Tarn ${i}`));
-  const islands = Array.from({ length: 17 }, (_, i) => card(`Island ${i}`, "Basic Land — Island", 0, "", ["U"]));
-  const blue = Array.from({ length: 62 }, (_, i) => card(`Blue ${i}`, "Sorcery", 3, "", undefined));
+  const tarns = Array.from({ length: 20 }, () => real("Scalding Tarn", "Tarn"));
+  const islands = Array.from({ length: 17 }, () => card("Island", "Basic Land — Island", 0, "", ["U"]));
+  const blue = Array.from({ length: 62 }, () => card("Blue", "Sorcery", 3, "", undefined));
   // The fetch produces nothing of its own, so without the colour read the deck has 17 blue sources
   // for a {U}{U}{U} cost and reads far under its real mana. WITH it, every Tarn is a blue source.
   const r = simulate([...tarns, ...islands, ...blue.slice(0, 61), card("Cryptic", "Instant", 4, "", undefined)], { trials: TRIALS, turns: 6, seed: 4 });
@@ -779,27 +783,27 @@ test("N2: the fetch cycle matches the gate, on its own printed text", () => {
 // played as a land. `land-count.ts` already makes this check (E4); `goldfish.ts` never learned it,
 // and took a phantom land drop on 23 deck-slots while dropping the card from the priced denominator.
 test("N3: a transform card's land back is not a land drop, and the front face is priced", () => {
-  const compass = (i: number): DeckCard => {
-    const c = card(`Compass ${i}`, "Artifact // Land", 3, "{3}, {T}: Search your library for a basic land card, reveal it, put it into your hand, then shuffle.");
+  const compass = (): DeckCard => {
+    const c = card("Compass", "Artifact // Land", 3, "{3}, {T}: Search your library for a basic land card, reveal it, put it into your hand, then shuffle.");
     (c.card as { layout?: string }).layout = "transform";
     return c;
   };
-  const deck = [...Array.from({ length: 20 }, (_, i) => compass(i)), ...basics(17), ...spells(62, 3)];
+  const deck = [...Array.from({ length: 20 }, () => compass()), ...basicCopies(17), ...spellCopies(62, 3)];
   const r = simulate(deck, { trials: TRIALS, turns: 6, seed: 4 });
   // It is a SPELL, so it is priced -- a land is not, which is how the phantom land drop also removed
   // it from `payableShareAt`'s denominator.
-  expect(r.byCard.has("Compass 0")).toBe(true);
+  expect(r.byCard.has("Compass")).toBe(true);
   // And the deck has 17 lands, not 37. Read as lands these would be a normal mana base.
   expect(pAtLeastMana(r, 6, 6)).toBeLessThan(0.1);
 
   // A MODAL DFC KEEPS ITS LAND FACE -- you really do play that side (28 distinct cards, 186 slots in
   // the 71 decks), which is the half a blanket type-line-plus-`//` rule would have broken.
-  const mdfc = (i: number): DeckCard => {
-    const c = card(`Shatterskull ${i}`, "Sorcery // Land", 3, "");
+  const mdfc = (): DeckCard => {
+    const c = card("Shatterskull", "Sorcery // Land", 3, "");
     (c.card as { layout?: string }).layout = "modal_dfc";
     return c;
   };
-  const withMdfc = simulate([...Array.from({ length: 20 }, (_, i) => mdfc(i)), ...basics(17), ...spells(62, 3)], { trials: TRIALS, turns: 6, seed: 4 });
+  const withMdfc = simulate([...Array.from({ length: 20 }, () => mdfc()), ...basicCopies(17), ...spellCopies(62, 3)], { trials: TRIALS, turns: 6, seed: 4 });
   // 34.0% here; refusing the land face reads 0.96%, measured by mutating the allow-list.
   expect(pAtLeastMana(withMdfc, 6, 6)).toBeGreaterThan(0.3);
 });
@@ -1014,7 +1018,7 @@ test("O2: a per-source bonus scales with the board it reads", () => {
 test("O2: Leyline of Abundance's bonus counts creature sources only: a rock adds nothing, a dork adds one", () => {
   const filler = (leyline: boolean): DeckCard[] => [leyline ? real("Leyline of Abundance") : card("Inert four-drop", "Sorcery", 4)];
   const arm = (leyline: boolean, source: DeckCard): number[] => {
-    const deck = [...filler(leyline), source, ...basics(38), ...spells(59, 3)];
+    const deck = [...filler(leyline), source, ...basicCopies(38), ...spellCopies(59, 3)];
     expect(deck.length).toBe(99);
     return simulate(deck, { trials: 3_000, turns: 8, seed: 14 }).manaAt.flatMap((turn) => turn);
   };
@@ -1073,30 +1077,30 @@ test("O2: a phase trigger that adds a FIXED amount is a source; the rest are ref
 test("O2: landfall mana pays per land entering, and only that bucket is modellable", () => {
   // Lotus Cobra, verbatim. A creature cast in your main phase misses that turn's land drop, which
   // already happened under rule 2 -- so it pays from the next turn, like every other engine here.
-  const cobra = (i: number) => real("Lotus Cobra", `Lotus Cobra ${i}`);
-  expect(classifyAccelerant(cobra(0))?.kind).toBe("dork");
-  expect(landfallOf(cobra(0))).toBe(1);
-  const deck = [...Array.from({ length: 12 }, (_, i) => cobra(i)), ...basics(37), ...spells(50, 3)];
+  const cobra = () => real("Lotus Cobra");
+  expect(classifyAccelerant(cobra())?.kind).toBe("dork");
+  expect(landfallOf(cobra())).toBe(1);
+  const deck = [...Array.from({ length: 12 }, () => cobra()), ...basicCopies(37), ...spellCopies(50, 3)];
   const r = simulate(deck, { trials: 4_000, turns: 8, seed: 21 });
 
   // IT IS A REAL SOURCE: the same deck with the Cobras replaced by blanks reads materially lower.
-  const blank = [...Array.from({ length: 12 }, (_, i) => card(`Blank ${i}`, "Creature — Snake", 2, "")),
-    ...basics(37), ...spells(50, 3)];
+  const blank = [...Array.from({ length: 12 }, () => card("Blank", "Creature — Snake", 2, "")),
+    ...basicCopies(37), ...spellCopies(50, 3)];
   expect(pAtLeastMana(r, 6, 6)).toBeGreaterThan(pAtLeastMana(simulate(blank, { trials: 4_000, turns: 8, seed: 21 }), 6, 6) + 0.05);
 
   // AND IT IS WORTH LESS THAN A FLAT DORK, which is the correction rather than an upgrade: the mana
   // arrives only when a land ENTERS, and a deck misses land drops. Priced as an ordinary one-mana
   // dork -- what it was before -- the same board reads HIGHER than the truth.
-  const asDork = [...Array.from({ length: 12 }, (_, i) => withTap(card(`Dork ${i}`, "Creature — Snake", 2, "{T}: Add {G}."), ["G"])),
-    ...basics(37), ...spells(50, 3)];
+  const asDork = [...Array.from({ length: 12 }, () => withTap(card("Dork", "Creature — Snake", 2, "{T}: Add {G}."), ["G"])),
+    ...basicCopies(37), ...spellCopies(50, 3)];
   const dorkArm = pAtLeastMana(simulate(asDork, { trials: 4_000, turns: 8, seed: 21 }), 9, 8);
   expect(pAtLeastMana(r, 9, 8)).toBeLessThan(dorkArm);
 
   // PER EVENT, NOT PER TURN: a land-fetch SPELL puts a second land onto the battlefield in the same
   // turn, and the Cobra is paid for both.
-  const withFetch = [...Array.from({ length: 12 }, (_, i) => cobra(i)),
-    ...Array.from({ length: 10 }, (_, i) => real("Nature's Lore", `Lore ${i}`)),
-    ...basics(30), ...spells(47, 3)];
+  const withFetch = [...Array.from({ length: 12 }, () => cobra()),
+    ...Array.from({ length: 10 }, () => real("Nature's Lore", "Lore")),
+    ...basicCopies(30), ...spellCopies(47, 3)];
   const fetched = simulate(withFetch, { trials: 4_000, turns: 8, seed: 21 });
   expect(pAtLeastMana(fetched, 6, 5)).toBeGreaterThan(pAtLeastMana(r, 6, 5));
 
@@ -1120,10 +1124,10 @@ test("O2: landfall mana pays per land entering, and only that bucket is modellab
   // Refused outright, since the restriction cannot be checked: not an accelerant at all.
   expect(classifyAccelerant(restricted)).toBeNull();
   expect(landfallOf(restricted)).toBe(0);
-  const board = [...Array.from({ length: 12 }, () => restricted), ...basics(37), ...spells(50, 3)];
+  const board = [...Array.from({ length: 12 }, () => restricted), ...basicCopies(37), ...spellCopies(50, 3)];
   const asRestricted = simulate(board, { trials: 4_000, turns: 8, seed: 21 });
   // REFUSED, so it reads EXACTLY like the same dorks with no mana line -- same composition, same seed, same answer.
-  const bare = [...Array.from({ length: 12 }, () => card("Not A Real Card", "Creature — Snake", 2)), ...basics(37), ...spells(50, 3)];
+  const bare = [...Array.from({ length: 12 }, () => card("Not A Real Card", "Creature — Snake", 2)), ...basicCopies(37), ...spellCopies(50, 3)];
   expect(pAtLeastMana(asRestricted, 9, 8)).toBe(pAtLeastMana(simulate(bare, { trials: 4_000, turns: 8, seed: 21 }), 9, 8));
   // A GATED landfall is not credited either (Koth: "that land is a Mountain").
   expect(classifyAccelerant(withManaLines("Gated Landfall", "Creature", [triggerLine("enters", "a land you control", ["R"], 1, { gate: parseGate("that land is a mountain") })]))).toBeNull();
@@ -1181,7 +1185,7 @@ test("O1: a restricted phase trigger counts when the deck makes the restriction 
 test("O1: a commander that makes mana is deployed, because the command zone always has it", () => {
   const bear = card("Bear", "Creature — Bear", 2, "");
   const dork = withTap(card("Mana Commander", "Legendary Creature — Elf Druid", 2, "{T}: Add {G}."), ["G"]);
-  const deck = [...basics(37), ...spells(62, 4)];
+  const deck = [...basicCopies(37), ...spellCopies(62, 4)];
 
   // No mulligan: a cheap commander is itself "a play by turn 3", so the keep would differ by commander.
   const withMana = simulate(deck, { trials: 8_000, turns: 8, seed: 41, alsoPrice: [dork], mulligan: false });
@@ -1291,7 +1295,7 @@ test("a card's castability denominator counts the trials that drew it, cast or n
   // `manaCost` matters here and nowhere else in this file: `parseCost` returns null without it and
   // the card would be skipped by the colour-aware half entirely.
   const solRing = real("Sol Ring");
-  const deck = [...basics(37), solRing, ...spells(61, 3)];
+  const deck = [...basicCopies(37), solRing, ...spellCopies(61, 3)];
   const r = simulate(deck, { trials: TRIALS, turns: 4, seed: 23 });
 
   // A singleton is drawn by turn 1 in (7 opening + 1 draw) of 99 cards. It is CAST on turn 1 in most
@@ -1510,7 +1514,7 @@ describe("draw and tutors", () => {
   });
 
   test("a hand with no land tutors one", () => {
-    const deck = [...forests(3), ...Array.from({ length: 96 }, (_, i) => tutor(i))];
+    const deck = [...forests(3), ...Array.from({ length: 96 }, () => tutor(0))];
     // Landless sevens are nearly every game; the turn-1 tutor finds a land and turn 2 plays it.
     expect(pAtLeastMana(simulate(deck, opts), 1, 2)).toBeGreaterThan(0.95);
     expect(pAtLeastMana(simulate(untag(deck), opts), 1, 2)).toBeLessThan(0.3);
@@ -1586,10 +1590,10 @@ test("Prismatic Lens is not a blue source in the simulation: it pays {U}{U} no b
 test("Chromatic Lantern makes the lands blue in the simulation, beyond its own tap", () => {
   const lantern = rocks["Chromatic Lantern"] as unknown as DeckCard;
   const twin: DeckCard = { ...lantern, card: { ...lantern.card, name: "Lantern Twin", oracleText: "{T}: Add one mana of any color." } as never, tags: { ...lantern.tags, staticFixer: undefined } as never };
-  const island = (i: number) => card(`Island ${i}`, "Basic Land — Island", 0, "({T}: Add {U}.)", ["U"]);
-  const mountain = (i: number) => card(`Mountain ${i}`, "Basic Land — Mountain", 0, "({T}: Add {R}.)", ["R"]);
+  const island = () => card("Island", "Basic Land — Island", 0, "({T}: Add {U}.)", ["U"]);
+  const mountain = () => card("Mountain", "Basic Land — Mountain", 0, "({T}: Add {R}.)", ["R"]);
   const counterspell: DeckCard = { ...card("Counterspell", "Instant", 4), card: { ...card("Counterspell", "Instant", 4).card, manaCost: "{2}{U}{U}" } };
-  const deckWith = (extra: DeckCard) => [...Array.from({ length: 4 }, (_, i) => island(i)), ...Array.from({ length: 30 }, (_, i) => mountain(i)), extra, counterspell, ...spells(30, 1)];
+  const deckWith = (extra: DeckCard) => [...Array.from({ length: 4 }, () => island()), ...Array.from({ length: 30 }, () => mountain()), extra, counterspell, ...spellCopies(30, 1)];
   const run = (d: DeckCard[]) => simulate(d, { trials: 6_000, turns: 8, seed: 5 }).byCardCastable.get("Counterspell")!;
   const withStatic = run(deckWith(lantern));
   const without = run(deckWith(twin));
@@ -1606,9 +1610,9 @@ const pulseLike = (covers: "basics" | undefined): DeckCard => ({
 const probe = (cost = "{2}{U}{U}"): DeckCard => ({ ...card("Probe", "Instant", 4), card: { ...card("Probe", "Instant", 4).card, manaCost: cost } });
 
 test("a basics fixer gives the colours to basic lands only, not to a nonbasic land of the same type", () => {
-  const island = (i: number) => card(`Island ${i}`, "Basic Land — Island", 0, "({T}: Add {U}.)", ["U"]);
-  const mountain = (i: number, line: string) => card(`Mountain ${i}`, line, 0, line.startsWith("Basic") ? "({T}: Add {R}.)" : "{T}: Add {R}.", ["R"]);
-  const deckWith = (extra: DeckCard, mountainLine: string) => [...Array.from({ length: 4 }, (_, i) => island(i)), ...Array.from({ length: 30 }, (_, i) => mountain(i, mountainLine)), extra, probe(), ...spells(30, 1)];
+  const island = () => card("Island", "Basic Land — Island", 0, "({T}: Add {U}.)", ["U"]);
+  const mountain = (line: string) => card("Mountain", line, 0, line.startsWith("Basic") ? "({T}: Add {R}.)" : "{T}: Add {R}.", ["R"]);
+  const deckWith = (extra: DeckCard, mountainLine: string) => [...Array.from({ length: 4 }, () => island()), ...Array.from({ length: 30 }, () => mountain(mountainLine)), extra, probe(), ...spellCopies(30, 1)];
   const run = (d: DeckCard[]) => simulate(d, { trials: 6_000, turns: 8, seed: 5 }).byCardCastable.get("Probe")!;
   const basicWith = run(deckWith(pulseLike("basics"), "Basic Land — Mountain"));
   const basicWithout = run(deckWith(pulseLike(undefined), "Basic Land — Mountain"));
@@ -1619,10 +1623,10 @@ test("a basics fixer gives the colours to basic lands only, not to a nonbasic la
 });
 
 test("a land a spell fetches with 'basic' in its text is a basic land, and gains a basics fixer's colours", () => {
-  const rampant = (i: number): DeckCard => ({ ...card(`Rampant ${i}`, "Sorcery", 2, "Search your library for a basic land card, put that card onto the battlefield tapped, then shuffle."), tags: fetchTags({ kind: "spell", tapped: true, reach: WUBRG }) });
-  const nonbasic = (i: number) => card(`Wastes Mountain ${i}`, "Land — Mountain", 0, "{T}: Add {R}.", ["R"]);
-  const deckWith = (extra: DeckCard, fetch: (i: number) => DeckCard) => [...Array.from({ length: 31 }, (_, i) => nonbasic(i)), ...Array.from({ length: 8 }, (_, i) => fetch(i)), extra, probe("{3}{U}"), ...spells(20, 1)];
-  const plain = (i: number) => card(`Plain ${i}`, "Sorcery", 2);
+  const rampant = (): DeckCard => ({ ...card("Rampant", "Sorcery", 2, "Search your library for a basic land card, put that card onto the battlefield tapped, then shuffle."), tags: fetchTags({ kind: "spell", tapped: true, reach: WUBRG }) });
+  const nonbasic = () => card("Wastes Mountain", "Land — Mountain", 0, "{T}: Add {R}.", ["R"]);
+  const deckWith = (extra: DeckCard, fetch: () => DeckCard) => [...Array.from({ length: 31 }, () => nonbasic()), ...Array.from({ length: 8 }, () => fetch()), extra, probe("{3}{U}"), ...spellCopies(20, 1)];
+  const plain = () => card("Plain", "Sorcery", 2);
   const run = (d: DeckCard[]) => simulate(d, { trials: 6_000, turns: 8, seed: 5 }).byCardCastable.get("Probe")!;
   // With Pulse out, the basic a Rampant Growth finds taps for blue: the deck holds no other basic, so that is the only blue it has.
   const withFetch = run(deckWith(pulseLike("basics"), rampant));
