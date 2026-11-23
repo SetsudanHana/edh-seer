@@ -312,6 +312,10 @@
     "abilities:0->1,cost,effect.kind,effect.subject(+type),effect.subject(-anyOf ~control -scope),emits,emits.verb,kind,payment,repeats,trigger": {
       "label": "grammar right",
       "why": "#1589: Ral, Storm Conduit. The stored answer numbers its clauses wrongly: the +2 scry carries the cost -2 and the -2 delayed copy (\"When you next cast an instant or sorcery spell this turn, copy that spell\") is absent. The grammar has all four abilities: the cast-or-copy damage trigger (both events), the +2 scry, and the -2 copy under its cast trigger. Nothing the stored answer claims is lost (lostClaims empty)."
+    },
+    "effect.becomes,effect.kind,effect.subject(+allTypes +control +self +type)": {
+      "label": "grammar right",
+      "why": "#1616: The Prima Vista (the only member over the corpus). \"Whenever you cast a noncreature spell, if at least four mana was spent to cast it, The Prima Vista becomes an artifact creature until end of turn.\" The stored answer files the effect sentence as a `cast` action (object \"The Prima Vista becomes an artifact creature until end of turn\"), which derive no longer emits (#1614), so the effect was unread and banked as `2:cast:partial`. The grammar reads it as the card's own animate (artifact creature, self) under the cast trigger. Nothing the stored answer claims is lost (lostClaims, lostSubjectFields, lostScaledAmount empty). Oracle text read 2026-11-23."
     }
   }
 }

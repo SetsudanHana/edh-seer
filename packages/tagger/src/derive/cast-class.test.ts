@@ -195,10 +195,12 @@ test.each([
 ])("%s: the 'cast' in its clause is a condition or a reference, the row emits no cast", (name) => {
   expect(allCasts(name)).toEqual([]);
 });
-// The Prima Vista's misfiled cast is the clause's ONLY action, and it holds the card's real effect ("becomes an artifact creature until end of turn"): nothing is derived beside it, so the action stays unclaimed and the
-// dropped-clauses ratchet still sees the unread effect (#1614 review).
-test("The Prima Vista: a condition-only cast that is the clause's only action stays unclaimed", () => {
-  expect((rowOf("The Prima Vista").tags.unclaimed ?? []).map((a) => a.verb)).toContain("cast");
+// The Prima Vista's misfiled cast is the clause's ONLY action, and it holds the card's real effect ("becomes an artifact creature until end of turn"). #1614 left it unclaimed (banked `2:cast:partial`); since #1616 the grammar
+// reads that sentence as the card's own animate (per-card switch, grammar-only-triage.json), so nothing is left unclaimed. A condition-only cast with no grammar reading (Lutri) never was unclaimed.
+test("The Prima Vista: its misfiled cast is read as the animate it is, nothing is left unclaimed (#1616)", () => {
+  const prima = rowOf("The Prima Vista").tags;
+  expect((prima.unclaimed ?? []).map((a) => a.verb)).not.toContain("cast");
+  expect(prima.abilities.some((a) => a.effect?.kind === "animate")).toBe(true);
   expect((rowOf("Lutri, the Spellchaser").tags.unclaimed ?? []).map((a) => a.verb)).not.toContain("cast");
 });
 test("the rest of the clause is untouched: Lutri still copies, The Sibsig Ceremony still destroys and makes its Zombie Druid, Lavinia still counters", () => {
