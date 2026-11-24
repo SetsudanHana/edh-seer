@@ -29,7 +29,7 @@ import { librarySearchOwner, printsSearch, searchedLibraryOwner } from "./librar
 import { putsOpponentsCard, putsOwnCard } from "./own-entry.js";
 import { damageDealerOf, granteeDealer, grantedDealerIsGranter, damageHitsSelf, damageRecipient, playerOnlyRecipient } from "./damage-recipient.js";
 import { actionRecipients, damagedPlayerActsEveryTime, damagedPlayerIsOpponent, everyPlayerChoosesThenSacrifices, oneSacrificer, pronounActs, sacrificeFallsOnEveryone, sacrificerIsTargeted, sentenceNamesAPlayer, thatPlayerIsOpponent, unstatedCreates, victimDeclines } from "./recipient.js";
-import { actionScaling, distinctCountOf, scalingSubject } from "./scaling.js";
+import { actionScaling, distinctCountOf, scalingAlso, scalingSubject } from "./scaling.js";
 import { CARD_TYPES, namesAClass, parseSubject, parseCounter, counterKindOf } from "./subject.js";
 import { parse as parseFilterRaw, stableJson } from "../grammar/filter.js";
 import { copyHasTargetsOf, copyKeywordOf, copyPaidColorsOf, copyPaidWithOf, copySourceOf, copyTargetsOf, targetSlotsOf } from "./copy-source.js";
@@ -780,7 +780,8 @@ import { castClassFromPrint, castIsOnlyACondition, castsYourOwnCard } from "./ca
 // 593: #1354 -- a tapped-token creation's companion tap is silent, not unclaimed (CR 110.5b)
 // 594: #1785 -- distinct-type counts: Effect.distinctCount gains counts 'creature-type' (battlefield creature-type counts: Infinite Diversity, Valiant Changeling, Saavik, Captain Jonathan Archer, Jean-Luc) and is set BESIDE scalingSubject (changeling partner, graveyard class) instead of only when none; a graveyard card-type count (Tarmogoyf, Emrakul the Promised End) carries distinctCount type over its graveyard class; Ability.thresholdDistinct records a delirium-style diversity threshold's unit and class (Dragon's Rage Channeler, Traverse the Ulvenwald) with no thresholdSubject; a card that prints '<name> is every creature type' without the Changeling keyword (Mistform Ultimus, Dr. Julius Jumblemorph) has every creature subtype derive-impact vs 63f0f297 (--pair-sample 0): 93 rows changed, 0 added, 0 removed, 0 source flips, grammar complete 29,282 -> 29,282; pair reasons of the 93 rows +1,461 / -12, all on Mistform Ultimus (+1,453 / -12, 37 of them the chosen-type banners and Door of Destinies, as a changeling has) plus 7 gained pairs with Mistform on other rows (an every-type card advertises its printed type as a theme and is no body for any one tribe, as a changeling: theme-stats.json is byte-identical to 63f0f297) (Altar of the Goyf, Demonic Counsel, Ishkanah, Jean-Luc Mon Capitaine, Pyrogoyf, Scuttletide, The Swarmweaver); the unit fields (distinctCount creature-type / graveyard type, thresholdDistinct) move no pair; loss-classify: 8 cards, lost 12 (LOST->CLASS 6: the non-Human / non-Gnome / non-Wall consumers Anim Pakal, Mob Mentality, Winota, Sage of the Falls, Uhura, Wildborn Preserver, which a Human / Gnome / Wall Mistform is no longer the class of; 6 unmatched: the same non-Angel / non-Wall / non-Human lords Glorious Protector, Keldon Warlord, Grumgully, Diligent Zookeeper and Mikaeus x2), gained 1,461 (GAINED->SELF 0, class 405, ambiguous 7, unmatched 1,049: each a creature-subtype consumer of a card that is every creature type); role-ratchet 0 / 0, dropped-clauses 4,627 -> 4,627.
 // 595: #1170 -- a stated cast-of-instant-and-sorcery condition cares about the one key cast:instant-sorcery (was cast:instant + cast:sorcery); matcher themeSubjectKey folds instant and sorcery to instant-sorcery (#543 moved from the page to the key). derive-impact vs 9c78505e in the PR.
-export const DERIVE_VERSION = 595;
+// 596: #811 -- a summed count ('the number of A plus the number of B') keeps every class it counts: scalingSubject is the first, the new Effect.scalingAlso the rest; the board-count and graveyard-scaling readers and the matcher's board-count and fill demand keys read them all (Armix, Soulless One, Abomination of Llanowar, Calamitous Cave-In, Gloom Ripper, Slash of Light, Hobbit's Sting ...)
+export const DERIVE_VERSION = 596;
 
 /** "a nonland card from target opponent's graveyard or hand" (#1592): the object of a stored hand-or-graveyard pick. */
 const GRAVEYARD_OR_HAND_PICK = /\bfrom (?:target opponent|target player|that player|that opponent|an opponent)'s (?:graveyard or hand|hand or graveyard)$/i;
@@ -5004,6 +5005,7 @@ export function deriveAbilities(
       // counts both carry one: those are the two `edges.ts` can judge against something it already
       // has, a fill it can match and a card's own printed characteristics.
       const countedSubject = scalingSubject(action, text);
+      const countedAlso = scalingAlso(action, text);
       const effect = effectKind
         ? keepSubject ? { kind: effectKind, subject: copiedSubject } : { kind: effectKind }
         : { kind: "" as const };
@@ -5013,7 +5015,7 @@ export function deriveAbilities(
       const distinct = distinctCountOf(action, text);
       const ability: Ability = {
         kind,
-        effect: { ...scaled, ...(countedSubject ? { scalingSubject: countedSubject } : {}), ...(distinct ? { distinctCount: distinct } : {}) },
+        effect: { ...scaled, ...(countedSubject ? { scalingSubject: countedSubject } : {}), ...(countedSubject && countedAlso ? { scalingAlso: countedAlso } : {}), ...(distinct ? { distinctCount: distinct } : {}) },
       };
       if (replacement?.tokenMultiplier) ability.effect = { ...ability.effect, tokenMultiplier: replacement.tokenMultiplier };
       // HOW A DAMAGE MULTIPLIER CHANGES THE DAMAGE (#1345), off the clause the verb path and the template both sit in.

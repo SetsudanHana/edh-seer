@@ -2455,6 +2455,9 @@ function landPutFor(e: GameEvent, t: GameEvent, landTypes: LandTypes | undefined
   return null;
 }
 
+/** EVERY CLASS A COUNT NAMES, in printed order: `scalingSubject`, then the rest of a summed count (`scalingAlso`, #811: Armix's artifacts you control plus the artifact cards in your graveyard). */
+export const countedClassesOf = (e: Ability["effect"]): SubjectFilter[] => e.scalingSubject ? [e.scalingSubject, ...(e.scalingAlso ?? [])] : [];
+
 /** The five basic land types, which a board count may name and which never form an edge -- see the
  *  board-count channel for why. */
 /** A board count over one of these is a count of the deck itself. See the board-count edge. */
@@ -3283,8 +3286,9 @@ function graveyardScalingEdges({ p, c, h, opts, pEvents, reasons }: PairScope): 
   for (const raw of selfFillsFirst(pEvents)) {
     if (!(raw.verb === "enters" && raw.subject.zone === "graveyard")) continue;
     const e = graveyardIdentity(p, raw);
-    for (const a of c.tags.abilities) {
-      if (a.effect.scaling !== "per-graveyard" || !a.effect.scalingSubject) continue;
+    for (const a of c.tags.abilities) for (const [i, counted] of countedClassesOf(a.effect).entries()) {
+      // The FIRST class is read under the basis, as before; a later class of a summed count (#811) is a graveyard count by its own zone, under whatever basis the first sets.
+      if (i === 0 ? a.effect.scaling !== "per-graveyard" : counted.zone !== "graveyard") continue;
       // AN UNTYPED COUNT IS A WILDCARD, and `graveyardFillMatches` passes an untyped demand on
       // purpose, so this is where it has to be refused. Rite of Flame counts "cards NAMED Rite of
       // Flame in each graveyard" — a name, which no SubjectFilter can express — and it parsed to
@@ -3300,7 +3304,6 @@ function graveyardScalingEdges({ p, c, h, opts, pEvents, reasons }: PairScope): 
       // Apostle, Rat Colony, Hare Apparent, Persistent Petitioners. A Dragon's Approach deck runs 30
       // copies and the engine cannot see the archetype at all. 35 cards count a name anywhere, 19 of
       // them in a graveyard. That is a roadmap item, not a line of code here.
-      const counted = a.effect.scalingSubject;
       // HISTORIC IS A NARROWING, and refusing it was the one wrong refusal here (roadmap C2b,
       // measured 2026-08-20). Artifact-legendary-or-Saga is a printed class, not a wildcard, so a
       // count restricted to it is not the Riverchurn shape. The population is EXACTLY THREE untyped
@@ -3325,8 +3328,8 @@ function graveyardScalingEdges({ p, c, h, opts, pEvents, reasons }: PairScope): 
       // subtype. The set is now {tax, win-game, extra-turn, extra-phase}.
       if (ROLE_NOT_SYNERGY.has(a.effect.kind)) continue;
       if (e.exiledAtOnce === true) continue; // exiled by the same ability: no card is left to count (#1523 part 2)
-      if (!graveyardFillMatches(e.subject, a.effect.scalingSubject, h, co)) continue;
-      const tag = `scales:${themeSubjectKey(keyedOn(a.effect.scalingSubject, e.subject))}`;
+      if (!graveyardFillMatches(e.subject, counted, h, co)) continue;
+      const tag = `scales:${themeSubjectKey(keyedOn(counted, e.subject))}`;
       if (said.has(tag)) continue;
       said.add(tag);
       reasons.push({
@@ -3382,9 +3385,8 @@ function lifeLostEdges({ p, c, pEvents, reasons }: PairScope): void {
 // `scalingSubject`, same `ROLE_NOT_SYNERGY` gate. What differs is what it compares the count
 // against -- a fill there, a type line here.
 function boardCountEdges({ p, c, h, pEvents, reasons }: PairScope): void {
-  for (const a of c.tags.abilities) {
-    const counted = a.effect.scalingSubject;
-    if (!counted || counted.zone !== "battlefield") continue;
+  for (const a of c.tags.abilities) for (const counted of countedClassesOf(a.effect)) {
+    if (counted.zone !== "battlefield") continue;
     if (ROLE_NOT_SYNERGY.has(a.effect.kind)) continue;
     if (!boardCountNarrows(counted)) continue;
     // `zone` IS DROPPED BEFORE THE COMPARISON and `control` IS KEPT, which is the opposite of what

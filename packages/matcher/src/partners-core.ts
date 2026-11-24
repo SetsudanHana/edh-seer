@@ -13,7 +13,7 @@ import { segment } from "@edh-seer/tagger/segment";
 import type { Card } from "@edh-seer/engine";
 import { ARCHETYPE_LABELS, type Archetype } from "./archetypes.js";
 import { MIN_INDEXABLE_PARTNERS, PARTNER_SHARD_COUNT, isIndexableCard, partnerShardOf } from "./partner-shard.js";
-import { FACT_KINDS, POLYMORPH_HIT_MV, eventTagKey, ROLE_NOT_SYNERGY, WHOLE_DECK_TYPES, abilityIsKind, directedReasons, eventReasonTag, givesAPermanentAway, isPolymorph, meldReason, producerEvents, themeSubjectKey } from "./edges.js";
+import { FACT_KINDS, POLYMORPH_HIT_MV, countedClassesOf, eventTagKey, ROLE_NOT_SYNERGY, WHOLE_DECK_TYPES, abilityIsKind, directedReasons, eventReasonTag, givesAPermanentAway, isPolymorph, meldReason, producerEvents, themeSubjectKey } from "./edges.js";
 import { impliedCounterEvents, impliedGraveyardEvents, keywordAbilities, selfFillTypes, selfLeavesTypes } from "./implied.js";
 import { isReflexiveTrigger, isRefusedTrigger, isSelfLoss } from "./claims.js";
 import { parseSubject } from "@edh-seer/tagger/subject";
@@ -1272,9 +1272,11 @@ export const fillDemandsOf = (d: DeckCard): { key: string; tag: string; tags: st
     if (a.effect?.kind === "graveyard-recursion" && s?.zone === "graveyard" && s.self !== true) {
       push(keyOf(s), [tagKey(a.effect.intercepted === true ? "graveyard-intercept" : "graveyard-recursion", themeSubjectKey(s))]);
     }
-    const scaled = a.effect?.scalingSubject;
-    if (a.effect?.scaling === "per-graveyard" && scaled && (asList(scaled.type).length > 0 || asList(scaled.subtype).length > 0)) {
-      push(keyOf(scaled), [`scales:${themeSubjectKey(scaled)}`]);
+    // The first class is read under its basis; a later class of a summed count (#811) is a graveyard count by its own zone.
+    for (const [i, scaled] of (a.effect ? countedClassesOf(a.effect) : []).entries()) {
+      if ((i === 0 ? a.effect?.scaling === "per-graveyard" : scaled.zone === "graveyard") && (asList(scaled.type).length > 0 || asList(scaled.subtype).length > 0)) {
+        push(keyOf(scaled), [`scales:${themeSubjectKey(scaled)}`]);
+      }
     }
     const gated = a.thresholdSubject;
     if (gated?.zone === "graveyard" && a.threshold) push(keyOf(gated), [`threshold:${themeSubjectKey(gated)}`]);
@@ -1332,8 +1334,8 @@ export const boardCountsOf = (d: DeckCard): { key: string; tag: string }[] =>
     // battlefield zone by derive) and the count it is GATED on (`thresholdSubject`, a board count by
     // construction -- see `thresholdSubjectFor`). Same keys, each carrying the tag the engine writes.
     const counts: { counted: SubjectFilter; tag: string }[] = [];
-    const scaled = a.effect?.scalingSubject;
-    if (scaled && scaled.zone === "battlefield") counts.push({ counted: scaled, tag: `scales:${themeSubjectKey(scaled)}` });
+    // EVERY CLASS OF A SUMMED COUNT (#811): Armix wants the artifacts on your board AND the artifact cards in your graveyard.
+    for (const scaled of a.effect ? countedClassesOf(a.effect) : []) if (scaled.zone === "battlefield") counts.push({ counted: scaled, tag: `scales:${themeSubjectKey(scaled)}` });
     const gated = a.thresholdSubject;
     if (gated && a.threshold) counts.push({ counted: gated, tag: tagKey(a.effect?.kind === "win-game" ? "wincon" : "threshold", themeSubjectKey(gated)) });
     return counts.flatMap(({ counted, tag }) => {
