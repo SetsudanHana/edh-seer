@@ -1,6 +1,8 @@
 import { expect, test } from "vitest";
 import type { CardTags } from "@edh-seer/tagger";
+import { CREATURE_SUBTYPES } from "@edh-seer/tagger/subtypes";
 import { cardSignalOf } from "./card-signal.js";
+import { detectKindred } from "./archetypes.js";
 
 /** THE SIGNAL THE REPORT'S DETECTOR READS, built once for a card (spec 2026-09-08 part 4). It lived
  *  inline in `analyze.ts`; the facet index needs the same construction for every corpus card, and
@@ -43,4 +45,19 @@ test("an intercepted graveyard fill signals exile-processing, not reanimation (#
   const s = cardSignalOf({ name: "Dauthi Voidwalker", oracleText: "" }, tags);
   expect(s.effectKinds).toEqual(["exile-processing"]);
   expect(s.themeTags).not.toContain("static:graveyard-recursion");
+});
+
+// #1785: a card that is every creature type WITHOUT the keyword (Mistform Ultimus) is a body of every type, as a changeling is, so it signals `["*"]` and is no body for any one tribe.
+test("a card that is every creature type without the keyword signals every type, as a changeling does", () => {
+  const every = (keywords: string[]): CardTags => ({ abilities: [], characteristics: { types: ["creature"], subtypes: ["illusion", ...CREATURE_SUBTYPES], keywords } }) as unknown as CardTags;
+  expect(cardSignalOf({ name: "Mistform Ultimus", oracleText: "" }, every([])).creatureTypes).toEqual(["*"]);
+  expect(cardSignalOf({ name: "Changeling", oracleText: "" }, every(["changeling"])).creatureTypes).toEqual(["*"]);
+});
+
+test("Mistform plus a Goblin token maker gives no goblin kindred: an every-type card is not a body for the tribe", () => {
+  const mistform = cardSignalOf({ name: "Mistform Ultimus", oracleText: "" }, { abilities: [], characteristics: { types: ["creature"], subtypes: ["illusion", ...CREATURE_SUBTYPES], keywords: [] } } as unknown as CardTags);
+  // A Human that makes Goblin tokens: the tokens are no body in the deck, so only Mistform could have made Goblin a candidate.
+  const maker = cardSignalOf({ name: "Goblin Rabblemaster", oracleText: "" }, { ...TAGS, characteristics: { ...TAGS.characteristics, subtypes: ["human"] } } as CardTags);
+  expect(detectKindred([maker], 2)).toBeUndefined();
+  expect(detectKindred([mistform, maker], 2)).toBeUndefined();
 });

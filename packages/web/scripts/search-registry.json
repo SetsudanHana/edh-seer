@@ -63,7 +63,7 @@
     },
     "cares": {
       "label": "Cares about",
-      "description": "A payoff whose rules count how many different types you have, read from our own rules (a scaling count or a threshold such as delirium), not from the card's words.",
+      "description": "A payoff whose rules count how many different types you have, read from our own rules (a scaling count or a threshold such as delirium), not from the card's words. Not complete: six delirium cards whose condition our rules do not read yet are missing (Prophetic Titan, Let's Play a Game, Patchwork Beastie, Convert to Slime, both Winters).",
       "valueLabels": {
         "card-types": "how many card types",
         "creature-types": "how many creature types"

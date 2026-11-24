@@ -44,6 +44,9 @@ function coreColumns(frontTypes: Map<number, string[]>, creatureList: string[]):
   ];
 }
 
+/** The cards whose OWN text prints "<name> is every creature type" with no Changeling keyword (CR 702.73a; 2 corpus cards, 2026-11-24). */
+const EVERY_TYPE_BY_TEXT: readonly string[] = ["Mistform Ultimus", "Dr. Julius Jumblemorph"];
+
 if (process.argv.includes("--verify")) {
   verify();
 } else {
@@ -241,9 +244,12 @@ function verify(): void {
   console.log(`changelings in result: ${res.rows.filter((r) => every.has(r)).length}`);
   console.log(`everyCreatureType: ${every.size} (keyword changeling: ${kwRows})`);
   if (res.rows.some((r) => every.has(r))) { console.error("a changeling is in the result"); process.exit(1); }
-  // A card that says it "is every creature type" without the keyword (Mistform Ultimus, #1785) has every creature subtype too, so the flag may name MORE than the keyword does; it may never name FEWER.
+  // A card that says it "is every creature type" without the keyword (#1785) has every creature subtype too, so the flag may name MORE than the keyword does, but ONLY these (a grant to other cards, Omo's counters, is no card that is every type).
+  // A new card of the kind is a reviewed addition here, never a silent one.
   const byText = [...every].filter((r) => !kwSet.has(r));
   console.log(`every creature type without the keyword (the card says so): ${byText.length}${byText.length ? ` (${byText.map((r) => index.cards[r]!.name).join(", ")})` : ""}`);
+  const stray = byText.filter((r) => !EVERY_TYPE_BY_TEXT.includes(index.cards[r]!.name));
+  if (stray.length > 0) { console.error(`everyCreatureType names a card that is neither a changeling nor on the by-text list (${EVERY_TYPE_BY_TEXT.join(", ")}): ${stray.map((r) => index.cards[r]!.name).join(", ")}`); process.exit(1); }
   const missing = [...kwSet].filter((r) => !every.has(r));
   if (missing.length > 0) { console.error(`a changeling is not everyCreatureType: ${missing.map((r) => index.cards[r]!.name).join(", ")}`); process.exit(1); }
 }

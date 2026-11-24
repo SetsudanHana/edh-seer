@@ -220,3 +220,22 @@ test("shards derived before #1785 build no `cares` field: a question about it is
   const ctx = clientColumns(root);
   expect(evaluate({ field: "cares", op: "has", value: "card-types" }, ctx)).toEqual({ ok: false, cannotAnswer: ["unknown field cares"] });
 });
+
+// #1785: the every-creature-type flag may name Mistform Ultimus beside the changelings, and nothing else.
+test("--verify passes with Mistform among the every-type cards and FAILS on a granter such as Omo", () => {
+  const withExtra = (name: string): string => {
+    const root = fakeStatic();
+    const file = join(root, "v-t", "name-index.json");
+    const idx = JSON.parse(readFileSync(file, "utf8"));
+    idx.cards.push({ slug: name.toLowerCase(), name, identity: ["W"], t: [0], s: [0, 1, 2, 3] });
+    writeFileSync(file, JSON.stringify(idx));
+    expect(run(["--static", root, "--creatures", "borg,elf,human,wizard", "--lands", "forest"]).status).toBe(0);
+    return root;
+  };
+  const ok = run(["--static", withExtra("Mistform Ultimus"), "--creatures", "borg,elf,human,wizard", "--verify"]);
+  expect(ok.status, ok.stderr + ok.stdout).toBe(0);
+  expect(ok.stdout).toMatch(/without the keyword \(the card says so\): 1 \(Mistform Ultimus\)/);
+  const bad = run(["--static", withExtra("Omo, Queen of Vesuva"), "--creatures", "borg,elf,human,wizard", "--verify"]);
+  expect(bad.status).toBe(1);
+  expect(bad.stderr).toMatch(/neither a changeling nor on the by-text list.*Omo, Queen of Vesuva/);
+});

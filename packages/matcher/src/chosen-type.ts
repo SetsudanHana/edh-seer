@@ -2,6 +2,7 @@ import type { CardTags, SubjectFilter } from "@edh-seer/tagger";
 import type { DeckCard, Hierarchy } from "./types.js";
 import { impliesType } from "./hierarchy.js";
 import { CREATURE_SUBTYPES } from "@edh-seer/tagger/subtypes";
+import { isEveryCreatureType } from "@edh-seer/tagger/characteristics";
 import { withoutParentheses } from "@edh-seer/tagger/reminder";
 
 const CREATURE_SUBTYPE_SET: ReadonlySet<string> = new Set(CREATURE_SUBTYPES.map((x) => x.toLowerCase()));
@@ -298,7 +299,7 @@ function caresFromTags(tags: CardTags): boolean {
     return [...arr(s.subtype), ...(s.anyOf ?? []).flatMap((b) => arr(b.subtype))].some(isCreatureType);
   };
   // A CHANGELING IS EVERY CREATURE TYPE, so it is in whatever type is chosen (deck mode pairs it with the deck's lord for the same reason: `extractCharacteristics` gives it every subtype).
-  if ((tags.characteristics.keywords ?? []).some((k) => k.toLowerCase() === "changeling")) return true;
+  if (isEveryCreatureType(tags.characteristics)) return true;
   // A TOKEN MAKER (token-generation, or any ability that emits a created token: "amass Orcs" is a counter-placement that creates an Army) names the type of what it makes, not one it cares about.
   const makesToken = (a: CardTags["abilities"][number]): boolean => a.effect.kind === "token-generation" || (a.emits ?? []).some((e) => e.verb === "create-token");
   return tags.abilities.some((a) => names(a.trigger?.subject) || names(a.doublesOf) || names(a.effect.scalingSubject)

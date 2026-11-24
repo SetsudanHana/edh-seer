@@ -244,7 +244,10 @@ export function thresholdSubjectFor(text: string): SubjectFilter | undefined {
 /** A DIVERSITY THRESHOLD'S UNIT (#1785): "four or more card types among cards in your graveyard" (delirium, 65 corpus), "creature types among creatures you control". `thresholdSubjectFor` refuses it on purpose, because a fill adds one card, not one type;
  *  this says WHAT is counted and over WHICH cards instead, for a reader that asks "does this card care about card types". The counted cards must be in a graveyard (zone and owner, as `thresholdSubjectFor` reads them) or on a battlefield ("you control" /
  *  "on the battlefield"); "among cards exiled with this creature" (Keen-Eyed Curator), "among the sacrificed permanents" (Baba Lysaga) and a basic land type count state none, and stay visible as a gap.
- *  Anchored at the noun, string tests only: no pattern here has two quantified groups over one phrase. */
+ *  Anchored at the noun, string tests only: no pattern here has two quantified groups over one phrase.
+ *  CEILING: a delirium card whose `threshold` is never read states no unit, so a reader of the unit (`cares:card-types`) misses it: a modal intro "choose both instead" (Prophetic Titan, Let's Play a Game: the intro segments alone, see the CEILING on `GRAVEYARD_COUNT_NOUN`),
+ *  "can't attack or block unless" (Patchwork Beastie), "Then if" (Convert to Slime: exclusion 3), a static that spends the count ("seven minus the number of those card types": Winter, Misanthropic Guide) and a count with no condition word ("with four or more card types among them":
+ *  Winter, Cynical Opportunist). Measured 2026-11-24: 84 of the 92 graveyard card-type cards carry a unit (6 delirium misses, plus Tarmogoyf Nest, whose count is reminder text, and Polluted Cistern, which counts the cards put into a graveyard). */
 const DIVERSITY_UNIT = /^(card|permanent|creature) types? among /i;
 export function thresholdDistinctFor(text: string): DistinctCount | undefined {
   const m = selectThreshold(text);

@@ -1,6 +1,7 @@
 import type { Reason } from "@edh-seer/engine";
 import type { Ability, CardTags, GameEvent, SubjectFilter } from "@edh-seer/tagger";
 import { CREATURE_SUBTYPES, LAND_SUBTYPES } from "@edh-seer/tagger/subtypes";
+import { isEveryCreatureType } from "@edh-seer/tagger/characteristics";
 import { tokenKindsWith } from "@edh-seer/tagger/token-kinds";
 import crKeywords from "@edh-seer/tagger/cr-keywords" with { type: "json" };
 /** The closed six, per CR 205.4a plus the un-set `host`/`elite`. A supertype is not a card type and
@@ -196,7 +197,7 @@ function impliedEntryThemeTags(tags: CardTags, keepRockEntry = false): string[] 
       // every typal payoff -- and nonsense as a THEME: measured, `tribal-tribal` went
       // "shapeshifters entering" -> "bears entering" and the corpus census nearly doubled,
       // 4,500 deck-tags -> 8,706. A changeling advertises its PRINTED type, which is subtypes[0].
-      const changeling = (tags.characteristics.keywords ?? []).some((k) => k.toLowerCase() === "changeling");
+      const changeling = isEveryCreatureType(tags.characteristics);
       const subtypes = changeling
         ? [n.subject.subtype ?? []].flat().slice(0, 1).map((x) => String(x).toLowerCase())
         : [n.subject.subtype ?? []].flat().map((x) => String(x).toLowerCase());

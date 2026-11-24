@@ -122,7 +122,7 @@
   "packages/tagger/src/derive/self-reference.ts": 1,
   "packages/tagger/src/derive/subject.ts": 13,
   "packages/tagger/src/derive/sweep-narrowing.ts": 2,
-  "packages/tagger/src/derive/threshold.ts": 2,
+  "packages/tagger/src/derive/threshold.ts": 3,
   "packages/tagger/src/derive/to-hand.ts": 5,
   "packages/tagger/src/derive/token-kinds.ts": 1,
   "packages/tagger/src/derive/top-reads.ts": 3,

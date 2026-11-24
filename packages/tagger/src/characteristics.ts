@@ -91,6 +91,17 @@ function isEveryType(card: Card): boolean {
   return false;
 }
 
+/** IS THIS CARD EVERY CREATURE TYPE (CR 702.73a)? The Changeling keyword, or the explicit subtype list `extractCharacteristics` gives a card whose own text says it (Mistform Ultimus, #1785). ONE predicate for the three places that treat an every-type card as
+ *  a special case (what it advertises as a theme, whether it is a body for any one tribe, whether a chosen type includes it): its explicit subtypes still let it meet tribal triggers and lords, which is right, but never fan it out as a theme or a tribe's body. */
+export function isEveryCreatureType(ch: { keywords?: readonly string[]; subtypes?: readonly string[] } | undefined): boolean {
+  if (ch === undefined) return false;
+  if ((ch.keywords ?? []).some((k) => k.toLowerCase() === "changeling")) return true;
+  const have = ch.subtypes ?? [];
+  if (have.length < CREATURE_SUBTYPES.length) return false;
+  const set = new Set(have);
+  return CREATURE_SUBTYPES.every((t) => set.has(t));
+}
+
 /** A CARD'S TEXT, ONE STRING PER FACE: the corpus joins a multi-face card's oracle text on a "//" line. */
 const faceTexts = (oracleText: string): string[] => oracleText.split("\n//\n");
 
