@@ -153,7 +153,7 @@ test("a group with a file and no budget fails the build, and promotes nothing", 
 test("--check passes on a clean registry and names a stale per-path entry; it promotes nothing", () => {
   const root = fakeStatic();
   // the tiny fixture builds no grammar, roles or answers, so the labels that name those are not stale here, just absent from it
-  const ok = run(["--static", root, "--check", ...withRegistry(root, (g) => { for (const k of Object.keys(g.fields)) if (k.startsWith("tags.abilities.") || ["r", "a", "n", "unknownTriggers"].includes(k)) delete g.fields[k]; })]);
+  const ok = run(["--static", root, "--check", ...withRegistry(root, (g) => { for (const k of Object.keys(g.fields)) if (k.startsWith("tags.abilities.") || ["r", "a", "n", "unknownTriggers", "is", "partner"].includes(k)) delete g.fields[k]; })]);
   expect(ok.status, ok.stderr + ok.stdout).toBe(0);
   const bad = run(["--static", root, "--check", ...withRegistry(root, (g) => { g.fields["tags.gone"] = { label: "Gone" }; })]);
   expect(bad.status).not.toBe(0);
@@ -450,4 +450,77 @@ test("a NOT over an ability field leaves out the row with no record, at card lev
     expect(r.rows.includes(ABILITY_NAMES.length), JSON.stringify(node)).toBe(false);
     expect(r.rows.length).toBeGreaterThan(0);
   }
+});
+
+// #1787: `is:commander` and `partner`. Real oracle text and type lines from the corpus (Mongo `cards`, 2026-11-24).
+const REAL_PARTNERS: { name: string; typeLine: string; oracleText: string; commander: boolean }[] = [
+  { name: "Thrasios, Triton Hero", typeLine: "Legendary Creature — Merfolk Wizard", oracleText: "{4}: Scry 1.\nPartner (You can have two commanders if both have partner.)", commander: true },
+  { name: "Pako, Arcane Retriever", typeLine: "Legendary Creature — Elemental Dog", oracleText: "Partner with Haldan, Avid Arcanist\nHaste", commander: true },
+  { name: "Sophina, Spearsage Deserter", typeLine: "Legendary Creature — Human Soldier", oracleText: "Menace\nPartner—Friends forever (You can have two commanders if both have this ability.)", commander: true },
+  { name: "Wilson, Refined Grizzly", typeLine: "Legendary Creature — Bear Warrior", oracleText: "Ward {2}\nChoose a Background (You can have a Background as a second commander.)", commander: true },
+  { name: "Dungeon Delver", typeLine: "Legendary Enchantment — Background", oracleText: "Commander creatures you own have \"Room abilities of dungeons you own trigger an additional time.\"", commander: true },
+  { name: "Clara Oswald", typeLine: "Legendary Creature — Human Advisor", oracleText: "Doctor's companion (You can have two commanders if the other is the Doctor.)", commander: true },
+  { name: "The Fourth Doctor", typeLine: "Legendary Creature — Time Lord Doctor", oracleText: "You may look at the top card of your library any time.", commander: true },
+  { name: "Susan Foreman", typeLine: "Legendary Creature — Time Lord", oracleText: "", commander: true },
+  { name: "River Song", typeLine: "Legendary Creature — Human Time Lord Rogue", oracleText: "", commander: true },
+  { name: "Jeska, Thrice Reborn", typeLine: "Legendary Planeswalker — Jeska", oracleText: "Jeska, Thrice Reborn can be your commander.\nPartner", commander: true },
+  { name: "Gisa, Glorious Resurrector", typeLine: "Legendary Creature — Human Wizard", oracleText: "If a creature an opponent controls would die, exile it instead.", commander: true },
+  { name: "Plain Bear", typeLine: "Creature — Bear", oracleText: "Partner (You can have two commanders if both have partner.)", commander: false },
+  { name: "Norecord", typeLine: "Legendary Creature — Elf", oracleText: "", commander: true },
+];
+function commanderStatic(): string {
+  const root = mkdtempSync(join(tmpdir(), "search-commander-"));
+  const v = join(root, "v-t");
+  mkdirSync(join(v, "cards"), { recursive: true });
+  writeFileSync(join(root, "manifest.json"), JSON.stringify({ version: "v-t", deriveVersion: 9 }));
+  writeFileSync(join(v, "name-index.json"), JSON.stringify({
+    types: ["creature"], subtypes: [], keywords: [],
+    cards: REAL_PARTNERS.map((c) => ({ slug: c.name.toLowerCase(), name: c.name, identity: [], commander: c.commander })),
+  }));
+  writeFileSync(join(v, "cards", "0000.json"), JSON.stringify(Object.fromEntries(REAL_PARTNERS.filter((c) => c.name !== "Norecord")
+    .map((c) => [c.name.toLowerCase(), { card: { name: c.name, typeLine: c.typeLine, oracleText: c.oracleText }, tags: { clauseSource: "grammar" } }]))));
+  return root;
+}
+const cmdRowsOf = (root: string, field: string, value: string): number[] => {
+  const r = evaluate({ field, op: "has", value }, clientColumns(root));
+  if (!r.ok) throw new Error("cannot answer");
+  return r.rows;
+};
+
+test("is:commander is exactly the commander rows of the name index, the Commanders page's own population", () => {
+  const root = commanderStatic();
+  const b = run(["--static", root]);
+  expect(b.status, b.stderr + b.stdout).toBe(0);
+  const index = JSON.parse(readFileSync(join(root, "v-t", "name-index.json"), "utf8")) as { cards: { commander: boolean }[] };
+  const page = index.cards.flatMap((c, i) => (c.commander ? [i] : []));
+  expect(page.length).toBe(12);
+  expect(cmdRowsOf(root, "is", "commander")).toEqual(page);
+});
+
+test("each partner kind finds its real card; a card with no record is not judged by NOT; a non-commander still prints its kind", () => {
+  const root = commanderStatic();
+  expect(run(["--static", root]).status).toBe(0);
+  const at = (n: string) => REAL_PARTNERS.findIndex((c) => c.name === n);
+  expect(cmdRowsOf(root, "partner", "partner")).toEqual([at("Thrasios, Triton Hero"), at("Jeska, Thrice Reborn"), at("Plain Bear")]);
+  // `doctor` is the card Doctor's companion allows (legality.ts's own test): a Time Lord Doctor with no other creature type, not any Time Lord
+  expect(cmdRowsOf(root, "partner", "doctor")).toEqual([at("The Fourth Doctor")]);
+  expect(cmdRowsOf(root, "partner", "partner-with")).toEqual([at("Pako, Arcane Retriever")]);
+  expect(cmdRowsOf(root, "partner", "friends-forever")).toEqual([at("Sophina, Spearsage Deserter")]);
+  expect(cmdRowsOf(root, "partner", "chooses-background")).toEqual([at("Wilson, Refined Grizzly")]);
+  expect(cmdRowsOf(root, "partner", "background")).toEqual([at("Dungeon Delver")]);
+  expect(cmdRowsOf(root, "partner", "doctors-companion")).toEqual([at("Clara Oswald")]);
+  const notBg = evaluate({ not: { field: "partner", op: "has", value: "background" } }, clientColumns(root));
+  if (!notBg.ok) throw new Error("cannot answer");
+  expect(notBg.rows.includes(at("Norecord"))).toBe(false);
+  expect(notBg.rows.includes(at("Gisa, Glorious Resurrector"))).toBe(true);
+});
+
+const REAL_OUT = join(import.meta.dirname, "../../../../static-out");
+test.skipIf(!existsSync(join(REAL_OUT, "manifest.json")))("on the local static-out, is:commander has as many rows as /commanders lists", () => {
+  const m = JSON.parse(readFileSync(join(REAL_OUT, "manifest.json"), "utf8")) as { version: string; search?: string };
+  if (!m.search) return;
+  const cat = JSON.parse(readFileSync(join(REAL_OUT, m.version, "search", m.search, "catalogue.json"), "utf8")) as Catalogue;
+  const index = JSON.parse(readFileSync(join(REAL_OUT, m.version, "name-index.json"), "utf8")) as { cards: { commander: boolean }[] };
+  const field = cat.groups["commander"]?.fields.find((f) => f.id === "is");
+  expect(field?.values).toEqual([{ v: "commander", n: index.cards.filter((c) => c.commander).length }]);
 });
