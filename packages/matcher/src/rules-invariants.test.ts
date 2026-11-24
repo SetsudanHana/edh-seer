@@ -106,7 +106,7 @@ const PROSE: Record<string, string> = {
   "302.6": "a creature's summoning sickness", "305.1": "land play", "500.5": "unspent mana empties as a step ends", "715.3": "an adventurer card is played as either half", "722.3c": "a prepare spell is cast from a copy in exile", "501": "beginning phase",
   "603.4": "intervening if", "603.6c": "leaves the battlefield", "613": "layers: OPEN", "613.1f": "layer 6: ability-adding and ability-removing effects (edges.ts, a granted ability applies once on the battlefield)", "700.6": "historic",
   "700.8": "party", "700.9": "modified", "701.17": "mill", "701.22": "scry", "701.23a": "search", "701.25": "surveil",
-  "701.34": "proliferate", "701.5": "cast (tagger asserts the emit)", "702": "keyword abilities", "702.179": "speed", "702.62": "suspend (goldfish.ts: a suspended card is never cast from hand for its printed cost)", "704.5d": "a token in a graveyard ceases to exist",
+  "701.34": "proliferate", "701.5": "cast (tagger asserts the emit)", "701.6": "counter (verbs.ts: counter-spell reads \"counters a spell\")", "702": "keyword abilities", "702.179": "speed", "702.62": "suspend (goldfish.ts: a suspended card is never cast from hand for its printed cost)", "704.5d": "a token in a graveyard ceases to exist",
   "704.5s": "Saga sacrifice", "708.2": "face-down 2/2", "709.5i": "a Room fully unlocked", "702.124k": "Choose a Background",
   "903": "Commander", "903.10a": "commander damage", "903.2": "a Commander deck", "903.4": "colour identity", "903.6": "singleton",
   "903.8": "commander tax is a caveat, not a number",

@@ -32,334 +32,19 @@
  *  - `counter-added`: the subject is what the counter lands ON ("a creature getting a counter"),
  *    not the counter's own kind — the field this reads is the consumer's demand, and a demand
  *    names a permanent, never a +1/+1. */
-import { isPutIntoGraveyardClass, tagName } from "@edh-seer/engine";
+import { FILL_ACTION, verbEntry, type VerbEntry } from "@edh-seer/matcher/verbs";
 import { OTHER_PLAYER_SUFFIX, WILDCARD_SUBJECT } from "@edh-seer/matcher/zones";
 
-export const DEMAND_VERB: Record<string, string> = {
-  enters: "entering the battlefield",
-  "enters-graveyard": "going to a graveyard",
-  // The eerie half: "whenever you fully unlock a Room" (verb added 2026-09-05).
-  unlock: "being fully unlocked",
-  dies: "dying",
-  leaves: "leaving the battlefield",
-  "leaves-graveyard": "leaving a graveyard",
-  cast: "being cast",
-  attacks: "attacking",
-  blocks: "blocking",
-  "becomes-blocked": "becoming blocked",
-  taps: "becoming tapped",
-  untaps: "untapping",
-  "non-combat-damage": "dealing noncombat damage",
-  "combat-damage": "dealing combat damage",
-  damaged: "being dealt damage",
-  exiled: "being exiled",
-  discard: "being discarded",
-  mill: "being milled",
-  sacrifice: "being sacrificed",
-  "create-token": "being created",
-  "counter-added": "getting a counter",
-  "counter-removed": "losing a counter",
-  // CR 722.3a, Reality Fracture (2026-09-27).
-  prepared: "becoming prepared",
-  // AC11 batch 2, the object events (2026-09-09).
-  transform: "transforming",
-  "turned-face-up": "being turned face up",
-  copy: "being copied",
-  reveal: "being revealed",
-  attached: "becoming attached",
-  unattached: "becoming unattached",
-  "gains-control": "changing control",
-  "phases-out": "phasing out",
-  regenerate: "regenerating",
-  // AC11 batch 3, keyword actions done to a permanent.
-  goad: "being goaded",
-  exert: "being exerted",
-  detain: "being detained",
-  suspect: "being suspected",
-  harness: "being harnessed",
-  convert: "converting",
-  explore: "exploring",
-  endure: "enduring",
-  heal: "being healed",
-  airbend: "being airbent",
-  foretell: "being foretold",
-  // CR 701.5, verb added 2026-09-09 (the Baral witness).
-  "counter-spell": "being countered",
-  "land-play": "being played",
-};
+// THE VERB TABLES ARE GONE (#1170 PR 2). `DEMAND_VERB`, `DEMAND_PHASE`, `DEMAND_SUBJECTLESS`,
+// `CLAUSE_VERB`, `SUBJECTLESS_CLAUSE`, `ACTION_VERB`, `SUBJECTLESS_ACTION` and the default objects are
+// one record, `@edh-seer/matcher/verbs`, typed over every `VERB_VOCAB` verb so `tsc` refuses a gap. The
+// reasoning each table carried -- a phase has no subject, a player action has no false actor, a verb
+// nobody performs has no action -- is in that file's header, as the entry's shape.
 
-/** Phase keys carry no subject — "an end step" is the whole demand, and gluing a subject onto it
- *  ("anything an end step") is nonsense. Kept in exact lockstep with `availability.ts`'s own
- *  `PHASE_VERBS` (the completeness test enforces it): `combat-damage` and `draw-step` do NOT belong
- *  here — the first is an event with a subject (a CREATURE dealing combat damage), the second is a
- *  phase name the engine has never used a trigger key for. Both bugs shipped from this map
- *  disagreeing with the engine's own list instead of reading it. */
-export const DEMAND_PHASE: Record<string, string> = {
-  "end-step": "an end step",
-  upkeep: "an upkeep",
-  "begin-combat": "the beginning of combat",
-};
-
-/** Player actions, not permanent events — the CR pins each of these eight to the CONTROLLER
- *  (CLAUDE.md's own list of controller-only verbs: draw · mill · discard · sacrifice · search ·
- *  scry · surveil · add-mana · create · gain-life · lose-life; the other six in that list stay in
- *  `DEMAND_VERB` because their PASSIVE reading — "a card being milled/discarded", "a permanent
- *  being created/sacrificed" — is true of the object no matter who acts on it). None of these eight
- *  has a true passive reading once glued to a subject: "anything drawing a card" told the reader a
- *  PERMANENT draws, which nothing does — review finding F1, task 8 fix round 1. Same structural move
- *  `DEMAND_PHASE` already makes for a phase: the phrase IS the whole demand, no subject glued on.
- *  `proliferate` moves here too — no corpus card narrows WHAT proliferates (it is a player action
- *  over "any number" of permanents/players with counters), so "anything proliferating" was the same
- *  false-actor sentence, not a genuinely free choice of wording. */
-export const DEMAND_SUBJECTLESS: Record<string, string> = {
-  draw: "a card being drawn",
-  "gain-life": "life being gained",
-  "lose-life": "life being lost",
-  "dice-rolled": "a die being rolled",
-  proliferate: "proliferating",
-  // CR 701.22 / 701.25 / 701.23, added 2026-09-07 with the verbs. SUBJECTLESS is the right table of
-  // the three: "whenever you scry" names no permanent, so gluing a subject to it would invent an
-  // actor exactly as the header describes for proliferate. All 27 consumers phrase it about the
-  // PLAYER -- 15 scry, 10 surveil, 4 search, and every one reads "whenever you/an opponent ...".
-  scry: "scrying",
-  surveil: "surveilling",
-  // The engine emits this only for a LIBRARY search (emits.ts), which is what all four consumers
-  // watch, so the phrase says the zone rather than leaving the reader to guess it.
-  search: "a library being searched",
-  // CR 104.3, AC11 batch 1: a player event, no permanent subject.
-  "loses-game": "a player losing the game",
-  // AC11 batch 2: player-scoped events with no permanent subject.
-  shuffle: "a library being shuffled",
-  prevented: "damage being prevented",
-  exchange: "an exchange",
-  double: "doubling",
-  triple: "tripling",
-  // AC11 batch 3, keyword actions a PLAYER performs.
-  vote: "a vote",
-  clash: "a clash",
-  fateseal: "fatesealing",
-  behold: "beholding",
-  learn: "learning",
-  forage: "foraging",
-  "time-travel": "time travelling",
-  "collect-evidence": "collecting evidence",
-  "venture-into-the-dungeon": "venturing into the dungeon",
-  "face-a-villainous-choice": "a villainous choice",
-  waterbend: "waterbending",
-  // AC11 batch 4, the designations: player events, no permanent subject.
-  "flip-coin": "a coin being flipped",
-  monarch: "becoming the monarch",
-  initiative: "taking the initiative",
-  "city-blessing": "gaining the city's blessing",
-  "ring-tempts": "the Ring tempting you",
-  // Star Trek (#1349): a player event, no permanent subject.
-  "face-a-dilemma": "a dilemma",
-};
-
-/** THE SAME EVENT, AS A CLAUSE (roadmap AK4, owner 2026-09-19: "this is not how mtg players say
- *  things"). `DEMAND_VERB` holds participles because it was built to be GLUED to a noun -- "a
- *  creature dying" -- which reads as a label and nowhere else. Inside a sentence it was simply
- *  wrong, and shipped that way: the ability table has been printing "when this card dying" and
- *  "when a card being drawn" on every card page.
- *
- *  Present tense, third person, because that is the tense the rules text a player reads is in. */
-export const CLAUSE_VERB: Record<string, string> = {
-  enters: "enters the battlefield",
-  "enters-graveyard": "goes to a graveyard",
-  unlock: "is fully unlocked",
-  dies: "dies",
-  leaves: "leaves the battlefield",
-  "leaves-graveyard": "leaves a graveyard",
-  cast: "is cast",
-  attacks: "attacks",
-  blocks: "blocks",
-  "becomes-blocked": "becomes blocked",
-  taps: "becomes tapped",
-  untaps: "untaps",
-  "non-combat-damage": "deals noncombat damage",
-  "combat-damage": "deals combat damage",
-  damaged: "is dealt damage",
-  exiled: "is exiled",
-  discard: "is discarded",
-  mill: "is milled",
-  sacrifice: "is sacrificed",
-  "create-token": "is created",
-  "counter-added": "gets a counter",
-  "counter-removed": "loses a counter",
-  prepared: "becomes prepared",
-  transform: "transforms",
-  "turned-face-up": "is turned face up",
-  copy: "is copied",
-  reveal: "is revealed",
-  attached: "becomes attached",
-  unattached: "becomes unattached",
-  "gains-control": "changes control",
-  "phases-out": "phases out",
-  regenerate: "regenerates",
-  goad: "is goaded",
-  exert: "is exerted",
-  detain: "is detained",
-  suspect: "is suspected",
-  harness: "is harnessed",
-  convert: "converts",
-  explore: "explores",
-  endure: "endures",
-  heal: "is healed",
-  airbend: "is airbent",
-  foretell: "is foretold",
-  "counter-spell": "is countered",
-  "land-play": "is played",
-};
-
-/** The subjectless events as clauses. Most already read as one; the participles do not. */
-export const SUBJECTLESS_CLAUSE: Record<string, string> = {
-  draw: "a card is drawn",
-  // WITH NO TYPE IN THE KEY THE OBJECT IS STILL KNOWN: milling and discarding are done to CARDS,
-  // so the bare key reads "a card is milled" rather than the generic "anything is milled". A key
-  // that names a type (`mill|creature|-|-`) never reaches here and keeps its own noun.
-  mill: "a card is milled",
-  discard: "a card is discarded",
-  "gain-life": "life is gained",
-  "lose-life": "life is lost",
-  "dice-rolled": "a die is rolled",
-  proliferate: "you proliferate",
-  scry: "you scry",
-  surveil: "you surveil",
-  search: "a library is searched",
-  "loses-game": "a player loses the game",
-  shuffle: "a library is shuffled",
-  prevented: "damage is prevented",
-  exchange: "an exchange happens",
-  double: "something is doubled",
-  triple: "something is tripled",
-  vote: "you vote",
-  clash: "you clash",
-  fateseal: "you fateseal",
-  behold: "you behold",
-  learn: "you learn",
-  forage: "you forage",
-  "time-travel": "you time travel",
-  "collect-evidence": "you collect evidence",
-  "venture-into-the-dungeon": "you venture into the dungeon",
-  "face-a-villainous-choice": "you face a villainous choice",
-  waterbend: "you waterbend",
-  "flip-coin": "a coin is flipped",
-  monarch: "you become the monarch",
-  initiative: "you take the initiative",
-  "city-blessing": "you gain the city's blessing",
-  "ring-tempts": "the Ring tempts you",
-  "face-a-dilemma": "you face a dilemma",
-};
-
-/** WHAT A CARD DOES, IN A PLAYER'S WORDS (roadmap AK4, owner's ruling: "draw a card").
- *
- *  A card that CAUSES an event performs an action, and a player names the action, not the event --
- *  "mill a card", not "a card being milled". This is the verb; the object noun is glued on by
- *  `eventKeyAction`.
- *
- *  AND THE VERB HAS TO BE A REAL ONE. `dies` was given "kill", which is not a word in Magic; the
- *  obvious replacement is not right either, because CR 701.8 `destroy` is only ONE of the ways CR
- *  700.4 `dies` happens and this key's suppliers use several. It has no entry, and the clause "a
- *  creature dies" -- which IS the rules word -- carries it. Both terms reach it through the search.
- *
- *  NOT EVERY EVENT HAS ONE, and that is not a gap. Nobody "deaths" a creature, and no card makes
- *  "a creature attack" the way it makes one die -- those keep the clause. An absent entry here is
- *  the caller's signal to fall back, which is why this map is deliberately shorter than the other
- *  two rather than padded with invented verbs.
- *
- *  `ONTO`/`INTO` are placeholders the composer splits on: the object sits inside the phrase ("put
- *  a creature onto the battlefield"), not after it. */
-export const ACTION_VERB: Record<string, string> = {
-  mill: "mill",
-  discard: "discard",
-  exiled: "exile",
-  sacrifice: "sacrifice",
-  "create-token": "create",
-  taps: "tap",
-  untaps: "untap",
-  copy: "copy",
-  reveal: "reveal",
-  goad: "goad",
-  detain: "detain",
-  suspect: "suspect",
-  exert: "exert",
-  transform: "transform",
-  regenerate: "regenerate",
-  heal: "heal",
-  harness: "harness",
-  cast: "cast",
-  "counter-spell": "counter",
-  "land-play": "play",
-  "gains-control": "take control of",
-  "counter-added": "put a counter on",
-  "counter-removed": "remove a counter from",
-  prepared: "prepare",
-  damaged: "deal damage to",
-  enters: "put ONTO the battlefield",
-  "enters-graveyard": "put INTO a graveyard",
-  // A FILL IS AN ACTION ON THE CAUSING SIDE. The label reads as the thing wanted ("a creature in a
-  // graveyard") because a reanimator is waiting for it; the card that puts it there is doing
-  // something, and a player calls that filling the yard.
-  fills: "put INTO a graveyard",
-};
-
-/** A STATIC HAS NO ACTION FORM, AND THE ONE IT HAD WAS BACKWARDS (owner-commissioned engine
- *  review, 2026-09-19). `STATIC_ACTION` read "boost a creature" on the CAUSES list -- but the
- *  suppliers of `applies:pump|creature|-|-` are the 15,005 cards the anthem REACHES, not the
- *  anthems: Llanowar Elves and Dimir Doppelganger are in that list and Glorious Anthem is not.
- *  The engine models a static as WANTING its class, so the anthem is the consumer (Koll, Rienne,
- *  Divine Sacrament, all on the cares side) and the creatures supply it.
- *
- *  So a static is a standing fact about a class, exactly like `counts` and `copies`, and the label
- *  form -- "a creature it boosts" -- already reads correctly from both ends. Naming an action here
- *  described the wrong side of every `applies:*` key, including cost-reduction at 24,982 cards. */
-
-/** THE OBJECT A VERB IMPLIES WHEN THE KEY NAMES NO CLASS. "untap anything" is not what a player
- *  says; "untap a permanent" is, and the verb already tells you which noun it must be. Only for
- *  verbs whose object is never in doubt -- everything else keeps "anything", which is honest about
- *  the key naming no class at all. */
-const DEFAULT_OBJECT: Record<string, string> = {
-  taps: "a permanent",
-  untaps: "a permanent",
-  exiled: "a card",
-  reveal: "a card",
-  sacrifice: "a permanent",
-  "create-token": "a token",
-  "counter-spell": "a spell",
-  "land-play": "a land",
-};
-
-/** The subjectless actions, whole: there is no object noun to glue on. */
-export const SUBJECTLESS_ACTION: Record<string, string> = {
-  draw: "draw a card",
-  // The same known object the clauses name: you mill a CARD, you discard a CARD.
-  mill: "mill a card",
-  discard: "discard a card",
-  "gain-life": "gain life",
-  // NOT "drain": a drain loses life AND gains it, and the suppliers here are mostly plain burn
-  // (Fire Ambush deals damage, which is life loss, and gains nothing). Review finding, 2026-09-19.
-  "lose-life": "make a player lose life",
-  search: "search your library",
-  scry: "scry",
-  surveil: "surveil",
-  proliferate: "proliferate",
-  shuffle: "shuffle a library",
-  "flip-coin": "flip a coin",
-  "dice-rolled": "roll a die",
-  vote: "vote",
-  clash: "clash",
-  fateseal: "fateseal",
-  behold: "behold",
-  learn: "learn",
-  forage: "forage",
-  "time-travel": "time travel",
-  "collect-evidence": "collect evidence",
-  "venture-into-the-dungeon": "venture into the dungeon",
-  waterbend: "waterbend",
-  monarch: "become the monarch",
-  initiative: "take the initiative",
-  "city-blessing": "gain the city's blessing",
-};
+/** The glued forms of an entry: a phase has neither, and a player action has them only where its object
+ *  is the class ("a creature being drawn"). */
+const gluedDemand = (e: VerbEntry | undefined): string | undefined => (e === undefined || e.shape === "phase" ? undefined : e.participle);
+const gluedClause = (e: VerbEntry | undefined): string | undefined => (e === undefined || e.shape === "phase" ? undefined : e.clause);
 
 const capitalize = (s: string): string => s.charAt(0).toUpperCase() + s.slice(1);
 
@@ -391,20 +76,20 @@ export function demandSentence(key: string): string {
     : verb === "enters" ? " (under another player's control)" : " (by another player)";
   const subjectKey = rest.join(":");
 
-  const phase = DEMAND_PHASE[verb];
-  if (phase && subjectKey === WILDCARD_SUBJECT) return phase;
+  const entry = verbEntry(verb);
+  if (entry?.shape === "phase" && subjectKey === WILDCARD_SUBJECT) return entry.bare.demand;
 
   // A player action has no permanent subject to glue this onto either -- same shape as the phase
-  // check above, one rung down (the subject slot always resolves to "any" for these eight, since
+  // check above, one rung down (the subject slot always resolves to "any" for these, since
   // nothing narrows WHO draws or gains life to a card type).
-  const subjectless = DEMAND_SUBJECTLESS[verb];
-  if (subjectless && subjectKey === WILDCARD_SUBJECT) {
-    return `${subjectless}${mark}`;
+  if (entry?.shape === "player" && subjectKey === WILDCARD_SUBJECT) {
+    return `${entry.bare.demand}${mark}`;
   }
 
-  const event = DEMAND_VERB[verb];
-  // Unknown verb: say the true ugly thing, de-slugified, rather than inventing a phrase for a verb
-  // the engine grew after this map was written.
+  const event = gluedDemand(entry);
+  // A player action or a phase named with a class that is not its object has no glued form: it keeps
+  // the key's own words, because the whole phrase would read as one sentence for every class. A verb the
+  // record has never seen says the true ugly thing, de-slugified.
   if (!event) return deslugify(key);
 
   /** "artifact", "battle", "creature" -> "an artifact, battle or creature". */
@@ -430,197 +115,6 @@ export function demandSentence(key: string): string {
   }
 
   return `${subject} ${event}${mark}`;
-}
-
-/** A census key's VERB half as a chip label — "dies" -> "Dying", "combat-damage" -> "Dealing combat
- *  damage". Reuses `DEMAND_VERB` rather than adding a second vocabulary: this repo has now twice
- *  shipped an internal identifier rendered as English (`targetedRemoval`, `enters:type:land`), and
- *  both times the humane label already existed one file over.
- *
- *  A verb the map has never seen de-slugs rather than printing a raw token, which is the same
- *  fallback `demandSentence` takes and for the same reason. */
-export function eventLabel(verb: string): string {
-  const phrase = STATIC_KIND[verb] ?? MECHANISM[verb] ?? DEMAND_VERB[verb]
-    ?? DEMAND_SUBJECTLESS[verb] ?? DEMAND_PHASE[verb] ?? verb.replace(/-/g, " ");
-  return phrase.charAt(0).toUpperCase() + phrase.slice(1);
-}
-
-/** THE MECHANISMS A REASON TAG NAMES THAT A CENSUS KEY NEVER DOES.
- *
- *  `DEMAND_VERB` was built for CENSUS keys — what a consumer's trigger watches. A reason TAG carries
- *  a partly different vocabulary, because most of `edges.ts`'s passes write their own literal:
- *  `ramp-target:`, `tutor:`, `creates:`, `land-condition:`, `doubles:`, `scales:`, `wincon:`,
- *  `graveyard-recursion:`, `meld`. Nothing had ever reconciled the two lists, so every one of those
- *  fell through `eventLabel`'s de-slugify branch and reached the reader as an internal identifier:
- *  "Ramp target", "Creates", "Doubles".
- *
- *  IT IS NOT A LONG TAIL. Measured across the 71 calibration decks 2026-08-27, by reason count and
- *  by decks: **`creates` 662 in SEVENTY of 71 decks · `ramp-target` 1,543 in SIXTY-NINE** — the two
- *  worst offenders are in essentially every deck anyone would paste — then `land-condition` 576 (45)
- *  · `tutor` 479 (27) · `scales` 255 (16) · `doubles` 234 (7) · `clone` 44 (2) · `wincon` 11 (2).
- *
- *  EVERY LABEL IS TAKEN FROM THE ENGINE'S OWN SENTENCE FOR THAT TAG, never from reading the tag's
- *  name — `sentence.ts` is where each pass says in English what it claims, so it is the authority on
- *  what the mechanism IS:
- *    - `creates`             `createsSentence`            "P creates C"
- *    - `ramp-target`         `fetchSentence`              "P can fetch C"
- *    - `tutor`               `tutorSentence`              "P can search up C"
- *    - `graveyard-recursion` `graveyardEnablesRecursion`  "When P is in the graveyard, C can bring it back",
- *                            or "P puts cards into the graveyard that C can bring back" (#558)
- *    - `scales`              `graveyardFeedsScaling`      "When P is in the graveyard, C gets bigger",
- *                            or "P puts cards into the graveyard, and C gets bigger"
- *    - `doubles`             `doublesSentence`            "P doubles C's <verb> trigger"
- *    - `wincon`              `winconSentence`             "P is what C counts toward winning"
- *    - `meld`                `meldSentence`               "A and B meld together"
- *    - `land-condition`      `landConditionSentence`      three templates, all of the shape
- *                            "C is better/enters untapped/can use its second mana ability while you
- *                            control a <basic type>, and P is one" — so the label names the DEMAND
- *                            the three share, which is the only thing true of all of them.
- *    - `clone`               `GRANT_PHRASES.clone`        "a copy of what it targets"
- *
- *  `clone` IS AN EFFECT KIND, NOT A PASS LITERAL, and it is here because the static pass's other
- *  branch writes `<effect kind>:<subject>` — so an effect kind can reach a legend as a mechanism.
- *  Its `static:clone` twin above carries the same phrase on purpose: the mechanism is the same fact
- *  whether or not the ability granting it is static, and giving one surface two words for it is the
- *  disagreement this whole module exists to prevent.
- *
- *  STILL NO RATCHET OVER EVERY POSSIBLE KIND, AND THAT IS A CHOICE. `EFFECT_KINDS` is importable and
- *  would make one — but most of its ~40 members have never formed a reason in 71 decks, and a label
- *  invented for a mechanism nobody has a witness for is a guess dressed as coverage. The test below
- *  pins the MEASURED set; anything else keeps the de-slugify fallback, which is what every entry
- *  here had before it was measured. */
-export const MECHANISM: Record<string, string> = {
-  creates: "creating a token",
-  "ramp-target": "fetching a land",
-  tutor: "searching up a card",
-  // "FROM WHERE, TO WHERE?" -- a tuner's objection, and half of it is answerable. The engine's
-  // sentence is "When P is in the GRAVEYARD, C can bring it back", so the source zone is a printed
-  // fact and belongs in the label. The DESTINATION is not in the kind (graveyard-to-hand and
-  // graveyard-to-battlefield derive the same one), so the label does not claim it -- naming a zone
-  // the tag cannot distinguish would be the wrong half of the same complaint.
-  "graveyard-recursion": "bringing cards back from a graveyard",
-  // "GETTING BIGGER 1" SAT BESIDE "BOOSTING POWER AND TOUGHNESS 30" and three reviewers in a row
-  // said they name the same thing: "two names, no distinction given", "sound like the same thing and
-  // are two separate chips", "I don't know which one a pump effect I care about lands in".
-  //
-  // They are different, and the difference is the GRAVEYARD -- checked in the engine rather than
-  // guessed: the scaling loop opens `if (a.effect.scaling !== "per-graveyard") continue`, and
-  // `scalingSubject` returns undefined unless the text counts something in a graveyard. So every
-  // `scales:` reason on this board is a payoff that grows with a graveyard, and the label can say so
-  // without over-claiming. `static:pump` stays the ordinary power/toughness boost.
-  scales: "getting bigger from a graveyard",
-  doubles: "doubling a trigger",
-  wincon: "counting toward a win",
-  // The processor pass's tag is `exile-processing:<what was exiled>` (AF7b, 2026-09-16).
-  "exile-processing": "processing an opponent's exiled card",
-  // Dauthi / Valgavoth: an intercepted graveyard fill (owner ruling 2026-10-08, #1083).
-  "graveyard-intercept": "taking an opponent's cards on the way to the graveyard",
-  // The threshold pass's tag is `threshold:<what it counts>` (2026-09-16): a count the ability is
-  // GATED on -- Gadrak's four artifacts, Chrome Steed's metalcraft -- as `wincon` is for a win.
-  threshold: "counting toward a condition",
-  meld: "melding",
-  "land-condition": "needing a basic type",
-  clone: "copying a permanent",
-  // AC12: the copy-ability pass's tag is `copies:<kind>`.
-  copies: "having an ability copied",
-  // The fodder pass's tag is `fodder:<what it eats>` (recall v4 token family, 2026-09-09).
-  fodder: "being sacrificed to it",
-};
-
-/** A STATIC IS A CLASS, NOT A MECHANISM, AND EVERY OTHER TAG'S FIRST COMPONENT IS A MECHANISM.
- *
- *  Reason tags are built two ways (`edges.ts`): a normal one is `<mechanism>:<subject>` —
- *  `enters:creature`, `cast:spell` — so splitting on the colon yields the mechanism. A static one is
- *  `static:<mechanism>`, so the same split yields the literal word "static" and throws the mechanism
- *  away. Measured across the 71 calibration decks 2026-08-27: **6,829 of 43,376 reasons (15.7%) are
- *  `static:`, over EIGHT distinct mechanisms** — cost-reduction 4,326 (59 decks) · pump 1,698 (34) ·
- *  keyword-grant 425 (22) · type-grant 229 (5) · speed-increase 61 · untap 45 · token-generation 44 ·
- *  animate 1. A cost cut and an anthem are not the same thing to a deckbuilder, and the graph legend
- *  was calling both of them "Static".
- *
- *  IT WAS NAMING THE WRONG HALF OF A REAL EDGE. On the Jodah deck, Serah Farron reaches a token
- *  carrying BOTH `static:cost-reduction` and `static:pump`; the first was false (a token is never
- *  cast) and the second true, and the legend printed the word that came from the false one.
- *
- *  THE ENGINE ALREADY HAS ENGLISH FOR THESE and it is deliberately not imported: `sentence.ts`'s
- *  `GRANT_PHRASES` fits the slot "<producer> gives <consumer> ___" ("bigger stats", "an extra
- *  ability"), which is a different grammar from a legend LABEL, and no subpath of `@edh-seer/matcher` is
- *  safe to value-import from client code anyway (the 2026-08-21 regression). Same reason
- *  `DEMAND_VERB` and the engine's own `VERB_PHRASES` coexist.
- *
- *  NO COMPLETENESS RATCHET, AND THAT IS STATED RATHER THAN QUIETLY MISSING. `DEMAND_VERB` can be
- *  walked against `VERB_VOCAB` because that list is authoritative; there is no list of "effect kinds
- *  that can appear on a STATIC ability" — it is whatever derivation produces — so this is the
- *  measured set plus the rest of `GRANT_PHRASES`, and an unmapped kind falls through to de-slugified
- *  text, which is exactly what every one of them did before this map existed. */
-export const STATIC_KIND: Record<string, string> = {
-  // "LESS THAN WHAT?" -- asked by two persona reviews independently. The engine's own sentence is
-  // "P reduces what C COSTS", and a cost reduction is refused on a land because "a land is played,
-  // not cast", so the thing reduced is the CAST cost and the label can say so.
-  "static:cost-reduction": "costing less to cast",
-  // "BIGGER STATS" LEFT OUT THE ONE FACT A TUNER CUTS ON. Their words: "Anthems? +1/+1 counters?
-  // Equipment? A 'power equal to the number of legends you control' effect? All four are different
-  // cards to me and I'd cut them differently." The KIND genuinely cannot separate those -- `pump`
-  // is any power/toughness increase -- so the honest move is to name the axis precisely rather than
-  // to imply a narrower claim. `PHRASES.pump` in the engine is "gives +N/+N", which is exactly this.
-  "static:pump": "boosting power and toughness",
-  "static:keyword-grant": "granted abilities",
-  "static:type-grant": "granted types",
-  "static:speed-increase": "haste",
-  "static:untap": "extra untaps",
-  "static:token-generation": "making tokens",
-  "static:animate": "becoming a creature",
-  // Present in the engine's `GRANT_PHRASES` and unmeasured in the 71 decks — an arbitrary paste can
-  // still produce them, and a label costs nothing where the fallback would print a slug.
-  "static:clone": "copying a permanent",
-  "static:proliferate": "proliferating",
-  "static:enters-with-counters": "entering with counters",
-};
-
-/** THE VOCABULARY MIXES TWO KINDS OF THING, AND THAT IS INHERENT RATHER THAN AN OVERSIGHT.
- *  A skeptic review (2026-08-27) put it exactly: `entering the battlefield`, `being cast` and
- *  `attacking` name the event a card WATCHES, while `bringing cards back from a graveyard`,
- *  `costing less to cast` and `fetching a land` name the EFFECT. That is what the tags are --
- *  `edges.ts` writes a trigger event for an event edge and an effect kind for a static or a pass
- *  literal -- so no labelling can unify them without re-keying the engine's reasons, which the
- *  frozen panel's cached verdicts are keyed on. Recorded so the next reader knows it was seen and
- *  priced, not missed. `creating a token` is the one that could honestly be read either way.
- */
-
-/** The mechanism a reason tag names, for any surface that groups edges by mechanism.
- *
- *  ONE FUNCTION FOR THE TRACE CHIPS AND THE FLOW LEGEND. They read the same tags and would otherwise
- *  disagree about what an edge IS — the chip saying "Static 18" beside a legend saying "Costing less
- *  12", which is how two surfaces start telling different stories about one number. */
-export function mechanismKey(tag: string): string {
-  return tag.startsWith("static:") ? tag : tag.split(":")[0];
-}
-
-/** A whole reason tag as English -- the mechanism, plus the subject that narrows it.
- *
- *  The card inspector rendered the raw tag inside an uppercasing chip, so a relationship read
- *  "ENTERS:CREATURE  GRAVEYARD-RECURSION:ANY" directly above the sentences that already say the
- *  same thing in words. That is the third surface in this repo to ship an internal identifier as
- *  English, after `targetedRemoval` and `enters:type:land`, and it survived the last sweep only
- *  because it sits in a panel the persona screenshots had cropped.
- *
- *  THE SUBJECT IS KEPT, because it is what discriminates: `enters:creature` and `enters:land` are
- *  the same mechanism narrowed two ways, and a chip reading only "Entering the battlefield" on both
- *  would make two different claims look identical -- the same collapse the static split just
- *  undid one surface over. `any` is dropped: it narrows nothing, so printing it adds a word and no
- *  fact. A `static:` tag has no subject half at all (its second component IS the mechanism), which
- *  `mechanismKey` already encodes, so it correctly yields the bare label. */
-export function tagLabel(tag: string): string {
-  const mechanism = mechanismKey(tag);
-  // A mechanism no table here knows would de-slug ("Static:token doubling", "Recursion target · instant"):
-  // the engine's `tagName` is the one name for it everywhere else (#1170), so it names it here too.
-  if (!(STATIC_KIND[mechanism] ?? MECHANISM[mechanism] ?? DEMAND_VERB[mechanism] ?? DEMAND_SUBJECTLESS[mechanism] ?? DEMAND_PHASE[mechanism])) return tagName(tag);
-  const subject = tag.slice(mechanism.length + 1);
-  // ONLY A CREATURE OR PLANESWALKER DIES (owner 2026-10-10): a land, artifact ... is put into a graveyard.
-  const label = mechanism === "dies" && isPutIntoGraveyardClass(subject) ? "Put into a graveyard" : eventLabel(mechanism);
-  if (mechanism === tag) return label;
-  // `themeSubjectKey` writes a negation as `-land`; a chip reads it as a word.
-  return subject && subject !== "any" ? `${label} · ${subject.replace(/^-/, "non")}` : label;
 }
 
 /** AN ARTIFACT EVENT KEY (`verb|type|subtype|token`) AS THE WORDS A PLAYER USES.
@@ -680,12 +174,8 @@ export function eventKeySentence(key: string, subject?: string, colors?: string[
 
   // A phase and a player action carry no subject to glue a noun onto -- the same two escapes
   // `demandSentence` makes, one rung up, and for the same reason.
-  if (type === "-" && subtype === "-") {
-    const phase = DEMAND_PHASE[verb];
-    if (phase) return phase;
-    const subjectless = DEMAND_SUBJECTLESS[verb];
-    if (subjectless) return subjectless;
-  }
+  const entry = verbEntry(verb);
+  if (type === "-" && subtype === "-" && entry && entry.shape !== "event") return entry.bare.demand;
 
   // MELD IS A CARD-NAME RELATION, and the key carries no class at all.
   if (verb === "meld") return "the other half of its meld pair";
@@ -739,8 +229,9 @@ export function eventKeySentence(key: string, subject?: string, colors?: string[
     return `${/^[aeiou]/i.test(wanted) ? "an" : "a"} ${wanted} in a graveyard`;
   }
 
-  const event = DEMAND_VERB[verb];
-  // A verb this map has never seen says the true ugly thing rather than inventing a phrase for it.
+  const event = gluedDemand(entry);
+  // No glued form (a class that is a SOURCE, not an object, of a player action): the key's own words, so
+  // distinct keys stay distinct. A verb the record has never seen says the true ugly thing too.
   if (!event) return deslugify(key.replace(/\|/g, " "));
   // A SELF TRIGGER NAMES THE CARD. "Whenever Burakos attacks" is not "anything attacking", and the
   // key cannot carry the self flag, so the caller hands the noun in.
@@ -805,11 +296,10 @@ export function eventKeyClause(key: string, subject?: string, colors?: string[])
   key = openSlots(key);
   const [verb = "", type = "-", subtype = "-", token = "-"] = key.split("|");
 
+  const entry = verbEntry(verb);
   if (type === "-" && subtype === "-") {
-    const phase = DEMAND_PHASE[verb];
-    if (phase) return phase;
-    const subjectless = SUBJECTLESS_CLAUSE[verb];
-    if (subjectless) return subjectless;
+    const whole = entry?.bare?.clause;
+    if (whole) return whole;
   }
   // ONLY A CREATURE DIES (CR 700.4, owner 2026-09-19: "dies describes an event of creature moving
   // from battlefield to graveyard, and it is creature specific"). Everything else is PUT INTO a
@@ -828,7 +318,7 @@ export function eventKeyClause(key: string, subject?: string, colors?: string[])
     const put = "is put into a graveyard from the battlefield";
     return noun === null ? `a permanent ${put}` : `${noun.article} ${noun.phrase} ${put}`;
   }
-  const event = CLAUSE_VERB[verb];
+  const event = gluedClause(entry);
   // No clause form means this is not an event with a subject -- a feeder, a static, a count. The
   // label already words those correctly, so there is nothing to conjugate.
   if (!event) return eventKeySentence(key, subject, colors);
@@ -867,11 +357,12 @@ export function eventKeyAction(key: string, colors?: string[]): string | undefin
   }
   // A static names a CLASS, and its suppliers are the members of that class. See the note above.
   if (verb.startsWith("applies:")) return undefined;
+  const entry = verbEntry(verb);
   if (type === "-" && subtype === "-") {
-    const whole = SUBJECTLESS_ACTION[verb];
+    const whole = entry?.bare?.action;
     if (whole) return whole;
   }
-  const action = ACTION_VERB[verb];
+  const action = verb === "fills" ? FILL_ACTION : entry?.action;
   if (!action) return undefined;
   const noun = subjectNoun(type, subtype, token, colors);
   // A FILL'S OBJECT IS A CARD when the key names no type, the same known object `mill` and
@@ -879,9 +370,11 @@ export function eventKeyAction(key: string, colors?: string[]): string | undefin
   // A NONTOKEN FLAG WITH NO CLASS still narrows the object: "sacrifice a nontoken permanent", not the
   // "sacrifice a permanent" a search narrowed to "not a token" read as (2026-09-29).
   const object = noun === null
-    ? (token === "n" ? "a nontoken permanent" : verb === "fills" ? "a card" : DEFAULT_OBJECT[verb] ?? "anything")
+    ? (token === "n" ? "a nontoken permanent" : verb === "fills" ? "a card" : entry?.defaultObject ?? "anything")
     : `${noun.article} ${noun.phrase}`;
   // `put ONTO the battlefield` -- the object belongs inside the phrase, not after it.
+  // `{object}` marks it the same way for the verbs the old table did not have.
+  if (action.includes("{object}")) return action.replace("{object}", object);
   const around = action.match(/^(.*)\b(ONTO|INTO)\b(.*)$/);
   return around
     ? `${around[1]}${object} ${around[2]!.toLowerCase()}${around[3]}`

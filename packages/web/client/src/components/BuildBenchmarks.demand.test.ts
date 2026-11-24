@@ -14,44 +14,37 @@
 import { expect, test } from "vitest";
 import { VERB_VOCAB } from "@edh-seer/tagger";
 import { PHASE_VERBS } from "@edh-seer/matcher";
-import { DEMAND_VERB, DEMAND_PHASE, DEMAND_SUBJECTLESS } from "./BuildBenchmarks.js";
+import { VERBS } from "@edh-seer/matcher/verbs";
+import { demandSentence } from "./BuildBenchmarks.js";
 
-// A completeness-AND-disjointness ratchet, derived from the engine's own vocabulary rather than
-// from this file's maps -- `VERB_VOCAB` is every verb a consumer's trigger can carry (buildCensus
-// reads `Ability.trigger.verb`, typed to that exact union), and `PHASE_VERBS`
-// (`availability.ts`'s own authority on what a phase is) is the subset the GAME supplies rather
-// than a card. Neither list lives in BuildBenchmarks.tsx, so this test moves when the engine's
-// vocabulary does, unlike the maps it is checking -- exactly the shape `sentence.test.ts` already
-// uses for `VERB_PHRASES` against this same `VERB_VOCAB`.
-//
-// THREE tables now, not two (review finding F1, task 8 fix round 1): `DEMAND_SUBJECTLESS` holds
-// the player-action verbs (draw, gain-life, lose-life, dice-rolled, proliferate) that have no true
-// passive reading once glued to a permanent subject. A verb must land in EXACTLY ONE of the three
-// -- zero is a silent raw-key fallback, two is a bug nobody would notice because both branches
-// would return something plausible.
-const TABLES = [DEMAND_VERB, DEMAND_PHASE, DEMAND_SUBJECTLESS] as const;
+// #1170 PR 2: the three demand tables became one record, `VERBS`, whose SHAPE (event / player / phase)
+// says which table a verb used to sit in. A verb is in exactly one shape by construction, so the
+// "exactly one table" ratchets this file held are now `tsc`'s job. What stays here is what the type
+// cannot say: that every vocabulary verb READS as English when it reaches `demandSentence`, and that
+// the engine's own list of phases (`availability.ts` PHASE_VERBS) is the phase shape.
+// THE DEMAND PHRASE OF EVERY VERB IS ENGLISH. The fallback `demandSentence` takes for a verb or a subject
+// shape it has no entry for is `deslugify` (`key.replace(/[:-]/g, " ")`), so a verb whose entry is
+// missing or empty reads exactly as its own key. Walk every vocabulary verb with the census's wildcard key
+// and, for the event verbs, with a typed one. (Proven to fire: setting `goad`'s participle to "" in
+// `verbs.ts` fails this with `goad:type:creature`.)
+const deslugify = (key: string): string => key.replace(/[:-]/g, " ");
 
-// PROVEN TO FIRE (verified by hand while implementing task 8, not shipped as a second test):
-// deleting the `leaves` entry from `DEMAND_VERB` and re-running failed this test with
-// `missing = ["leaves"]`; restoring the entry made it pass again.
-test("every VERB_VOCAB member the engine can put on a consumer's trigger has a demand phrase", () => {
-  const missing = VERB_VOCAB.filter((v) => !TABLES.some((t) => v in t));
-  expect(missing).toEqual([]);
+test("every VERB_VOCAB member reads as a phrase, never as its own key", () => {
+  const raw: string[] = [];
+  for (const v of VERB_VOCAB) {
+    const keys = [`${v}:*`, ...(VERBS[v]?.shape === "event" ? [`${v}:type:creature`, `${v}:subtype:wizard`] : [])];
+    for (const k of keys) if (demandSentence(k) === deslugify(k)) raw.push(k);
+  }
+  expect(raw).toEqual([]);
 });
 
-// PROVEN TO FIRE (fix round 1): duplicating `draw` into `DEMAND_VERB` (already present in
-// `DEMAND_SUBJECTLESS`) failed this test with `duplicated = ["draw"]`; removing the duplicate made
-// it pass again.
-test("no VERB_VOCAB member sits in more than one of the three demand tables", () => {
-  const duplicated = VERB_VOCAB.filter((v) => TABLES.filter((t) => v in t).length > 1);
-  expect(duplicated).toEqual([]);
+test("a verb names exactly one demand shape, and every verb has one", () => {
+  expect(VERB_VOCAB.filter((v) => !["event", "player", "phase"].includes(VERBS[v]?.shape ?? ""))).toEqual([]);
 });
 
 // PHASE_VERBS is the one sub-list an outside authority (availability.ts) pins down exactly: a verb
-// the GAME supplies, never a card, must land in DEMAND_PHASE specifically, not merely somewhere
-// among the three (the two tests above would pass even if `upkeep` were misfiled into
-// DEMAND_SUBJECTLESS, since that is still "exactly one").
-test("every PHASE_VERBS member lands in DEMAND_PHASE, not DEMAND_VERB or DEMAND_SUBJECTLESS", () => {
-  const misfiled = [...PHASE_VERBS].filter((v) => !(v in DEMAND_PHASE));
+// the GAME supplies, never a card, must be the phase shape (not an event with an "an upkeep" subject).
+test("every PHASE_VERBS member is the phase shape", () => {
+  const misfiled = [...PHASE_VERBS].filter((v) => VERBS[v as keyof typeof VERBS]?.shape !== "phase");
   expect(misfiled).toEqual([]);
 });

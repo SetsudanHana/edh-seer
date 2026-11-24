@@ -1,6 +1,6 @@
 import { useEffect, useState, type ReactNode } from "react";
 import type { CardGraph, GraphNode } from "../types.js";
-import { tagLabel } from "../lib/demand-sentence.js";
+import { tagName } from "@edh-seer/engine";
 import { cardImageUrl } from "./card-node.js";
 import { routesThrough } from "../lib/routes.js";
 import { demandSentence } from "../lib/demand-sentence.js";
@@ -181,7 +181,7 @@ export function CardInspector({
                       key={t}
                       className="eyebrow px-1 py-0.5 rounded-(--radius) border border-(--separator) text-(--muted)"
                     >
-                      {tagLabel(t)}
+                      {tagName(t)}
                     </span>
                   ))}
                 </div>

@@ -63,7 +63,8 @@ import type { CardTags, GameEvent, SubjectFilter } from "@edh-seer/tagger";
 import { isRefusedTrigger } from "./claims.js";
 import { REPEATS_LADDER, factAmountOf, factKindOf, type FactAmount, type FactKind } from "./member-facts.js";
 import { eventKey, splitKey } from "./partners-core.js";
-import { VERB_PHRASES, emitSubjectNoun } from "./sentence.js";
+import { emitSubjectNoun } from "./sentence.js";
+import { verbEntry } from "./verbs.js";
 
 /** What a card carries here: the same pair `partners-core` builds per card (a card and its derived tags), flattened. */
 export interface SimilarCard { id: number; name: string; tags: CardTags | null }
@@ -351,7 +352,7 @@ function triggerLabel(sig: AbilitySig): string {
   const col = s.self === true ? "" : colourWords(s);
   const base = col ? articled(`${col} ${noun0.replace(/^(a|an) /, "")}`) : noun0;
   const who = s.self === true ? "" : s.control === "you" ? " you control" : s.control === "opp" ? " an opponent controls" : "";
-  const verbs = sig.verbs.map((v) => VERB_PHRASES[v] ?? v.replace(/-/g, " ")).join(" or ");
+  const verbs = sig.verbs.map((v) => verbEntry(v)?.finite ?? v.replace(/-/g, " ")).join(" or ");
   return `when ${base}${who} ${verbs}`;
 }
 
