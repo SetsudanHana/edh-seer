@@ -21,7 +21,8 @@ test("a creature type entering is named for the tribe, whatever the type is", ()
 /** #616: a deck that COUNTS a tribe is that tribe's deck; it read "counts your Clerics". */
 test("a count of a creature type is typal, and a count of a class is not a tribe", () => {
   expect(tagName("scales:cleric")).toBe("Cleric typal");
-  expect(tagName("scales:creature")).toBe("Go wide");
+  // "Go wide" said a board of many creatures; the key also counts a graveyard (edges.ts), so it is the true-of-both name (#1170 PR 2 review).
+  expect(tagName("scales:creature")).toBe("Creatures matter");
   expect(tagName("scales:land")).toBe("Lands matter");
   expect(tagName("scales:party")).toBe("Party");
   expect(tagName("scales:donated")).toBe("Donate");

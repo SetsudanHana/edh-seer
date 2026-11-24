@@ -87,9 +87,10 @@ export function demandSentence(key: string): string {
   }
 
   const event = gluedDemand(entry);
-  // A player action or a phase named with a class has no glued form: say the whole phrase rather than
-  // a raw key. A verb the record has never seen says the true ugly thing, de-slugified.
-  if (!event) return entry && entry.shape !== "event" ? `${entry.bare.demand}${entry.shape === "player" ? mark : ""}` : deslugify(key);
+  // A player action or a phase named with a class that is not its object has no glued form: it keeps
+  // the key's own words, because the whole phrase would read as one sentence for every class. A verb the
+  // record has never seen says the true ugly thing, de-slugified.
+  if (!event) return deslugify(key);
 
   /** "artifact", "battle", "creature" -> "an artifact, battle or creature". */
   const oneOf = (members: string[]): string => {
@@ -229,9 +230,9 @@ export function eventKeySentence(key: string, subject?: string, colors?: string[
   }
 
   const event = gluedDemand(entry);
-  // A player action or a phase named with a class has no glued form: its whole phrase, never a raw key.
-  // A verb the record has never seen says the true ugly thing rather than inventing a phrase for it.
-  if (!event) return entry && entry.shape !== "event" ? entry.bare.demand : deslugify(key.replace(/\|/g, " "));
+  // No glued form (a class that is a SOURCE, not an object, of a player action): the key's own words, so
+  // distinct keys stay distinct. A verb the record has never seen says the true ugly thing too.
+  if (!event) return deslugify(key.replace(/\|/g, " "));
   // A SELF TRIGGER NAMES THE CARD. "Whenever Burakos attacks" is not "anything attacking", and the
   // key cannot carry the self flag, so the caller hands the noun in.
   if (subject !== undefined) return `${subject} ${event}`;

@@ -13,9 +13,12 @@ import type { Verb } from "@edh-seer/tagger/schema";
  *  - `event`: something happens to a permanent, card or spell, and a subject can be glued on --
  *    "a creature dying", "a creature dies". `participle` and `clause` are required.
  *  - `player`: an action a PLAYER takes ("whenever you scry"). Nothing narrows who does it, so gluing a
- *    subject on would invent an actor ("anything drawing a card"); the whole phrase is `bare`, and a
- *    key that names a class still reads it (`participle` and `clause` are optional here, and only
- *    where the class is the object: a creature CARD being drawn).
+ *    subject on would invent an actor ("anything drawing a card"); the whole phrase is `bare`.
+ *    `participle` and `clause` exist only where the class a key names is the OBJECT of the action: a
+ *    creature CARD being drawn, a land being searched for. Where the class would be a SOURCE ("life
+ *    gained by an artifact") there is no typed form yet, and the key keeps its own words: two keys that
+ *    differ only in class must never read as one sentence, which is what the first cut of this record
+ *    did ("life being gained" for every class).
  *  - `phase`: a step of the turn. The phrase IS the whole demand ("an upkeep"); no subject, no action:
  *    nothing in a deck supplies your upkeep.
  *
@@ -80,7 +83,7 @@ export const VERBS: Record<Verb, VerbEntry> = {
   "land-play": { finite: "plays a land", shape: "event", participle: "being played", clause: "is played", action: "play" , defaultObject: "a land" },
   untaps: { finite: "untaps", shape: "event", participle: "untapping", clause: "untaps", action: "untap" , defaultObject: "a permanent" },
   proliferate: { finite: "proliferates", shape: "player", bare: { demand: "proliferating", clause: "you proliferate", action: "proliferate" } },
-  unlock: { finite: "is fully unlocked", shape: "event", participle: "being fully unlocked", clause: "is fully unlocked", action: "unlock {object}" , defaultObject: "a Room" },
+  unlock: { finite: "is fully unlocked", shape: "event", participle: "being fully unlocked", clause: "is fully unlocked", action: "unlock half of {object}" , defaultObject: "a Room" },
   upkeep: { finite: "reaches its upkeep", shape: "phase", bare: { demand: "an upkeep", clause: "an upkeep" } },
   "begin-combat": { finite: "enters combat", shape: "phase", bare: { demand: "the beginning of combat", clause: "the beginning of combat" } },
   "end-step": { finite: "reaches the end step", shape: "phase", bare: { demand: "an end step", clause: "an end step" } },
@@ -89,7 +92,7 @@ export const VERBS: Record<Verb, VerbEntry> = {
   // search phrase says the library because every consumer of this event names one.
   scry: { finite: "scries", shape: "player", bare: { demand: "scrying", clause: "you scry", action: "scry" } },
   surveil: { finite: "surveils", shape: "player", bare: { demand: "surveilling", clause: "you surveil", action: "surveil" } },
-  search: { finite: "searches a library", shape: "player", bare: { demand: "a library being searched", clause: "a library is searched", action: "search your library" } },
+  search: { finite: "searches a library", shape: "player", participle: "being searched for", clause: "is searched for", bare: { demand: "a library being searched", clause: "a library is searched", action: "search your library" } },
   // CR 701.6 (Counter): the consumer sentence reads "When X counters a spell, Y ...". (The table this
   // replaced cited it as 701.5, which is Cast.)
   "counter-spell": { finite: "counters a spell", shape: "event", participle: "being countered", clause: "is countered", action: "counter" , defaultObject: "a spell" },

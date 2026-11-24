@@ -118,6 +118,13 @@ test("only a creature type is typal; a land type, a count and a possessive are n
   expect(tagName("dies:urza's")).not.toMatch(/ses/);
 });
 
+/** A PLAYER faces a villainous choice (CR 701.55a) and the roll is made for something: the class a key names
+ *  is what the event is ABOUT, not who performs it ("Humans facing a villainous choice" was wrong). */
+test("a class on a player action is named as what the event is about, not who does it", () => {
+  expect(tagName("face-a-villainous-choice:human")).toBe("Villainous choices about Humans");
+  expect(tagName("dice-rolled:creature")).toBe("Dice rolled for creatures");
+});
+
 test("fodder for any sacrifice is not the creature fodder deck", () => {
   expect(tagName("fodder:creature")).toBe("Sac fodder");
   expect(tagName("fodder:any")).toBe("General sacrifice fodder");

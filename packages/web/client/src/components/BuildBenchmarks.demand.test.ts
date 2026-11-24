@@ -22,8 +22,19 @@ import { demandSentence } from "./BuildBenchmarks.js";
 // "exactly one table" ratchets this file held are now `tsc`'s job. What stays here is what the type
 // cannot say: that every vocabulary verb READS as English when it reaches `demandSentence`, and that
 // the engine's own list of phases (`availability.ts` PHASE_VERBS) is the phase shape.
-test("every VERB_VOCAB member the engine can put on a consumer's trigger has a demand phrase", () => {
-  const raw = VERB_VOCAB.filter((v) => /[:-]/.test(demandSentence(`${v}:*`)) || demandSentence(`${v}:*`) === v);
+// THE DEMAND PHRASE OF EVERY VERB IS ENGLISH. The fallback `demandSentence` takes for a verb or a subject
+// shape it has no entry for is `deslugify` (`key.replace(/[:-]/g, " ")`), so a verb whose entry is
+// missing or empty reads exactly as its own key. Walk every vocabulary verb with the census's wildcard key
+// and, for the event verbs, with a typed one. (Proven to fire: setting `goad`'s participle to "" in
+// `verbs.ts` fails this with `goad:type:creature`.)
+const deslugify = (key: string): string => key.replace(/[:-]/g, " ");
+
+test("every VERB_VOCAB member reads as a phrase, never as its own key", () => {
+  const raw: string[] = [];
+  for (const v of VERB_VOCAB) {
+    const keys = [`${v}:*`, ...(VERBS[v]?.shape === "event" ? [`${v}:type:creature`, `${v}:subtype:wizard`] : [])];
+    for (const k of keys) if (demandSentence(k) === deslugify(k)) raw.push(k);
+  }
   expect(raw).toEqual([]);
 });
 

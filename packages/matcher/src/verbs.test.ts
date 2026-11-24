@@ -28,3 +28,9 @@ test("a graveyard leave is a zone event the record names, a future verb is not",
   expect(verbEntry("some-future-verb")).toBeUndefined();
   expect(verbEntry("constructor")).toBeUndefined();
 });
+
+/** CR 709.5f: you unlock HALF of a permanent; 709.5i: the event the key names is the FULL unlock. */
+test("a card that unlocks, unlocks half of a Room", () => {
+  expect(VERBS.unlock.action).toBe("unlock half of {object}");
+  expect(VERBS.unlock.defaultObject).toBe("a Room");
+});
