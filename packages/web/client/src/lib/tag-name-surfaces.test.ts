@@ -29,7 +29,7 @@ describe("headline == group name == disc name", () => {
   const cases: [string, string][] = [
     ["enters:creature", "Creature ETBs"],
     ["cast:spell", "Cast triggers"],
-    ["cast:instant", "Spellslinger"],
+    ["cast:instant-sorcery", "Spellslinger"],
     ["enters:wizard", "Wizard ETBs"],
   ];
   test.each(cases)("%s is %s on every surface", (tag, name) => {

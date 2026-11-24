@@ -15,8 +15,9 @@ import { isPutIntoGraveyardClass, type Tag } from "./tags.js";
  *
  *  TWO DISTINCT KEYS NEVER SHARE A NAME (a test walks every VERB_VOCAB verb and the 972 keys of the 71
  *  calibration decks). The one deliberate merge is #543, the owner's ruling that instants and
- *  sorceries are one group: `cast:instant` and `cast:sorcery` are named as `cast:instant-sorcery`.
- *  That is a fold of the NAME only; the reason tags still carry the two types (PR 3 moves it to the key).
+ *  sorceries are one group. The matcher's `themeSubjectKey` writes the one key `instant-sorcery` itself
+ *  (#1170 PR 3), so the structured pipeline never sends the two. THE FOLD BELOW STAYS for the FLAT engine
+ *  (`patterns.ts`, which the CLI still runs) that keys `cast:instant` and `cast:sorcery`.
  *
  *  THE OWNER'S WORDS: "no magic player uses phrasing like 'Creatures Entering'" (2026-09-27, #616). A
  *  theme is named the way a deck tech names it -- Landfall, Enchantress, Aristocrats, Anthems -- and
@@ -344,7 +345,8 @@ export function tagNameSource(tag: Tag): NameSource {
 export const TAG_VERB_ROWS: readonly string[] = Object.keys(VERBS);
 
 function resolveTag(tag: Tag): { name: string; how: NameSource } {
-  // #543 (owner 2026-09-27): instants and sorceries are one group on the page. The name folds; the key does not.
+  // #543 (owner 2026-09-27): instants and sorceries are one group. The matcher folds its keys upstream; this
+  // is only for the flat engine's `cast:instant` / `cast:sorcery` (patterns.ts), which the CLI names through here.
   const folded = tag.replace(/:(?:instant|sorcery)$/, ":instant-sorcery");
   const exact = THEME_NAMES[folded];
   if (exact !== undefined) return { name: exact, how: "table" };

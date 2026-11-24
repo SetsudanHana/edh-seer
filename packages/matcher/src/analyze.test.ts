@@ -814,9 +814,9 @@ test("theme ranking weighs what a card cares about above what it merely does", (
     dc("Mentor A", caresAboutCasting), dc("Mentor B", caresAboutCasting),
   ];
   // Equally rare in the corpus, so rarity cannot decide it — only the cares/does split can.
-  const stats: TagStats = { N: 1000, counts: { "non-combat-damage:opp": 20, "cast:instant": 20, "enters:permanent": 900 } };
+  const stats: TagStats = { N: 1000, counts: { "non-combat-damage:opp": 20, "cast:instant-sorcery": 20, "enters:permanent": 900 } };
   const report = analyzeDeckStructured(deck, undefined, H, SEED_IMPACT_WEIGHTS, undefined, stats);
-  expect(report.cohesion!.tag).toBe("cast:instant");
+  expect(report.cohesion!.tag).toBe("cast:instant-sorcery");
 });
 
 // Task 6 (tokens-as-nodes): a Treasure-making card and a Treasure-caring card. The carer's trigger

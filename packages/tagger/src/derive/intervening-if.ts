@@ -193,7 +193,7 @@ export function conditionCares(condition: string): string[] {
   // "if you've cast a noncreature spell this turn", "if you cast two or more instant and/or sorcery
   // spells this turn" -- the spellslinger demand the same ruling names.
   if (CAST_NONCREATURE.test(condition)) out.push("cast:-creature");
-  if (CAST_INSTANT_SORCERY.test(condition)) out.push("cast:instant", "cast:sorcery");
+  if (CAST_INSTANT_SORCERY.test(condition)) out.push("cast:instant-sorcery");
   return [...new Set(out)];
 }
 

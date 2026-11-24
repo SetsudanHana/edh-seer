@@ -5542,9 +5542,10 @@ test("a cast consumer whose classes sit in anyOf branches narrows, and is fed by
     c.tags.characteristics.types = types;
     return c;
   };
-  expect(directedReasons(spell("Counterspell", ["instant"]), alania, H).map((r) => r.tag)).toContain("cast:instant");
-  // Keyed by the branch the producer meets (#1764): a sorcery is the second branch.
-  expect(directedReasons(spell("Mizzix's Mastery", ["sorcery"]), alania, H).map((r) => r.tag)).toContain("cast:sorcery");
+  // One key for the two types (#543, folded in `themeSubjectKey` by #1170 PR 3); the branch the producer meets
+  // (#1764) still decides WHICH producers join, so the sorcery below is fed by the sorcery branch.
+  expect(directedReasons(spell("Counterspell", ["instant"]), alania, H).map((r) => r.tag)).toContain("cast:instant-sorcery");
+  expect(directedReasons(spell("Mizzix's Mastery", ["sorcery"]), alania, H).map((r) => r.tag)).toContain("cast:instant-sorcery");
   expect(directedReasons(spell("Otter", ["creature"], ["otter"]), alania, H).some((r) => r.tag.startsWith("cast:"))).toBe(true);
   expect(directedReasons(spell("Grizzly Bears", ["creature"], ["bear"]), alania, H).some((r) => r.tag.startsWith("cast:"))).toBe(false);
 });
@@ -6079,15 +6080,17 @@ test("an instant-or-sorcery tutor and recursion are tagged with the type the tar
   bolt.tags.characteristics.cmc = 1;
   const tag = (p: ReturnType<typeof base>, c: ReturnType<typeof base>, fam: string) =>
     pairReasons(p, c, H).map((r) => r.tag).filter((t) => t.startsWith(fam));
-  expect(tag(seeker, reanimate, "tutor:")).toEqual(["tutor:sorcery"]);
-  expect(tag(seeker, bolt, "tutor:")).toEqual(["tutor:instant"]);
-  expect(tag(archaeo, reanimate, "recursion-target:")).toEqual(["recursion-target:sorcery"]);
+  // The TYPE decides who is joined (a sorcery and an instant are both found by "instant or sorcery"); the
+  // TAG is the one key for the two since #1170 PR 3 (owner ruling #543), where #507 had split it by type.
+  expect(tag(seeker, reanimate, "tutor:")).toEqual(["tutor:instant-sorcery"]);
+  expect(tag(seeker, bolt, "tutor:")).toEqual(["tutor:instant-sorcery"]);
+  expect(tag(archaeo, reanimate, "recursion-target:")).toEqual(["recursion-target:instant-sorcery"]);
   // And the cast trigger: casting a sorcery into "whenever you cast an instant or sorcery spell".
   const snipe = base("Guttersnipe", [{
     kind: "triggered", trigger: { verbs: ["cast"], subject: spells }, effect: { kind: "damage" },
   }] as CardTags["abilities"]);
-  expect(tag(reanimate, snipe, "cast:")).toEqual(["cast:sorcery"]);
-  expect(tag(bolt, snipe, "cast:")).toEqual(["cast:instant"]);
+  expect(tag(reanimate, snipe, "cast:")).toEqual(["cast:instant-sorcery"]);
+  expect(tag(bolt, snipe, "cast:")).toEqual(["cast:instant-sorcery"]);
 });
 
 /** A TRIGGER THAT SACRIFICES ITS OWN SOURCE FIRES ONCE (issue #530): Mogg Bombers read EVERY TIME.
@@ -7123,7 +7126,7 @@ describe("spell targeting", () => {
 test("an implied cast meets a 'from your hand' demand; a cast that states another zone does not", () => {
   const ojer = base("Ojer", [{ kind: "triggered", trigger: { verbs: ["cast"], subject: { control: "you", token: null, type: "instant", fromZone: "hand" } }, effect: { kind: "keyword-grant" } }] as unknown as CardTags["abilities"]);
   const brainstorm = (() => { const d = base("Brainstorm", [{ kind: "on-cast", effect: { kind: "draw-card" } }] as unknown as CardTags["abilities"]); return { ...d, tags: { ...d.tags, characteristics: { ...d.tags.characteristics, types: ["instant"] } } as CardTags }; })();
-  expect(directedReasons(brainstorm, ojer, H).some((r) => r.tag === "cast:instant")).toBe(true);
+  expect(directedReasons(brainstorm, ojer, H).some((r) => r.tag === "cast:instant-sorcery")).toBe(true);
   const fromExile = { verb: "cast", subject: { control: "you", token: null, type: "instant", fromZone: "exile" } } as never;
   const wants = { verb: "cast", subject: ojer.tags.abilities[0]!.trigger!.subject } as never;
   const fromHand = { verb: "cast", subject: { control: "you", token: false, type: "instant" }, implied: true } as never;

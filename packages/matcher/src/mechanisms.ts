@@ -90,10 +90,11 @@ export const CATEGORY_MATCH: Record<MechanismCategory, CategoryMatchEntry> = {
   // the calibration decks at 4,212 reasons against `cast:instant`'s 1,952. Without it this category
   // was reached only through `damage`/`draw-card`, i.e. by accident. `cast:noncreature` is the same
   // trigger as the FLAT tag pipeline spells it, which is what the compass runs on — both spellings,
-  // or the gold set fails on a rename nobody made. `cast:spell` stays OUT: it is the unnarrowed
+  // or the gold set fails on a rename nobody made. `cast:instant-sorcery` is the structured pipeline's one key
+  // for the two (#1170 PR 3); the other two are the flat engine's `patterns.ts`. `cast:spell` stays OUT: it is the unnarrowed
   // trigger, which a creature satisfies too.
   spellslinger: {
-    tags: ["cast:-creature", "cast:noncreature", "cast:instant", "cast:sorcery"],
+    tags: ["cast:-creature", "cast:noncreature", "cast:instant", "cast:sorcery", "cast:instant-sorcery"],
     effectKinds: ["copy-spell"],
   },
   reanimator: { effectKinds: ["graveyard-recursion", "animate"] },

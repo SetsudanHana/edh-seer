@@ -56,7 +56,7 @@ test("a turn's lifegain and spells cast are demands; the most-life comparison is
   expect(conditionCares("you have at least 7 life more than your starting life total")).toEqual(["gain-life:any"]);
   expect(conditionCares("you have 40 or more life")).toEqual(["gain-life:any"]);
   expect(conditionCares("you've cast a noncreature spell this turn")).toEqual(["cast:-creature"]);
-  expect(conditionCares("you've cast two or more instant and/or sorcery spells this turn")).toEqual(["cast:instant", "cast:sorcery"]);
+  expect(conditionCares("you've cast two or more instant and/or sorcery spells this turn")).toEqual(["cast:instant-sorcery"]);
   expect(conditionCares("you have the most life or are tied for most life")).toEqual([]);
   expect(conditionCares("you cast it")).toEqual([]);
 });

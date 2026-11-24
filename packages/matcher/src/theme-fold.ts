@@ -74,7 +74,10 @@ export function foldThemeTag(tag: string, h: Hierarchy): string {
   const parents = SUBTYPE_TYPES[value.toLowerCase()] ?? h[value.toLowerCase()];
   if (!parents || parents.length === 0) return tag;
   const parent = TYPE_PRIORITY.find((t) => parents.includes(t)) ?? parents[0];
-  return tagKey(family, parent);
+  // THE PARENT GOES THROUGH THE KEY'S OWN FOLD (#1170 PR 3). A spell subtype (lesson, trap, omen, arcane) is an
+  // instant or a sorcery, and `themeSubjectKey` writes both as `instant-sorcery`; folding to a bare `instant` wrote
+  // `cast:instant`, a key nothing emits, and left the card off the theme in an instant-sorcery deck.
+  return tagKey(family, parent === "instant" || parent === "sorcery" ? "instant-sorcery" : parent);
 }
 
 /** A fold function bound to one hierarchy, for the readers that take it as an argument. */

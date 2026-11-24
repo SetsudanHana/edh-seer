@@ -73,9 +73,12 @@ export function axisEventKeys(tag: string, eventKeys: readonly string[]): string
   }
   const untyped = implied !== undefined && word === implied
     ? eventKeysForDemand(tagKey(verb, WILDCARD_SUBJECT), eventKeys).filter((k) => k.split("|")[1] === "-") : [];
+  // THE ONE KEY FOR INSTANTS AND SORCERIES (#543, `themeSubjectKey`; #1170 PR 3) is two types to an event key:
+  // `cast|instant|-|-` and `cast|sorcery|-|-`. As one word it matched neither.
+  const words = word === "instant-sorcery" ? ["instant", "sorcery"] : [word];
   return [...new Set([
     ...untyped,
-    ...eventKeysForDemand(`${verb}:type:${word}`, eventKeys),
-    ...eventKeysForDemand(`${verb}:subtype:${word}`, eventKeys),
+    ...words.flatMap((w) => eventKeysForDemand(`${verb}:type:${w}`, eventKeys)),
+    ...words.flatMap((w) => eventKeysForDemand(`${verb}:subtype:${w}`, eventKeys)),
   ])];
 }

@@ -95,3 +95,16 @@ test("a supertype value is never folded into a card type", () => {
   expect(foldThemeTag("enters:legendary", misleading)).toBe("enters:legendary");
   expect(foldThemeTag("enters:snow", misleading)).toBe("enters:snow");
 });
+
+/** #1170 PR 3: the one key for instants and sorceries. A spell subtype (lesson, trap, omen, arcane) is an instant or a
+ *  sorcery by CR 205.3k, so a `cast:lesson` card belongs to the `cast:instant-sorcery` theme. It folded to `cast:instant`,
+ *  a key nothing writes any more, and sat off-theme in an instant-sorcery deck. */
+test("a spell subtype folds to the one instant-sorcery key, not to a dead instant key", () => {
+  for (const sub of ["lesson", "trap", "omen", "arcane"]) {
+    expect(foldThemeTag(`cast:${sub}`, {}), sub).toBe("cast:instant-sorcery");
+    expect(foldThemeTag(`recursion-target:${sub}`, {}), sub).toBe("recursion-target:instant-sorcery");
+  }
+  // A creature subtype still folds to its type, and the instant-sorcery key is its own family.
+  expect(foldThemeTag("enters:wizard", { wizard: ["creature"] })).toBe("enters:creature");
+  expect(foldThemeTag("cast:instant-sorcery", {})).toBe("cast:instant-sorcery");
+});
