@@ -4,9 +4,13 @@ import { useSearchParams } from "react-router";
 import { identityMask, inIdentityOf } from "@edh-seer/matcher/partners-core";
 import { matchNames, needleOf } from "../lib/name-match.js";
 import { coreContext, evaluateEventQuery, fromEventQuery, rowCountsOf, typeCountSpec, withEveryCreatureType } from "../lib/search/from-event-query.js";
-import { BESPOKE_FIELDS, createSearchLoader, fieldsOf, resolveCatalogue, type CatalogueResolution, type SearchLoader } from "../lib/search/load.js";
+import { BESPOKE_FIELDS, createSearchLoader, fieldsOf, listsOf, needsCatalogue, resolveCatalogue, type CatalogueResolution, type SearchLoader } from "../lib/search/load.js";
 import type { Catalogue, CatalogueField } from "../lib/search/catalogue.js";
-import type { EvalContext, Node } from "../lib/search/evaluate.js";
+import { evaluate, type EvalContext, type Node } from "../lib/search/evaluate.js";
+import { builderQuery } from "../lib/search/builder-text.js";
+import { eventsOf, fieldNames, keepChangelings as keepTyped, notSubtypesOf, parse, print, shapeNode, toNode, type Query, type QueryError } from "../lib/search/query.js";
+import { buildSchema } from "../lib/search/schema.js";
+import { TypedQuery } from "./TypedQuery.js";
 import { TypeCountRow } from "./TypeCountRow.js";
 import { FieldRow } from "./FieldRow.js";
 import { sharedEventFrequency, sharedEventMembers, sharedNameIndex, sharedNameIndexVocabulary, type EventFrequencyFile, type EventMembers, type NameIndexEntry } from "../lib/partners.js";
@@ -210,15 +214,33 @@ export function CardSearch({
   }, [text, setParams]);
   // THE QUESTION LIVES IN THE URL (spec 2026-09-19), so a result set is a link and the back button
   // is honest -- the same rule the colour chips have followed since they moved out of local state.
-  const eventQuery = useMemo(() => eventsFromParams(params), [params]);
-  const setEvents = (next: EventQuery) => setParams(eventsToParams(next, params), { replace: true });
+  const builderEvents = useMemo(() => eventsFromParams(params), [params]);
+  // `x=` (#1783) IS THE WHOLE QUESTION WHEN PRESENT: the builder's own params stay in the link, paused, and come back when
+  // `x` goes. The order and its direction are not part of a question, so they keep working beside it.
+  const xText = (params.get("x") ?? "").trim();
+  const typedActive = xText.length > 0;
+  const eventQuery = useMemo((): EventQuery => (typedActive
+    ? { produce: [], consume: [], colours: [], types: [], subtypes: [], keywords: [], cardColours: [],
+      ...(builderEvents.sort ? { sort: builderEvents.sort } : {}), ...(builderEvents.dir ? { dir: builderEvents.dir } : {}),
+      // THE CHANGELING TOGGLE IS A WAY TO READ THE ANSWER, not part of the question, so it rides beside `x` as it does beside the rows.
+      ...(builderEvents.keepChangelings ? { keepChangelings: true } : {}) }
+    : builderEvents), [typedActive, builderEvents]);
+  // TYPED MODE TAKES THE ORDER AND ITS DIRECTION AS GIVEN: changing the order deliberately drops the direction, and the
+  // paused rows' own must not bring the old one back.
+  const withOrder = (kept: EventQuery, next: EventQuery): EventQuery => {
+    const { sort: _s, dir: _d, ...rest } = kept;
+    return { ...rest, ...(next.sort ? { sort: next.sort } : {}), ...(next.dir ? { dir: next.dir } : {}), keepChangelings: next.keepChangelings };
+  };
+  const setEvents = (next: EventQuery) => setParams(
+    eventsToParams(typedActive ? withOrder(builderEvents, next) : next, params),
+    { replace: true });
   // THE SKIPPED VIEW BELONGS TO ONE SET OF TERMS AND EFFECT ROWS: change either and it is dropped, or
   // it would stay armed and reopen on the skipped list when the filters next leave something out.
   const setEffects = (next: EventQuery) => { const { skipped: _s, ...rest } = next; setEvents(rest); };
   const colours = eventQuery.colours;
   const setColours = (f: (cs: string[]) => string[]) => setEvents({ ...eventQuery, colours: f(colours) });
   const terms = useMemo(() => termsOf(eventQuery), [eventQuery]);
-  const chosenKeys = useMemo(() => [...new Set(terms.map((t) => t.key))], [terms]);
+  const builderKeys = useMemo(() => [...new Set(terms.map((t) => t.key))], [terms]);
   // THE ROWS THE URL IS ASKING FOR, plus the ones added and not yet filled. `pending` is the only
   // part that is local state, and it has to be: a row a reader just created has nothing in the URL
   // to be read back out of, and writing an empty param to hold its place would put a question in
@@ -252,7 +274,7 @@ export function CardSearch({
   const [catalogueInfo, setCatalogueInfo] = useState<{ state: "idle" | "loading" | "ready" | "none" | "failed"; cat: Catalogue | null }>({ state: "idle", cat: null });
   const [catAttempt, setCatAttempt] = useState(0);
   // A MENU WITH NO KIND LEFT HAS ONLY THE CATALOGUE TO OFFER, so it is read without waiting for the menu to open.
-  const wantCatalogue = menuOpen || genericAsked || available.length === 0;
+  const wantCatalogue = menuOpen || genericAsked || typedActive || available.length === 0;
   useEffect(() => {
     if (!wantCatalogue) return;
     let live = true;
@@ -306,13 +328,67 @@ export function CardSearch({
   // replaces: nothing is fetched for a reader who never asks about an event, and the fetch starts
   // the moment one is asked for rather than when the control happens to take focus.
   const [sentenceOpened, setSentenceOpened] = useState(false);
-  const needsFreq = sentenceOpened || chosenKeys.length > 0;
+  const needsFreq = sentenceOpened || builderKeys.length > 0 || typedActive;
   useEffect(() => {
     if (!needsFreq || freq !== null) return;
     let live = true;
     void frequency("/static").then((f) => { if (live) setFreq(f); });
     return () => { live = false; };
   }, [needsFreq, freq, frequency]);
+
+  // THE TYPED QUERY, READ AGAINST WHAT THIS BUILD HOLDS (#1783). Nothing is judged until the tables, the catalogue and (for an
+  // event word) the event keys are in: an early "unknown field" would be a wrong answer, so the page waits instead.
+  const hasCardColours = useMemo(() => (index ?? []).some((r) => r.c !== undefined), [index]);
+  const schema = useMemo(() => buildSchema({ vocabulary, catalogue: catalogueInfo.cat, hasCardColours, events: freq }),
+    [vocabulary, catalogueInfo.cat, hasCardColours, freq]);
+  const typed = useMemo((): { status: "pending" | "failed" } | { status: "error"; error: QueryError } | { status: "ok"; ast: Query } | null => {
+    if (!typedActive) return null;
+    if (index === null || catalogueInfo.state === "idle" || catalogueInfo.state === "loading") return { status: "pending" };
+    if (catalogueInfo.state === "failed") return { status: "failed" };
+    const r = parse(xText, schema);
+    if (!r.ok) return { status: "error", error: r.error };
+    if (r.ast === null) return { status: "pending" };
+    if (r.usesEvents && freq === null) return { status: "pending" };
+    return { status: "ok", ast: r.ast };
+  }, [typedActive, index, catalogueInfo.state, xText, schema, freq]);
+  const typedAst = typed?.status === "ok" ? typed.ast : null;
+  const typedShape = useMemo(() => (typedAst ? shapeNode(typedAst) : null), [typedAst]);
+  const typedNeedsCatalogue = typedShape !== null && needsCatalogue(typedShape);
+  const chosenKeys = useMemo(
+    () => (typedAst ? [...new Set(eventsOf(typedAst).map((e) => e.key))] : typedActive ? [] : builderKeys),
+    [typedAst, typedActive, builderKeys]);
+
+  // THE TEXT BOX SHOWS WHAT THE ROWS ASK, until the reader types: then `x=` is the question and the rows pause. ONE WAY, AND SAID
+  // SO: the rows write their own params (so every old link and every row edit is as it was) and are shown as text here; typed text
+  // becomes `x=` and does not rewrite the rows, because a typed `or` / `not` group has no row to sit in. Clearing `x` brings the
+  // rows back as they were. Same settle rule as the name box, so a keystroke is not a navigation.
+  const builderText = useMemo(() => {
+    const q = typedActive ? null : builderQuery(builderEvents, mode);
+    return q === null ? "" : print(q, schema);
+  }, [typedActive, builderEvents, mode, schema]);
+  // THE ROWS THE TEXT HAS NO WORDS FOR (ability type, how often, amount): said, so the box is never taken for all of the question.
+  const builderLeavesOut = !typedActive && ((builderEvents.abilityKinds?.length ?? 0) > 0 || builderEvents.repeatsMin !== undefined
+    || builderEvents.amountMin !== undefined || builderEvents.amountMax !== undefined || builderEvents.amountVariable === true || builderEvents.amountChange !== undefined);
+  const baseText = typedActive ? xText : builderText;
+  const [typedText, setTypedText] = useState(baseText);
+  const seenText = useRef(baseText);
+  useEffect(() => {
+    if (baseText !== seenText.current) { seenText.current = baseText; setTypedText(baseText); }
+  }, [baseText]);
+  useEffect(() => {
+    const t = typedText.trim();
+    if (t === seenText.current) return;
+    const timer = setTimeout(() => {
+      seenText.current = t;
+      setParams((prev) => {
+        const out = new URLSearchParams(prev);
+        if (t === "" || t === builderText) out.delete("x"); else out.set("x", t);
+        return out;
+      }, { replace: true });
+    }, QUERY_SETTLE_MS);
+    return () => clearTimeout(timer);
+  }, [typedText, builderText, setParams]);
+  const typedNames = useMemo(() => fieldNames(schema).map((f) => f.name), [schema]);
 
   // ONE FETCH PER CHOSEN EVENT. Nothing is read for an event nobody picked, and the shared loader
   // means the two pickers and the list ask for a key once between them.
@@ -347,7 +423,7 @@ export function CardSearch({
   // query, so asking it here means a dimension can never again be added to one and not the other.
   // THE EFFECT ROWS ARE NOT A QUESTION ON THEIR OWN: they narrow the events, and with none asked an
   // "Amount 1 to 1" link would otherwise draw the whole index as its answer.
-  const asked = needle.length > 0 || chosenKeys.length > 0
+  const asked = typedActive || needle.length > 0 || chosenKeys.length > 0
     || filterKindsOf(eventQuery).some((k) => !EFFECT_KINDS.includes(k)) || genericAsked;
   // A ROW'S POSITION IN THE INDEX, which is what the event lists hold. Once per artifact.
   const positionOf = useMemo(() => new Map((index ?? []).map((e, i) => [e, i] as const)), [index]);
@@ -395,14 +471,16 @@ export function CardSearch({
   const orderKey = orderOf(eventQuery);
   const countSort = TYPE_COUNTS.some((c) => c.sort === orderKey) ? (orderKey as TypeCountSort) : null;
   const countsAsked = TYPE_COUNTS.some((c) => eventQuery[c.min] !== undefined || eventQuery[c.max] !== undefined);
-  const notSubtypesAsked = (eventQuery.notSubtypes?.length ?? 0) > 0;
+  // THE NOT CREATURE TYPES: the rows' own, or the ones the typed text negates directly (`-st:borg`).
+  const notSubtypes = useMemo((): readonly string[] => (typedAst ? notSubtypesOf(typedAst) : eventQuery.notSubtypes ?? []), [typedAst, eventQuery.notSubtypes]);
+  const notSubtypesAsked = notSubtypes.length > 0;
   // A MUST OR ANY-OF SUBTYPE reads the creature list too, only to say on a changeling's tile why it matched (it is every
   // creature type). That is decoration: it never blocks the list, which answers from the rows.
   const subtypeAsked = eventQuery.subtypes.length > 0 || (eventQuery.orSubtypes?.length ?? 0) > 0;
   // THE KEY IS WHAT IS NEEDED, not the whole question: moving a mana-value bound must not look like a new
   // catalogue request and flash the loading line. `fields|lists`; the every-creature-type flag is built here, not fetched.
   const needKey = useMemo((): string | null => {
-    if (!countsAsked && countSort === null && !notSubtypesAsked && !genericAsked && !subtypeAsked) return null;
+    if (!countsAsked && countSort === null && !notSubtypesAsked && !genericAsked && !subtypeAsked && !typedNeedsCatalogue) return null;
     const node = fromEventQuery(eventQuery, mode);
     const fields = new Set(fieldsOf(node).filter((f) => f !== "everyCreatureType"));
     const lists = new Set([...(countsAsked || countSort !== null || notSubtypesAsked || subtypeAsked ? ["creature"] : []), ...(JSON.stringify(node).match(/"list":"(\w+)"/g) ?? []).map((m) => m.slice(8, -1))]);
@@ -411,8 +489,12 @@ export function CardSearch({
       const l = typeCountSpec[countSort].list;
       if (l) lists.add(l);
     }
+    if (typedShape) {
+      for (const f of fieldsOf(typedShape)) if (f !== "everyCreatureType") fields.add(f);
+      for (const l of listsOf(typedShape)) lists.add(l);
+    }
     return `${[...fields].sort().join(",")}|${[...lists].sort().join(",")}`;
-  }, [countsAsked, countSort, notSubtypesAsked, subtypeAsked, genericAsked, eventQuery, mode]);
+  }, [countsAsked, countSort, notSubtypesAsked, subtypeAsked, genericAsked, typedNeedsCatalogue, typedShape, eventQuery, mode]);
   const [resolved, setResolved] = useState<{ core: EvalContext; key: string; ctx: EvalContext; state: CatalogueResolution["state"] } | null>(null);
   // THE RETRY CHIP: bumping it runs the read again. A failed read is shown, and the loader keeps nothing of it.
   const [attempt, setAttempt] = useState(0);
@@ -438,8 +520,8 @@ export function CardSearch({
   // loaded that is unknown, and unknown is not blocking: the list answers from the rows meanwhile.
   const hiddenTypeNames = useMemo((): string[] => {
     const list = catalogueCtx?.namedLists["creature"]?.values;
-    return list === undefined ? [] : (eventQuery.notSubtypes ?? []).filter((n) => list.includes(n));
-  }, [catalogueCtx, eventQuery.notSubtypes]);
+    return list === undefined ? [] : notSubtypes.filter((n) => list.includes(n));
+  }, [catalogueCtx, notSubtypes]);
   const catalogueState: "none" | "pending" | "ready" | "no-pointer" | "failed" | "incomplete" =
     needKey === null ? "none" : resolvedNow === null ? "pending" : resolvedNow.state;
   // KEEPING CHANGELINGS WITH A NOT SUBTYPE CANNOT BE ANSWERED WITHOUT THE CREATURE LIST, so until it is known the page
@@ -448,12 +530,12 @@ export function CardSearch({
   // can never be known: it is shown without them, and says so (`changelingsUnmatched`).
   const keepAsked = eventQuery.keepChangelings === true && notSubtypesAsked;
   const keepUnresolved = keepAsked && (catalogueState === "pending" || catalogueState === "failed");
-  const blocking = countsAsked || countSort !== null || keepUnresolved || (keepAsked && hiddenTypeNames.length > 0) || genericAsked;
+  const blocking = countsAsked || countSort !== null || keepUnresolved || (keepAsked && hiddenTypeNames.length > 0) || genericAsked || typedNeedsCatalogue;
   // WHICH QUESTION THE WORDS ARE ABOUT: type counts and the changeling note have their own, a catalogue row the general one.
   const typeQuestion = countsAsked || countSort !== null || keepAsked;
   // A LINK'S FIELD IS JUDGED AGAINST THE CATALOGUE ITSELF, so the page waits for it too: an incomplete read must not say
   // "can't answer" for a moment and "doesn't know" the next.
-  const catalogueSettled = !genericAsked || catalogueInfo.state === "ready" || catalogueInfo.state === "none" || catalogueInfo.state === "failed";
+  const catalogueSettled = !(genericAsked || typedActive) || catalogueInfo.state === "ready" || catalogueInfo.state === "none" || catalogueInfo.state === "failed";
   // WHAT A LINK ASKS THAT THE CATALOGUE DOES NOT HOLD: a field, a value of a set field, or the wrong kind of question for
   // the field. One line each, said where the answer would be; the list is not drawn (an unknown is not an empty answer).
   const unknownLines = useMemo((): string[] => {
@@ -490,23 +572,50 @@ export function CardSearch({
   // A CANNOT-ANSWER IS NOT A ZERO MASK: it is said, and the list is not drawn.
   const characteristic = useMemo((): { mask: Uint8Array | null; cannotAnswer: boolean } => {
     if (index === null || evalCtx === null) return { mask: null, cannotAnswer: false };
+    if (typedActive) {
+      // THE TYPED QUESTION: its events are the member lists already read, joined as `rows` leaves.
+      const creature = evalCtx.namedLists["creature"]?.values;
+      const asked = typedAst !== null && eventQuery.keepChangelings === true && creature ? keepTyped(typedAst, new Set(creature)) : typedAst;
+      const node = asked === null ? null : toNode(asked, (side, key) => {
+        const m = lists.get(key);
+        return m ? (side === "makes" ? m.p : m.c) : undefined;
+      });
+      if (node === null) return { mask: null, cannotAnswer: false };
+      const res = evaluate(commanderMode ? { and: [{ op: "rows", rows: index.flatMap((r, i) => (r.commander ? [i] : [])) }, node] } : node, evalCtx);
+      if (!res.ok) return { mask: null, cannotAnswer: true };
+      const mask = new Uint8Array(index.length);
+      for (const r of res.rows) mask[r] = 1;
+      return { mask, cannotAnswer: false };
+    }
     const res = evaluateEventQuery(index, vocabulary, eventQuery, mode, { commandersOnly: commanderMode, context: evalCtx });
     if (!res.ok) return { mask: null, cannotAnswer: true };
     const mask = new Uint8Array(index.length);
     for (const r of res.rows) mask[r] = 1;
     return { mask, cannotAnswer: false };
-  }, [index, evalCtx, vocabulary, eventQuery, mode, commanderMode]);
+  }, [index, evalCtx, vocabulary, eventQuery, mode, commanderMode, typedActive, typedAst, lists]);
   const characteristicMask = characteristic.mask;
   const filtersUnanswerable = characteristic.cannotAnswer;
   // THE SAME QUESTION WITH CHANGELINGS KEPT, to count what the NOT creature type hid.
   const keepMask = useMemo((): Uint8Array | null => {
     if (index === null || catalogueCtx === null || hiddenTypeNames.length === 0) return null;
-    const res = evaluateEventQuery(index, vocabulary, { ...eventQuery, keepChangelings: true }, mode, { commandersOnly: commanderMode, context: catalogueCtx });
+    let res: ReturnType<typeof evaluate>;
+    if (typedActive) {
+      // THE TYPED QUESTION WITH CHANGELINGS KEPT, to count what its NOT creature types hid.
+      const creature = catalogueCtx.namedLists["creature"]?.values;
+      const node = typedAst === null || !creature ? null : toNode(keepTyped(typedAst, new Set(creature)), (side, key) => {
+        const m = lists.get(key);
+        return m ? (side === "makes" ? m.p : m.c) : undefined;
+      });
+      if (node === null) return null;
+      res = evaluate(commanderMode ? { and: [{ op: "rows", rows: index.flatMap((r, i) => (r.commander ? [i] : [])) }, node] } : node, catalogueCtx);
+    } else {
+      res = evaluateEventQuery(index, vocabulary, { ...eventQuery, keepChangelings: true }, mode, { commandersOnly: commanderMode, context: catalogueCtx });
+    }
     if (!res.ok) return null;
     const mask = new Uint8Array(index.length);
     for (const r of res.rows) mask[r] = 1;
     return mask;
-  }, [index, catalogueCtx, hiddenTypeNames, vocabulary, eventQuery, mode, commanderMode]);
+  }, [index, catalogueCtx, hiddenTypeNames, vocabulary, eventQuery, mode, commanderMode, typedActive, typedAst, lists]);
   const fitCard = useCallback((entries: NameIndexEntry[], using: Uint8Array | null = characteristicMask): NameIndexEntry[] => {
     if (using === null) return [];
     const named = needle.length === 0 ? entries : matchNames(entries, { query });
@@ -559,6 +668,8 @@ export function CardSearch({
     [catalogueCtx]);
   const matches = useMemo((): NameIndexEntry[] | null => {
     if (index === null || !asked) return [];
+    if (typed?.status === "pending") return null;
+    if (typed !== null && typed.status !== "ok") return [];
     if (typeCountsBlocked) return null;
     if (typeCountsMissing || typeCountsFailed || filtersUnanswerable || unknownLines.length > 0) return [];
     if (keptIds === undefined) return null;
@@ -604,7 +715,7 @@ export function CardSearch({
         : countSort !== null ? byNumber((e) => countsBy[countSort]?.[positionOf.get(e) ?? -1])
         : byNumber((e) => e.partners ?? 0),
     );
-  }, [index, keptIds, asked, eventQuery, lists, positionOf, fitCard, baseEntries, countSort, countsBy, typeCountsBlocked, typeCountsMissing, typeCountsFailed, filtersUnanswerable, unknownLines]);
+  }, [index, typed, keptIds, asked, eventQuery, lists, positionOf, fitCard, baseEntries, countSort, countsBy, typeCountsBlocked, typeCountsMissing, typeCountsFailed, filtersUnanswerable, unknownLines]);
   // WHAT "Back to the N matches" RETURNS TO: the normal list's size, without sorting it.
   const normalCount = useMemo((): number => {
     if (!showSkipped || index === null || keptIds === undefined || keptIds === null) return 0;
@@ -949,6 +1060,17 @@ export function CardSearch({
         *  test harness could never take, because a max-width media query is false under jsdom. */}
       {/* THE QUESTION, AS A SENTENCE (owner, 2026-09-27: mockup B). Always drawn, so "+ add" is where
         * a reader starts asking what a card does; the rows below are what it IS and what it costs. */}
+      <TypedQuery
+        value={typedText} onChange={setTypedText} names={typedNames} noun={commanderMode ? "commanders" : "cards"}
+        error={typed?.status === "error" ? typed.error : null}
+        leftOut={builderLeavesOut}
+      />
+      {typedActive ? (
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+          <p className="text-(--muted) text-sm">The typed query is the question, so the filter rows are paused.</p>
+          <button type="button" className="chip" onClick={() => setTypedText("")}>Back to the filters</button>
+        </div>
+      ) : (<>
       <EventSentence
         terms={terms}
         colours={colours}
@@ -1067,6 +1189,7 @@ export function CardSearch({
           </details>
         )}
       </div>
+      </>)}
       </div>
       </div>
 
@@ -1129,6 +1252,15 @@ export function CardSearch({
                 </li>
               ))}
             </ul>
+          </div>
+        : typed?.status === "error"
+        // A PROBLEM IN THE TEXT IS SAID UNDER THE BOX; no list stands in for it. A CANNOT-ANSWER has said so already, and
+        // "fix the query" would be the wrong advice for it.
+        ? (typed.error.cannot ? null : <p role="status" className="text-(--muted)">Fix the typed query above to see {commanderMode ? "commanders" : "cards"}.</p>)
+        : typed?.status === "failed"
+        ? <div className="flex flex-wrap items-center gap-3">
+            <p role="status" className="text-(--muted)">Couldn&apos;t load filter data. Try again.</p>
+            <button type="button" className="chip" onClick={() => setCatAttempt((n) => n + 1)}>Try again</button>
           </div>
         : unanswerable
         ? <p role="status" className="text-(--muted)">{effectUnanswerable
