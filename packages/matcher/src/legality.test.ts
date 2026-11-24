@@ -1,6 +1,6 @@
 import { expect, test } from "vitest";
 import type { Card } from "@edh-seer/engine";
-import { choosesColour, deckLegality, upcomingCards } from "./legality.js";
+import { choosesColour, deckLegality, pairingLicense, upcomingCards } from "./legality.js";
 import { companionFindings } from "./deck-rules.js";
 import { commanderDamage } from "./commander-damage.js";
 
@@ -141,10 +141,9 @@ test("a partner label is read off its own line, trimmed, and only up to the remi
   const a = partner("A", "Flying\nPartner—Friends forever  (You can have two commanders if both have this ability.)");
   const b = partner("B", "Partner—friends FOREVER (You can have two commanders if both have this ability.)");
   expect(deckLegality({ cards: [a, b, ...filler(98)], commanders: [a, b] })).toEqual([]);
-  // A "Partner—" with no reminder text names no group, so it licenses no pairing.
+  // #1798: reminder text is not required, so a bare "Partner—Friends forever" names the group too.
   const bare = partner("C", "Partner—Friends forever");
-  expect(deckLegality({ cards: [a, bare, ...filler(98)], commanders: [a, bare] })
-    .map((f) => f.rule)).toContain("pairing");
+  expect(deckLegality({ cards: [a, bare, ...filler(98)], commanders: [a, bare] })).toEqual([]);
 });
 
 // The four Backgrounds in the calibration corpus, whose partner J4 could not see. All four decks
@@ -558,4 +557,60 @@ test.each([
 ])("%s is a legal commander", (name, typeLine, oracleText) => {
   const c = card(name, typeLine, { oracleText, colorIdentity: ["R"] });
   expect(deckLegality({ cards: [c, ...filler(99)], commanders: [c] })).toEqual([]);
+});
+
+// #1798 — THE KEYWORD LINE IS READ WHOLE, WITH NO REMINDER TEXT REQUIRED. Oracle text below is the
+// full corpus text (Mongo `cards`, 2026-11-24), never truncated.
+const FULL = {
+  jeska: "Jeska enters with a loyalty counter on her for each time you've cast a commander from the command zone this game.\n0: Choose target creature. Until your next turn, if that creature would deal combat damage to one of your opponents, it deals triple that damage to that player instead.\n−X: Jeska deals X damage to each of up to three targets.\nJeska, Thrice Reborn can be your commander.\nPartner",
+  tevesh: "+2: Create two 0/1 black Thrull creature tokens.\n+1: You may sacrifice another creature or planeswalker. If you do, draw two cards, then draw another card if the sacrificed permanent was a commander.\n−10: Gain control of all commanders. Put all commanders from the command zone onto the battlefield under your control.\nTevesh Szat, Doom of Fools can be your commander.\nPartner",
+  akroma: "Flying, first strike, vigilance, trample\nAt the beginning of each combat, until end of turn, each other creature you control gets +1/+1 if it has flying, +1/+1 if it has first strike, and so on for double strike, deathtouch, haste, hexproof, indestructible, lifelink, menace, protection, reach, trample, vigilance, and partner.\nPartner",
+  april: "Whenever a Mutant, Ninja, or Turtle you control enters, investigate. (Create a Clue token. It's an artifact with \"{2}, Sacrifice this token: Draw a card.\")\nPartner—Character select",
+  donatello: "Partner—Character select (You can have two commanders if both have this ability.)",
+  unearthly: "(As this Saga enters and after your draw step, add a lore counter. Sacrifice after III.)\nI, II, III — Reveal cards from the top of your library until you reveal a Doctor card, a card with doctor's companion, or a Vehicle card. Put that card into your hand and the rest on the bottom of your library in a random order.",
+};
+const pairRules = (a: Card, b: Card) => deckLegality({ cards: [a, b, ...filler(98)], commanders: [a, b] }).map((f) => f.rule);
+const jeska = partner("Jeska, Thrice Reborn", FULL.jeska, "Legendary Planeswalker — Jeska");
+const tevesh = partner("Tevesh Szat, Doom of Fools", FULL.tevesh, "Legendary Planeswalker — Szat");
+const akroma = partner("Akroma, Vision of Ixidor", FULL.akroma, "Legendary Creature — Angel");
+
+test("#1798: a bare Partner line (no reminder text) pairs: Jeska + Tevesh Szat, Akroma + Jeska", () => {
+  expect(pairRules(jeska, tevesh)).toEqual([]);
+  expect(pairRules(akroma, jeska)).toEqual([]);
+});
+
+test("#1798: Partner—Character select with no reminder text pairs with a Character select card", () => {
+  const april = partner("April O'Neil, Live on the Scene", FULL.april);
+  const donatello = partner("Donatello, the Brains", FULL.donatello, "Legendary Creature — Mutant Ninja Turtle");
+  expect(pairRules(april, donatello)).toEqual([]);
+});
+
+test("#1798: Akroma's sentence mentioning partner is not itself a Partner line", () => {
+  const sentenceOnly = partner("Akroma Sans Line", FULL.akroma.replace("\nPartner", ""), "Legendary Creature — Angel");
+  expect(pairRules(sentenceOnly, jeska)).toContain("pairing");
+});
+
+test("#1798: An Unearthly Child's mid-sentence 'doctor's companion' is not the ability", () => {
+  const saga = partner("An Unearthly Child", FULL.unearthly, "Enchantment — Saga");
+  const doc = partner("The Tenth Doctor", "", "Legendary Creature — Time Lord Doctor");
+  expect(pairingLicense(saga, doc)).toBeUndefined();
+});
+
+// Guards: what must NOT pair.
+test("#1798 guards: Partner with still needs its named partner, Friends forever only pairs with itself", () => {
+  const pako = partner("Pako, Arcane Retriever", "Partner with Haldan, Avid Arcanist\nHaste");
+  expect(pairRules(pako, jeska)).toContain("pairing");
+  const sophina = partner("Sophina", "Menace\nPartner—Friends forever (You can have two commanders if both have this ability.)");
+  const bareFriends = partner("Bare Friend", "Partner—Friends forever");
+  expect(pairRules(sophina, bareFriends)).toEqual([]);
+  expect(pairRules(sophina, jeska)).toContain("pairing");
+  expect(pairRules(partner("April", FULL.april), sophina)).toContain("pairing");
+});
+
+test("#1798 guards: a non-partner pair is illegal, and Choose a Background + Background is legal", () => {
+  expect(pairRules(partner("Krenko, Mob Boss", ""), jeska)).toContain("pairing");
+  expect(pairRules(partner("A", ""), partner("B", ""))).toContain("pairing");
+  const chooser = partner("Wilson, Refined Grizzly", "Ward {2}\nChoose a Background (You can have a Background as a second commander.)");
+  const bg = partner("Dungeon Delver", "Commander creatures you own have \"Room abilities of dungeons you own trigger an additional time.\"", "Legendary Enchantment — Background");
+  expect(pairRules(chooser, bg)).toEqual([]);
 });
