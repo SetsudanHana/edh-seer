@@ -2,7 +2,7 @@
 // String operations only, no regular expression: a line is classified by what it STARTS with, the way `legality.ts`
 // reads the same six forms (`pairingLicense`). The kinds are the `partner` search field's values.
 //
-//   partner               "Partner (You can have two commanders if both have partner.)"
+//   partner               "Partner (You can have two commanders if both have partner.)", or a bare "Partner" line (Jeska, Tevesh Szat, Akroma)
 //   partner-with          "Partner with <name>"
 //   <label>               "Partner—<label> (…)": the label after the dash, as `friends-forever`, `character-select`,
 //                         `survivors`, `father-son`. Read, not listed: a group printed next year appears with no code.
@@ -31,7 +31,7 @@ export function partnerKindsOf(card: { oracleText?: string; typeLine?: string })
   const kinds = new Set<string>();
   for (const raw of (card.oracleText ?? "").split("\n")) {
     const line = raw.trim().toLowerCase();
-    if (line.startsWith("partner (")) kinds.add("partner");
+    if (line === "partner" || line.startsWith("partner (")) kinds.add("partner");
     else if (line.startsWith("partner with ")) kinds.add("partner-with");
     else if (line.startsWith(`partner${DASH}`)) {
       const open = line.indexOf("(");

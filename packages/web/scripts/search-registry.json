@@ -252,7 +252,7 @@
     },
     "partner": {
       "label": "Pairs as a second commander",
-      "description": "The ways a card can share the command zone, read from its printed text: Partner, Partner with a named card, a named group (Friends forever, Character select, Survivors, Father and son), Choose a Background, being a Background, and Doctor's companion.",
+      "description": "The ways a card can share the command zone, read from its printed text: Partner, Partner with a named card, a named group (Friends forever, Character select, Survivors, Father and son), Choose a Background, being a Background, Doctor's companion, and being the Doctor it pairs with.",
       "valueLabels": {
         "partner": "Partner",
         "partner-with": "Partner with a named card",
@@ -262,7 +262,8 @@
         "father-son": "Father and son",
         "chooses-background": "Choose a Background",
         "background": "is a Background",
-        "doctors-companion": "Doctor's companion"
+        "doctors-companion": "Doctor's companion",
+        "doctor": "is a Doctor (what a Doctor's companion pairs with)"
       }
     }
   },

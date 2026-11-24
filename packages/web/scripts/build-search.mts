@@ -20,6 +20,7 @@ import { CREATURE_SUBTYPES, LAND_SUBTYPES } from "@edh-seer/tagger/subtypes";
 import { buildAbilityRows } from "../client/src/lib/search/ability-rows.ts";
 import { buildCatalogue, decodeGroup, type Catalogue, type GroupPayload } from "../client/src/lib/search/catalogue.ts";
 import { evaluate, type Node } from "../client/src/lib/search/evaluate.ts";
+import { isTimeLordDoctor } from "@edh-seer/matcher/legality";
 import { partnerKindsOf } from "../client/src/lib/search/partner-kinds.ts";
 import { isAbilityField, type SearchRegistry } from "../client/src/lib/search/registry.ts";
 import { buildIdentityView, buildNumberViews, buildTypeViews, completeFaces, sparseBestFace, sparseFront, type IndexRow, type NumericRow } from "../client/src/lib/search/type-views.ts";
@@ -126,9 +127,9 @@ function build(): void {
   // COMMANDER EXTRAS (#1787). `is:commander` is the name-index flag `/commanders` lists by, so the two populations are one set; thin rows count (their flag is set like any other).
   const commanderRows = index.cards.flatMap((c, i) => (c.commander === true ? [i] : []));
   if (commanderRows.length > 0) walk.columns.set("is", { kind: "set", path: "is", group: "commander", values: new Map([["commander", commanderRows]]) });
-  // `partner`: every pairing kind a card prints, read from the shard's own oracle text and type line (`partnerKindsOf`). A row with no record cannot say which it prints, so a NOT leaves it out.
+  // `partner`: every pairing kind a card prints, read from the shard's own oracle text and type line (`partnerKindsOf`), plus `doctor`: the card a Doctor's companion may pair with, by legality.ts's own test. A row with no record cannot say which it prints, so a NOT leaves it out.
   const byKind = new Map<string, number[]>();
-  for (const r of [...records].sort((x, y) => x.row - y.row)) for (const k of partnerKindsOf(r.card as { oracleText?: string; typeLine?: string })) (byKind.get(k) ?? byKind.set(k, []).get(k)!).push(r.row);
+  for (const r of [...records].sort((x, y) => x.row - y.row)) for (const k of [...partnerKindsOf(r.card as { oracleText?: string; typeLine?: string }), ...(isTimeLordDoctor(r.card as { typeLine?: string }) ? ["doctor"] : [])]) (byKind.get(k) ?? byKind.set(k, []).get(k)!).push(r.row);
   if (byKind.size > 0) walk.columns.set("partner", { kind: "set", path: "partner", group: "commander", values: new Map([...byKind].sort((x, y) => (x[0] < y[0] ? -1 : 1))), unjudged: index.cards.flatMap((_, i) => (source_.has(i) ? [] : [i])) });
   // PRINTED TEXT IS NOT AN ENUM. The walker's only test is "at most `threshold` distinct values", which a field of printed costs or phrases passes (delayedBy shipped "{T}, Exile this artifact"; condition.choice "a choice you didn't vote for"). THE RULE: a string value of a walked set field may not hold a brace (a mana or cost symbol), a newline, or more than 4 space-separated words. Engine words are hyphen- or colon-joined, so none trips it; a path that does is added to `deny`, never allowed past.
   const leaks: string[] = [];

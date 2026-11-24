@@ -21,8 +21,17 @@ test.each(REAL)("%s prints %j", (_name, card, kinds) => {
   expect(partnerKindsOf(card)).toEqual(kinds);
 });
 
-test("a card that merely has the Partner keyword, or mentions a commander, prints no kind (Scryfall tags Jeska and Akroma 'partner')", () => {
-  expect(partnerKindsOf({ typeLine: "Legendary Planeswalker — Jeska", oracleText: "Jeska enters with a loyalty counter on her for each time you've cast a commander from the command zone this game." })).toEqual([]);
+// Full corpus oracle text (Mongo `cards`, 2026-11-24): a bare "Partner" last line with no reminder text.
+const JESKA = { typeLine: "Legendary Planeswalker — Jeska", oracleText: "Jeska enters with a loyalty counter on her for each time you've cast a commander from the command zone this game.\n0: Choose target creature. Until your next turn, if that creature would deal combat damage to one of your opponents, it deals triple that damage to that player instead.\n−X: Jeska deals X damage to each of up to three targets.\nJeska, Thrice Reborn can be your commander.\nPartner" };
+const TEVESH = { typeLine: "Legendary Planeswalker — Szat", oracleText: "+2: Create two 0/1 black Thrull creature tokens.\n+1: You may sacrifice another creature or planeswalker. If you do, draw two cards, then draw another card if the sacrificed permanent was a commander.\n−10: Gain control of all commanders. Put all commanders from the command zone onto the battlefield under your control.\nTevesh Szat, Doom of Fools can be your commander.\nPartner" };
+const AKROMA = { typeLine: "Legendary Creature — Angel", oracleText: "Flying, first strike, vigilance, trample\nAt the beginning of each combat, until end of turn, each other creature you control gets +1/+1 if it has flying, +1/+1 if it has first strike, and so on for double strike, deathtouch, haste, hexproof, indestructible, lifelink, menace, protection, reach, trample, vigilance, and partner.\nPartner" };
+
+test.each([["Jeska, Thrice Reborn", JESKA], ["Tevesh Szat, Doom of Fools", TEVESH], ["Akroma, Vision of Ixidor", AKROMA]])("%s ends in a bare Partner line and prints partner", (_n, card) => {
+  expect(partnerKindsOf(card)).toEqual(["partner"]);
+});
+
+test("a sentence that merely mentions partner is not a Partner line (Akroma's list, without her final line)", () => {
+  expect(partnerKindsOf({ typeLine: AKROMA.typeLine, oracleText: AKROMA.oracleText.replace("\nPartner", "") })).toEqual([]);
   expect(partnerKindsOf({})).toEqual([]);
 });
 

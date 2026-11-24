@@ -460,6 +460,10 @@ const REAL_PARTNERS: { name: string; typeLine: string; oracleText: string; comma
   { name: "Wilson, Refined Grizzly", typeLine: "Legendary Creature — Bear Warrior", oracleText: "Ward {2}\nChoose a Background (You can have a Background as a second commander.)", commander: true },
   { name: "Dungeon Delver", typeLine: "Legendary Enchantment — Background", oracleText: "Commander creatures you own have \"Room abilities of dungeons you own trigger an additional time.\"", commander: true },
   { name: "Clara Oswald", typeLine: "Legendary Creature — Human Advisor", oracleText: "Doctor's companion (You can have two commanders if the other is the Doctor.)", commander: true },
+  { name: "The Fourth Doctor", typeLine: "Legendary Creature — Time Lord Doctor", oracleText: "You may look at the top card of your library any time.", commander: true },
+  { name: "Susan Foreman", typeLine: "Legendary Creature — Time Lord", oracleText: "", commander: true },
+  { name: "River Song", typeLine: "Legendary Creature — Human Time Lord Rogue", oracleText: "", commander: true },
+  { name: "Jeska, Thrice Reborn", typeLine: "Legendary Planeswalker — Jeska", oracleText: "Jeska, Thrice Reborn can be your commander.\nPartner", commander: true },
   { name: "Gisa, Glorious Resurrector", typeLine: "Legendary Creature — Human Wizard", oracleText: "If a creature an opponent controls would die, exile it instead.", commander: true },
   { name: "Plain Bear", typeLine: "Creature — Bear", oracleText: "Partner (You can have two commanders if both have partner.)", commander: false },
   { name: "Norecord", typeLine: "Legendary Creature — Elf", oracleText: "", commander: true },
@@ -489,7 +493,7 @@ test("is:commander is exactly the commander rows of the name index, the Commande
   expect(b.status, b.stderr + b.stdout).toBe(0);
   const index = JSON.parse(readFileSync(join(root, "v-t", "name-index.json"), "utf8")) as { cards: { commander: boolean }[] };
   const page = index.cards.flatMap((c, i) => (c.commander ? [i] : []));
-  expect(page.length).toBe(8);
+  expect(page.length).toBe(12);
   expect(cmdRowsOf(root, "is", "commander")).toEqual(page);
 });
 
@@ -497,7 +501,9 @@ test("each partner kind finds its real card; a card with no record is not judged
   const root = commanderStatic();
   expect(run(["--static", root]).status).toBe(0);
   const at = (n: string) => REAL_PARTNERS.findIndex((c) => c.name === n);
-  expect(cmdRowsOf(root, "partner", "partner")).toEqual([at("Thrasios, Triton Hero"), at("Plain Bear")]);
+  expect(cmdRowsOf(root, "partner", "partner")).toEqual([at("Thrasios, Triton Hero"), at("Jeska, Thrice Reborn"), at("Plain Bear")]);
+  // `doctor` is the card Doctor's companion allows (legality.ts's own test): a Time Lord Doctor with no other creature type, not any Time Lord
+  expect(cmdRowsOf(root, "partner", "doctor")).toEqual([at("The Fourth Doctor")]);
   expect(cmdRowsOf(root, "partner", "partner-with")).toEqual([at("Pako, Arcane Retriever")]);
   expect(cmdRowsOf(root, "partner", "friends-forever")).toEqual([at("Sophina, Spearsage Deserter")]);
   expect(cmdRowsOf(root, "partner", "chooses-background")).toEqual([at("Wilson, Refined Grizzly")]);

@@ -82,6 +82,17 @@ function namesPartner(a: Card, b: Card): boolean {
   return who.includes(other) || other.includes(who);
 }
 
+/** CR 702.124m: the other commander a Doctor's companion allows, "a legendary Time Lord Doctor creature card that has no other creature types" (owner 2026-09-27; see `pairingLicense`). Hoisted so the search build reads the same test. */
+export const isTimeLordDoctor = (c: Pick<Card, "typeLine">): boolean => (c.typeLine ?? "").split(" // ").some((face) => {
+  const lower = face.toLowerCase();
+  const dash = ["—", "–", " - "].map((d) => lower.indexOf(d)).filter((i) => i >= 0).sort((a, b) => a - b)[0];
+  if (dash === undefined) return false;
+  const types = lower.slice(0, dash);
+  const subtypes = lower.slice(dash + 1).replace("-", "").split(" ").filter(Boolean);
+  return types.includes("legendary") && types.includes("creature")
+    && subtypes.sort().join(" ") === "doctor lord time";
+});
+
 /** The printed ability that licenses this pair, or undefined when nothing on either card does.
  *
  *  UNDER-REPORTS, exactly as `isLegalCommander` does and for the same measured reason: the naive
@@ -104,16 +115,7 @@ export function pairingLicense(a: Card, b: Card): string | undefined {
   // by another type -- a Human Doctor is not the Doctor. Read per face, as a type line prints them.
   // The dash is found by position, not a regex: `\s+[—-]\s+` backtracks on a long run of spaces
   // (CodeQL, polynomial regex on library input).
-  const isDoctor = (c: Card): boolean => (c.typeLine ?? "").split(" // ").some((face) => {
-    const lower = face.toLowerCase();
-    const dash = ["—", "–", " - "].map((d) => lower.indexOf(d)).filter((i) => i >= 0).sort((a, b) => a - b)[0];
-    if (dash === undefined) return false;
-    const types = lower.slice(0, dash);
-    const subtypes = lower.slice(dash + 1).replace("-", "").split(" ").filter(Boolean);
-    return types.includes("legendary") && types.includes("creature")
-      && subtypes.sort().join(" ") === "doctor lord time";
-  });
-  if ((DOCTORS_COMPANION.test(ta) && isDoctor(b)) || (DOCTORS_COMPANION.test(tb) && isDoctor(a))) return "doctor's companion";
+  if ((DOCTORS_COMPANION.test(ta) && isTimeLordDoctor(b)) || (DOCTORS_COMPANION.test(tb) && isTimeLordDoctor(a))) return "doctor's companion";
   return undefined;
 }
 
