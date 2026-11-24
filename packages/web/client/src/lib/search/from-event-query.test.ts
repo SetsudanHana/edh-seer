@@ -1,8 +1,8 @@
 import { describe, expect, test } from "vitest";
 import { identityKeyOf } from "@edh-seer/matcher/partners-core";
-import { compileCharacteristics, coloursFit, type EventQuery } from "../facets.js";
+import { compileCharacteristics, coloursFit, eventsFromParams, eventsToParams, type EventQuery } from "../facets.js";
 import { evaluate } from "./evaluate.js";
-import { coreContext, evaluateEventQuery, fromEventQuery, type CoreRow } from "./from-event-query.js";
+import { coreContext, evaluateEventQuery, fieldNodes, fromEventQuery, type CoreRow } from "./from-event-query.js";
 
 type Row = CoreRow & { slug: string; name: string };
 const vocab = {
@@ -279,5 +279,39 @@ describe("commandersOnly over a mixed fixture", () => {
   });
   test("a row with no `commander` flag is not a commander", () => {
     expect(evaluateEventQuery([{ identity: [], t: [1] }], vocab, { ...q, colours: [] }, "commanders", { commandersOnly: true })).toEqual({ ok: true, rows: [] });
+  });
+});
+
+describe("the same-ability switch (#1786)", () => {
+  const ab = new Set(["tags.abilities.kind", "tags.abilities.emits.verb"]);
+  const filters = [
+    { field: "tags.abilities.kind", op: "must", value: "static" },
+    { field: "tags.abilities.emits.verb", op: "any", value: "draw" },
+    { field: "tags.abilities.emits.verb", op: "any", value: "mill" },
+    { field: "tags.abilities.kind", op: "not", value: "activated" },
+    { field: "read", op: "must", value: "grammar" },
+  ] as const;
+  test("must and any-of ability rows become one ability( ) group; a never row and a non-ability row stay outside", () => {
+    expect(fieldNodes(filters, ab)).toStrictEqual([
+      { not: { field: "tags.abilities.kind", op: "has", value: "activated" } },
+      { field: "read", op: "has", value: "grammar" },
+      { ability: { and: [
+        { field: "tags.abilities.kind", op: "has", value: "static" },
+        { or: [{ field: "tags.abilities.emits.verb", op: "has", value: "draw" }, { field: "tags.abilities.emits.verb", op: "has", value: "mill" }] },
+      ] } },
+    ]);
+  });
+  test("off, or with the ability fields unknown, nothing is grouped", () => {
+    expect(fieldNodes(filters).some((n) => "ability" in n)).toBe(false);
+    const q = { colours: [], types: [], subtypes: [], keywords: [], cardColours: [], produce: [], consume: [], fieldFilters: [...filters], sameAbility: true };
+    expect(JSON.stringify(fromEventQuery(q, "cards"))).not.toContain("ability");
+    expect(JSON.stringify(fromEventQuery(q, "cards", { abilityFields: ab }))).toContain("\"ability\"");
+  });
+  test("the link carries it as sameability=1 and reads it back", () => {
+    const q = eventsFromParams(new URLSearchParams("sameability=1&f=read:grammar"));
+    expect(q.sameAbility).toBe(true);
+    expect(eventsToParams(q, new URLSearchParams()).get("sameability")).toBe("1");
+    expect(eventsToParams({ ...q, sameAbility: undefined }, new URLSearchParams("sameability=1")).has("sameability")).toBe(false);
+    expect(eventsFromParams(new URLSearchParams("sameability=yes")).sameAbility).toBeUndefined();
   });
 });

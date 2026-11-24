@@ -6,7 +6,8 @@
     "catalogue": 100000,
     "payoffs": 4000,
     "abilities": 550000,
-    "roles": 30000
+    "roles": 30000,
+    "abilityRows": 800000
   },
   "groups": {
     "types": [],

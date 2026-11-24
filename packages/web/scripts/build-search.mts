@@ -17,6 +17,7 @@ import { gzipSync } from "node:zlib";
 import { POOL_CLASSES } from "@edh-seer/matcher";
 import { BUILD_CATEGORIES } from "@edh-seer/matcher/build";
 import { CREATURE_SUBTYPES, LAND_SUBTYPES } from "@edh-seer/tagger/subtypes";
+import { buildAbilityRows } from "../client/src/lib/search/ability-rows.ts";
 import { buildCatalogue, decodeGroup, type Catalogue, type GroupPayload } from "../client/src/lib/search/catalogue.ts";
 import { evaluate, type Node } from "../client/src/lib/search/evaluate.ts";
 import type { SearchRegistry } from "../client/src/lib/search/registry.ts";
@@ -158,6 +159,8 @@ function build(): void {
   walk.columns.set("stBest", best);
   const { catalogue, payloads } = buildCatalogue({ version: manifest.version, deriveVersion: manifest.deriveVersion, registry, walk, core });
 
+  // ABILITY ROWS (#1786): the same ability fields over one row per ability, for `ability( … )`. A file of its own, outside `groups`, so a question that does not name `ability(` never fetches it.
+  const abilityRows = buildAbilityRows(records, registry, walk.columns);
   const files = new Map<string, string>();
   const sizes: Record<string, { bytes: number; gzipBytes: number }> = {};
   for (const [name, payload] of Object.entries(payloads)) {
@@ -167,6 +170,13 @@ function build(): void {
     group.gzipBytes = gzipSync(text).length;
     sizes[name] = { bytes: group.bytes, gzipBytes: group.gzipBytes };
     files.set(group.file!, text);
+  }
+  {
+    const text = JSON.stringify(abilityRows.payload);
+    const meta = { file: "abilityRows.json", bytes: Buffer.byteLength(text), gzipBytes: gzipSync(text).length };
+    catalogue.abilityRows = meta;
+    sizes["abilityRows"] = { bytes: meta.bytes, gzipBytes: meta.gzipBytes };
+    files.set(meta.file, text);
   }
   const catalogueText = JSON.stringify(catalogue);
   sizes["catalogue"] = { bytes: Buffer.byteLength(catalogueText), gzipBytes: gzipSync(catalogueText).length };

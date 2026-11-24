@@ -23,8 +23,8 @@ test("the registry owns the read state, the grammar's paths, roles and the disti
   expect(registry.deny).toEqual(expect.arrayContaining([...DEFAULT_DENY]));
 });
 
-test("budgets are gzip bytes for read, faces, payoffs, abilities, roles and the catalogue", () => {
-  expect(registry.budgets).toEqual({ read: 50_000, faces: 20_000, catalogue: 100_000, payoffs: 4_000, abilities: 550_000, roles: 30_000 });
+test("budgets are gzip bytes for read, faces, payoffs, abilities, roles, the ability rows and the catalogue", () => {
+  expect(registry.budgets).toEqual({ read: 50_000, faces: 20_000, catalogue: 100_000, payoffs: 4_000, abilities: 550_000, roles: 30_000, abilityRows: 800_000 });
 });
 
 test("creature and land are named, with values supplied at build time", () => {

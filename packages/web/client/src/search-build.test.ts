@@ -4,6 +4,7 @@ import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, writeFil
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { expect, test } from "vitest";
+import { decodeAbilityRows } from "./lib/search/ability-rows.js";
 import { decodeGroup, type Catalogue } from "./lib/search/catalogue.js";
 import { evaluate, type EvalContext } from "./lib/search/evaluate.js";
 import { buildIdentityView, buildNumberViews, buildTypeViews } from "./lib/search/type-views.js";
@@ -53,7 +54,7 @@ test("build promotes search/s-<hash>, keeps the other manifest keys, and --verif
   expect(m.precons).toBe("p-keep");
   expect(m.search).toMatch(/^s-[0-9a-f]{12}$/);
   const dir = join(root, "v-t", "search", m.search);
-  expect(readdirSync(dir).sort()).toEqual(["catalogue.json", "faces.json", "read.json"]);
+  expect(readdirSync(dir).sort()).toEqual(["abilityRows.json", "catalogue.json", "faces.json", "read.json"]);
   const cat = JSON.parse(readFileSync(join(dir, "catalogue.json"), "utf8"));
   expect(cat).toMatchObject({ formatVersion: 1, version: "v-t", deriveVersion: 9 });
   expect(cat.groups.read.bytes).toBeGreaterThan(0);
@@ -397,4 +398,40 @@ test("NOT on `unknownTriggers` keeps out the rows with no record or no tags: the
   // the unjudged row still answers the positive question as before (no), and a NOT beside other terms stays per column
   expect(rowsOf(ctx, { and: [{ not: present }, { field: "read", op: "has", value: "no-record" }] })).toEqual([]);
   expect(rowsOf(ctx, { not: { field: "read", op: "has", value: "grammar" } })).toContain("Ghost");
+});
+
+// #1786: the ability rows of the BUILT artifact, over the production cards above.
+test("the ability rows are a file of their own, outside every group, and `ability( … )` is never wider than the card-level and (#1786)", () => {
+  const root = abilityStatic();
+  const built = run(["--static", root]);
+  expect(built.status, built.stderr + built.stdout).toBe(0);
+  const cat = catalogueOf(root);
+  const meta = cat.abilityRows!;
+  expect(meta.file).toBe("abilityRows.json");
+  // no group names the file, so a question that does not say `ability(` never fetches it
+  expect(Object.values(cat.groups).some((g) => g.file === meta.file)).toBe(false);
+  expect(built.stdout).toMatch(/abilityRows\s+\d+ bytes\s+\d+ gzip/);
+  const dir = join(root, "v-t", "search", manifest(root).search);
+  const rows = decodeAbilityRows(JSON.parse(readFileSync(join(dir, meta.file), "utf8")));
+  const ctx = { ...clientColumns(root), abilities: rows };
+  // one id per ability of every card the shards hold
+  const abilityCount = Object.values(JSON.parse(readFileSync(join(root, "v-t", "cards", "0000.json"), "utf8")) as Record<string, { tags: { abilities?: unknown[] } }>)
+    .reduce((n, e) => n + (e.tags.abilities?.length ?? 0), 0);
+  expect(rows.count).toBe(abilityCount);
+  // every pair of values of two ability fields: the same-ability answer is a subset of the across-abilities one, and some pair is strictly narrower
+  const KIND = "tags.abilities.kind", VERB = "tags.abilities.emits.verb";
+  const kinds = cat.groups["abilities"]!.fields.find((f) => f.id === KIND)!.values!.map((v) => v.v);
+  const verbs = cat.groups["abilities"]!.fields.find((f) => f.id === VERB)!.values!.map((v) => v.v);
+  let narrower = 0;
+  for (const k of kinds) for (const v of verbs) {
+    const terms = [{ field: KIND, op: "has", value: k }, { field: VERB, op: "has", value: v }] as const;
+    const across = evaluate({ and: [...terms] }, ctx);
+    const same = evaluate({ ability: { and: [...terms] } }, ctx);
+    if (!across.ok || !same.ok) throw new Error("cannot answer");
+    expect(same.rows.every((r) => across.rows.includes(r)), `${k} ${v}`).toBe(true);
+    if (same.rows.length < across.rows.length) narrower++;
+  }
+  expect(narrower).toBeGreaterThan(0);
+  // a field outside the abilities is no ability field: refused by name
+  expect(evaluate({ ability: { field: "read", op: "has", value: "grammar" } }, ctx)).toEqual({ ok: false, cannotAnswer: ["read is not an ability field, so it cannot be inside ability( )"] });
 });

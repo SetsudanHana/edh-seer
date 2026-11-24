@@ -154,3 +154,49 @@ describe("the search loader", () => {
     });
   });
 });
+
+describe("the ability rows (#1786)", () => {
+  const abCatalogue = { ...catalogue, abilityRows: { file: "abilityRows.json", bytes: 1, gzipBytes: 1 } };
+  const abFile = { rows: encodePostings([0, 2]), n: [2, 1], fields: { "tags.abilities.kind": { kind: "set", values: { static: encodePostings([0]), triggered: encodePostings([1, 2]) } } } };
+  const withRows = (over: Record<string, unknown> = {}) => stub({ "/static/v1/search/s-abc/catalogue.json": abCatalogue, "/static/v1/search/s-abc/abilityRows.json": abFile, ...over });
+  // three cards, the first two on a card with abilities 0,1 and the third with ability 2
+  const q: Node = { ability: { field: "tags.abilities.kind", op: "has", value: "triggered" } };
+
+  test("a question without ability( ) never fetches the file; fieldsOf leaves the inner fields to it", async () => {
+    const f = withRows();
+    await withCatalogue(coreContext(rows, vocab), createSearchLoader("/static", f as unknown as typeof fetch), readQ);
+    expect(f.mock.calls.map((c) => String(c[0]))).not.toContain("/static/v1/search/s-abc/abilityRows.json");
+    expect(fieldsOf(q)).toEqual([]);
+  });
+
+  test("ability( ) fetches it once, from the ability rows and not from any group file, and answers by card", async () => {
+    const f = withRows();
+    const loader = createSearchLoader("/static", f as unknown as typeof fetch);
+    const r = await resolveCatalogue(coreContext(rows, vocab), loader, q);
+    expect(r.state).toBe("ready");
+    expect(evaluate(q, r.ctx)).toEqual({ ok: true, rows: [0, 2] });
+    await resolveCatalogue(coreContext(rows, vocab), loader, q);
+    const urls = f.mock.calls.map((c) => String(c[0]));
+    expect(urls.filter((u) => u.endsWith("abilityRows.json"))).toHaveLength(1);
+    expect(urls.some((u) => u.endsWith("read.json") || u.endsWith("other.json"))).toBe(false);
+  });
+
+  test("a failed read is `failed`, is never cached, and the next ask reads again", async () => {
+    const f = withRows({ "/static/v1/search/s-abc/abilityRows.json": null });
+    const loader = createSearchLoader("/static", f as unknown as typeof fetch);
+    expect((await resolveCatalogue(coreContext(rows, vocab), loader, q)).state).toBe("failed");
+    expect((await resolveCatalogue(coreContext(rows, vocab), loader, q)).state).toBe("failed");
+    expect(f.mock.calls.filter((c) => String(c[0]).endsWith("abilityRows.json"))).toHaveLength(2);
+  });
+
+  test("a build without the file is `incomplete`: cannot-answer, never an empty list", async () => {
+    const r = await resolveCatalogue(coreContext(rows, vocab), createSearchLoader("/static", stub() as unknown as typeof fetch), q);
+    expect(r.state).toBe("incomplete");
+    expect(evaluate(q, r.ctx).ok).toBe(false);
+  });
+
+  test("an inner field the file lacks is `incomplete` too", async () => {
+    const r = await resolveCatalogue(coreContext(rows, vocab), createSearchLoader("/static", withRows() as unknown as typeof fetch), { ability: { field: "tags.abilities.nope", op: "has", value: "x" } });
+    expect(r.state).toBe("incomplete");
+  });
+});

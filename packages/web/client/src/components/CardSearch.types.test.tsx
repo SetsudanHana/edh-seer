@@ -34,6 +34,7 @@ const loaderOf = (cat: Catalogue | null, gate?: Promise<void>): SearchLoader => 
   catalogue: vi.fn(async () => { await gate; return cat; }),
   // The best-face view of the creature types: no row's best face differs from its subtypes unless a test says so.
   columnsFor: vi.fn(async (fields: readonly string[]) => fields.includes("stBest") ? [BEST] : []),
+  abilityRows: vi.fn(async () => null),
 });
 
 const atUrl = (url: string, searchLoader: SearchLoader) => {

@@ -1,7 +1,7 @@
 // The ability-scope note (#1784). The engine's facts about a card belong to ONE ABILITY each (this ability triggers on X, THAT ability
 // sacrifices Y), but a result here is judged by CARD: a card matches `ab.kind:static` and `ab.emits.verb:draw` when SOME ability is static
 // and SOME ability draws, not necessarily the same one.
-// CEILING: results are judged by card, not by ability, so the page says so under any result set with two ability terms. The upgrade is the ability-scope slice (#1786), which keeps a row per ability and judges every term of a group on the same one.
+// CEILING: results are judged by card, not by ability, unless the terms are grouped as `ability( … )` (typed) or by the builder's "same ability" switch (#1786, ability-rows.ts), so the page says so under any result set with two ungrouped ability terms.
 import type { FieldFilter } from "../facets.js";
 import type { Query } from "./query.js";
 
@@ -10,6 +10,8 @@ export const ACROSS_ABILITIES_NOTE = "Matched across the card's abilities: each 
 
 /** How many ability terms a query needs to hold TOGETHER: an `and` adds, an `or` needs only its widest branch, a `not` is its inner term. */
 export function abilityTermsOf(q: Query, isAbility: (field: string) => boolean): number {
+  // INSIDE ability( … ) every term is judged on one ability, so none of them is "across": the group counts for nothing here.
+  if ("ability" in q) return 0;
   if ("and" in q) return q.and.reduce((n, k) => n + abilityTermsOf(k, isAbility), 0);
   if ("or" in q) return q.or.reduce((n, k) => Math.max(n, abilityTermsOf(k, isAbility)), 0);
   if ("not" in q) return abilityTermsOf(q.not, isAbility);

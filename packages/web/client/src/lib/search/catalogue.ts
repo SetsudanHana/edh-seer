@@ -39,6 +39,8 @@ export interface Catalogue {
   deriveVersion: number;
   groups: Record<string, CatalogueGroup>;
   namedLists: Record<string, NamedList>;
+  /** The ability-row file (#1786), apart from `groups` so no ordinary question fetches it. Absent = this build has none: `ability( … )` is cannot-answer. */
+  abilityRows?: { file: string; bytes: number; gzipBytes: number };
 }
 
 export type FieldPayload =
@@ -87,6 +89,11 @@ function describe(col: Column, registry: SearchRegistry): CatalogueField {
   return f;
 }
 
+/** One column as its payload (also the ability-row file's). */
+export function encodeColumn(col: Column): FieldPayload {
+  return payloadOf(col);
+}
+
 function payloadOf(col: Column): FieldPayload {
   if (col.kind === "set") {
     const values: Record<string, string> = {};
@@ -121,25 +128,28 @@ export function buildCatalogue(input: BuildInput): { catalogue: Catalogue; paylo
   };
 }
 
+/** One field payload back to a column. */
+export function decodeFieldPayload(path: string, p: FieldPayload): Column {
+  if (p.kind === "set") {
+    const values = new Map<string, number[]>();
+    for (const [v, b64] of Object.entries(p.values)) values.set(v, decodePostings(b64));
+    const col: Column = { kind: "set", path, group: "", values };
+    if (p.unjudged) col.unjudged = decodePostings(p.unjudged);
+    if (p.fallback) {
+      col.fallback = p.fallback;
+      col.overrides = decodePostings(p.overrides ?? "");
+    }
+    return col;
+  }
+  return { kind: "number", path, group: "", rows: decodePostings(p.rows), min: p.min, max: p.max };
+}
+
 /** Rebuild columns from a group payload: what a client does after fetching the group file. */
 export function decodeGroup(group: CatalogueGroup, payload: GroupPayload): Column[] {
   const out: Column[] = [];
   for (const f of group.fields) {
     const p = payload.fields[f.id];
-    if (!p) continue;
-    if (p.kind === "set") {
-      const values = new Map<string, number[]>();
-      for (const [v, b64] of Object.entries(p.values)) values.set(v, decodePostings(b64));
-      const col: Column = { kind: "set", path: f.id, group: "", values };
-      if (p.unjudged) col.unjudged = decodePostings(p.unjudged);
-      if (p.fallback) {
-        col.fallback = p.fallback;
-        col.overrides = decodePostings(p.overrides ?? "");
-      }
-      out.push(col);
-    } else {
-      out.push({ kind: "number", path: f.id, group: "", rows: decodePostings(p.rows), min: p.min, max: p.max });
-    }
+    if (p) out.push(decodeFieldPayload(f.id, p));
   }
   return out;
 }
