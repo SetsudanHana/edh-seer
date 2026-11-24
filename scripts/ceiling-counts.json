@@ -154,6 +154,7 @@
   "packages/web/client/src/lib/deck-gauge.ts": 1,
   "packages/web/client/src/lib/precon-upgrades.ts": 1,
   "packages/web/client/src/lib/search/evaluate.ts": 1,
+  "packages/web/client/src/lib/search/query.ts": 1,
   "packages/web/client/src/lib/speed.ts": 2,
   "packages/web/client/src/main.tsx": 1,
   "packages/web/functions/globals.d.ts": 1,

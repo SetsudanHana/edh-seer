@@ -88,7 +88,7 @@ export function createSearchLoader(baseUrl: string, fetchImpl: typeof fetch = fe
   };
 }
 
-function listsOf(node: Node, out: Set<string> = new Set()): string[] {
+export function listsOf(node: Node, out: Set<string> = new Set()): string[] {
   if ("and" in node) node.and.forEach((n) => listsOf(n, out));
   else if ("or" in node) node.or.forEach((n) => listsOf(n, out));
   else if ("not" in node) listsOf(node.not, out);
