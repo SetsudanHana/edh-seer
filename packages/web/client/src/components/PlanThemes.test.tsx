@@ -70,15 +70,15 @@ test("the supporting groups are folded until asked for", async () => {
   expect(screen.getByRole("heading", { name: "Cost reducers" })).toBeInTheDocument();
 });
 
-/** ONE NAME FOR THE MAIN THEME (appeal review 2026-09-26): the group that IS the main theme takes
- *  the name Glance gives it, leads, and says so; where no group meets it, the page says so. */
-test("the main theme's own group takes its name, leads and says so", () => {
+/** ONE NAME FOR THE MAIN THEME (appeal review 2026-09-26; #1170 2026-11-24): the group that IS the main
+ *  theme is named by the same `tagName` as the headline, so it needs no patch; it leads and says so.
+ *  Where no group meets it, the page says so. */
+test("the main theme's own group is named as the headline names it, leads and says so", () => {
   const { report, graph } = engineDeck();
-  render(<PlanThemes report={report} graph={graph} main={{ name: "Clerics", tag: "scales:cleric", count: 9, nonland: 16 }} />);
+  render(<PlanThemes report={report} graph={graph} main={{ name: "Cleric typal", tag: "scales:cleric", count: 9, nonland: 16 }} />);
   const themes = screen.getAllByRole("heading", { level: 4 }).filter((h) => h.id.startsWith("theme-"));
-  expect(themes[0]!.textContent).toBe("Clerics");
+  expect(themes[0]!.textContent).toBe("Cleric typal");
   expect(within(themes[0]!.closest("li")!).getByText("main theme")).toBeInTheDocument();
-  expect(screen.queryByRole("heading", { name: "Cleric typal" })).toBeNull();
 });
 
 test("a main theme no group meets is named in words above the themes", () => {
@@ -125,8 +125,8 @@ test("the main theme never folds under another row", () => {
   const cleric = themes.find((g) => g.tag === "scales:cleric")!;
   const other = themes.find((g) => g !== cleric)!;
   cleric.sameAs = { name: other.name, extra: [], missing: [] };
-  render(<PlanThemes report={report} graph={graph} model={model} main={{ name: "Clerics", tag: "scales:cleric", count: 9, nonland: 16 }} />);
-  expect(screen.getByRole("heading", { name: "Clerics" })).toBeInTheDocument();
+  render(<PlanThemes report={report} graph={graph} model={model} main={{ name: "Cleric typal", tag: "scales:cleric", count: 9, nonland: 16 }} />);
+  expect(screen.getByRole("heading", { name: "Cleric typal" })).toBeInTheDocument();
 });
 
 /** WHY THE MAIN THEME IS MAIN (#979, owner ruling 2026-10-06, option A): "Blink (27)" over an
@@ -145,6 +145,6 @@ test("a bar bigger than the main theme gets the reason, named", () => {
 
 test("no reason is printed when the main theme's bar is the biggest", () => {
   const { report, graph } = engineDeck();
-  render(<PlanThemes report={report} graph={graph} main={{ name: "Clerics", tag: "scales:cleric", count: 99, nonland: 120 }} />);
+  render(<PlanThemes report={report} graph={graph} main={{ name: "Cleric typal", tag: "scales:cleric", count: 99, nonland: 120 }} />);
   expect(screen.queryByText(/most distinctive/)).toBeNull();
 });

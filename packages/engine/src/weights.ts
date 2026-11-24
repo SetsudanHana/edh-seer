@@ -1,5 +1,5 @@
 import { VERB_GENERAL_CLASS } from "@edh-seer/tagger/schema";
-import { themeName } from "./theme-names.js";
+import { tagName } from "./theme-names.js";
 import { describeTag, diesGeneralClass, tagFamily, type Tag } from "./tags.js";
 
 // Re-exported for callers that historically imported it from here (e.g. this file's own test)
@@ -254,7 +254,8 @@ export function computeCohesion(
   // but describeTag has no per-family case for most families, so a same-family secondary would
   // still render the identical label as the primary. Comparing family, not position, catches
   // that wherever in the ranking it falls.
-  const secondary = themes.slice(1).find((t) => tagFamily(t) !== tagFamily(primary)) ?? null;
+  // A CHOSEN-TYPE key that resolved to nothing (`__none__`) is a placeholder, not a theme: it named a deck "__none__s".
+  const secondary = themes.slice(1).find((t) => tagFamily(t) !== tagFamily(primary) && !t.endsWith(":__none__")) ?? null;
   // COHESION MEASURES THE FAMILY, THE RANKING AND THE AXIS DO NOT (2026-08-18).
   //
   // A deck whose plan is "make tokens" splits across 22 `create-token:<subtype>` tags, so counting
@@ -304,13 +305,13 @@ export function computeCohesion(
     theme,
     /** The player's name for the same thing -- see `theme-names.ts`. Carried BESIDE the mechanical
      *  phrase, never instead of it: every edge reason still needs the mechanism. */
-    name: themeName(primary, theme),
+    name: tagName(primary),
     tag: primary,
     secondary: secondaryTheme,
     /** The secondary's player name, on the same rule as `name`. Both halves of the theme line are
      *  named or neither is; naming one and leaving "re-firing entry triggers" beside it was the
      *  version of this that shipped for an hour. */
-    secondaryName: secondary && secondaryTheme ? themeName(secondary, secondaryTheme) : null,
+    secondaryName: secondary && secondaryTheme ? tagName(secondary) : null,
     secondaryTag: secondary,
     score,
     onThemeCount,

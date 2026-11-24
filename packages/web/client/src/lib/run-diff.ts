@@ -51,7 +51,7 @@ export function snapshotRun(data: AnalyzeResponse): RunSnapshot {
     cards: r.cards.map((c) => c.name),
     synergy: r.synergyOverall,
     build: r.buildScore,
-    theme: r.cohesion?.theme,
+    theme: r.cohesion?.name ?? r.cohesion?.theme,
     categories: Object.fromEntries((r.buildCategories ?? []).map((c) => [c.category, c.count])),
     findings: Object.fromEntries(findings(r).map((f) => [f.id, `${f.figureLabel} ${f.figure}`])),
   };

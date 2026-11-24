@@ -56,7 +56,6 @@ export function PlanThemes({ report, graph, model, onOpenCard, main }: {
   // most DISTINCTIVE thing the deck does (`rankThemes` weighs rarity), while a bar counts every card a
   // link touches. "Blink (27)" over an Enchantress bar of 39 read as an error to three seats, so the
   // page says which is which wherever a bar outnumbers it.
-  const shown = (g: EngineGroup) => { const w = main ? whichTheme(g, main) : null; return w?.match === "same" ? w.name : g.name; };
   const bigger = main ? roots.filter((g) => !leads(g) && size(g) > main.count).sort((x, y) => size(y) - size(x))[0] : undefined;
   if (!m.totalLinks) return null;
   return (
@@ -64,7 +63,7 @@ export function PlanThemes({ report, graph, model, onOpenCard, main }: {
       <h3 id="plan-themes" className="text-lg font-semibold">What your deck does</h3>
       {/* NO GROUP IS THE MAIN THEME: said, not left as two unrelated names on two chapters. */}
       {main && bigger ? (
-        <p className="max-w-[70ch] text-sm">Your main theme is <b>{main.name}</b> ({main.count} of {main.nonland} nonland cards are about it): the most distinctive thing this deck does. {shown(bigger)} links more cards ({size(bigger)}): a bar counts every card a link touches, while the main theme counts only the cards whose own text is about it, and weighs how rare that is across decks.</p>
+        <p className="max-w-[70ch] text-sm">Your main theme is <b>{main.name}</b> ({main.count} of {main.nonland} nonland cards are about it): the most distinctive thing this deck does. {bigger.name} links more cards ({size(bigger)}): a bar counts every card a link touches, while the main theme counts only the cards whose own text is about it, and weighs how rare that is across decks.</p>
       ) : main && !matched ? (
         <p className="max-w-[70ch] text-sm">Your main theme is <b>{main.name}</b> ({main.count} of {main.nonland} nonland cards); by how the cards work together, the deck does these:</p>
       ) : null}
@@ -109,8 +108,9 @@ const byWeight = (a: EngineCard, b: EngineCard) => Number(b.isCommander) - Numbe
  *  its own theme's cards in place, and a card there opens in the drawer like everywhere else. */
 function Theme({ g, m, onOpenCard, main, top, also = [] }: { g: EngineGroup; m: EngineModel; onOpenCard?: (id: string) => void; main?: MainTheme | null; top: number; also?: EngineGroup[] }) {
   const which = main ? whichTheme(g, main) : null;
-  // A named theme's own group takes the name Glance gives it, so the deck is called one thing.
-  const name = which?.match === "same" ? which.name : g.name;
+  // ONE NAME PER KEY (#1170): the group and the headline are named by the same `tagName`, so the
+  // main theme's own group needs no patch to be called what Glance calls it.
+  const name = g.name;
   const [open, setOpen] = useState(false);
   const [kid, setKid] = useState<string | null>(null);
   const hubs = g.hubs.map((id) => m.cards.get(id)!).sort(byWeight);
