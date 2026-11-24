@@ -42,7 +42,7 @@ export interface Catalogue {
 }
 
 export type FieldPayload =
-  | { kind: "set"; values: Record<string, string>; fallback?: string; overrides?: string }
+  | { kind: "set"; values: Record<string, string>; fallback?: string; overrides?: string; unjudged?: string }
   | { kind: "number"; rows: string; min: number[]; max: number[] };
 
 export interface GroupPayload {
@@ -91,7 +91,8 @@ function payloadOf(col: Column): FieldPayload {
   if (col.kind === "set") {
     const values: Record<string, string> = {};
     for (const [v, rows] of col.values) values[v] = encodePostings(rows);
-    return col.fallback ? { kind: "set", values, fallback: col.fallback, overrides: encodePostings(col.overrides ?? []) } : { kind: "set", values };
+    const unjudged = col.unjudged && col.unjudged.length > 0 ? { unjudged: encodePostings(col.unjudged) } : {};
+    return col.fallback ? { kind: "set", values, fallback: col.fallback, overrides: encodePostings(col.overrides ?? []), ...unjudged } : { kind: "set", values, ...unjudged };
   }
   return { kind: "number", rows: encodePostings(col.rows), min: col.min, max: col.max };
 }
@@ -130,6 +131,7 @@ export function decodeGroup(group: CatalogueGroup, payload: GroupPayload): Colum
       const values = new Map<string, number[]>();
       for (const [v, b64] of Object.entries(p.values)) values.set(v, decodePostings(b64));
       const col: Column = { kind: "set", path: f.id, group: "", values };
+      if (p.unjudged) col.unjudged = decodePostings(p.unjudged);
       if (p.fallback) {
         col.fallback = p.fallback;
         col.overrides = decodePostings(p.overrides ?? "");

@@ -16,6 +16,8 @@ export interface SetColumn {
   /** A sparse column: `values` hold only the `overrides` rows; every other row answers as `fallback` does. */
   fallback?: string;
   overrides?: number[];
+  /** Rows this column cannot speak for (a card with no record, or one with no tags): a NOT over it leaves them out, because "none of its triggers is unread" is no answer about a card nobody read. Absent = it speaks for every row. */
+  unjudged?: number[];
   /** Effective per-value counts of a sparse column (what the catalogue reports). */
   totals?: Map<string, number>;
 }

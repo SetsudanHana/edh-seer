@@ -318,9 +318,11 @@ test("grants:creature-types, counts:excluding-a-type and cares:one-type-count ea
   // a chosen creature type, and a named one
   expect(has("grants", "creature-types")).toEqual(["Valkyrie's Call", "Xenograft"]);
   // a count that leaves a type out: non-Borg creatures, noncreature permanents; and not a TRIGGER that leaves one out (Valkyrie's Call)
-  expect(has("counts", "excluding-a-type")).toEqual(["Blast Zone", "Glorious Protector", "Hour of Revelation", "Infinite Diversity", "The Third Doctor"]);
+  // Only the sources that always carry a counting phrase: Blast Zone ("destroy each nonland permanent") records its SET in count.scalesWith and is NOT a member; Infinite Diversity's count is recorded only there, so it is not either (CEILING in build-search.mts)
+  expect(has("counts", "excluding-a-type")).toEqual(["Glorious Protector", "Hour of Revelation", "The Third Doctor"]);
   // how many of ONE creature type; the distinct-type counters stay in `creature-types`, not here
   // (Witch's Cottage counts Swamps: a land type, not a creature type)
+  // (Zombie Apocalypse and Tivadar's Crusade name a tribe they destroy or cast, which count.scalesWith records, so they are NOT members)
   expect(has("cares", "one-type-count")).toEqual(["Krenko, Mob Boss", "Priest of Titania"]);
   expect(has("cares", "creature-types")).toEqual(["Infinite Diversity", "Valiant Changeling"]);
   const cat = catalogueOf(root);
@@ -343,9 +345,56 @@ test("roles and answer classes are ordinary fields over the name-index row codes
   expect(r.valueLabels!["targetedRemoval"]).toBe("targeted removal");
 });
 
-test("each group stays under its budget in the built artifact (#1784)", () => {
+test("a group over its budget fails the build, exits non-zero and promotes nothing (#1784)", () => {
+  const root = abilityStatic();
+  const okRun = run(["--static", root]);
+  expect(okRun.status, okRun.stderr).toBe(0);
+  const sizes = Object.entries(catalogueOf(root).groups).filter(([, g]) => g.file).map(([n, g]) => [n, g.gzipBytes!] as const);
+  const regPath = join(root, "tight.json");
+  const reg = JSON.parse(readFileSync(REGISTRY, "utf8"));
+  const root2 = abilityStatic();
+  // every group under its real budget (the fixture is far smaller), then the abilities group given less than the fixture needs
+  for (const [n, bytes] of sizes) expect(bytes, n).toBeLessThan(reg.budgets[n]);
+  reg.budgets.abilities = Math.floor(sizes.find(([n]) => n === "abilities")![1] / 2);
+  writeFileSync(regPath, JSON.stringify(reg));
+  const r = run(["--static", root2, "--registry", regPath]);
+  expect(r.status).not.toBe(0);
+  expect(r.stderr).toMatch(/budget breach: abilities is \d+ gzip bytes, budget \d+/);
+  expect(manifest(root2).search).toBeUndefined();
+});
+
+/** The same fixture with one grammar value edited, for the printed-text check. */
+function withGrammarValue(value: string): string {
+  const root = abilityStatic();
+  const file = join(root, "v-t", "cards", "0000.json");
+  const shard = JSON.parse(readFileSync(file, "utf8"));
+  shard["grizzly bears"].tags.abilities = [{ kind: "static", repeats: value }];
+  writeFileSync(file, JSON.stringify(shard));
+  return root;
+}
+
+test("a string enum that holds printed text fails the build and names the path and the value (#1784)", () => {
+  for (const leak of ["{T}, Exile this artifact", "a choice you didn't vote for", "Whenever this creature attacks, draw"]) {
+    const root = withGrammarValue(leak);
+    const r = run(["--static", root]);
+    expect(r.status, leak).not.toBe(0);
+    expect(r.stderr, leak).toMatch(/printed text in an enum: tags\.abilities\.repeats = /);
+    expect(manifest(root).search).toBeUndefined();
+  }
+  // short hyphenated and colon-joined engine words are the normal shape
+  for (const ok of ["per-turn", "dies:creature:59", "creature-type", "mana-spent"]) expect(run(["--static", withGrammarValue(ok)]).status, ok).toBe(0);
+}, 60_000);
+
+test("NOT on `unknownTriggers` keeps out the rows with no record or no tags: they are not 'all triggers read' (#1784)", () => {
   const root = abilityStatic();
   expect(run(["--static", root]).status).toBe(0);
-  const budgets = JSON.parse(readFileSync(REGISTRY, "utf8")).budgets as Record<string, number>;
-  for (const [name, g] of Object.entries(catalogueOf(root).groups)) if (g.file) expect(g.gzipBytes!, name).toBeLessThan(budgets[name]!);
+  const ctx = clientColumns(root);
+  const present = { field: "unknownTriggers", op: "has", value: "present" } as const;
+  const without = rowsOf(ctx, { not: present });
+  expect(without).not.toContain("Ghost");
+  expect(without).toContain("Grizzly Bears");
+  expect(without).not.toContain("Betor, Kin to All");
+  // the unjudged row still answers the positive question as before (no), and a NOT beside other terms stays per column
+  expect(rowsOf(ctx, { and: [{ not: present }, { field: "read", op: "has", value: "no-record" }] })).toEqual([]);
+  expect(rowsOf(ctx, { not: { field: "read", op: "has", value: "grammar" } })).toContain("Ghost");
 });

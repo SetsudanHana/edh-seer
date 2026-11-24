@@ -386,5 +386,65 @@
    }
   ],
   "segmentHash": "4914db5fcfe800dd234332cc4cfc121c92fe721522c4a2aea31cfdbdfdac1ee7"
+ },
+ "Zombie Apocalypse": {
+  "source": {
+   "name": "Zombie Apocalypse",
+   "typeLine": "Sorcery",
+   "oracleText": "Return all Zombie creature cards from your graveyard to the battlefield tapped, then destroy all Humans.",
+   "keywords": [],
+   "colors": [
+    "B"
+   ],
+   "manaValue": 6,
+   "colorIdentity": [
+    "B"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{3}{B}{B}{B}",
+   "layout": "normal",
+   "_id": "8241277d-654f-4985-9d49-a22c1e59eec2"
+  }
+ },
+ "Tivadar's Crusade": {
+  "source": {
+   "name": "Tivadar's Crusade",
+   "typeLine": "Sorcery",
+   "oracleText": "Destroy all Goblins.",
+   "keywords": [],
+   "colors": [
+    "W"
+   ],
+   "manaValue": 3,
+   "colorIdentity": [
+    "W"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{1}{W}{W}",
+   "layout": "normal",
+   "_id": "5cf4d98e-f2f4-435b-a633-990b2e654f3a"
+  }
+ },
+ "Planar Cleansing": {
+  "source": {
+   "name": "Planar Cleansing",
+   "typeLine": "Sorcery",
+   "oracleText": "Destroy all nonland permanents.",
+   "keywords": [],
+   "colors": [
+    "W"
+   ],
+   "manaValue": 6,
+   "colorIdentity": [
+    "W"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{3}{W}{W}{W}",
+   "layout": "normal",
+   "_id": "a98c2d81-4add-4292-bbdd-e1b69ff936d4"
+  }
  }
 }

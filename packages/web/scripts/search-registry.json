@@ -69,7 +69,7 @@
     },
     "cares": {
       "label": "Cares about",
-      "description": "A payoff whose rules count types, read from our own rules and not from the card's words: how many different card types, how many different creature types, or how many of one creature type. Not complete: six delirium cards whose condition our rules do not read yet are missing (Prophetic Titan, Let's Play a Game, Patchwork Beastie, Convert to Slime, both Winters).",
+      "description": "A payoff whose rules count types, read from our own rules and not from the card's words: how many different card types, how many different creature types, or how many of one creature type (\"for each Elf you control\"; a count that is only recorded as the set a card covers, such as Infinite Diversity's, or a card that destroys or casts a tribe, is not here). Not complete: six delirium cards whose condition our rules do not read yet are missing (Prophetic Titan, Let's Play a Game, Patchwork Beastie, Convert to Slime, both Winters).",
       "valueLabels": {
         "card-types": "how many card types",
         "creature-types": "how many creature types",
@@ -125,21 +125,21 @@
     },
     "unknownTriggers": {
       "label": "Triggers we could not read",
-      "description": "The card has a trigger whose wording our rules do not read yet, so what it does at that moment is not in the other fields.",
+      "description": "The card has a trigger whose wording our rules do not read yet, so what it does at that moment is not in the other fields. Cards we have no reading of at all are never counted either way.",
       "valueLabels": {
         "present": "has one"
       }
     },
     "grants": {
       "label": "Gives something a type",
-      "description": "A card that makes things a creature type, named or chosen as it comes in (Arcane Adaptation, Valkyrie's Call). Not complete: a card that makes things every creature type (Maskwood Nexus, Omo) names no one type, so it is not here.",
+      "description": "A card that makes things a creature type, named or chosen as it comes in (Arcane Adaptation, Valkyrie's Call). Not complete: a card that makes things every creature type (Maskwood Nexus, Omo) names no one type, so it is not here. Not exact either: a card that gives only ITSELF the chosen type (Metallic Mimic, Adaptive Automaton, Roaming Throne, Titan of Littjara) or a named type to itself (Ezio) is here too, because our rules do not record who gets it.",
       "valueLabels": {
         "creature-types": "a creature type"
       }
     },
     "counts": {
       "label": "Counts something",
-      "description": "A count that leaves something out, such as the number of creature types among non-Borg creatures you control.",
+      "description": "A count with a counting phrase that leaves a type out, such as 'for each nonland permanent'. Not complete: a count our rules record only as the set a card covers (Infinite Diversity's non-Borg creature types) cannot be told from a mass effect such as Blast Zone, so those cards are not here; search the path under Advanced to find them.",
       "valueLabels": {
         "excluding-a-type": "leaving out a type"
       }
@@ -316,7 +316,11 @@
     "tags.abilities.payment.other",
     "tags.abilities.unless.cost",
     "*.named",
-    "*.notNamed"
+    "*.notNamed",
+    "tags.abilities.delayedBy",
+    "*.choice",
+    "tags.abilities.payment.mana",
+    "tags.abilities.reduces.mana"
   ],
   "derivedSets": {
     "cares": {
@@ -331,7 +335,6 @@
           "tags.abilities.thresholdDistinct.counts=creature-type"
         ],
         "one-type-count": [
-          "tags.abilities.count.scalesWith.subtype@creature",
           "tags.abilities.effect.scalingSubject.subtype@creature",
           "tags.abilities.thresholdSubject.subtype@creature"
         ]
@@ -350,8 +353,6 @@
       "group": "abilities",
       "values": {
         "excluding-a-type": [
-          "tags.abilities.count.scalesWith.notSubtype=*",
-          "tags.abilities.count.scalesWith.notType=*",
           "tags.abilities.effect.scalingSubject.notSubtype=*",
           "tags.abilities.effect.scalingSubject.notType=*",
           "tags.abilities.thresholdSubject.notType=*"
