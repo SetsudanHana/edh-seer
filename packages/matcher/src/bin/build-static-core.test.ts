@@ -1,5 +1,6 @@
 import { expect, test } from "vitest";
-import { anchorOf, comboIndex, SHARD_COUNT, shardOf, shippedTags, shippedTokenTags, staleRows } from "./build-static-core.js";
+import { normalizeName } from "@edh-seer/data";
+import { anchorOf, comboIndex, resolveKeyOwners, SHARD_COUNT, shardOf, shippedTags, shippedTokenTags, staleRows } from "./build-static-core.js";
 
 /** THE ANCHOR IS WHY THE INDEX IS EXACT RATHER THAN APPROXIMATE. A combo is contained in a deck
  *  only if EVERY one of its cards is present, so it can only ever match if its alphabetically-first
@@ -91,4 +92,52 @@ test("shippedTokenTags strips unclaimed from every resolved token row and skips 
   const rows: Record<string, { oracleId: string; unclaimed?: unknown[] }> = { p1: { oracleId: "a", unclaimed: [{ clause: 1 }] }, p2: { oracleId: "b" } };
   const out = shippedTokenTags(["p1", "p2", "p3"], (p) => rows[p] ?? null);
   expect(out).toEqual({ p1: { oracleId: "a" }, p2: { oracleId: "b" } });
+});
+
+/** #1790: the three real cards the build used to lose, with their real claimants (names read from the corpus). */
+const card = (_id: string, name: string, searchNames: string[]) => ({ _id, name, searchNames });
+const smelt = card("real-smelt", "Smelt", ["smelt"]);
+const smeltSplit = card("split-smelt", "Smelt // Herd // Saw", ["smelt herd saw", "smelt"]);
+const gather = card("real-gather", "Gather the Townsfolk", ["gather the townsfolk"]);
+const gatherJoke = card("joke-gather", "Gather, the Townsfolk", ["gather the townsfolk"]);
+const ransack = card("real-ransack", "Ransack the Lab", ["ransack the lab"]);
+const ransackJoke = card("joke-ransack", "Ransack, the Lab", ["ransack the lab"]);
+
+test("a card's own name owns its key, whatever order the claimants arrive in (#1790)", () => {
+  for (const order of [[smeltSplit, smelt, gatherJoke, gather, ransackJoke, ransack], [smelt, smeltSplit, gather, gatherJoke, ransack, ransackJoke]]) {
+    const r = resolveKeyOwners(order, normalizeName);
+    expect(r.owners.get("smelt")).toBe(smelt);
+    expect(r.owners.get("gather the townsfolk")).toBe(gather);
+    expect(r.owners.get("ransack the lab")).toBe(ransack);
+    expect(r.unresolved.size).toBe(0);
+  }
+});
+
+test("the shadowing alias keeps a key of its own, so the multi-name card stays reachable (#1790)", () => {
+  const r = resolveKeyOwners([smelt, smeltSplit], normalizeName);
+  expect(r.owners.get("smelt herd saw")).toBe(smeltSplit);
+});
+
+test("a punctuation-variant card that loses its own key is reported as shadowed, not dropped silently (#1790)", () => {
+  const r = resolveKeyOwners([gatherJoke, gather], normalizeName);
+  expect(r.shadowed.map((s) => [s.card.name, s.owner.name])).toEqual([["Gather, the Townsfolk", "Gather the Townsfolk"]]);
+});
+
+test("same-name duplicates are tied, not an error; alias-only keys are tied too (#1790)", () => {
+  const a = card("a", "Blink", ["blink"]);
+  const b = card("b", "Blink", ["blink"]);
+  const r = resolveKeyOwners([a, b], normalizeName);
+  expect(r.tied.get("blink")).toEqual([a, b]);
+  expect(r.unresolved.size).toBe(0);
+  const m1 = card("m1", "Monster // Virtuous", ["monster virtuous", "monster"]);
+  const m2 = card("m2", "Monster // Sorcerer", ["monster sorcerer", "monster"]);
+  expect(resolveKeyOwners([m1, m2], normalizeName).tied.get("monster")).toEqual([m1, m2]);
+});
+
+test("two different names that both strip to the same key at the same tier are an unresolved collision (#1790)", () => {
+  const x = card("x", "Foo, Bar", ["foo bar"]);
+  const y = card("y", "Foo; Bar", ["foo bar"]);
+  const r = resolveKeyOwners([x, y], normalizeName);
+  expect([...r.unresolved.keys()]).toEqual(["foo bar"]);
+  expect(r.owners.has("foo bar")).toBe(false);
 });
