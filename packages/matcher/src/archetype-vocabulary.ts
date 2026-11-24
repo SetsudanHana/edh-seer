@@ -549,7 +549,7 @@ export const ARCHETYPE_SIGNATURE: Partial<Record<Archetype, ArchetypeSignature>>
   aristocrats: { tags: ["dies:", "sacrifice:"], effectKinds: ["drain"], demandDefined: true },
   lifegain: { tags: ["gain-life:any"], effectKinds: ["lifegain"] },
   landfall: { tags: ["enters:land"] },
-  spellslinger: { tags: ["cast:instant", "cast:sorcery"], effectKinds: ["copy-spell"] },
+  spellslinger: { tags: ["cast:instant-sorcery", "cast:instant", "cast:sorcery"], effectKinds: ["copy-spell"] },
   reanimator: { effectKinds: ["graveyard-recursion", "animate"] },
   // THE DEMAND SIDE (2026-09-08, facet gate). Without it no card ever ASKED for counters: Fathom
   // Mage (draws when counters land) and Hardened Scales (watches counters land) were members by

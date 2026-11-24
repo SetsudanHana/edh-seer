@@ -1,7 +1,7 @@
 import { describe, expect, test } from "vitest";
 import { nodeId as matcherNodeId } from "@edh-seer/matcher/graph-projection";
 import { engineDeck } from "./engine-model.fixture.js";
-import { buildEngineModel, foldSpellTag, pairStrength, groupName, listNames, nodeId, plural, tokenLabel } from "./engine-model.js";
+import { buildEngineModel, pairStrength, groupName, listNames, nodeId, plural, tokenLabel } from "./engine-model.js";
 import type { CardGraph, DeckReport } from "../types.js";
 
 describe("nodeId", () => {
@@ -185,7 +185,7 @@ test("a doubled card is not what acts in the doubler's line", () => {
 test("one-time links are named, count a little, and a card that can be brought back says so", () => {
   const m = tiny(["Flicker", "A", "B", "C", "Lone", "Digger"], [
     ...["A", "B", "C"].map((x) => ({ producer: "Flicker", consumer: x, tag: "enters:creature", text: `When ${x} enters thanks to Flicker, ${x} triggers again`, repeatability: "oneshot" })),
-    { producer: "Digger", consumer: "Flicker", tag: "recursion-target:instant", text: "Digger can bring back Flicker" },
+    { producer: "Digger", consumer: "Flicker", tag: "recursion-target:instant-sorcery", text: "Digger can bring back Flicker" },
     { producer: "Lone", consumer: "A", tag: "attacks:creature", text: "When Lone attacks, A grows" },
   ]);
   const flicker = m.cuts.find((c) => c.card.name === "Flicker")!;
@@ -226,11 +226,9 @@ test("a card's back face says whose back it is", () => {
   expect(m.cards.get("Front // Back")!.faceOf).toBeUndefined();
 });
 
-/** Owner ruling 2026-09-27 (#543): instants and sorceries are one group on the page, labelled as both. */
-test("instant and sorcery tags fold into one group labelled for both", () => {
-  expect(foldSpellTag("cast:instant")).toBe("cast:instant-sorcery");
-  expect(foldSpellTag("graveyard-recursion:sorcery")).toBe("graveyard-recursion:instant-sorcery");
-  expect(foldSpellTag("cast:creature")).toBe("cast:creature");
+/** Owner ruling 2026-09-27 (#543): instants and sorceries are one group on the page, labelled as both. Since
+ *  #1170 PR 3 the KEY is folded where it is written (`themeSubjectKey`), so the page no longer folds anything. */
+test("the instant-sorcery key is one group labelled for both", () => {
   expect(groupName("cast:instant-sorcery")).toBe("Spellslinger");
   expect(groupName("graveyard-recursion:instant-sorcery")).toBe("Instant and sorcery recursion");
   expect(groupName("graveyard-intercept:any")).toBe("Playing their exiled cards");

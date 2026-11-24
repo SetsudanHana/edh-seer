@@ -48,6 +48,20 @@ const NARROWED_FROM_NEGATION = new WeakSet<object>();
 
 /** A short human/grouping key for a subject: its subtype, else its type, else "any". */
 export function themeSubjectKey(s: Partial<SubjectFilter>): string {
+  return foldInstantSorcery(rawSubjectKey(s));
+}
+
+/** INSTANTS AND SORCERIES ARE ONE KEY (owner ruling 2026-09-27, #543; moved from the web to the key in
+ *  #1170 PR 3). The engine keyed a reason on the type that matched (#507) and the client folded the two
+ *  into one tag after the fact, in the Plan and in the main-theme match, but never in the headline, which
+ *  read "instants" over six of the 71 decks. Folded here every reader sees one key.
+ *
+ *  A LABEL, NOT A MATCH. A reason's tag names its edge; what makes the edge is `subjectMatches` on the
+ *  subject's own type list, which this does not touch. A recursion card that returns a sorcery still joins
+ *  sorceries and refuses instants. What the fold does change is grouping: the two tags dedupe to one. */
+const foldInstantSorcery = (key: string): string => (key === "instant" || key === "sorcery" ? "instant-sorcery" : key);
+
+function rawSubjectKey(s: Partial<SubjectFilter>): string {
   // A NEGATION outranks the list it resolves to. `type` holds the six types "noncreature spell"
   // leaves, and taking the first of them keyed Valley Floodcaller as `cast:artifact` -- a wrong tag
   // for a card that excludes creatures, not one that names artifacts -- and cardThemeTags grouped

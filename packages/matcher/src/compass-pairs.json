@@ -525,7 +525,7 @@
     "a": "Chandra's Regulator",
     "b": "Chandra, Acolyte of Flame",
     "category": "graveyard-matters",
-    "tag": "graveyard-recursion:instant",
+    "tag": "graveyard-recursion:instant-sorcery",
     "note": "the Regulator's discard puts instants and sorceries where Acolyte's -2 casts them",
     "source": "#558 fix (compass backfill 2026-09-28)",
     "verified": true
@@ -716,7 +716,7 @@
     "a": "Brainstorm",
     "b": "Ojer Pakpatiq, Deepest Epoch // Temple of Cyclical Time",
     "category": "cast-trigger",
-    "tag": "cast:instant",
+    "tag": "cast:instant-sorcery",
     "note": "#931: Ojer Pakpatiq's \"whenever you cast an instant spell from your hand, it gains rebound\" is met by every instant you cast from hand; a card's own cast is from your hand.",
     "source": "#931 (2026-10-02, owner issue)",
     "verified": true

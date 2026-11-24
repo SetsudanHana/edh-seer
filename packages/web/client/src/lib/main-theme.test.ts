@@ -23,7 +23,7 @@ test("the second theme is matched after the main one", () => {
   expect(whichTheme({ tag: "dies:goblin", helper: false }, both)).toBeNull();
 });
 
-/** #543: the page folds instant and sorcery groups, so the deck's `cast:instant` theme still names it. */
-test("a spellslinger theme still matches its folded group", () => {
-  expect(themeMatch({ tag: "cast:instant-sorcery", helper: false }, { tag: "cast:instant" })).toBe("same");
+/** #543: the deck's theme and its group carry the one folded key, so they match without a page fold. */
+test("a spellslinger theme matches its group on the one key", () => {
+  expect(themeMatch({ tag: "cast:instant-sorcery", helper: false }, { tag: "cast:instant-sorcery" })).toBe("same");
 });

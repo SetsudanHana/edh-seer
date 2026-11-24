@@ -131,6 +131,9 @@ export function keyDenotes(key: string, family: string): ReadonlySet<string> | u
     return narrow([...universe].filter((t) => t !== excluded));
   }
   if (PSEUDO_TYPE_SETS[key] !== undefined) return narrow(PSEUDO_TYPE_SETS[key]);
+  // THE ONE KEY FOR INSTANTS AND SORCERIES (#543, `themeSubjectKey`): both types, so it still sits inside
+  // `cast:-creature` and `cast:spell`.
+  if (key === "instant-sorcery") return narrow(["instant", "sorcery"]);
   if ((ALL_CARD_TYPES as readonly string[]).includes(key)) {
     const one = narrow([key]);
     // A type outside its own family's universe denotes NOTHING there — `cast:land` would be an empty

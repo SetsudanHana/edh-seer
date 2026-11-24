@@ -158,20 +158,11 @@ export const isHelperTag = (tag: string): boolean => HELPER_TAG.test(tag);
 
 
 /** A subject as the plural a player says: "creatures", "Clerics", "noncreature spells". */
-/** INSTANTS AND SORCERIES ARE ONE GROUP ON THE PAGE (owner ruling 2026-09-27, #543). The engine keys a
- *  reason on the type that matched (#507), and where nothing could be matched -- a discard of an
- *  unknown card, Mizzix's Mastery's copies -- on the first of "instant or sorcery". Either way a
- *  spellslinger deck's two halves are one plan, so the client folds both into one tag, once, where
- *  links are built; every group, orbit and theme lookup then sees the same key. */
 /** What a token is, said wherever its name is: "(token from Summon: Fat Chocobo)", or "(token)" when
  *  nothing in the deck is known to make it (owner ruling 2026-09-27, #519). Empty for a real card. */
 export function tokenLabel(c: Pick<EngineCard, "isToken" | "madeBy">): string {
   if (!c.isToken) return "";
   return c.madeBy?.length ? `(token from ${c.madeBy.join(", ")})` : "(token)";
-}
-
-export function foldSpellTag(tag: string): string {
-  return tag.replace(/:(?:instant|sorcery)$/, ":instant-sorcery");
 }
 
 export const plural = pluralSubject;
@@ -227,7 +218,7 @@ export function buildEngineModel(report: DeckReport, graph: CardGraph): EngineMo
       const k = `${from}\u0001${to}\u0001${r.tag}\u0001${r.text}`;
       if (seen.has(k)) continue;
       seen.add(k);
-      links.push({ from, to, tag: foldSpellTag(r.tag), text: r.text, repeat: asRepeat(r.repeatability), perTurn: r.perTurn || undefined });
+      links.push({ from, to, tag: r.tag, text: r.text, repeat: asRepeat(r.repeatability), perTurn: r.perTurn || undefined });
     }
   }
 

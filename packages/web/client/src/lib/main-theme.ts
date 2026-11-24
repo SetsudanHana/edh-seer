@@ -1,5 +1,5 @@
 import type { DeckReport } from "../types.js";
-import { foldSpellTag, type EngineGroup } from "./engine-model.js";
+import type { EngineGroup } from "./engine-model.js";
 
 /** THE DECK'S MAIN THEME, ONE NAME ON EVERY CHAPTER (appeal review 2026-09-26). Three vocabularies
  *  named the same deck: Glance said "Cleric typal", Game plan said "Counts your party members", and
@@ -41,9 +41,9 @@ const subject = (tag: string): string | null => {
 /** "same" when the group is the theme's own tag, "part" when it is about the same subject. */
 export function themeMatch(group: Pick<EngineGroup, "tag" | "helper">, main: Pick<MainTheme, "tag">): "same" | "part" | null {
   if (group.helper) return null;
-  const mainTag = foldSpellTag(main.tag);
-  if (group.tag === mainTag) return "same";
-  const a = subject(group.tag), b = subject(mainTag);
+  // One key for instants and sorceries since #1170 PR 3, so the headline tag and the group tag already agree.
+  if (group.tag === main.tag) return "same";
+  const a = subject(group.tag), b = subject(main.tag);
   if (!a || !b || BROAD.has(a) || BROAD.has(b)) return null;
   return a === b ? "part" : null;
 }
