@@ -31,13 +31,17 @@ export function buildSchema(src: SchemaSources): QuerySchema {
     { id: "tou", kind: "number" },
   ];
   for (const f of core) fields.set(f.id, f);
+  const sparse = new Map<string, string>();
   for (const g of Object.values(src.catalogue?.groups ?? {})) {
     for (const cf of g.fields) {
       const had = fields.get(cf.id);
-      // The page's own tables win for the core fields; the catalogue fills in what they lack.
-      const values = cf.kind === "set"
+      // t, st and k are answered from the page's own vocabulary tables, so their values come from those and from nothing
+      // else: a catalogue's list for them must not make a value "known" that the core view cannot answer.
+      const own = had?.noValues !== undefined;
+      const values = cf.kind === "set" && !own
         ? known([...(cf.values ?? []).map((v) => v.v), ...Object.keys(cf.valueLabels ?? {})].filter((v, i, a) => a.indexOf(v) === i))
         : undefined;
+      if (cf.fallback) sparse.set(cf.id, cf.fallback);
       fields.set(cf.id, {
         id: cf.id, kind: cf.kind,
         ...(cf.alias ? { alias: cf.alias } : {}),
@@ -45,6 +49,14 @@ export function buildSchema(src: SchemaSources): QuerySchema {
         ...(had?.noValues ? { noValues: had.noValues } : {}),
       });
     }
+  }
+  // A SPARSE COLUMN (stBest) lists only the rows it overrides; every other row answers as its fallback field does. Its
+  // values are the union, and unknown when the fallback's are.
+  for (const [id, base] of sparse) {
+    const f = fields.get(id)!;
+    const b = fields.get(base);
+    const union = b?.values ? [...new Set([...b.values, ...(f.values ?? [])])] : undefined;
+    fields.set(id, { ...f, ...(union ? { values: union } : { values: undefined, ...(b?.noValues ? { noValues: b.noValues } : {}) }) });
   }
   const positive = (m: Readonly<Record<string, number>>): Set<string> => new Set(Object.keys(m).filter((k) => (m[k] ?? 0) > 0));
   return {

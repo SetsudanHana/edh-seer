@@ -225,8 +225,14 @@ export function CardSearch({
       // THE CHANGELING TOGGLE IS A WAY TO READ THE ANSWER, not part of the question, so it rides beside `x` as it does beside the rows.
       ...(builderEvents.keepChangelings ? { keepChangelings: true } : {}) }
     : builderEvents), [typedActive, builderEvents]);
+  // TYPED MODE TAKES THE ORDER AND ITS DIRECTION AS GIVEN: changing the order deliberately drops the direction, and the
+  // paused rows' own must not bring the old one back.
+  const withOrder = (kept: EventQuery, next: EventQuery): EventQuery => {
+    const { sort: _s, dir: _d, ...rest } = kept;
+    return { ...rest, ...(next.sort ? { sort: next.sort } : {}), ...(next.dir ? { dir: next.dir } : {}), keepChangelings: next.keepChangelings };
+  };
   const setEvents = (next: EventQuery) => setParams(
-    eventsToParams(typedActive ? { ...builderEvents, ...(next.sort ? { sort: next.sort } : {}), ...(next.dir ? { dir: next.dir } : {}), keepChangelings: next.keepChangelings } : next, params),
+    eventsToParams(typedActive ? withOrder(builderEvents, next) : next, params),
     { replace: true });
   // THE SKIPPED VIEW BELONGS TO ONE SET OF TERMS AND EFFECT ROWS: change either and it is dropped, or
   // it would stay armed and reopen on the skipped list when the filters next leave something out.
@@ -360,6 +366,9 @@ export function CardSearch({
     const q = typedActive ? null : builderQuery(builderEvents, mode);
     return q === null ? "" : print(q, schema);
   }, [typedActive, builderEvents, mode, schema]);
+  // THE ROWS THE TEXT HAS NO WORDS FOR (ability type, how often, amount): said, so the box is never taken for all of the question.
+  const builderLeavesOut = !typedActive && ((builderEvents.abilityKinds?.length ?? 0) > 0 || builderEvents.repeatsMin !== undefined
+    || builderEvents.amountMin !== undefined || builderEvents.amountMax !== undefined || builderEvents.amountVariable === true || builderEvents.amountChange !== undefined);
   const baseText = typedActive ? xText : builderText;
   const [typedText, setTypedText] = useState(baseText);
   const seenText = useRef(baseText);
@@ -1054,6 +1063,7 @@ export function CardSearch({
       <TypedQuery
         value={typedText} onChange={setTypedText} names={typedNames} noun={commanderMode ? "commanders" : "cards"}
         error={typed?.status === "error" ? typed.error : null}
+        leftOut={builderLeavesOut}
       />
       {typedActive ? (
         <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
@@ -1244,8 +1254,9 @@ export function CardSearch({
             </ul>
           </div>
         : typed?.status === "error"
-        // A PROBLEM IN THE TEXT IS SAID UNDER THE BOX; no list stands in for it.
-        ? <p role="status" className="text-(--muted)">Fix the typed query above to see {commanderMode ? "commanders" : "cards"}.</p>
+        // A PROBLEM IN THE TEXT IS SAID UNDER THE BOX; no list stands in for it. A CANNOT-ANSWER has said so already, and
+        // "fix the query" would be the wrong advice for it.
+        ? (typed.error.cannot ? null : <p role="status" className="text-(--muted)">Fix the typed query above to see {commanderMode ? "commanders" : "cards"}.</p>)
         : typed?.status === "failed"
         ? <div className="flex flex-wrap items-center gap-3">
             <p role="status" className="text-(--muted)">Couldn&apos;t load filter data. Try again.</p>

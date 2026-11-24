@@ -22,7 +22,13 @@ const INDEX: NameIndexEntry[] = [
 ];
 const CATALOGUE: Catalogue = {
   formatVersion: 1, version: "v", deriveVersion: 1,
-  groups: { faces: { file: "faces.json", fields: [{ id: "stBest", kind: "set", fallback: "st", values: [] }] } },
+  // A REAL CATALOGUE SHIPS THE TYPES GROUP, with the values of t and st: they must not rescue an empty vocabulary.
+  groups: {
+    types: { file: null, fields: [
+      { id: "t", kind: "set", values: VOCAB.types.map((v) => ({ v, n: 1 })) },
+      { id: "st", kind: "set", values: VOCAB.subtypes.map((v) => ({ v, n: 1 })) },
+    ] },
+    faces: { file: "faces.json", fields: [{ id: "stBest", kind: "set", fallback: "st", values: [{ v: "borg", n: 1 }] }] } },
   namedLists: {
     card: { label: "Card types", values: ["creature", "land"] },
     creature: { label: "Creature types", values: ["borg", "elf", "human", "wizard"] },
@@ -59,7 +65,7 @@ const names = () => {
   return NAMES.filter((n) => text.some((t) => t.includes(n)));
 };
 const LEGACY = "/cards?type=creature&notsubtype=borg&creaturetypesmin=3&colors=WUG&sort=creaturetypes";
-const box = () => screen.findByRole("textbox", { name: "Typed query" });
+const box = () => screen.findByRole("textbox", { name: /type a query/i });
 
 test("the 1b query typed gives the same list as the builder, and the builder's own text is that query", async () => {
   atUrl(LEGACY);
@@ -163,4 +169,52 @@ test("an old artifact with no vocabulary cannot check a value: it says so and dr
   expect(await screen.findByRole("alert")).toHaveTextContent("Can't check value `creature` for t: this build has no type vocabulary at 2");
   expect(screen.queryByRole("list", { name: "Results" })).toBeNull();
   expect(screen.queryByText(/No card matches/)).toBeNull();
+});
+
+test("stBest is a sparse column: its values are the fallback's, so stBest:elf is known", async () => {
+  atUrl(`/cards?x=${encodeURIComponent("stBest:elf")}`);
+  await screen.findByRole("list", { name: "Results" });
+  expect(screen.queryByRole("alert")).toBeNull();
+});
+
+test("a changeling toggle follows polarity: --st:borg shows no note", async () => {
+  atUrl(`/cards?x=${encodeURIComponent("t:creature --st:borg")}`);
+  await screen.findByRole("list", { name: "Results" });
+  await new Promise((r) => setTimeout(r, 100));
+  expect(screen.queryByText(/changeling.* hidden/)).toBeNull();
+});
+
+test("-(st:borg or st:elf) hides changelings and says so", async () => {
+  atUrl(`/cards?x=${encodeURIComponent("t:creature -(st:borg or st:wizard)")}`);
+  expect(await screen.findByText(/changelings? hidden/)).toBeInTheDocument();
+});
+
+test("rows the text cannot say (amount) are named, not silently left out of the box", async () => {
+  atUrl("/cards?produce=" + encodeURIComponent("mill|-|-|-") + "&amtmin=1");
+  expect(await screen.findByText(/leaves out the .*amount/i)).toBeInTheDocument();
+});
+
+test("in typed mode, changing Order resets the direction to the new order's own", async () => {
+  const spy = atUrl(`/cards?x=${encodeURIComponent("t:creature")}&sort=mv&dir=desc`);
+  await screen.findByRole("list", { name: "Results" });
+  await userEvent.selectOptions(screen.getByRole("combobox", { name: "Order" }), "name");
+  await waitFor(() => expect(spy.search).toContain("sort=name"));
+  expect(spy.search).not.toContain("dir=");
+  expect(screen.getByRole("combobox", { name: "Direction" })).toHaveValue("asc");
+});
+
+test("a cannot-answer is not followed by 'fix the query'", async () => {
+  render(
+    <MemoryRouter initialEntries={[`/cards?x=${encodeURIComponent("t:creature")}`]}>
+      <Routes><Route path="/cards" element={<CardSearch load={async () => INDEX} vocabulary={async () => ({ types: [], subtypes: [], keywords: [] })} searchLoader={loader()} frequency={async () => FREQ} members={async () => null} />} /></Routes>
+    </MemoryRouter>,
+  );
+  await screen.findByRole("alert");
+  expect(screen.queryByText(/Fix the typed query/)).toBeNull();
+});
+
+test("the box's name carries its visible label, and the box turns ligatures off so <= is typed as it is read", async () => {
+  atUrl("/cards");
+  const b = await box();
+  expect(b.className).toContain("font-variant-ligatures:none");
 });

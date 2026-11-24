@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { eventsOf, fieldNames, fromNode, parse, print, shapeNode, toNode, type Query, type QuerySchema } from "./query.js";
+import { eventsOf, fieldNames, fromNode, keepChangelings, notSubtypesOf, parse, print, shapeNode, toNode, type Query, type QuerySchema } from "./query.js";
 
 const SCHEMA: QuerySchema = {
   fields: [
@@ -194,5 +194,36 @@ describe("reading a parsed query", () => {
     expect(names).toContain("src");
     expect(names).not.toContain("shared");
     expect(names).toContain("dup1");
+  });
+});
+
+describe("changelings follow polarity (the not count is odd or even)", () => {
+  const creature = new Set(["borg", "elf"]);
+  const q = (t: string): Query => ok(t)!;
+  test("--st:borg negates nothing: no note, no rewrite", () => {
+    expect(notSubtypesOf(q("--st:borg"))).toStrictEqual([]);
+    expect(keepChangelings(q("--st:borg"), creature)).toStrictEqual(q("--st:borg"));
+  });
+  test("-(t:creature -st:borg): the borg term sits under two nots, so it is wanted, not hidden", () => {
+    expect(notSubtypesOf(q("-(t:creature -st:borg)"))).toStrictEqual([]);
+    expect(keepChangelings(q("-(t:creature -st:borg)"), creature)).toStrictEqual(q("-(t:creature -st:borg)"));
+  });
+  test("-(st:borg or st:elf) counts as -st:borg -st:elf (De Morgan)", () => {
+    expect(notSubtypesOf(q("-(st:borg or st:elf)"))).toStrictEqual(["borg", "elf"]);
+    const kept = keepChangelings(q("-(st:borg or st:elf)"), creature);
+    expect(JSON.stringify(kept)).toContain("everyCreatureType");
+  });
+  test("the plain case still hides and rewrites", () => {
+    expect(notSubtypesOf(q("t:creature -st:borg"))).toStrictEqual(["borg"]);
+  });
+});
+
+describe("depth", () => {
+  test.each(["(", "-", "not "])("10,000 of %j is an error, not a stack overflow", (open) => {
+    const e = bad(open.repeat(10000) + "t:land" + (open === "(" ? ")".repeat(10000) : ""));
+    expect(e.message).toMatch(/nested too deeply at \d+/);
+  });
+  test("ordinary nesting is fine", () => {
+    expect(parse("(".repeat(50) + "t:land" + ")".repeat(50), SCHEMA).ok).toBe(true);
   });
 });

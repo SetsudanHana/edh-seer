@@ -63,6 +63,7 @@ const WS = " \t\r\n";
 const DIGITS = "0123456789";
 const SAFE_VALUE = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_-.|,*+/'!?";
 const MAX_DIGITS = 9;
+const MAX_DEPTH = 100;
 
 class Failure extends Error {
   constructor(readonly pos: number, message: string, readonly cannot = false) { super(message); }
@@ -153,6 +154,7 @@ export function print(q: Query, schema?: QuerySchema): string {
 
 class Scanner {
   i = 0;
+  depth = 0;
   constructor(readonly s: string, readonly schema: QuerySchema) {}
 
   get names(): Names { return namesOf(this.schema); }
@@ -201,7 +203,14 @@ class Scanner {
     return items.length === 1 ? items[0]! : { and: items };
   }
 
+  /** Every nesting (a parenthesis, a `-`, a `not`) goes through here: past MAX_DEPTH the text is refused, because the
+   *  recursion below, and every walk over the result, would otherwise overflow the stack. */
   parseNot(): Query {
+    if (++this.depth > MAX_DEPTH) throw new Failure(this.i, `the query is nested too deeply at ${this.i}`);
+    try { return this.parseNotInner(); } finally { this.depth--; }
+  }
+
+  parseNotInner(): Query {
     this.ws();
     if (this.peek() === "-") {
       const at = this.i;
@@ -461,29 +470,25 @@ export const QUERY_HELP: readonly { form: string; means: string; example: string
   { form: "and, or, not, ( )", means: "side by side means and; not binds tightest, then and, then or", example: "t:creature (st:elf or st:human)" },
 ];
 
-/** The creature-type words the query negates directly (`-st:borg`): what a changeling would be hidden by. */
-export function notSubtypesOf(q: Query, out: string[] = []): string[] {
-  if ("and" in q) q.and.forEach((n) => notSubtypesOf(n, out));
-  else if ("or" in q) q.or.forEach((n) => notSubtypesOf(n, out));
-  else if ("not" in q) {
-    const c = q.not;
-    if ("field" in c && c.field === "st" && c.op === "has" && !out.includes(c.value)) out.push(c.value);
-    else notSubtypesOf(c, out);
-  }
+/** The creature-type words the query negates: an `st` term under an odd number of nots, with a negation pushed through
+ *  `and` / `or` as De Morgan does (`-(st:borg or st:elf)` negates both; `--st:borg` and `-(t:creature -st:borg)` negate
+ *  neither, they ask for it). These are what a changeling would be hidden by. */
+export function notSubtypesOf(q: Query, out: string[] = [], negated = false): string[] {
+  if ("and" in q) q.and.forEach((n) => notSubtypesOf(n, out, negated));
+  else if ("or" in q) q.or.forEach((n) => notSubtypesOf(n, out, negated));
+  else if ("not" in q) notSubtypesOf(q.not, out, !negated);
+  else if (negated && q.op === "has" && q.field === "st" && !out.includes(q.value)) out.push(q.value);
   return out;
 }
 
-/** The query with changelings kept (`changelings=keep`): each `-st:<creature type>` also lets through a card that has every
- *  creature type, as the builder's NOT row does (CR 702.73a). */
-export function keepChangelings(q: Query, creature: ReadonlySet<string>): Query {
-  if ("and" in q) return { and: q.and.map((n) => keepChangelings(n, creature)) };
-  if ("or" in q) return { or: q.or.map((n) => keepChangelings(n, creature)) };
-  if ("not" in q) {
-    const c = q.not;
-    if ("field" in c && c.field === "st" && c.op === "has" && creature.has(c.value)) {
-      return { or: [q, { field: "everyCreatureType", op: "has", value: "true" }] };
-    }
-    return { not: keepChangelings(c, creature) };
+/** The query with changelings kept (`changelings=keep`): a negated `st:<creature type>` does not match a card that has every
+ *  creature type, so the not lets it through, as the builder's NOT row does (CR 702.73a). Same polarity as `notSubtypesOf`. */
+export function keepChangelings(q: Query, creature: ReadonlySet<string>, negated = false): Query {
+  if ("and" in q) return { and: q.and.map((n) => keepChangelings(n, creature, negated)) };
+  if ("or" in q) return { or: q.or.map((n) => keepChangelings(n, creature, negated)) };
+  if ("not" in q) return { not: keepChangelings(q.not, creature, !negated) };
+  if (negated && q.op === "has" && q.field === "st" && creature.has(q.value)) {
+    return { and: [q, { not: { field: "everyCreatureType", op: "has", value: "true" } }] };
   }
   return q;
 }
