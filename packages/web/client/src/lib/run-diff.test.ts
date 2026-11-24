@@ -53,6 +53,14 @@ test("a snapshot carries the deck, both scores, the theme and the build counts",
   expect(snap.categories.ramp).toBe(6);
 });
 
+/** ONE NAME PER KEY (#1170): the strip's "theme X -> Y" is the deck's NAME, as the headline says it, and
+ *  not `describeTag`'s mechanism ("goblins entering"). */
+test("a snapshot's theme is the deck's name, falling back to the mechanism only when there is none", () => {
+  const withCohesion = (c: Record<string, unknown>) => ({ ...SAMPLE, report: { ...SAMPLE.report, cohesion: { ...SAMPLE.report.cohesion!, ...c } } }) as typeof SAMPLE;
+  expect(snapshotRun(withCohesion({ theme: "goblins entering", name: "Goblin ETBs" })).theme).toBe("Goblin ETBs");
+  expect(snapshotRun(withCohesion({ theme: "goblins entering", name: undefined })).theme).toBe("goblins entering");
+});
+
 /** THE LOOP'S MEMORY OF THE THING THE REPORT LEADS WITH. The strip carried scores, theme and leaf
  *  categories but not the ranked diagnosis — so a tuner who cut for card draw and re-pasted got a
  *  re-ranked list and no statement that the number they were chasing had moved. */

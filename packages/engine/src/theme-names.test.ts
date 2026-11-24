@@ -57,6 +57,6 @@ test("every entry names a real tag and no name is empty", () => {
   for (const [tag, name] of Object.entries(THEME_NAMES)) {
     expect(name.length, tag).toBeGreaterThan(0);
     // `<verb>:<subject>` or a bare family -- never a trailing colon or an empty subject.
-    expect(tag, tag).toMatch(/^[a-z-]+(:[a-z0-9 +/-]+)?$/);
+    expect(tag, tag).toMatch(/^[a-z-]+(:[a-z0-9 +/'-]+)?$/);
   }
 });

@@ -1,3 +1,4 @@
+import { SUBTYPE_TYPES } from "@edh-seer/tagger/subtypes";
 import { isPutIntoGraveyardClass, type Tag } from "./tags.js";
 
 /** ONE NAME PER KEY (#1170, owner 2026-11-24). `tagName` is the only function that turns a tag into
@@ -59,6 +60,60 @@ export const THEME_NAMES: Record<string, string> = {
   "static:tax": "Taxes",
   "static:copy-spell": "Spell copiers",
   "static:clone": "Clones",
+  // EVERY `EFFECT_KINDS` MEMBER, in a player's words (#1170 review): a static ability's kind is the whole
+  // content of its tag, and "<slug> effects" read "Base pt set effects". A test fails on a kind with no entry.
+  "static:token-generation": "Token engines",
+  "static:damage": "Damage engines",
+  "static:player-life-loss": "Life-loss engines",
+  "static:lifegain": "Lifegain engines",
+  "static:drain": "Drain engines",
+  "static:draw-card": "Card draw engines",
+  "static:forced-sacrifice": "Edicts",
+  "static:debuff": "Debuffs",
+  "static:ability-loss": "Ability removal",
+  "static:trigger-doubling": "Doubling triggers",
+  "static:graveyard-recursion": "Recursion engines",
+  "static:token-doubling": "Token doublers",
+  "static:scry": "Scry engines",
+  "static:surveil": "Surveil engines",
+  "static:mill": "Mill engines",
+  "static:search": "Tutor engines",
+  "static:top-set": "Top-of-library setup",
+  "static:counter-placement": "Counter placers",
+  "static:enters-with-counters": "Extra counters on entry",
+  "static:mana-generation": "Mana engines",
+  "static:fast-mana": "Mana accelerants",
+  "static:ritual": "Rituals",
+  "static:copy-ability": "Ability copying",
+  "static:speed": "Speed boosters",
+  "static:flicker": "Blink effects",
+  "static:animate": "Animators",
+  "static:untap": "Untappers",
+  "static:proliferate": "Proliferate engines",
+  "static:graveyard-hate": "Graveyard hosers",
+  "static:exile-processing": "Exile processors",
+  "static:extra-combat": "Extra combats",
+  "static:win-game": "Alternate wins",
+  "static:extra-turn": "Extra turns",
+  "static:extra-phase": "Extra phases",
+  "static:emblem": "Emblem makers",
+  "static:bounce": "Bouncers",
+  "static:play-from-top": "Top-of-library play",
+  "static:extra-loyalty": "Extra loyalty activations",
+  "static:retarget": "Retargeting",
+  "static:evasion": "Evasive creatures",
+  "static:restriction": "Restrictions",
+  "static:targeting-ban": "Targeting protection",
+  "static:graveyard-lock": "Graveyard locks",
+  "static:counter-immunity": "Uncounterable spells",
+  "static:player-lock": "Player locks",
+  "static:trigger-suppression": "Trigger stoppers",
+  "static:untap-denial": "Untap stoppers",
+  "static:prevention": "Prevention shields",
+  "static:damage-change": "Damage changers",
+  "static:life-total-set": "Life total setting",
+  "static:to-hand": "Returning to hand",
+  "static:base-pt-set": "Base power/toughness setting",
   "fodder:creature": "Sac fodder",
   "graveyard-recursion:creature": "Reanimator",
   "graveyard-recursion:any": "Recursion",
@@ -71,6 +126,10 @@ export const THEME_NAMES: Record<string, string> = {
   "scales:creature": "Go wide",
   "scales:land": "Lands matter",
   "scales:party": "Party",
+  // Per-life-lost scaling (Rowan, Rakdos): a count of life, not of a type, so it is no tribe (`edges.ts` lifeLostEdges).
+  "scales:life-lost": "Life loss matters",
+  // Urza's Mine, Tower and Power-Plant are one land type (CR 205.3i); the apostrophe is part of the word.
+  "scales:urza's": "Urza's lands matter",
   "scales:donated": "Donate",
   "condition:party": "Party synergy",
   "keyword-grant:spell": "Spell keyword granting",
@@ -89,16 +148,6 @@ export const THEME_NAMES: Record<string, string> = {
 
 const CARD_TYPES = new Set(["creature", "land", "artifact", "enchantment", "instant", "sorcery", "planeswalker", "permanent", "spell", "battle"]);
 
-/** Subjects of `enters:` and `scales:` that are NOT creature types, so the tribal rule must not
- *  claim them. Every one of these is a card type, a supertype, a non-creature subtype or a class the
- *  engine counts (a party, what you donated) -- this list exists so a subject the table has never
- *  seen falls to the tribal rule only when it really is a tribe. */
-const NOT_A_TRIBE = new Set([
-  "creature", "artifact", "enchantment", "land", "planeswalker", "instant", "sorcery", "battle",
-  "legendary", "token", "permanent", "aura", "equipment", "vehicle", "saga", "curse", "any",
-  "spell", "instant-sorcery", "basic", "historic", "card", "party", "donated", "nontoken", "__none__",
-]);
-
 /** Title case for words as they are printed in a name: "time lord" -> "Time Lord". */
 const titleCase = (s: string): string =>
   s.replace(/(^|[ -])([a-z])/g, (_m, sep: string, c: string) => sep + c.toUpperCase());
@@ -115,6 +164,9 @@ export function pluralSubject(subject: string): string {
   if (subject === "party") return "party members";
   const w = CARD_TYPES.has(subject) ? subject : capital(subject);
   if (w === "sorcery") return "sorceries";
+  if (w.toLowerCase() === "locus") return w === "locus" ? "loci" : "Loci";
+  // "Urza's" is a possessive, not a noun to pluralise.
+  if (/'s$/i.test(w)) return w;
   if (/(ch|sh|s|x)$/i.test(w)) return `${w}es`;
   if (/[^aeiou]y$/i.test(w)) return `${w.slice(0, -1)}ies`;
   if (/f$/i.test(w)) return `${w.slice(0, -1)}ves`;
@@ -133,12 +185,17 @@ interface Subj {
   P: string;
 }
 
+/** A TRIBE IS A CREATURE TYPE (CR 205.3m), decided by the tagger's authoritative subtype map and never
+ *  by the shape of the word: "life-lost", "Urza's" and the land types gate, locus and town are not
+ *  tribes and read "Gate typal" before this. A Chandra is a planeswalker type, not a tribe. */
+const isCreatureType = (sub: string): boolean => SUBTYPE_TYPES[sub]?.includes("creature") === true;
+
 function subjectOf(sub: string): Subj {
   const none = sub === "" || sub === "any";
   if (sub === "__none__") return { none: false, tribe: false, S: "Unchosen type", p: "unchosen types", P: "Unchosen types" };
   const S = sub === "instant-sorcery" ? "Instant and sorcery" : sub.startsWith("-") ? `Non${sub.slice(1)}` : titleCase(sub);
   const p = pluralSubject(sub);
-  return { none, tribe: !none && !NOT_A_TRIBE.has(sub) && !sub.startsWith("-") && /^[a-z]+([ -][a-z]+)*$/.test(sub), S, p, P: capital(p) };
+  return { none, tribe: isCreatureType(sub), S, p, P: capital(p) };
 }
 
 /** Verbs with no family rule of their own: the name with no subject, and the name once a subject
@@ -198,7 +255,7 @@ const VERBS: Record<string, [bare: string, typed?: string]> = {
   // The pass literals `edges.ts` writes itself (the reason tag's family is not a trigger verb).
   "recursion-target": ["Recursion targets", "{S} recursion targets"],
   tutor: ["Tutors", "{S} tutors"],
-  fodder: ["Sacrifice fodder", "{S} fodder"],
+  fodder: ["General sacrifice fodder", "{S} fodder"],
   copies: ["Copy effects", "{S} copiers"],
   doubles: ["Trigger doublers", "{S} trigger doublers"],
   threshold: ["Graveyard matters", "{P} in the graveyard"],
@@ -219,12 +276,12 @@ const VERBS: Record<string, [bare: string, typed?: string]> = {
   "counter-removed": ["Removing counters", "Removing counters from {p}"],
   "graveyard-intercept": ["Playing their exiled cards"],
   "non-combat-damage": ["Burn", "{S} non-combat damage"],
-  "etb-refire": ["Blink"],
-  meld: ["Melding cards"],
-  tribe: ["Tribes", "{P}"],
-  "tribe-nontoken": ["Nontoken tribes", "Nontoken {P}"],
-  counter: ["Counters", "{S} counters"],
-  token: ["Tokens", "{S} tokens"],
+  // THE FLAT ENGINE'S LEGACY FAMILIES (`extractTags` -> `synergy.ts`): they read as their own words and
+  // must not share a name with `enters:`, `create-token:` or `counter-added:`.
+  tribe: ["Tribes", "{S} tribe"],
+  "tribe-nontoken": ["Nontoken tribes", "Nontoken {S} tribe"],
+  counter: ["Counter synergies", "{S} counter synergies"],
+  token: ["Token synergies", "{S} token synergies"],
 };
 
 const fill = (tpl: string, s: Subj): string => tpl.replace("{S}", s.S).replace("{P}", s.P).replace("{p}", s.p);
@@ -269,29 +326,47 @@ function familyRule(kind: string, sub: string, s: Subj): string | null {
   }
 }
 
+/** How `tagName` reached a name: a table entry, a family rule, a verb row (`verb-default` when the row has
+ *  no typed form and the name is built from the bare one), or `fallback` (a family nobody has named, or a
+ *  static kind with no entry). The completeness test asserts no vocabulary key reaches `fallback`. */
+export type NameSource = "table" | "rule" | "verb" | "verb-default" | "fallback";
+
 /** The name a player reads for a tag, anywhere in the report. See the header above. */
 export function tagName(tag: Tag): string {
+  return resolveTag(tag).name;
+}
+
+/** `tagName`, and which step produced it. */
+export function tagNameSource(tag: Tag): NameSource {
+  return resolveTag(tag).how;
+}
+
+/** The verb rows, exported so the test can walk every one of them. */
+export const TAG_VERB_ROWS: readonly string[] = Object.keys(VERBS);
+
+function resolveTag(tag: Tag): { name: string; how: NameSource } {
   // #543 (owner 2026-09-27): instants and sorceries are one group on the page. The name folds; the key does not.
   const folded = tag.replace(/:(?:instant|sorcery)$/, ":instant-sorcery");
   const exact = THEME_NAMES[folded];
-  if (exact !== undefined) return exact;
+  if (exact !== undefined) return { name: exact, how: "table" };
   const i = folded.indexOf(":");
   const kind = i < 0 ? folded : folded.slice(0, i);
   const sub = i < 0 ? "" : folded.slice(i + 1);
   if (kind === "static") {
-    // The kind is the whole content of a static tag; the kinds the owner named are in the table.
-    return `${capital(sub.replace(/-/g, " "))} effects`;
+    // Every `EFFECT_KINDS` member is in the table; a kind added later still reads as words, and the
+    // completeness test fails until it is named.
+    return { name: `${capital(sub.replace(/-/g, " "))} effects`, how: "fallback" };
   }
   const s = subjectOf(sub);
   const ruled = familyRule(kind, sub, s);
-  if (ruled !== null) return ruled;
+  if (ruled !== null) return { name: ruled, how: "rule" };
   const verb = VERBS[kind];
   if (verb !== undefined) {
     const [bare, typed] = verb;
-    if (s.none) return bare;
-    return typed !== undefined ? fill(typed, s) : `${s.S} ${lower(bare)}`;
+    if (s.none) return { name: bare, how: "verb" };
+    return typed !== undefined ? { name: fill(typed, s), how: "verb" } : { name: `${s.S} ${lower(bare)}`, how: "verb-default" };
   }
   // A family nobody has named: its own words, never its slug. `tag` is `<family>:<subject>`.
   const words = capital(kind.replace(/-/g, " "));
-  return s.none ? words : `${s.S} ${lower(words)}`;
+  return { name: s.none ? words : `${s.S} ${lower(words)}`, how: "fallback" };
 }

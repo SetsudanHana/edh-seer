@@ -85,6 +85,15 @@ test("cohesion secondary skips same-family tags to find a true second theme", ()
   expect(c.secondaryTag).toBe("draw:any");
 });
 
+test("a chosen type that resolved to nothing is never the secondary theme", () => {
+  // `cast:__none__` is a placeholder (chosen-type.ts NO_MATCH): it named a deck "__none__s".
+  const ranked = ["enters:wizard", "cast:__none__", "draw:any"];
+  const deckFreq = new Map([["enters:wizard", 9], ["cast:__none__", 8], ["draw:any", 7]]);
+  const c = computeCohesion(ranked, deckFreq, 20)!;
+  expect(c.tag).toBe("enters:wizard");
+  expect(c.secondaryTag).toBe("draw:any");
+});
+
 test("cohesion secondary is null when every ranked tag shares the primary's family", () => {
   const ranked = ["counter-added:creature", "counter-added:any"];
   const deckFreq = new Map([["counter-added:creature", 17], ["counter-added:any", 16]]);
