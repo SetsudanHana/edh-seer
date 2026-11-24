@@ -435,3 +435,19 @@ test("the ability rows are a file of their own, outside every group, and `abilit
   // a field outside the abilities is no ability field: refused by name
   expect(evaluate({ ability: { field: "read", op: "has", value: "grammar" } }, ctx)).toEqual({ ok: false, cannotAnswer: ["read is not an ability field, so it cannot be inside ability( )"] });
 });
+
+test("a NOT over an ability field leaves out the row with no record, at card level and inside ability( ) (#1786 review)", () => {
+  const root = abilityStatic();
+  expect(run(["--static", root]).status).toBe(0);
+  const cat = catalogueOf(root);
+  const dir = join(root, "v-t", "search", manifest(root).search);
+  const ctx = { ...clientColumns(root), abilities: decodeAbilityRows(JSON.parse(readFileSync(join(dir, cat.abilityRows!.file), "utf8"))) };
+  const KIND = "tags.abilities.kind";
+  const notTriggered = { field: KIND, op: "has", value: "triggered" } as const;
+  for (const node of [{ not: notTriggered }, { not: { ability: notTriggered } }] as const) {
+    const r = evaluate(node, ctx);
+    if (!r.ok) throw new Error("cannot answer");
+    expect(r.rows.includes(ABILITY_NAMES.length), JSON.stringify(node)).toBe(false);
+    expect(r.rows.length).toBeGreaterThan(0);
+  }
+});

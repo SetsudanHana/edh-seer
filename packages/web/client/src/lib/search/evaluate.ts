@@ -89,7 +89,7 @@ function unjudgedIn(node: Node, ctx: EvalContext, out: Set<number> = new Set()):
   if ("and" in node) node.and.forEach((c) => unjudgedIn(c, ctx, out));
   else if ("or" in node) node.or.forEach((c) => unjudgedIn(c, ctx, out));
   else if ("not" in node) unjudgedIn(node.not, ctx, out);
-  else if ("ability" in node) return out;
+  else if ("ability" in node) { for (const r of ctx.abilities?.unjudged ?? []) out.add(r); }
   else if ("field" in node) {
     const col = ctx.columns.get(node.field);
     if (col?.kind === "set") for (const r of col.unjudged ?? []) out.add(r);

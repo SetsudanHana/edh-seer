@@ -364,7 +364,7 @@ export function CardSearch({
   // THE ABILITY-SCOPE NOTE (#1784): two terms on the grammar's own fields are matched by card, not by ability, until #1786.
   const abilityTerms = useMemo(() => {
     const isAbility = (id: string): boolean => catalogueFields.get(id)?.ability === true;
-    return typedActive ? (typedAst ? abilityTermsOf(typedAst, isAbility) : 0) : abilityTermsOfFilters(eventQuery.sameAbility === true ? [] : fieldFilters, isAbility);
+    return typedActive ? (typedAst ? abilityTermsOf(typedAst, isAbility) : 0) : abilityTermsOfFilters(eventQuery.sameAbility === true ? fieldFilters.filter((f) => f.op === "not") : fieldFilters, isAbility) + (eventQuery.sameAbility === true && fieldFilters.some((f) => f.op !== "not" && isAbility(f.field)) ? 1 : 0);
   }, [typedActive, typedAst, fieldFilters, catalogueFields, eventQuery.sameAbility]);
   const typedShape = useMemo(() => (typedAst ? shapeNode(typedAst) : null), [typedAst]);
   const typedNeedsCatalogue = typedShape !== null && needsCatalogue(typedShape);
@@ -1156,7 +1156,7 @@ export function CardSearch({
                 setEffects(e.target.checked ? { ...without, sameAbility: true } : without);
               }}
             />
-            <span className="min-w-0">All the ability rows on the same ability</span>
+            <span className="min-w-0">Hold the ability-field rows above to one ability</span>
           </label>
         )}
         {/* A NATIVE `<details>`, so the keyboard and screen-reader model is the platform's -- the

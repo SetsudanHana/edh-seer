@@ -10,8 +10,8 @@ export const ACROSS_ABILITIES_NOTE = "Matched across the card's abilities: each 
 
 /** How many ability terms a query needs to hold TOGETHER: an `and` adds, an `or` needs only its widest branch, a `not` is its inner term. */
 export function abilityTermsOf(q: Query, isAbility: (field: string) => boolean): number {
-  // INSIDE ability( … ) every term is judged on one ability, so none of them is "across": the group counts for nothing here.
-  if ("ability" in q) return 0;
+  // A group is ONE term beside the others (it holds on one ability, which may be another than theirs); inside itself every term is judged on one ability, so nothing there is "across".
+  if ("ability" in q) return 1;
   if ("and" in q) return q.and.reduce((n, k) => n + abilityTermsOf(k, isAbility), 0);
   if ("or" in q) return q.or.reduce((n, k) => Math.max(n, abilityTermsOf(k, isAbility)), 0);
   if ("not" in q) return abilityTermsOf(q.not, isAbility);

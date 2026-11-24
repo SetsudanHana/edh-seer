@@ -340,7 +340,7 @@ const GRAMMAR_CAT: Catalogue = {
   groups: {
     ...CAT.groups,
     abilities: { file: "abilities.json", fields: [
-      { id: KIND, kind: "set", label: "Ability type", alias: "ab.kind", ability: true, advanced: true, values: [{ v: "static", n: 2 }, { v: "triggered", n: 2 }] },
+      { id: KIND, kind: "set", label: "Ability kind", alias: "ab.kind", ability: true, advanced: true, values: [{ v: "static", n: 2 }, { v: "triggered", n: 2 }] },
       { id: VERB, kind: "set", label: "Events it causes", alias: "ab.emits.verb", ability: true, advanced: true, values: [{ v: "draw", n: 2 }, { v: "mill", n: 2 }, { v: "gain-life", n: 1 }] },
       { id: "grants", kind: "set", label: "Gives something a type", ability: true, values: [{ v: "creature-types", n: 1 }], valueLabels: { "creature-types": "a creature type" } },
     ] },
@@ -364,13 +364,13 @@ test("a LABELLED grammar path still waits behind Advanced; a named query about t
   await openMenu();
   expect(await screen.findByRole("button", { name: "Gives something a type" })).toBeInTheDocument();
   expect(screen.getByRole("button", { name: "Our reading" })).toBeInTheDocument();
-  expect(screen.queryByRole("button", { name: "Ability type" })).toBeNull();
+  expect(screen.queryByRole("button", { name: "Ability kind" })).toBeNull();
   expect(screen.queryByRole("button", { name: "Events it causes" })).toBeNull();
   await userEvent.click(screen.getByRole("checkbox", { name: "Advanced fields" }));
   const labels = screen.getAllByRole("button").map((b) => b.textContent);
-  expect(labels).toEqual(expect.arrayContaining(["Ability type", "Events it causes"]));
+  expect(labels).toEqual(expect.arrayContaining(["Ability kind", "Events it causes"]));
   await userEvent.click(screen.getByRole("checkbox", { name: "Advanced fields" }));
-  expect(screen.queryByRole("button", { name: "Ability type" })).toBeNull();
+  expect(screen.queryByRole("button", { name: "Ability kind" })).toBeNull();
 });
 
 test("two grammar terms say they are matched across the card's abilities; one does not, and neither does a grammar term beside a plain one", async () => {
@@ -464,20 +464,26 @@ test("the builder's switch groups the ability rows: offered at two ability rows,
   const spy = atUrl(`/cards?f=${KIND}:static&f=${VERB}:draw`, rowsLoader(vi.fn(async () => abilityRowsOf())));
   await waitFor(() => expect(names()).toEqual(["Card A"]));
   expect(screen.getByText(NOTE)).toBeInTheDocument();
-  await userEvent.click(screen.getByRole("checkbox", { name: "All the ability rows on the same ability" }));
+  await userEvent.click(screen.getByRole("checkbox", { name: "Hold the ability-field rows above to one ability" }));
   await waitFor(() => expect(spy.search).toContain("sameability=1"));
   await screen.findByText(/No card/);
   expect(screen.queryByText(NOTE)).toBeNull();
-  await userEvent.click(screen.getByRole("checkbox", { name: "All the ability rows on the same ability" }));
+  await userEvent.click(screen.getByRole("checkbox", { name: "Hold the ability-field rows above to one ability" }));
   await waitFor(() => expect(names()).toEqual(["Card A"]));
   expect(spy.search).not.toContain("sameability");
   cleanup();
   atUrl(`/cards?f=${VERB}:draw`, rowsLoader(vi.fn(async () => abilityRowsOf())));
   await waitFor(() => expect(names()).toEqual(["Card A", "Card B"]));
-  expect(screen.queryByRole("checkbox", { name: "All the ability rows on the same ability" })).toBeNull();
+  expect(screen.queryByRole("checkbox", { name: "Hold the ability-field rows above to one ability" })).toBeNull();
 });
 
 test("the query box shows the builder's same-ability switch as ability( … )", async () => {
   atUrl(`/cards?sameability=1&f=${KIND}:static&f=${VERB}:draw`, rowsLoader(vi.fn(async () => abilityRowsOf())));
   await waitFor(() => expect((screen.getByRole("textbox", { name: /type a query/i }) as HTMLInputElement).value).toBe(SAME));
+});
+
+test("an ability( … ) group beside one more ability term says the two are matched across abilities", async () => {
+  atUrl(`/cards?x=${encodeURIComponent("ability(ab.kind:static) ab.emits.verb:draw")}`, rowsLoader(vi.fn(async () => abilityRowsOf())), typedExtra);
+  await waitFor(() => expect(names()).toEqual(["Card A"]));
+  expect(screen.getByText(NOTE)).toBeInTheDocument();
 });

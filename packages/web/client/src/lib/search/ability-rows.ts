@@ -17,6 +17,8 @@ export interface AbilityRowsPayload {
   /** How many abilities each of those rows holds, in the same order. */
   n: number[];
   fields: Record<string, FieldPayload>;
+  /** Cards with no record or no tags: they cannot say "no ability of mine is X", so a NOT over an `ability( … )` leaves them out. Absent in a file written before this. */
+  unjudged?: string;
 }
 
 /** The ability rows once decoded: columns over ability ids, and the card each id belongs to. */
@@ -26,6 +28,7 @@ export interface AbilityRows {
   /** ability id -> card row */
   owner: Uint32Array;
   columns: ReadonlyMap<string, Column>;
+  unjudged?: number[];
 }
 
 /** The pseudo-records of a build: one per ability, numbered in card-row order. */
@@ -44,7 +47,7 @@ export function abilityRecords(records: readonly WalkRecord[]): { records: WalkR
 }
 
 /** The ability-level columns of every ability field the card-level walk kept (a path the card walk dropped for being free text is dropped here too), plus the computed fields over them. */
-export function buildAbilityRows(records: readonly WalkRecord[], registry: SearchRegistry, kept: ReadonlyMap<string, Column>): { payload: AbilityRowsPayload; columns: Map<string, Column> } {
+export function buildAbilityRows(records: readonly WalkRecord[], registry: SearchRegistry, kept: ReadonlyMap<string, Column>, unjudged: readonly number[] = []): { payload: AbilityRowsPayload; columns: Map<string, Column> } {
   const ar = abilityRecords(records);
   const prefixes = registry.abilityPrefixes ?? [];
   const own: SearchRegistry = {
@@ -66,7 +69,7 @@ export function buildAbilityRows(records: readonly WalkRecord[], registry: Searc
   }
   const fields: Record<string, FieldPayload> = {};
   for (const [path, col] of columns) fields[path] = encodeColumn(col);
-  return { payload: { rows: encodePostings(ar.rows), n: ar.n, fields }, columns };
+  return { payload: { rows: encodePostings(ar.rows), n: ar.n, fields, ...(unjudged.length > 0 ? { unjudged: encodePostings(unjudged) } : {}) }, columns };
 }
 
 /** Rebuild from the fetched file. Throws on a count column that does not fit its rows: a torn file is never half read. */
@@ -79,5 +82,5 @@ export function decodeAbilityRows(payload: AbilityRowsPayload): AbilityRows {
   rows.forEach((row, i) => { for (let k = 0; k < payload.n[i]!; k++) owner[at++] = row; });
   const columns = new Map<string, Column>();
   for (const [path, p] of Object.entries(payload.fields)) columns.set(path, decodeFieldPayload(path, p));
-  return { count: total, owner, columns };
+  return { count: total, owner, columns, ...(payload.unjudged ? { unjudged: decodePostings(payload.unjudged) } : {}) };
 }

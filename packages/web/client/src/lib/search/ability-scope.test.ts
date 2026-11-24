@@ -23,3 +23,10 @@ test("builder rows: all the any-of values of one field are one term; the note st
   expect(needsAcrossNote(1)).toBe(false);
   expect(needsAcrossNote(2)).toBe(true);
 });
+
+test("an ability( … ) group is ONE term toward the note, and adds nothing inside itself (#1786 review)", () => {
+  const a = has("tags.abilities.kind"), b = has("tags.abilities.emits.verb");
+  expect(abilityTermsOf({ ability: { and: [a, b] } }, ab)).toBe(1);
+  expect(abilityTermsOf({ and: [{ ability: a }, b] }, ab)).toBe(2);
+  expect(abilityTermsOf({ and: [{ ability: { and: [a, b] } }, has("st", "elf")] }, ab)).toBe(1);
+});

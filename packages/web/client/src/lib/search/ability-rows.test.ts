@@ -26,7 +26,7 @@ const names = (rows: readonly number[]): string[] => rows.map((r) => (records[r]
 
 function context(): EvalContext {
   const walk = walkRecords(records, registry);
-  const built = buildAbilityRows(records, registry, walk.columns);
+  const built = buildAbilityRows(records, registry, walk.columns, [6]);
   // through the wire, as the page gets it
   const abilities = decodeAbilityRows(JSON.parse(JSON.stringify(built.payload)));
   return { rowCount: records.length, columns: walk.columns, namedLists: {}, abilities };
@@ -62,7 +62,7 @@ describe("ability( … ): every term on the SAME ability", () => {
     expect(ask({ ability: { or: [has(VERB, "scry"), has(VERB, "lose-life")] } })).toStrictEqual(["Phyrexian Arena", "Sylvan Library", "Viscera Seer"]);
     expect(ask({ ability: { and: [has(KIND, "activated"), { not: has(VERB, "scry") }] } })).toStrictEqual(["Viscera Seer"]);
     expect(ask({ ability: { not: has(KIND, "triggered") } })).toStrictEqual(["Skullclamp", "Viscera Seer"]);
-    expect(ask({ not: { ability: has(KIND, "triggered") } })).toStrictEqual(["Viscera Seer", "No abilities", "Not read"]);
+    expect(ask({ not: { ability: has(KIND, "triggered") } })).toStrictEqual(["Viscera Seer", "No abilities"]); // "Not read" (no tags) cannot say it has no such ability
   });
 
   test("a card with no abilities, or no reading, is in no ability( ) answer", () => {
