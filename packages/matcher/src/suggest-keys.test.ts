@@ -66,3 +66,11 @@ test("a verb's implied-class axis reaches its untyped keys; a stored `:any` axis
   expect(axisEventKeys("draw:any", keys)).toEqual(["draw|-|-|-"]);
   expect(eventKeysForDemand("enters:any", keys)).toEqual([]); // dead-key-ok: proves the unfilled key matches nothing
 });
+
+/** THE ONE KEY FOR INSTANTS AND SORCERIES (#1170 PR 3). A spellslinger deck's axis tag is `cast:instant-sorcery`; the
+ *  suppliers and consumers key their events by the two base types, so the axis must reach both. As one word it matched
+ *  neither, and the plan hint for every spellslinger deck found no candidates. */
+test("the instant-sorcery axis tag reaches the instant and the sorcery keys", () => {
+  const keys = ["cast|instant|-|-", "cast|sorcery|-|-", "cast|creature|-|-", "cast|-|-|-"];
+  expect(axisEventKeys("cast:instant-sorcery", keys).sort()).toEqual(["cast|instant|-|-", "cast|sorcery|-|-"]);
+});

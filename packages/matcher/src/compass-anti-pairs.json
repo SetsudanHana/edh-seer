@@ -61,7 +61,7 @@
       "why": "Recoup gives flashback to ONE target sorcery card in your graveyard; a one-target grant is not a class of the deck (review of the spell-grant join).",
       "source": "#681 fix and its reviews, 2026-09-28 (compass backfill)",
       "verified": true,
-      "tag": "keyword-grant:sorcery"
+      "tag": "keyword-grant:instant-sorcery"
     },
     {
       "a": "Hoarding Broodlord",
@@ -124,7 +124,7 @@
       "why": "Pillage discards cards of unknown type; the fill is keyed `any`, never filed under instants.",
       "source": "#543 fix (compass backfill 2026-09-28)",
       "verified": true,
-      "tag": "graveyard-recursion:instant"
+      "tag": "graveyard-recursion:instant-sorcery"
     },
     {
       "a": "Nalia de'Arnise",
@@ -210,7 +210,7 @@
     {
       "a": "Ephemerate",
       "b": "Ojer Pakpatiq, Deepest Epoch // Temple of Cyclical Time",
-      "tag": "cast:instant",
+      "tag": "cast:instant-sorcery",
       "class": "false-emit",
       "why": "#931 / owner ruling 2026-10-02 (#929/#930), redundant keywords: Ephemerate already has rebound, so Ojer Pakpatiq's rebound grant gives it nothing (CR 702.88c).",
       "source": "#931",
@@ -246,7 +246,7 @@
     {
       "a": "Faithless Looting",
       "b": "Soundwave, Sonic Spy // Soundwave, Superior Captain",
-      "tag": "graveyard-recursion:instant",
+      "tag": "graveyard-recursion:instant-sorcery",
       "class": "false-emit",
       "why": "#729: Soundwave exiles an instant or sorcery from THEIR (the damaged player's) graveyard; your own discard fills yours, so Faithless Looting brings nothing back for it. Own-yard fills are not what an opponent recursion joins (owner ruling 2026-10-09).",
       "source": "#729 (2026-10-09)",

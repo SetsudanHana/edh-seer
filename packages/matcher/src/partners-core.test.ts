@@ -2160,6 +2160,12 @@ test("a condition's demand is a demand key, the same as a trigger on that event"
   // A noncreature-spell condition is the prowess demand.
   const spells = card([{ kind: "triggered", trigger: { verbs: ["end-step"], subject: { control: "you", token: null } }, conditionCares: ["cast:-creature"], effect: { kind: "draw-card" } }]);
   expect(demandKeysOf(spells).some((k) => k.startsWith("cast|") && !k.includes("|creature|"))).toBe(true);
+  // "If you've cast two or more instant and/or sorcery spells" (Rootha, Burrog Barrage, Sanar...): the condition tag is the ONE key
+  // `cast:instant-sorcery` (#1170 PR 3), and the demand is the two base keys a trigger on either type has -- not a key
+  // no supplier emits (`cast|instant-sorcery|-|-`), which dropped these cards' only spells-cast demand.
+  const slingers = card([{ kind: "triggered", trigger: { verbs: ["end-step"], subject: { control: "you", token: null } }, conditionCares: ["cast:instant-sorcery"], effect: { kind: "draw-card" } }]);
+  expect(demandKeysOf(slingers).filter((k) => k.startsWith("cast|")).sort()).toEqual(["cast|instant|-|-", "cast|sorcery|-|-"]);
+  expect(demandKeysOf(slingers).some((k) => k.includes("instant-sorcery"))).toBe(false);
   // The older condition tags stay out of the pools: "if you attacked this turn" (Alesha).
   const alesha = card([{ kind: "triggered", trigger: { verbs: ["end-step"], subject: { control: "you", token: null } }, conditionCares: ["attacks:creature"], effect: { kind: "graveyard-recursion" } }]);
   expect(demandKeysOf(alesha).some((k) => k.startsWith("attacks"))).toBe(false);

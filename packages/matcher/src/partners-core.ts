@@ -1189,7 +1189,10 @@ function conditionDemandKeys(tag: string): string[] {
   if (!verb || !cls) return [];
   const subject: SubjectFilter = cls === "any" ? { control: "you", token: null }
     : cls.startsWith("-") ? { ...parseSubject(`a non${cls.slice(1)} spell`), control: "you" }
-    : { type: cls, control: "you", token: null };
+    // THE ONE KEY FOR INSTANTS AND SORCERIES (#543, `themeSubjectKey`; #1170 PR 3) is two types as a subject:
+    // `splitKey` then yields the two base keys a trigger on either has. As `{ type: cls }` it wrote
+    // `cast|instant-sorcery|-|-`, which no supplier emits.
+    : { type: cls === "instant-sorcery" ? ["instant", "sorcery"] : cls, control: "you", token: null };
   return splitKey(eventKey({ verb, subject } as GameEvent));
 }
 
