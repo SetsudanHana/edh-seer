@@ -15,11 +15,11 @@ import { totalmem } from "node:os";
 import { getHeapStatistics } from "node:v8";
 import { mkdirSync, readdirSync, readFileSync, renameSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { connect, docToCard, loadConfig } from "@edh-seer/data";
+import { connect, docToCard, loadConfig, normalizeName } from "@edh-seer/data";
 import { DERIVED_COLLECTION, DERIVE_VERSION, type CardTags } from "@edh-seer/tagger";
 import { tokenGapMessage, unresolvedTokenMakers } from "@edh-seer/data/ingest-tokens-core";
 import { loadTokenTags } from "../index.js";
-import { SHARD_COUNT, comboIndex, shardOf, shippedTags, shippedTokenTags, staleRows, type StaticCombo } from "./build-static-core.js";
+import { SHARD_COUNT, comboIndex, resolveKeyOwners, shardOf, shippedTags, shippedTokenTags, staleRows, type StaticCombo } from "./build-static-core.js";
 import { browseSlices, buildPartnerArtifact, commanderPlayable, hasPage, isLandPoolMember, partnerShardOf, type PartnerId } from "../partners-core.js";
 import { similarIndex } from "../similar.js";
 import { ChipTable, encodeSimilar } from "../similar-shard.js";
@@ -139,13 +139,34 @@ const collisions = [...occurrencesByName.entries()].filter(([, n]) => n > 1);
 // once per colliding name (53 here, nothing), is exact by construction instead. Rewriting only
 // these files after the fact — rather than resolving every name through `findOne` up front — keeps
 // the common case (no collision) a single bulk read.
-const winners = new Map<string, { _id: string }>();
-for (const [name] of collisions) {
-  const winner = await store.cards.findOne({ searchNames: name });
-  if (!winner) continue; // cannot happen: `name` was just written from a real card above
-  winners.set(name, winner);
-  entryByName.set(name, entryOf(winner));
+// A KEY'S OWNER IS DECIDED BY `resolveKeyOwners` (#1790), NOT BY `findOne` ALONE: a card's own name beats
+// another card's alias, so the split "Smelt // Herd // Saw" no longer holds the key "smelt" over the real
+// Smelt (it keeps "smelt herd saw"). `findOne` survives only to separate claimants the rule cannot
+// (same-name duplicates, alias-only keys), restricted to those claimants, which keeps live-path parity.
+const keyOwners = resolveKeyOwners(cards, normalizeName);
+if (keyOwners.unresolved.size > 0) {
+  const lines = [...keyOwners.unresolved].slice(0, 20).map(([k, cs]) => `  "${k}": ${cs.map((c) => `${c.name} (${c._id})`).join(" vs ")}`);
+  console.error(`build-static refused: ${keyOwners.unresolved.size} shard key(s) claimed as their own name by two different cards:\n${lines.join("\n")}`);
+  await store.close();
+  process.exit(1);
 }
+const winners = new Map<string, { _id: string }>(); // colliding keys only; read back from disk below as the proof
+for (const [name, claimants] of keyOwners.tied) {
+  const winner = await store.cards.findOne({ searchNames: name, _id: { $in: claimants.map((c) => c._id) } });
+  if (!winner) continue; // cannot happen: the claimants were just read from this collection
+  entryByName.set(name, entryOf(winner));
+  winners.set(name, winner);
+}
+// Every key the rule decided outright is set from its owner, whatever order `cards` came in.
+for (const [name, owner] of keyOwners.owners) {
+  if (keyOwners.tied.has(name)) continue;
+  entryByName.set(name, entryOf(owner));
+  if ((occurrencesByName.get(name) ?? 0) > 1) winners.set(name, owner);
+}
+console.log(
+  `key owners: ${keyOwners.owners.size} keys, ${keyOwners.tied.size} tied (same-name duplicates / alias-only, findOne order), ` +
+    `${keyOwners.shadowed.length} card(s) lose their own key to a better-named card: ${keyOwners.shadowed.map((s) => `${s.card.name} -> ${s.owner.name}`).join("; ")}`,
+);
 
 const resolveToken = await loadTokenTags(store.db);
 const tokenTags = shippedTokenTags(tokens.flatMap((t) => t.printingIds), (pid) => resolveToken({ name: "", typeLine: "", printingId: pid }));

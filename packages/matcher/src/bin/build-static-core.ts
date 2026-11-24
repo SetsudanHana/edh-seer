@@ -83,3 +83,66 @@ export function shippedTokenTags<T extends object>(printingIds: Iterable<string>
   }
   return out;
 }
+
+/** WHO OWNS A SHARD KEY (#1790). `searchNames` is a card's normalized full name PLUS its normalized front
+ *  face, and punctuation is stripped from both, so a key can have several claimants. Before this rule the
+ *  build gave the key to whatever `findOne({ searchNames })` returned (index order, i.e. nothing): the
+ *  split "Smelt // Herd // Saw" (alias "smelt") shadowed the real Smelt, and the joke cards "Gather, the
+ *  Townsfolk" / "Ransack, the Lab" shadowed the real Gather the Townsfolk / Ransack the Lab, which then
+ *  had no record anywhere in `static-out`.
+ *
+ *  THE RULE: a card's OWN name beats any other card's alias, and a name that needs no stripping beats one
+ *  that does.  tier 0 = the lowercased name IS the key ("Gather the Townsfolk");  tier 1 = the key is the
+ *  name with punctuation stripped ("Gather, the Townsfolk", "Multi-Headed");  tier 2 = an alias (a face).
+ *  The lowest tier present wins.
+ *   - several claimants at that tier with the SAME name (alternate-object duplicates; ~40 corpus-wide):
+ *     `tied` — the caller keeps its findOne order among them, parity with the live path;
+ *   - several claimants at tier 2 (two flip cards sharing a front face): `tied` too, no card owns the key;
+ *   - several DIFFERENT names at tier 0 or 1 is a hard error: two cards claim one key as their own and no
+ *     rule here can say which, so `unresolved` carries them and the build refuses to run.
+ *  `shadowed` lists cards whose OWN key (tier 0/1) went to another card: they have no shard record. It is
+ *  not an error (the key is single-valued and the client looks cards up by it) but the build prints it. */
+export interface KeyClaimant { _id: string; name: string; searchNames: readonly string[] }
+export interface KeyOwners<C extends KeyClaimant> {
+  /** key -> the single owner. */
+  owners: Map<string, C>;
+  /** key -> claimants the rule could not separate (same-name duplicates, or alias-only keys). */
+  tied: Map<string, C[]>;
+  /** key -> claimants with different names tied at tier 0/1. Non-empty means refuse to build. */
+  unresolved: Map<string, C[]>;
+  /** cards that own a key (tier 0/1) but lost it to a lower tier. */
+  shadowed: { key: string; card: C; owner: C }[];
+}
+
+export function resolveKeyOwners<C extends KeyClaimant>(cards: readonly C[], normalize: (name: string) => string): KeyOwners<C> {
+  const claims = new Map<string, C[]>();
+  for (const card of cards) {
+    for (const key of card.searchNames) {
+      const list = claims.get(key);
+      if (list) list.push(card);
+      else claims.set(key, [card]);
+    }
+  }
+  const tierOf = (card: C, key: string): number => (card.name.toLowerCase() === key ? 0 : normalize(card.name) === key ? 1 : 2);
+  const out: KeyOwners<C> = { owners: new Map(), tied: new Map(), unresolved: new Map(), shadowed: [] };
+  for (const [key, list] of claims) {
+    if (list.length === 1) { out.owners.set(key, list[0]); continue; }
+    const tiers = list.map((c) => tierOf(c, key));
+    const best = Math.min(...tiers);
+    const top = list.filter((_, i) => tiers[i] === best);
+    const names = new Set(top.map((c) => c.name));
+    if (top.length === 1) {
+      out.owners.set(key, top[0]);
+    } else if (best < 2 && names.size > 1) {
+      out.unresolved.set(key, top);
+      continue;
+    } else {
+      out.tied.set(key, top);
+      out.owners.set(key, top[0]); // placeholder; the caller refines it among `top`
+    }
+    for (let i = 0; i < list.length; i++) {
+      if (tiers[i] < 2 && list[i].name !== top[0].name) out.shadowed.push({ key, card: list[i], owner: top[0] });
+    }
+  }
+  return out;
+}
