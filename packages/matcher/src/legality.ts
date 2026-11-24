@@ -1,4 +1,5 @@
 import type { Card } from "@edh-seer/engine";
+import { partnerGroupsOf, partnerKindsOf } from "./partner-kinds.js";
 import { allowsChosenColour, commanderDeckRules, companionFindings, constructionFindings, copyLimit, exemptionNote, isInstantOrSorcery } from "./deck-rules.js";
 
 /** DECK LEGALITY AS A REPORT, NEVER A GATE (roadmap J4, CR 903.3 and 903.5a-d).
@@ -44,35 +45,13 @@ export const isBackground = (card: Card): boolean => (card.typeLine ?? "").toLow
  *  Background 32 and Doctor's companion 27. So the rule reads the LABEL after the em dash and pairs
  *  any two cards printing the same one, rather than enumerating the labels — Friends forever is not
  *  special, and a seventh group printed next year works without a code change. */
-const PARTNER_BARE = /(?:^|\n)Partner \(/;
-/** 702.124c names the specific other card, so the pair is licensed only with THAT card. */
+/** 702.124j names the specific other card, so the pair is licensed only with THAT card. */
 const PARTNER_WITH = /(?:^|\n)Partner with ([^(\n]+)/i;
-/** 702.124's named groups. The captured label is the thing that must match on both cards.
- *
- *  READ WITH STRING OPS, NOT A REGEX (CodeQL js/polynomial-redos, alert #74). The obvious pattern
- *  `/(?:^|\n)Partner—([^(\n]+?)\s*\(/i` lets the lazy group AND the `\s*` after it both match a
- *  space, so a line of "Partner—" with many spaces and no "(" backtracks quadratically: measured
- *  2,000 spaces 2.5ms, 8,000 28.5ms, 16,000 167ms, 32,000 389ms -- four times the work for twice
- *  the input. Oracle text is corpus data rather than the pasted decklist, so this was never the
- *  cheapest way to hurt this service, but the fix is smaller than the argument for keeping it. */
-const PARTNER_PREFIX = "partner—";
-const CHOOSE_BACKGROUND = /Choose a Background/i;
-const DOCTORS_COMPANION = /Doctor's companion/i;
-
-function partnerLabel(text: string): string | undefined {
-  for (const line of text.split("\n")) {
-    // Anchored to the line start and case-insensitive, exactly as the regex was.
-    if (!line.toLowerCase().startsWith(PARTNER_PREFIX)) continue;
-    // The reminder text in brackets closes the label. No "(" means no label -- the regex required
-    // one too, so a bare "Partner—Friends forever" has never named a group.
-    const open = line.indexOf("(", PARTNER_PREFIX.length);
-    if (open < 0) continue;
-    const label = line.slice(PARTNER_PREFIX.length, open).trim().toLowerCase();
-    if (label) return label;
-  }
-  return undefined;
-}
-
+/** THE KEYWORD LINES ARE READ BY `partner-kinds.ts` (#1798), the reader the `partner` search field uses: whole-line
+ *  string tests, no reminder text required. The regexes this replaced needed "Partner (" and "Partner—<label> (",
+ *  which missed Jeska, Tevesh Szat and Akroma (a bare "Partner" line) and April O'Neil ("Partner—Character select"
+ *  with no parenthesis), and an unanchored "Doctor's companion" matched a Saga that only mentions the phrase.
+ *  No regex means nothing for CodeQL's js/polynomial-redos to flag on the label read (alert #74). */
 /** Does `a` name `b`? "Partner with Kydele, Chosen of Kruphix" carries the whole printed name, so a
  *  containment test either way is enough and survives the comma every legendary name has. */
 function namesPartner(a: Card, b: Card): boolean {
@@ -100,22 +79,23 @@ export const isTimeLordDoctor = (c: Pick<Card, "typeLine">): boolean => (c.typeL
  *  licensing shape the corpus actually prints has to be here — which is why the six forms were
  *  counted before the regexes were written rather than after. */
 export function pairingLicense(a: Card, b: Card): string | undefined {
-  const ta = a.oracleText ?? "";
-  const tb = b.oracleText ?? "";
-  if (PARTNER_BARE.test(ta) && PARTNER_BARE.test(tb)) return "partner";
+  const ka = partnerKindsOf(a);
+  const kb = partnerKindsOf(b);
+  if (ka.includes("partner") && kb.includes("partner")) return "partner";
   if (namesPartner(a, b) || namesPartner(b, a)) return "partner with";
-  const la = partnerLabel(ta);
-  if (la !== undefined && la === partnerLabel(tb)) return la;
+  const gb = partnerGroupsOf(b);
+  const shared = partnerGroupsOf(a).find((g) => gb.includes(g));
+  if (shared !== undefined) return shared;
   // A Background is the SECOND commander, so the licence is on the other card. Checked both ways
   // round because a decklist states no order.
-  if ((CHOOSE_BACKGROUND.test(ta) && isBackground(b)) || (CHOOSE_BACKGROUND.test(tb) && isBackground(a))) return "choose a background";
+  if ((ka.includes("chooses-background") && isBackground(b)) || (kb.includes("chooses-background") && isBackground(a))) return "choose a background";
   // CR 702.124m: Doctor's companion lets the OTHER commander be "a legendary Time Lord Doctor
   // creature card that has no other creature types". Not any Doctor (owner, 2026-09-27): reading
   // "Doctor" anywhere in the type line paired companions with legendary creatures that are Doctors
   // by another type -- a Human Doctor is not the Doctor. Read per face, as a type line prints them.
   // The dash is found by position, not a regex: `\s+[—-]\s+` backtracks on a long run of spaces
   // (CodeQL, polynomial regex on library input).
-  if ((DOCTORS_COMPANION.test(ta) && isTimeLordDoctor(b)) || (DOCTORS_COMPANION.test(tb) && isTimeLordDoctor(a))) return "doctor's companion";
+  if ((ka.includes("doctors-companion") && isTimeLordDoctor(b)) || (kb.includes("doctors-companion") && isTimeLordDoctor(a))) return "doctor's companion";
   return undefined;
 }
 

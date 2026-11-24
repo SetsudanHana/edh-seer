@@ -21,6 +21,7 @@
     "./suggest-static": "./src/suggest-static.ts",
     "./routes": "./src/routes.ts",
     "./legality": "./src/legality.ts",
+    "./partner-kinds": "./src/partner-kinds.ts",
     "./partner-shard": "./src/partner-shard.ts",
     "./partners-core": "./src/partners-core.ts",
     "./member-facts": "./src/member-facts.ts",
