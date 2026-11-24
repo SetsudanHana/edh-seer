@@ -1,4 +1,4 @@
-import { isPutIntoGraveyardClass } from "@edh-seer/engine";
+import { pluralSubject, tagName } from "@edh-seer/engine";
 import type { CardGraph, DeckReport } from "../types.js";
 
 /** THE DECK AS THE FEW THINGS IT DOES, NOT AS 800 LINES (graph evaluation 2026-09-25).
@@ -156,8 +156,6 @@ const MIN_GROUP_LINKS = 6;
 const HELPER_TAG = /^(static:cost-reduction|static:type-grant|recursion-target|tutor|ramp-target|prowess)/;
 export const isHelperTag = (tag: string): boolean => HELPER_TAG.test(tag);
 
-const CARD_TYPES = new Set(["creature", "land", "artifact", "enchantment", "instant", "sorcery", "planeswalker", "permanent", "spell", "battle"]);
-const capital = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
 /** A subject as the plural a player says: "creatures", "Clerics", "noncreature spells". */
 /** INSTANTS AND SORCERIES ARE ONE GROUP ON THE PAGE (owner ruling 2026-09-27, #543). The engine keys a
@@ -176,93 +174,13 @@ export function foldSpellTag(tag: string): string {
   return tag.replace(/:(?:instant|sorcery)$/, ":instant-sorcery");
 }
 
-export function plural(subject: string): string {
-  if (!subject || subject === "any") return "cards";
-  if (subject === "instant-sorcery") return "instants and sorceries";
-  if (subject.startsWith("-")) return `non${subject.slice(1)} ${subject === "-land" ? "cards" : "spells"}`;
-  // THE PARTY IS NOT A TYPE: `scales:party` (#490) counts up to one each of Cleric, Rogue, Warrior
-  // and Wizard, and "Counts your Parties" read as a card type that does not exist.
-  if (subject === "party") return "party members";
-  const w = CARD_TYPES.has(subject) ? subject : capital(subject);
-  if (w === "sorcery") return "sorceries";
-  if (/(ch|sh|s|x)$/i.test(w)) return `${w}es`;
-  if (/[^aeiou]y$/i.test(w)) return `${w.slice(0, -1)}ies`;
-  if (/f$/i.test(w)) return `${w.slice(0, -1)}ves`;
-  return `${w}s`;
-}
+export const plural = pluralSubject;
 
-/** A group's name in a player's words. Taken from what the tag's sentences say, not from the tag's
- *  spelling: `scales:cleric` is "counts it and does more", which is a Cleric tribal deck, whatever
- *  the inspector's label says about graveyards.
- *
- *  THE TABLE'S OWN WORDS (owner, 2026-09-27: "no magic player uses phrasing like 'Creatures
- *  Entering', 'Wizard typal'"). A theme is named the way a player names it in a deck tech: tribal,
- *  ETBs, landfall, aristocrats, spellslinger, anthems, sac fodder. Every tag still gets a name of
- *  its own, so two themes never share one. */
-export function groupName(tag: string): string {
-  const exact: Record<string, string> = {
-    "static:pump": "Anthems", "static:keyword-grant": "Keyword granting", "static:type-grant": "Adds creature types",
-    "static:cost-reduction": "Cost reducers", "static:speed-increase": "Haste enablers",
-    "static:damage-multiplier": "Damage doublers", "static:tax": "Taxes", "static:copy-spell": "Spell copiers",
-    "enters:land": "Landfall", "enters:enchantment": "Enchantress", "cast:instant-sorcery": "Spellslinger",
-    "dies:creature": "Aristocrats", "graveyard-recursion:creature": "Reanimator", "non-combat-damage:any": "Burn",
-    "lose-life:opp": "Drain", "doubles:enters": "ETB doublers", "copies:triggered": "Trigger copiers",
-    "copies:activated": "Ability copiers", "creates:treasure": "Treasure makers", "creates:emblem": "Emblems",
-    "scales:creature": "Go wide", "scales:land": "Lands matter", "scales:party": "Party",
-    "condition:party": "Party synergy",
-    // #681: a count of what you gave away is a Donate deck; a grant to the spells you cast is no tribe.
-    "scales:donated": "Donate", "keyword-grant:spell": "Spell keyword granting",
-    "keyword-grant:instant-sorcery": "Instant and sorcery keyword granting",
-  };
-  if (exact[tag]) return exact[tag];
-  const i = tag.indexOf(":");
-  const kind = i < 0 ? tag : tag.slice(0, i);
-  const sub = i < 0 ? "" : tag.slice(i + 1);
-  const p = plural(sub), P = capital(p);
-  const none = !sub || sub === "any";
-  // A creature type ("wizard"), as against a card type, a "non-" class, a token or "any".
-  const tribe = !none && !CARD_TYPES.has(sub) && !sub.startsWith("-") && !["party", "token", "basic", "instant-sorcery"].includes(sub);
-  const T = capital(sub);
-  // A class's short name: "Artifact", "Noncreature", "Instant and sorcery".
-  const S = sub === "instant-sorcery" ? "Instant and sorcery" : sub.startsWith("-") ? `Non${sub.slice(1)}` : T;
-  switch (kind) {
-    case "scales": return tribe ? `${T} typal` : none ? "Cards matter" : `${P} matter`;
-    case "enters": return sub === "permanent" ? "ETB triggers" : `${S} ETBs`;
-    case "cast": return sub === "spell" ? "Cast triggers" : `${S} spells`;
-    case "dies": return isPutIntoGraveyardClass(sub) ? `${P} to the graveyard` : `${S} deaths`;
-    case "attacks": return sub === "creature" ? "Attack triggers" : `${S} attacks`;
-    case "blocks": return sub === "creature" ? "Block triggers" : `${S} blocks`;
-    case "becomes-blocked": return sub === "creature" ? "Becomes-blocked triggers" : `${S} becoming blocked`;
-    case "combat-damage": return sub === "creature" ? "Combat damage triggers" : `${S} combat damage`;
-    case "non-combat-damage": return "Burn";
-    case "counter-added": return none ? "Counters matter" : `Counters on ${p}`;
-    case "graveyard-recursion": return none ? "Recursion" : tribe ? `${T} reanimation` : `${S} recursion`;
-    // #1083 (owner 2026-10-08): Dauthi Voidwalker / Valgavoth exile what would hit an opponent's
-    // graveyard and play it; not recursion, so not "Recursion" and not the raw tag.
-    case "graveyard-intercept": return "Playing their exiled cards";
-    case "recursion-target": return none ? "Recursion targets" : `${S} recursion targets`;
-    case "ramp-target": return none || sub === "land" || sub === "basic" ? "Land ramp" : `${T} ramp`;
-    case "tutor": return none ? "Tutors" : `${S} tutors`;
-    case "fodder": return none || sub === "creature" ? "Sac fodder" : `${S} fodder`;
-    case "copies": return "Copy effects";
-    case "doubles": return none ? "Trigger doublers" : `${S} trigger doublers`;
-    case "creates": return none || sub === "token" || sub === "creature" ? "Token makers" : `${S} token makers`;
-    case "lose-life": return "Life loss";
-    case "threshold": return none ? "Graveyard matters" : `${P} in the graveyard`;
-    // #571: a flicker or reanimation puts a creature a typed payoff watches onto the battlefield again.
-    case "reuse": return none ? "Blink" : `${S} blink`;
-    case "prowess": return "Prowess";
-    // Issue #505: a cheat puts a creature from hand onto the battlefield (Summoner's Grimoire).
-    case "cheat": return none ? "Cheat into play" : `Cheat ${p} into play`;
-    // Issue #514: a card switched on by a creature type (Multiclass Baldric, Gravecrawler).
-    case "condition": return none ? "Conditional cards" : `${S} synergy`;
-    // Issue #510: a flash grant gives a temporary token (Inalla's copy) a whole turn.
-    case "flash": return "Flash";
-    // Issue #511: a cost that removes a counter (O'aka) spends what the counter makers put down.
-    case "counter-removed": return "Removing counters";
-    default: return capital(tag.replace(/[:-]/g, " "));
-  }
-}
+/** A group's name in a player's words: the engine's `tagName`, the same function that names the deck's
+ *  headline and the card chips' fallback (#1170, owner 2026-11-24: one name per key everywhere).
+ *  Kept as a name so the call sites read as what they name. The `exact` table, the verb x subject
+ *  rules and the instant/sorcery fold (#543) all live in `@edh-seer/engine`'s `theme-names.ts`. */
+export const groupName = (tag: string): string => tagName(tag);
 
 /** The jobs a link count cannot judge, in words the precon seat knew (round 4 flagged "ramp",
  *  "counterspell" and "board wipe"). Keyed on the engine's role ids. */

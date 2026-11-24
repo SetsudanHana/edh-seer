@@ -242,7 +242,6 @@ export function ReportChapters({ data, diff, assumptions, assumptionsSet }: {
     // WHERE THE REPORT ALREADY NAMES A CARD (Drawer mockup, 2026-09-27: "In this report: …").
     const classes = report.deckMath?.wincons.classes ?? [];
     const cutSet = new Set(cuts.map((c) => c.name));
-    const main = mainTheme(report);
     const inCombo = (name: string) => (report.combos ?? []).some((c) => c.cards.includes(name));
     setExtras({
       model: themes,
@@ -258,7 +257,6 @@ export function ReportChapters({ data, diff, assumptions, assumptionsSet }: {
         ...(inCombo(name) ? ["a piece of a combo"] : []),
         ...(cutSet.has(name) ? ["on the cut list"] : []),
       ],
-      groupName: (key, name) => key === main?.tag ? main.name : key === main?.second?.tag ? main.second.name : name,
       // THE PAIR OPENS ON THE MAP, AND SAYS WHERE IT CAME FROM (mockup F1: "Back to game plan"). The
       // way back is the control that asked, taken now, before the page scrolls away from it.
       pair: (a, b) => {

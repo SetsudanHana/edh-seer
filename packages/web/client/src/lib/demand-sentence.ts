@@ -32,7 +32,7 @@
  *  - `counter-added`: the subject is what the counter lands ON ("a creature getting a counter"),
  *    not the counter's own kind — the field this reads is the consumer's demand, and a demand
  *    names a permanent, never a +1/+1. */
-import { isPutIntoGraveyardClass } from "@edh-seer/engine";
+import { isPutIntoGraveyardClass, tagName } from "@edh-seer/engine";
 import { OTHER_PLAYER_SUFFIX, WILDCARD_SUBJECT } from "@edh-seer/matcher/zones";
 
 export const DEMAND_VERB: Record<string, string> = {
@@ -612,11 +612,15 @@ export function mechanismKey(tag: string): string {
  *  `mechanismKey` already encodes, so it correctly yields the bare label. */
 export function tagLabel(tag: string): string {
   const mechanism = mechanismKey(tag);
+  // A mechanism no table here knows would de-slug ("Static:token doubling", "Recursion target · instant"):
+  // the engine's `tagName` is the one name for it everywhere else (#1170), so it names it here too.
+  if (!(STATIC_KIND[mechanism] ?? MECHANISM[mechanism] ?? DEMAND_VERB[mechanism] ?? DEMAND_SUBJECTLESS[mechanism] ?? DEMAND_PHASE[mechanism])) return tagName(tag);
   const subject = tag.slice(mechanism.length + 1);
   // ONLY A CREATURE OR PLANESWALKER DIES (owner 2026-10-10): a land, artifact ... is put into a graveyard.
   const label = mechanism === "dies" && isPutIntoGraveyardClass(subject) ? "Put into a graveyard" : eventLabel(mechanism);
   if (mechanism === tag) return label;
-  return subject && subject !== "any" ? `${label} · ${subject}` : label;
+  // `themeSubjectKey` writes a negation as `-land`; a chip reads it as a word.
+  return subject && subject !== "any" ? `${label} · ${subject.replace(/^-/, "non")}` : label;
 }
 
 /** AN ARTIFACT EVENT KEY (`verb|type|subtype|token`) AS THE WORDS A PLAYER USES.

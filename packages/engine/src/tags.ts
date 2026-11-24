@@ -134,7 +134,13 @@ function subjectPhrase(value: string): string | null {
   if (irregular !== undefined) return irregular;
   const negated = value.startsWith("-");
   const noun = negated ? `non${value.slice(1)}` : value;
-  return noun.endsWith("s") ? noun : `${noun}s`;
+  return plainPlural(noun);
+}
+
+/** "+s", except the nouns that end in a consonant + y ("sorcery" -> "sorceries"; it read "sorcerys"). */
+function plainPlural(noun: string): string {
+  if (noun.endsWith("s")) return noun;
+  return /[^aeiou]y$/.test(noun) ? `${noun.slice(0, -1)}ies` : `${noun}s`;
 }
 
 export function describeTag(t: Tag): string {
@@ -152,7 +158,7 @@ export function describeTag(t: Tag): string {
       // A negated cast subject names the SPELL, not the excluded type: Valley Floodcaller's
       // "noncreature spell" is a spell you cast, so "noncreatures" would drop the noun.
       if (value?.startsWith("-")) return `non${value.slice(1)} spells`;
-      return `${value}s`;
+      return plainPlural(value ?? "");
     case "token":
       return value ? `${value} tokens` : "tokens";
     // A STATIC NAMES ITS KIND OR IT NAMES NOTHING. The default branch below has no
