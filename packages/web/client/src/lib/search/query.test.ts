@@ -10,7 +10,9 @@ const SCHEMA: QuerySchema = {
     { id: "mv", kind: "number" },
     { id: "pow", kind: "number" },
     { id: "tags.clauseSource", kind: "set", alias: "src", values: ["grammar", "model"] },
-    { id: "cares", kind: "set", values: ["card-types", "weird \"one\" \\ (x)", "and", "-lead"] },
+    { id: "cares", kind: "set", ability: true, values: ["card-types", "weird \"one\" \\ (x)", "and", "-lead"] },
+    { id: "tags.abilities.kind", kind: "set", alias: "ab.kind", ability: true, values: ["static", "triggered", "activated"] },
+    { id: "tags.abilities.count.floor", kind: "number", alias: "ab.count.floor", ability: true },
     { id: "dup1", kind: "set", alias: "shared" },
     { id: "dup2", kind: "set", alias: "shared" },
   ],
@@ -152,8 +154,26 @@ describe("parse(print(ast)) = ast", () => {
       ] as const);
     }
   };
+  // INSIDE `ability( … )`: ability fields only, no event, no second ability( ).
+  const abilityLeaf = (): Query => {
+    switch (Math.floor(rnd() * 4)) {
+      case 0: return { field: "tags.abilities.kind", op: "has", value: pick(["static", "triggered", "activated"]) };
+      case 1: return { field: "tags.abilities.count.floor", op: "cmp", ...bounds() };
+      case 2: return { field: "cares", op: "has", value: pick(SCHEMA.fields.find((f) => f.id === "cares")!.values!) };
+      default: return { field: "cares", op: "count", ...bounds() };
+    }
+  };
+  const genAbility = (depth: number): Query => {
+    if (depth === 0 || rnd() < 0.3) return abilityLeaf();
+    const n = 2 + Math.floor(rnd() * 2);
+    switch (Math.floor(rnd() * 3)) {
+      case 0: return { and: Array.from({ length: n }, () => genAbility(depth - 1)) };
+      case 1: return { or: Array.from({ length: n }, () => genAbility(depth - 1)) };
+      default: return { not: genAbility(depth - 1) };
+    }
+  };
   const gen = (depth: number): Query => {
-    if (depth === 0 || rnd() < 0.3) return leaf();
+    if (depth === 0 || rnd() < 0.3) return rnd() < 0.15 ? { ability: genAbility(2) } : leaf();
     const n = 2 + Math.floor(rnd() * 2);
     switch (Math.floor(rnd() * 3)) {
       case 0: return { and: Array.from({ length: n }, () => gen(depth - 1)) };
@@ -161,6 +181,12 @@ describe("parse(print(ast)) = ast", () => {
       default: return { not: gen(depth - 1) };
     }
   };
+
+  test("the generator reaches ability( … ), not just the rest of the grammar", () => {
+    let seen = 0;
+    for (let i = 0; i < 600; i++) if (print(gen(4), SCHEMA).includes("ability(")) seen++;
+    expect(seen).toBeGreaterThan(50);
+  });
 
   test("600 generated queries survive print then parse, deep-equal", () => {
     for (let i = 0; i < 600; i++) {
@@ -172,6 +198,40 @@ describe("parse(print(ast)) = ast", () => {
       // and printing again is a fixed point: the text is canonical
       expect(print((back as { ast: Query }).ast, SCHEMA), text).toBe(text);
     }
+  });
+});
+
+describe("ability( … ) (#1786)", () => {
+  const kind = { field: "tags.abilities.kind", op: "has", value: "static" } as const;
+  const cares = { field: "cares", op: "has", value: "card-types" } as const;
+  test("groups ability fields, and prints back with the alias", () => {
+    expect(ok("ability(ab.kind:static cares:card-types)")).toStrictEqual({ ability: { and: [kind, cares] } });
+    expect(print({ ability: { and: [kind, cares] } }, SCHEMA)).toBe("ability(ab.kind:static cares:card-types)");
+    expect(ok("t:creature -ability(ab.kind:static or cares:card-types)")).toStrictEqual({
+      and: [{ field: "t", op: "has", value: "creature" }, { not: { ability: { or: [kind, cares] } } }],
+    });
+  });
+  test.each([
+    ["ability(t:creature)", "`t` is not about an ability, so it cannot be inside ability( ), at 8", 8],
+    ["ability(ab.kind:static st:elf)", "`st` is not about an ability, so it cannot be inside ability( ), at 23", 23],
+    ["ability(#t>=1)", "`t` is not about an ability, so it cannot be inside ability( ), at 9", 9],
+    ["ability(makes:mill|-|-|-)", "`makes:` is about the whole card, so it cannot be inside ability( ), at 8", 8],
+    ["ability(ab.kind:static ability(cares:card-types))", "ability( ) cannot be inside ability( ), at 23", 23],
+    ["ability()", "empty ability( ) at 0", 8],
+    ["ability(ab.kind:static", "the `ability(` at 0 is never closed", 0],
+    ["ability", "`ability` is followed by `(`, as in ability(ab.kind:static ab.emits.verb:draw), at 0", 0],
+    ["ability (ab.kind:static)", "`ability` is followed by `(`, as in ability(ab.kind:static ab.emits.verb:draw), at 0", 0],
+  ] as const)("%s", (text, message, pos) => {
+    const e = bad(text);
+    expect(e.message).toBe(message);
+    expect(e.pos).toBe(pos);
+  });
+  test("a node and back, an ability( ) holds no events and no changeling words", () => {
+    const q = ok("ability(ab.kind:static)")!;
+    expect(eventsOf(q)).toStrictEqual([]);
+    expect(toNode(q, () => undefined)).toStrictEqual({ ability: kind });
+    expect(print(fromNode({ ability: { and: [kind, cares] } })!, SCHEMA)).toBe("ability(ab.kind:static cares:card-types)");
+    expect(notSubtypesOf(q)).toStrictEqual([]);
   });
 });
 

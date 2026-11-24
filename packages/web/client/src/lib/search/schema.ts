@@ -45,6 +45,7 @@ export function buildSchema(src: SchemaSources): QuerySchema {
       fields.set(cf.id, {
         id: cf.id, kind: cf.kind,
         ...(cf.alias ? { alias: cf.alias } : {}),
+        ...(cf.ability ? { ability: true as const } : {}),
         ...(had ? (had.values ? { values: had.values } : values ? { values } : {}) : values ? { values } : {}),
         ...(had?.noValues ? { noValues: had.noValues } : {}),
       });

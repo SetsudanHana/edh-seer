@@ -4,7 +4,7 @@ import { useSearchParams } from "react-router";
 import { identityMask, inIdentityOf } from "@edh-seer/matcher/partners-core";
 import { matchNames, needleOf } from "../lib/name-match.js";
 import { coreContext, evaluateEventQuery, fromEventQuery, rowCountsOf, typeCountSpec, withEveryCreatureType } from "../lib/search/from-event-query.js";
-import { BESPOKE_FIELDS, createSearchLoader, fieldsOf, listsOf, needsCatalogue, resolveCatalogue, type CatalogueResolution, type SearchLoader } from "../lib/search/load.js";
+import { BESPOKE_FIELDS, abilityFieldsOf, createSearchLoader, fieldsOf, listsOf, needsCatalogue, usesAbilityScope, resolveCatalogue, type CatalogueResolution, type SearchLoader } from "../lib/search/load.js";
 import type { Catalogue, CatalogueField } from "../lib/search/catalogue.js";
 import { ACROSS_ABILITIES_NOTE, abilityTermsOf, abilityTermsOfFilters, needsAcrossNote } from "../lib/search/ability-scope.js";
 import { evaluate, type EvalContext, type Node } from "../lib/search/evaluate.js";
@@ -293,6 +293,9 @@ export function CardSearch({
   const catalogueFields = useMemo(
     () => new Map((catalogueInfo.cat ? Object.values(catalogueInfo.cat.groups).flatMap((g) => g.fields) : []).map((f) => [f.id, f] as const)),
     [catalogueInfo.cat]);
+  // THE CATALOGUE'S ABILITY FIELDS: what `ability( … )` may hold, and what the builder's "same ability" switch groups.
+  const abilityFields = useMemo((): ReadonlySet<string> => new Set([...catalogueFields.values()].filter((f) => f.ability === true).map((f) => f.id)), [catalogueFields]);
+  const abilityMustRows = useMemo(() => abilityTermsOfFilters(fieldFilters.filter((f) => f.op !== "not"), (id) => abilityFields.has(id)), [fieldFilters, abilityFields]);
   const dropField = (id: string): void => {
     const rest = fieldFilters.filter((f) => f.field !== id);
     const { fieldFilters: _f, ...without } = eventQuery;
@@ -361,8 +364,8 @@ export function CardSearch({
   // THE ABILITY-SCOPE NOTE (#1784): two terms on the grammar's own fields are matched by card, not by ability, until #1786.
   const abilityTerms = useMemo(() => {
     const isAbility = (id: string): boolean => catalogueFields.get(id)?.ability === true;
-    return typedActive ? (typedAst ? abilityTermsOf(typedAst, isAbility) : 0) : abilityTermsOfFilters(fieldFilters, isAbility);
-  }, [typedActive, typedAst, fieldFilters, catalogueFields]);
+    return typedActive ? (typedAst ? abilityTermsOf(typedAst, isAbility) : 0) : abilityTermsOfFilters(eventQuery.sameAbility === true ? fieldFilters.filter((f) => f.op === "not") : fieldFilters, isAbility) + (eventQuery.sameAbility === true && fieldFilters.some((f) => f.op !== "not" && isAbility(f.field)) ? 1 : 0);
+  }, [typedActive, typedAst, fieldFilters, catalogueFields, eventQuery.sameAbility]);
   const typedShape = useMemo(() => (typedAst ? shapeNode(typedAst) : null), [typedAst]);
   const typedNeedsCatalogue = typedShape !== null && needsCatalogue(typedShape);
   const chosenKeys = useMemo(
@@ -374,9 +377,9 @@ export function CardSearch({
   // becomes `x=` and does not rewrite the rows, because a typed `or` / `not` group has no row to sit in. Clearing `x` brings the
   // rows back as they were. Same settle rule as the name box, so a keystroke is not a navigation.
   const builderText = useMemo(() => {
-    const q = typedActive ? null : builderQuery(builderEvents, mode);
+    const q = typedActive ? null : builderQuery(builderEvents, mode, abilityFields);
     return q === null ? "" : print(q, schema);
-  }, [typedActive, builderEvents, mode, schema]);
+  }, [typedActive, builderEvents, mode, schema, abilityFields]);
   // THE ROWS THE TEXT HAS NO WORDS FOR (ability type, how often, amount): said, so the box is never taken for all of the question.
   const builderLeavesOut = !typedActive && ((builderEvents.abilityKinds?.length ?? 0) > 0 || builderEvents.repeatsMin !== undefined
     || builderEvents.amountMin !== undefined || builderEvents.amountMax !== undefined || builderEvents.amountVariable === true || builderEvents.amountChange !== undefined);
@@ -492,7 +495,8 @@ export function CardSearch({
   // catalogue request and flash the loading line. `fields|lists`; the every-creature-type flag is built here, not fetched.
   const needKey = useMemo((): string | null => {
     if (!countsAsked && countSort === null && !notSubtypesAsked && !genericAsked && !subtypeAsked && !typedNeedsCatalogue) return null;
-    const node = fromEventQuery(eventQuery, mode);
+    const node = fromEventQuery(eventQuery, mode, { abilityFields });
+    const abilityNeed = new Set(abilityFieldsOf(node));
     const fields = new Set(fieldsOf(node).filter((f) => f !== "everyCreatureType"));
     const lists = new Set([...(countsAsked || countSort !== null || notSubtypesAsked || subtypeAsked ? ["creature"] : []), ...(JSON.stringify(node).match(/"list":"(\w+)"/g) ?? []).map((m) => m.slice(8, -1))]);
     if (countSort !== null) {
@@ -503,9 +507,10 @@ export function CardSearch({
     if (typedShape) {
       for (const f of fieldsOf(typedShape)) if (f !== "everyCreatureType") fields.add(f);
       for (const l of listsOf(typedShape)) lists.add(l);
+      for (const f of abilityFieldsOf(typedShape)) abilityNeed.add(f);
     }
-    return `${[...fields].sort().join(",")}|${[...lists].sort().join(",")}`;
-  }, [countsAsked, countSort, notSubtypesAsked, subtypeAsked, genericAsked, typedNeedsCatalogue, typedShape, eventQuery, mode]);
+    return `${[...fields].sort().join(",")}|${[...lists].sort().join(",")}|${[...abilityNeed].sort().join(",")}`;
+  }, [countsAsked, countSort, notSubtypesAsked, subtypeAsked, genericAsked, typedNeedsCatalogue, typedShape, eventQuery, mode, abilityFields]);
   const [resolved, setResolved] = useState<{ core: EvalContext; key: string; ctx: EvalContext; state: CatalogueResolution["state"] } | null>(null);
   // THE RETRY CHIP: bumping it runs the read again. A failed read is shown, and the loader keeps nothing of it.
   const [attempt, setAttempt] = useState(0);
@@ -514,10 +519,12 @@ export function CardSearch({
     let live = true;
     // A LATE ANSWER FOR A QUESTION THE READER HAS SINCE CHANGED IS DROPPED: `live` ends with this effect, and the
     // answer is also keyed by the question and the rows it was built from.
-    const [fieldPart = "", listPart = ""] = needKey.split("|");
+    const [fieldPart = "", listPart = "", abilityPart = ""] = needKey.split("|");
     const need: Node = { and: [
       ...listPart.split(",").filter(Boolean).map((list): Node => ({ field: "t", op: "countIn", list })),
       ...fieldPart.split(",").filter(Boolean).map((field): Node => ({ field, op: "has", value: "-" })),
+      // the fields inside `ability( … )` come from the ability rows, not from the group files
+      ...(abilityPart ? [{ ability: { and: abilityPart.split(",").filter(Boolean).map((field): Node => ({ field, op: "has", value: "-" })) } } as Node] : []),
     ] };
     void resolveCatalogue(searchContext, resolveLoader, need).then((r) => {
       if (!live) return;
@@ -544,6 +551,8 @@ export function CardSearch({
   const blocking = countsAsked || countSort !== null || keepUnresolved || (keepAsked && hiddenTypeNames.length > 0) || genericAsked || typedNeedsCatalogue;
   // WHICH QUESTION THE WORDS ARE ABOUT: type counts and the changeling note have their own, a catalogue row the general one.
   const typeQuestion = countsAsked || countSort !== null || keepAsked;
+  // A QUESTION WITH `ability( … )` (typed, or the builder's switch) reads the ability rows, a file of its own.
+  const abilityScoped = (typedShape !== null && usesAbilityScope(typedShape)) || (eventQuery.sameAbility === true && !typedActive && fieldFilters.some((f) => abilityFields.has(f.field)));
   // A LINK'S FIELD IS JUDGED AGAINST THE CATALOGUE ITSELF, so the page waits for it too: an incomplete read must not say
   // "can't answer" for a moment and "doesn't know" the next.
   const catalogueSettled = !(genericAsked || typedActive) || catalogueInfo.state === "ready" || catalogueInfo.state === "none" || catalogueInfo.state === "failed";
@@ -598,12 +607,12 @@ export function CardSearch({
       for (const r of res.rows) mask[r] = 1;
       return { mask, cannotAnswer: false };
     }
-    const res = evaluateEventQuery(index, vocabulary, eventQuery, mode, { commandersOnly: commanderMode, context: evalCtx });
+    const res = evaluateEventQuery(index, vocabulary, eventQuery, mode, { commandersOnly: commanderMode, context: evalCtx, abilityFields });
     if (!res.ok) return { mask: null, cannotAnswer: true };
     const mask = new Uint8Array(index.length);
     for (const r of res.rows) mask[r] = 1;
     return { mask, cannotAnswer: false };
-  }, [index, evalCtx, vocabulary, eventQuery, mode, commanderMode, typedActive, typedAst, lists]);
+  }, [index, evalCtx, vocabulary, eventQuery, mode, commanderMode, typedActive, typedAst, lists, abilityFields]);
   const characteristicMask = characteristic.mask;
   const filtersUnanswerable = characteristic.cannotAnswer;
   // THE SAME QUESTION WITH CHANGELINGS KEPT, to count what the NOT creature type hid.
@@ -620,13 +629,13 @@ export function CardSearch({
       if (node === null) return null;
       res = evaluate(commanderMode ? { and: [{ op: "rows", rows: index.flatMap((r, i) => (r.commander ? [i] : [])) }, node] } : node, catalogueCtx);
     } else {
-      res = evaluateEventQuery(index, vocabulary, { ...eventQuery, keepChangelings: true }, mode, { commandersOnly: commanderMode, context: catalogueCtx });
+      res = evaluateEventQuery(index, vocabulary, { ...eventQuery, keepChangelings: true }, mode, { commandersOnly: commanderMode, context: catalogueCtx, abilityFields });
     }
     if (!res.ok) return null;
     const mask = new Uint8Array(index.length);
     for (const r of res.rows) mask[r] = 1;
     return mask;
-  }, [index, catalogueCtx, hiddenTypeNames, vocabulary, eventQuery, mode, commanderMode, typedActive, typedAst, lists]);
+  }, [index, catalogueCtx, hiddenTypeNames, vocabulary, eventQuery, mode, commanderMode, typedActive, typedAst, lists, abilityFields]);
   const fitCard = useCallback((entries: NameIndexEntry[], using: Uint8Array | null = characteristicMask): NameIndexEntry[] => {
     if (using === null) return [];
     const named = needle.length === 0 ? entries : matchNames(entries, { query });
@@ -1136,6 +1145,20 @@ export function CardSearch({
             })}
           </ul>
         )}
+        {/* SAME ABILITY (#1786): the builder's way to `ability( … )`. Offered once two of the ability rows could be asking about different abilities. */}
+        {(eventQuery.sameAbility === true || abilityMustRows >= 2) && (
+          <label className="flex items-start gap-2 text-sm min-w-0">
+            <input
+              type="checkbox" className="mt-1"
+              checked={eventQuery.sameAbility === true}
+              onChange={(e) => {
+                const { sameAbility: _s, ...without } = eventQuery;
+                setEffects(e.target.checked ? { ...without, sameAbility: true } : without);
+              }}
+            />
+            <span className="min-w-0">Hold the ability-field rows above to one ability</span>
+          </label>
+        )}
         {/* A NATIVE `<details>`, so the keyboard and screen-reader model is the platform's -- the
           * same reason the panel it replaces was one. It closes itself once a row is added,
           * because a menu still standing over the control it just created is in the way. */}
@@ -1284,11 +1307,11 @@ export function CardSearch({
           </div>
         : typeCountsMissing
         // NO ANSWER IS NOT AN EMPTY ANSWER: an artifact built without the search catalogue cannot count types.
-        ? <p role="status" className="text-(--muted)">{typeQuestion ? "This build can't answer type counts yet." : "This build can't answer one of those filters yet."}</p>
+        ? <p role="status" className="text-(--muted)">{typeQuestion ? "This build can't answer type counts yet." : abilityScoped ? "This build can't match terms on one ability yet." : "This build can't answer one of those filters yet."}</p>
         : typeCountsFailed
         // A FAILED READ IS NOT "THIS BUILD CANNOT": it may work next time, so it offers the retry.
         ? <div className="flex flex-wrap items-center gap-3">
-            <p role="status" className="text-(--muted)">{typeQuestion ? "Couldn't load type data. Try again." : "Couldn't load filter data. Try again."}</p>
+            <p role="status" className="text-(--muted)">{typeQuestion ? "Couldn't load type data. Try again." : abilityScoped ? "Couldn't load the ability data. Try again." : "Couldn't load filter data. Try again."}</p>
             <button type="button" className="chip" onClick={() => { setResolved(null); setAttempt((n) => n + 1); setCatAttempt((n) => n + 1); }}>Try again</button>
           </div>
         : filtersUnanswerable

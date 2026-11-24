@@ -102,6 +102,8 @@ export interface EventQuery {
   /** A changeling is every creature type (CR 702.73a), so a NOT-creature-type term hides it. `keep` shows it anyway
    *  (`changelings=keep`). Not a question: a way to read the answer. */
   keepChangelings?: boolean;
+  /** The ability rows must hold on ONE ability (#1786, `sameability=1`): the catalogue rows about abilities are then wrapped as `ability( … )`. Not a question of its own: it changes what the ability rows mean together. */
+  sameAbility?: boolean;
   /** MANA VALUE AS A RANGE, both ends inclusive, either end optional (owner, 2026-09-21: "not
    *  everyone looks for just X or less"). It was a bare ceiling until then, and `?mv=N` still
    *  reads as `mvMax` so no link already shared changes meaning.
@@ -253,6 +255,7 @@ export function eventsFromParams(p: URLSearchParams): EventQuery {
     ...Object.fromEntries(TYPE_COUNTS.flatMap((c) => [[c.min, bound(p.get(`${c.param}min`))], [c.max, bound(p.get(`${c.param}max`))]] as const)
       .filter(([, v]) => v !== undefined)),
     ...(p.get("changelings") === "keep" ? { keepChangelings: true } : {}),
+    ...(p.get("sameability") === "1" ? { sameAbility: true } : {}),
     ...(SORTS.has(sort) ? { sort: sort as EventQuery["sort"] } : {}),
     ...(dir === "asc" || dir === "desc" ? { dir } : {}),
     ...effectFromParams(p),
@@ -299,7 +302,7 @@ export function eventsToParams(q: EventQuery, p: URLSearchParams): URLSearchPara
   const out = new URLSearchParams(p);
   for (const k of [
     "produce", "consume", ...OPERATOR_PARAMS.map(([, param]) => param), "colors", "type", "subtype", "keyword", "cardcolors", "sort", "dir",
-    ...WORD_NOT_PARAMS.map(([, param]) => param), ...WORD_ANY_PARAMS.map(([, param]) => param), ...FIELD_PARAMS, "changelings",
+    ...WORD_NOT_PARAMS.map(([, param]) => param), ...WORD_ANY_PARAMS.map(([, param]) => param), ...FIELD_PARAMS, "changelings", "sameability",
     ...TYPE_COUNTS.flatMap((c) => [`${c.param}min`, `${c.param}max`]),
     // `mv` IS DELETED AND NEVER WRITTEN. It is read for the links that already carry it and
     // rewritten as `mvmax`, so the legacy spelling does not propagate into new ones.
@@ -322,6 +325,7 @@ export function eventsToParams(q: EventQuery, p: URLSearchParams): URLSearchPara
     if (f.op === "range") out.append("frange", `${f.field}:${f.min ?? ""}..${f.max ?? ""}`);
   }
   if (q.keepChangelings === true) out.set("changelings", "keep");
+  if (q.sameAbility === true) out.set("sameability", "1");
   for (const c of TYPE_COUNTS) {
     if (q[c.min] !== undefined) out.set(`${c.param}min`, String(q[c.min]));
     if (q[c.max] !== undefined) out.set(`${c.param}max`, String(q[c.max]));

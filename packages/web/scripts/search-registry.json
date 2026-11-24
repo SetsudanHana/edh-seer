@@ -6,7 +6,8 @@
     "catalogue": 100000,
     "payoffs": 4000,
     "abilities": 550000,
-    "roles": 30000
+    "roles": 30000,
+    "abilityRows": 800000
   },
   "groups": {
     "types": [],
@@ -145,7 +146,7 @@
       }
     },
     "tags.abilities.kind": {
-      "label": "Ability type",
+      "label": "Ability kind",
       "description": "Whether the ability is static, triggered, activated or a cast effect."
     },
     "tags.abilities.effect.kind": {

@@ -17,9 +17,10 @@ import { gzipSync } from "node:zlib";
 import { POOL_CLASSES } from "@edh-seer/matcher";
 import { BUILD_CATEGORIES } from "@edh-seer/matcher/build";
 import { CREATURE_SUBTYPES, LAND_SUBTYPES } from "@edh-seer/tagger/subtypes";
+import { buildAbilityRows } from "../client/src/lib/search/ability-rows.ts";
 import { buildCatalogue, decodeGroup, type Catalogue, type GroupPayload } from "../client/src/lib/search/catalogue.ts";
 import { evaluate, type Node } from "../client/src/lib/search/evaluate.ts";
-import type { SearchRegistry } from "../client/src/lib/search/registry.ts";
+import { isAbilityField, type SearchRegistry } from "../client/src/lib/search/registry.ts";
 import { buildIdentityView, buildNumberViews, buildTypeViews, completeFaces, sparseBestFace, sparseFront, type IndexRow, type NumericRow } from "../client/src/lib/search/type-views.ts";
 import { derivedSetColumn, walkRecords, type Column, type SetColumn, type WalkRecord } from "../client/src/lib/search/walk.ts";
 
@@ -147,6 +148,8 @@ function build(): void {
     }
   }
 
+  // A NOT over an ability field cannot speak for a row with no record or no tags (#1786 review, as `unknownTriggers`): every set column of an ability field says so, and so does the ability-row file.
+  for (const col of walk.columns.values()) if (col.kind === "set" && !col.unjudged && unjudged.length > 0 && isAbilityField(col.path, registry)) col.unjudged = unjudged;
   // tFront is NOT served by name-index (no face data there): only the rows whose front differs from `t` ship, as `faces`.
   const all = coreColumns(frontTypes, creature);
   const core = all.filter((c) => c.path !== "tFront");
@@ -158,6 +161,8 @@ function build(): void {
   walk.columns.set("stBest", best);
   const { catalogue, payloads } = buildCatalogue({ version: manifest.version, deriveVersion: manifest.deriveVersion, registry, walk, core });
 
+  // ABILITY ROWS (#1786): the same ability fields over one row per ability, for `ability( … )`. A file of its own, outside `groups`, so a question that does not name `ability(` never fetches it.
+  const abilityRows = buildAbilityRows(records, registry, walk.columns, unjudged);
   const files = new Map<string, string>();
   const sizes: Record<string, { bytes: number; gzipBytes: number }> = {};
   for (const [name, payload] of Object.entries(payloads)) {
@@ -167,6 +172,13 @@ function build(): void {
     group.gzipBytes = gzipSync(text).length;
     sizes[name] = { bytes: group.bytes, gzipBytes: group.gzipBytes };
     files.set(group.file!, text);
+  }
+  {
+    const text = JSON.stringify(abilityRows.payload);
+    const meta = { file: "abilityRows.json", bytes: Buffer.byteLength(text), gzipBytes: gzipSync(text).length };
+    catalogue.abilityRows = meta;
+    sizes["abilityRows"] = { bytes: meta.bytes, gzipBytes: meta.gzipBytes };
+    files.set(meta.file, text);
   }
   const catalogueText = JSON.stringify(catalogue);
   sizes["catalogue"] = { bytes: Buffer.byteLength(catalogueText), gzipBytes: gzipSync(catalogueText).length };

@@ -6,7 +6,9 @@ import { CardSearch } from "./CardSearch.js";
 import type { NameIndexEntry } from "../lib/partners.js";
 import type { Catalogue } from "../lib/search/catalogue.js";
 import type { SearchLoader } from "../lib/search/load.js";
-import type { Column } from "../lib/search/walk.js";
+import { buildAbilityRows, decodeAbilityRows } from "../lib/search/ability-rows.js";
+import { DEFAULT_DENY } from "../lib/search/registry.js";
+import { walkRecords, type Column } from "../lib/search/walk.js";
 
 /** #1782 task 3: rows for catalogue fields no bespoke row covers. Nothing in CardSearch names these fields: the
  *  fixture catalogue is the only place they exist, which is what the elasticity tests prove. */
@@ -42,6 +44,7 @@ const CAT: Catalogue = {
 const loaderOf = (cat: Catalogue | null = CAT, gate?: Promise<void>): SearchLoader => ({
   catalogue: vi.fn(async () => { await gate; return cat; }),
   columnsFor: vi.fn(async (fields: readonly string[]) => COLUMNS.filter((c) => fields.includes(c.path))),
+  abilityRows: vi.fn(async () => null),
 });
 
 const atUrl = (url: string, searchLoader: SearchLoader, extra: Record<string, unknown> = {}) => {
@@ -186,7 +189,7 @@ test("a failed read offers the retry, and loading shows the loading line, never 
 });
 
 test("a failed catalogue read says so with a retry", async () => {
-  const bad: SearchLoader = { catalogue: vi.fn(async () => { throw new Error("down"); }), columnsFor: vi.fn(async () => []) };
+  const bad: SearchLoader = { catalogue: vi.fn(async () => { throw new Error("down"); }), columnsFor: vi.fn(async () => []), abilityRows: vi.fn(async () => null) };
   atUrl(`/cards?f=read:unread`, bad);
   expect(await screen.findByText("Couldn't load filter data. Try again.")).toBeInTheDocument();
   expect(screen.getAllByRole("button", { name: "Try again" }).length).toBeGreaterThan(0);
@@ -337,7 +340,7 @@ const GRAMMAR_CAT: Catalogue = {
   groups: {
     ...CAT.groups,
     abilities: { file: "abilities.json", fields: [
-      { id: KIND, kind: "set", label: "Ability type", alias: "ab.kind", ability: true, advanced: true, values: [{ v: "static", n: 2 }, { v: "triggered", n: 2 }] },
+      { id: KIND, kind: "set", label: "Ability kind", alias: "ab.kind", ability: true, advanced: true, values: [{ v: "static", n: 2 }, { v: "triggered", n: 2 }] },
       { id: VERB, kind: "set", label: "Events it causes", alias: "ab.emits.verb", ability: true, advanced: true, values: [{ v: "draw", n: 2 }, { v: "mill", n: 2 }, { v: "gain-life", n: 1 }] },
       { id: "grants", kind: "set", label: "Gives something a type", ability: true, values: [{ v: "creature-types", n: 1 }], valueLabels: { "creature-types": "a creature type" } },
     ] },
@@ -352,6 +355,7 @@ const GRAMMAR_COLUMNS: Column[] = [
 const grammarLoader = (): SearchLoader => ({
   catalogue: vi.fn(async () => GRAMMAR_CAT),
   columnsFor: vi.fn(async (fields: readonly string[]) => GRAMMAR_COLUMNS.filter((c) => fields.includes(c.path))),
+  abilityRows: vi.fn(async () => null),
 });
 const NOTE = /matched across the card's abilities/i;
 
@@ -360,13 +364,13 @@ test("a LABELLED grammar path still waits behind Advanced; a named query about t
   await openMenu();
   expect(await screen.findByRole("button", { name: "Gives something a type" })).toBeInTheDocument();
   expect(screen.getByRole("button", { name: "Our reading" })).toBeInTheDocument();
-  expect(screen.queryByRole("button", { name: "Ability type" })).toBeNull();
+  expect(screen.queryByRole("button", { name: "Ability kind" })).toBeNull();
   expect(screen.queryByRole("button", { name: "Events it causes" })).toBeNull();
   await userEvent.click(screen.getByRole("checkbox", { name: "Advanced fields" }));
   const labels = screen.getAllByRole("button").map((b) => b.textContent);
-  expect(labels).toEqual(expect.arrayContaining(["Ability type", "Events it causes"]));
+  expect(labels).toEqual(expect.arrayContaining(["Ability kind", "Events it causes"]));
   await userEvent.click(screen.getByRole("checkbox", { name: "Advanced fields" }));
-  expect(screen.queryByRole("button", { name: "Ability type" })).toBeNull();
+  expect(screen.queryByRole("button", { name: "Ability kind" })).toBeNull();
 });
 
 test("two grammar terms say they are matched across the card's abilities; one does not, and neither does a grammar term beside a plain one", async () => {
@@ -392,4 +396,94 @@ test("the typed form says it too, and `ab.` names the grammar path", async () =>
   atUrl(`/cards?x=${encodeURIComponent("ab.kind:static")}`, grammarLoader(), typedExtra);
   await waitFor(() => expect(names()).toEqual(["Card A", "Card D"]));
   expect(screen.queryByText(NOTE)).toBeNull();
+});
+
+// #1786: `ability( … )` and the builder's "same ability" switch. The ability rows hold what the card-level columns above say, split by ability:
+// A has a static ability and, apart from it, one that draws; B's one triggered ability draws and mills; D's one static ability gains life.
+const AB_RECORDS = [
+  { row: 0, card: {}, tags: { abilities: [{ kind: "static" }, { emits: [{ verb: "draw" }] }] } },
+  { row: 1, card: {}, tags: { abilities: [{ kind: "triggered", emits: [{ verb: "draw" }, { verb: "mill" }] }] } },
+  { row: 2, card: {}, tags: { abilities: [{ kind: "triggered", emits: [{ verb: "mill" }] }] } },
+  { row: 3, card: {}, tags: { abilities: [{ kind: "static", emits: [{ verb: "gain-life" }] }] } },
+  { row: 4, card: {}, tags: { abilities: [] } },
+];
+const AB_REGISTRY = { fields: {}, groups: { abilities: ["tags.abilities"] }, namedLists: {}, deny: [...DEFAULT_DENY], abilityPrefixes: ["tags.abilities"] };
+const abilityRowsOf = () => {
+  const kept = walkRecords(AB_RECORDS, AB_REGISTRY).columns;
+  return decodeAbilityRows(JSON.parse(JSON.stringify(buildAbilityRows(AB_RECORDS, AB_REGISTRY, kept).payload)));
+};
+const rowsLoader = (rows: SearchLoader["abilityRows"]): SearchLoader => ({ ...grammarLoader(), abilityRows: rows });
+const SAME = "ability(ab.kind:static ab.emits.verb:draw)";
+const typedExtra = { frequency: async () => ({ supply: {}, consume: {}, byIdentity: {} }), members: async () => null };
+
+test("ability( … ) asks for one ability: the card-level and finds A, the grouped one finds nobody, and a card with both on one ability is found by both", async () => {
+  atUrl(`/cards?x=${encodeURIComponent("ab.kind:static ab.emits.verb:draw")}`, rowsLoader(vi.fn(async () => abilityRowsOf())), typedExtra);
+  await waitFor(() => expect(names()).toEqual(["Card A"]));
+  cleanup();
+  const loader = rowsLoader(vi.fn(async () => abilityRowsOf()));
+  atUrl(`/cards?x=${encodeURIComponent(SAME)}`, loader, typedExtra);
+  expect(await screen.findByText(/No card/)).toBeInTheDocument();
+  // the fields inside come from the ability rows: no group file was fetched for them
+  expect(loader.columnsFor).not.toHaveBeenCalledWith(expect.arrayContaining([KIND]));
+  cleanup();
+  atUrl(`/cards?x=${encodeURIComponent("ability(ab.kind:static ab.emits.verb:gain-life)")}`, rowsLoader(vi.fn(async () => abilityRowsOf())), typedExtra);
+  await waitFor(() => expect(names()).toEqual(["Card D"]));
+});
+
+test("the across-abilities note is gone inside ability( … ) and stays outside it", async () => {
+  atUrl(`/cards?x=${encodeURIComponent("ability(ab.kind:triggered ab.emits.verb:draw)")}`, rowsLoader(vi.fn(async () => abilityRowsOf())), typedExtra);
+  await waitFor(() => expect(names()).toEqual(["Card B"]));
+  expect(screen.queryByText(NOTE)).toBeNull();
+  cleanup();
+  atUrl(`/cards?x=${encodeURIComponent("ability(ab.kind:triggered) ab.kind:triggered ab.emits.verb:draw")}`, rowsLoader(vi.fn(async () => abilityRowsOf())), typedExtra);
+  await waitFor(() => expect(names()).toEqual(["Card B"]));
+  expect(screen.getByText(NOTE)).toBeInTheDocument();
+});
+
+test("ability rows that fail to load say so, offer a retry and draw no list; a build without them cannot answer", async () => {
+  const failing = vi.fn(async () => { throw new Error("down"); });
+  atUrl(`/cards?x=${encodeURIComponent(SAME)}`, rowsLoader(failing), typedExtra);
+  expect(await screen.findByText("Couldn't load the ability data. Try again.")).toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "Try again" })).toBeInTheDocument();
+  expect(screen.queryByRole("list", { name: "Results" })).toBeNull();
+  expect(screen.queryByText(/No card/)).toBeNull();
+  cleanup();
+  atUrl(`/cards?x=${encodeURIComponent(SAME)}`, rowsLoader(vi.fn(async () => null)), typedExtra);
+  expect(await screen.findByText("This build can't match terms on one ability yet.")).toBeInTheDocument();
+  expect(screen.queryByRole("list", { name: "Results" })).toBeNull();
+  expect(screen.queryByText(/No card/)).toBeNull();
+});
+
+test("a non-ability term inside ability( ) is an error naming it, and no list", async () => {
+  atUrl(`/cards?x=${encodeURIComponent("ability(ab.kind:static read:grammar)")}`, rowsLoader(vi.fn(async () => abilityRowsOf())), typedExtra);
+  expect(await screen.findByRole("alert")).toHaveTextContent("`read` is not about an ability");
+  expect(screen.queryByRole("list", { name: "Results" })).toBeNull();
+});
+
+test("the builder's switch groups the ability rows: offered at two ability rows, in the link as sameability=1, and it changes the answer", async () => {
+  const spy = atUrl(`/cards?f=${KIND}:static&f=${VERB}:draw`, rowsLoader(vi.fn(async () => abilityRowsOf())));
+  await waitFor(() => expect(names()).toEqual(["Card A"]));
+  expect(screen.getByText(NOTE)).toBeInTheDocument();
+  await userEvent.click(screen.getByRole("checkbox", { name: "Hold the ability-field rows above to one ability" }));
+  await waitFor(() => expect(spy.search).toContain("sameability=1"));
+  await screen.findByText(/No card/);
+  expect(screen.queryByText(NOTE)).toBeNull();
+  await userEvent.click(screen.getByRole("checkbox", { name: "Hold the ability-field rows above to one ability" }));
+  await waitFor(() => expect(names()).toEqual(["Card A"]));
+  expect(spy.search).not.toContain("sameability");
+  cleanup();
+  atUrl(`/cards?f=${VERB}:draw`, rowsLoader(vi.fn(async () => abilityRowsOf())));
+  await waitFor(() => expect(names()).toEqual(["Card A", "Card B"]));
+  expect(screen.queryByRole("checkbox", { name: "Hold the ability-field rows above to one ability" })).toBeNull();
+});
+
+test("the query box shows the builder's same-ability switch as ability( … )", async () => {
+  atUrl(`/cards?sameability=1&f=${KIND}:static&f=${VERB}:draw`, rowsLoader(vi.fn(async () => abilityRowsOf())));
+  await waitFor(() => expect((screen.getByRole("textbox", { name: /type a query/i }) as HTMLInputElement).value).toBe(SAME));
+});
+
+test("an ability( … ) group beside one more ability term says the two are matched across abilities", async () => {
+  atUrl(`/cards?x=${encodeURIComponent("ability(ab.kind:static) ab.emits.verb:draw")}`, rowsLoader(vi.fn(async () => abilityRowsOf())), typedExtra);
+  await waitFor(() => expect(names()).toEqual(["Card A"]));
+  expect(screen.getByText(NOTE)).toBeInTheDocument();
 });

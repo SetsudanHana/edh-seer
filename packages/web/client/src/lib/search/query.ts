@@ -8,13 +8,14 @@
 //   or     := and { "or" and }                       loosest
 //   and    := not { ["and"] not }                    "and" is optional: two terms side by side are both required
 //   not    := ( "-" | "not" ) not | atom             tightest; "-" must touch what it negates
-//   atom   := "(" or ")" | term
+//   atom   := "(" or ")" | "ability(" or ")" | term
 //   term   := "makes:" V                             the card causes this event   (an event key, e.g. dies|creature|-|-)
 //           | "asks:" V                              the card asks for this event
 //           | F ":" V                                has: a set field holds the value        st:borg
 //           | "#" F [ "@" L ] BOUND                  count of a set field's values (within named list L)   #st@creature>=3
 //           | F BOUND                                a numeric field within bounds           mv<=3
 //           | F "<=" LETTERS | F "=" LETTERS         a set field's values all within / exactly these   id<=WUG, id=C
+//   `ability( … )` needs every inner term to hold on the SAME ability of one card; its terms must be ability fields (ab.…, grants, counts, cares).
 //   BOUND  := ">=" N | "<=" N | "=" N | "=" N ".." N        always inclusive; N is a whole number
 //   V      := text up to a space or a parenthesis, or "quoted" with \" and \\ escapes
 //
@@ -27,7 +28,7 @@ import type { Node } from "./evaluate.js";
 export type QueryLeaf =
   | { op: "event"; side: "makes" | "asks"; key: string }
   | Extract<Node, { field: string }>;
-export type Query = { and: Query[] } | { or: Query[] } | { not: Query } | QueryLeaf;
+export type Query = { and: Query[] } | { or: Query[] } | { not: Query } | { ability: Query } | QueryLeaf;
 
 /** `cannot`: the text is well formed but this build cannot check it (a vocabulary table it lacks). The page says so and
  *  draws no list, and "fix the query" would be the wrong advice. */
@@ -39,6 +40,8 @@ export interface SchemaField {
   id: string;
   kind: "set" | "number";
   alias?: string;
+  /** About the card's abilities (the catalogue's `ability` flag): the only fields `ability( … )` may hold. */
+  ability?: true;
   values?: readonly string[];
   /** Why `values` is missing, in the words of "can't check value `x` for st: <this>". */
   noValues?: string;
@@ -56,7 +59,7 @@ export type ParseResult =
   | { ok: true; ast: Query | null; usesEvents: boolean }
   | { ok: false; error: QueryError };
 
-const RESERVED: ReadonlySet<string> = new Set(["and", "or", "not", "makes", "asks"]);
+const RESERVED: ReadonlySet<string> = new Set(["and", "or", "not", "makes", "asks", "ability"]);
 /** What may not appear inside a field name or a list name. */
 const NAME_STOP = " \t\r\n():#@<>=\"";
 const WS = " \t\r\n";
@@ -137,6 +140,7 @@ function printLeaf(q: QueryLeaf, display: (id: string) => string): string {
 export function print(q: Query, schema?: QuerySchema): string {
   const display = (id: string): string => (schema ? namesOf(schema).display.get(id) ?? id : id);
   const go = (n: Query, parent: "and" | "or" | "not" | null): string => {
+    if ("ability" in n) return `ability(${go(n.ability, null)})`;
     if ("and" in n || "or" in n) {
       const kind = "and" in n ? "and" : "or";
       const kids = "and" in n ? n.and : n.or;
@@ -155,6 +159,8 @@ export function print(q: Query, schema?: QuerySchema): string {
 class Scanner {
   i = 0;
   depth = 0;
+  /** Inside `ability( … )`: only ability fields, no events, no second `ability(`. */
+  inAbility = false;
   constructor(readonly s: string, readonly schema: QuerySchema) {}
 
   get names(): Names { return namesOf(this.schema); }
@@ -225,6 +231,21 @@ class Scanner {
       if (this.atEnd() || this.peek() === ")") throw new Failure(this.i, `a term must follow \`not\` at ${this.i}`);
       return { not: this.parseNot() };
     }
+    if (this.word() === "ability") {
+      const at = this.i;
+      if (this.s[at + 7] !== "(") throw new Failure(at, `\`ability\` is followed by \`(\`, as in ability(ab.kind:static ab.emits.verb:draw), at ${at}`);
+      if (this.inAbility) throw new Failure(at, `ability( ) cannot be inside ability( ), at ${at}`);
+      this.i = at + 8;
+      this.ws();
+      if (this.peek() === ")") throw new Failure(this.i, `empty ability( ) at ${at}`);
+      this.inAbility = true;
+      let inner: Query;
+      try { inner = this.parseOr(); } finally { this.inAbility = false; }
+      this.ws();
+      if (this.peek() !== ")") throw new Failure(at, `the \`ability(\` at ${at} is never closed`);
+      this.i++;
+      return { ability: inner };
+    }
     if (this.peek() === "(") {
       const open = this.i;
       this.i++;
@@ -243,6 +264,10 @@ class Scanner {
     const f = this.names.byName.get(name);
     if (!f) throw new Failure(at, `unknown field \`${name}\` at ${at}`);
     return f;
+  }
+
+  notInAbility(f: SchemaField, name: string, at: number): void {
+    if (this.inAbility && !f.ability) throw new Failure(at, `\`${name}\` is not about an ability, so it cannot be inside ability( ), at ${at}`);
   }
 
   /** A value: quoted, or text up to a space or a parenthesis. */
@@ -325,6 +350,7 @@ class Scanner {
       const name = this.word();
       if (name === "") throw new Failure(nameAt, `a field name must follow \`#\` at ${nameAt}`);
       const f = this.fieldNamed(name, nameAt);
+      this.notInAbility(f, name, nameAt);
       this.i += name.length;
       if (f.kind !== "set") throw new Failure(nameAt, `\`${name}\` is a number, so it has no count: write ${name}>=n, ${name}<=n or ${name}=n at ${nameAt}`);
       let list: string | undefined;
@@ -344,6 +370,7 @@ class Scanner {
       const c = this.peek();
       throw new Failure(start, c === ")" ? `an unexpected \`)\` at ${start}` : `a term is expected at ${start}, found \`${c || "the end"}\``);
     }
+    if (this.inAbility && (name === "makes" || name === "asks")) throw new Failure(start, `\`${name}:\` is about the whole card, so it cannot be inside ability( ), at ${start}`);
     if (name === "makes" || name === "asks") {
       if (this.s[this.i + name.length] !== ":") throw new Failure(start, `\`${name}\` is followed by \`:\` and an event key at ${start}`);
       this.i += name.length + 1;
@@ -353,6 +380,7 @@ class Scanner {
       return { op: "event", side: name, key: v.text };
     }
     const f = this.fieldNamed(name, start);
+    this.notInAbility(f, name, start);
     this.i += name.length;
     const after = this.peek();
     if (after === ":") {
@@ -402,6 +430,7 @@ export function parse(text: string, schema: QuerySchema): ParseResult {
 
 /** The events the query names, once each. */
 export function eventsOf(q: Query, out: { side: "makes" | "asks"; key: string }[] = []): { side: "makes" | "asks"; key: string }[] {
+  if ("ability" in q) return out; // no event is inside ability( )
   if ("and" in q) q.and.forEach((n) => eventsOf(n, out));
   else if ("or" in q) q.or.forEach((n) => eventsOf(n, out));
   else if ("not" in q) eventsOf(q.not, out);
@@ -412,6 +441,10 @@ export function eventsOf(q: Query, out: { side: "makes" | "asks"; key: string }[
 /** The evaluator's tree. An event becomes the rows `rowsOf` gives for it; a query with an event `rowsOf` cannot give
  *  yet is `null`, never a tree that treats the event as empty. */
 export function toNode(q: Query, rowsOf: (side: "makes" | "asks", key: string) => readonly number[] | undefined): Node | null {
+  if ("ability" in q) {
+    const n = toNode(q.ability, rowsOf);
+    return n === null ? null : { ability: n };
+  }
   if ("and" in q || "or" in q) {
     const kids: Node[] = [];
     for (const k of "and" in q ? q.and : q.or) {
@@ -440,6 +473,10 @@ export function shapeNode(q: Query): Node {
 /** The evaluator's tree as a query, for showing what the builder asks. null when it holds rows a caller supplied (which
  *  have no words). Single-child groups collapse. */
 export function fromNode(n: Node): Query | null {
+  if ("ability" in n) {
+    const q = fromNode(n.ability);
+    return q === null ? null : { ability: q };
+  }
   if ("and" in n || "or" in n) {
     const kids: Query[] = [];
     for (const k of "and" in n ? n.and : n.or) {
@@ -467,6 +504,7 @@ export const QUERY_HELP: readonly { form: string; means: string; example: string
   { form: "field<=LETTERS", means: "colours fit inside these; = for exactly these, C for none", example: "id<=WUG" },
   { form: "makes:event", means: "the card causes this event", example: "makes:create-token|creature|-|t" },
   { form: "asks:event", means: "the card asks for this event", example: "asks:dies|creature|-|-" },
+  { form: "ability( … )", means: "every term inside holds on the SAME ability of the card (ability fields only)", example: "ability(ab.kind:triggered ab.emits.verb:draw)" },
   { form: "and, or, not, ( )", means: "side by side means and; not binds tightest, then and, then or", example: "t:creature (st:elf or st:human)" },
 ];
 
@@ -474,6 +512,7 @@ export const QUERY_HELP: readonly { form: string; means: string; example: string
  *  `and` / `or` as De Morgan does (`-(st:borg or st:elf)` negates both; `--st:borg` and `-(t:creature -st:borg)` negate
  *  neither, they ask for it). These are what a changeling would be hidden by. */
 export function notSubtypesOf(q: Query, out: string[] = [], negated = false): string[] {
+  if ("ability" in q) return out; // only ability fields are inside, and `st` is none
   if ("and" in q) q.and.forEach((n) => notSubtypesOf(n, out, negated));
   else if ("or" in q) q.or.forEach((n) => notSubtypesOf(n, out, negated));
   else if ("not" in q) notSubtypesOf(q.not, out, !negated);
@@ -484,6 +523,7 @@ export function notSubtypesOf(q: Query, out: string[] = [], negated = false): st
 /** The query with changelings kept (`changelings=keep`): a negated `st:<creature type>` does not match a card that has every
  *  creature type, so the not lets it through, as the builder's NOT row does (CR 702.73a). Same polarity as `notSubtypesOf`. */
 export function keepChangelings(q: Query, creature: ReadonlySet<string>, negated = false): Query {
+  if ("ability" in q) return q;
   if ("and" in q) return { and: q.and.map((n) => keepChangelings(n, creature, negated)) };
   if ("or" in q) return { or: q.or.map((n) => keepChangelings(n, creature, negated)) };
   if ("not" in q) return { not: keepChangelings(q.not, creature, !negated) };

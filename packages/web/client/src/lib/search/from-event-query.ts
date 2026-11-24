@@ -80,7 +80,7 @@ export function withEveryCreatureType(ctx: EvalContext, rows: readonly CoreRow[]
 
 type CharQuery = Pick<EventQuery, "colours" | "types" | "subtypes" | "keywords" | "cardColours"
   | "mvMin" | "mvMax" | "powMin" | "powMax" | "touMin" | "touMax"
-  | "notTypes" | "notSubtypes" | "notKeywords" | "keepChangelings" | "orTypes" | "orSubtypes" | "orKeywords" | "fieldFilters"
+  | "notTypes" | "notSubtypes" | "notKeywords" | "keepChangelings" | "sameAbility" | "orTypes" | "orSubtypes" | "orKeywords" | "fieldFilters"
   | "cardTypesMin" | "cardTypesMax" | "frontTypesMin" | "frontTypesMax" | "supertypesMin" | "supertypesMax"
   | "subtypeCountMin" | "subtypeCountMax" | "creatureTypesMin" | "creatureTypesMax">;
 
@@ -90,11 +90,13 @@ export interface CompileOptions {
   vocab?: CoreVocab;
   /** The creature types (the catalogue's `creature` list): the subtypes `keepChangelings` is about. */
   creatureTypes?: ReadonlySet<string>;
+  /** The catalogue's ability fields. With `sameAbility`, the rows on these become one `ability( … )` group. Unknown (the catalogue has not loaded) = no grouping yet. */
+  abilityFields?: ReadonlySet<string>;
 }
 
 /** The catalogue rows as nodes: must and never per value, one OR group per field for its any-of values, a range per
  *  number filter. Whether a field exists is the evaluator's to say (cannot-answer), never this function's. */
-export function fieldNodes(filters: readonly FieldFilter[]): Node[] {
+export function fieldNodes(filters: readonly FieldFilter[], sameAbility?: ReadonlySet<string>): Node[] {
   const out: Node[] = [];
   const any = new Map<string, Node[]>();
   for (const f of filters) {
@@ -105,7 +107,12 @@ export function fieldNodes(filters: readonly FieldFilter[]): Node[] {
     else (any.get(f.field) ?? any.set(f.field, []).get(f.field)!).push({ field: f.field, op: "has", value: f.value });
   }
   for (const group of any.values()) out.push({ or: group });
-  return out;
+  if (!sameAbility) return out;
+  // SAME ABILITY (#1786): the rows about abilities become ONE group, so every one of them holds on a single ability.
+  // A NEVER row stays outside: "no ability of the card does X" is a question about all of them, while a `not` inside the group would say "some ability does not".
+  const on = (n: Node): boolean => !("not" in n) && ("or" in n ? n.or.every(on) : "field" in n && sameAbility.has(n.field));
+  const together = out.filter(on);
+  return together.length === 0 ? out : [...out.filter((n) => !on(n)), { ability: { and: together } }];
 }
 
 /** The characteristic half of an EventQuery as an AST, matching `compileCharacteristics` + `coloursFit`:
@@ -141,7 +148,7 @@ export function fromEventQuery(q: CharQuery, mode: PageMode, opts: CompileOption
   ];
   if (typeLine.length > 0) and.push({ or: typeLine });
   if (q.orKeywords && q.orKeywords.length > 0) and.push({ or: q.orKeywords.map((value): Node => ({ field: "k", op: "has", value })) });
-  and.push(...fieldNodes(q.fieldFilters ?? []));
+  and.push(...fieldNodes(q.fieldFilters ?? [], q.sameAbility === true ? opts.abilityFields : undefined));
   if (q.cardColours.length > 0) {
     if (q.cardColours.includes("C")) and.push({ field: "c", op: "count", max: 0 });
     else for (const v of q.cardColours) if (WUBRG.includes(v)) and.push({ field: "c", op: "has", value: v });
@@ -167,11 +174,11 @@ export function fromEventQuery(q: CharQuery, mode: PageMode, opts: CompileOption
 /** Evaluate the characteristics (and, on the commanders page, the commander toggle) over the rows. */
 export function evaluateEventQuery(
   rows: readonly CoreRow[], vocab: CoreVocab, q: CharQuery, mode: PageMode,
-  opts: { commandersOnly?: boolean; context?: EvalContext } = {},
+  opts: { commandersOnly?: boolean; context?: EvalContext; abilityFields?: ReadonlySet<string> } = {},
 ): EvalResult {
   const ctx = opts.context ?? coreContext(rows, vocab);
   const creature = ctx.namedLists["creature"]?.values;
-  const node = fromEventQuery(q, mode, { vocab, ...(creature ? { creatureTypes: new Set(creature) } : {}) });
+  const node = fromEventQuery(q, mode, { vocab, ...(creature ? { creatureTypes: new Set(creature) } : {}), ...(opts.abilityFields ? { abilityFields: opts.abilityFields } : {}) });
   if (!opts.commandersOnly) return evaluate(node, ctx);
   const commanders = rows.flatMap((r, i) => (r.commander ? [i] : []));
   return evaluate({ and: [{ op: "rows", rows: commanders }, node] }, ctx);

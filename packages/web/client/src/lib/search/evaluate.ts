@@ -1,3 +1,4 @@
+import type { AbilityRows } from "./ability-rows.js";
 import type { Column, NumberColumn, SetColumn } from "./walk.js";
 
 export type Node =
@@ -12,6 +13,8 @@ export type Node =
   /** Colour identity as a set column of W/U/B/R/G: `within` = subset (fits in), `exactly` = equal. */
   | { field: string; op: "within"; value: string[] }
   | { field: string; op: "exactly"; value: string[] }
+  /** All inner terms hold on the SAME ability (#1786): judged over the ability rows, then mapped back to the cards that own one. The inner terms must be ability fields. */
+  | { ability: Node }
   /** Rows a caller already computed elsewhere (event membership, the commander toggle), so they combine in this evaluator. */
   | { op: "rows"; rows: ReadonlySet<number> | readonly number[] };
 
@@ -19,6 +22,8 @@ export interface EvalContext {
   rowCount: number;
   columns: ReadonlyMap<string, Column>;
   namedLists: Readonly<Record<string, { values: readonly string[] }>>;
+  /** The ability rows, once loaded; absent = a question with `ability( … )` cannot be answered. */
+  abilities?: AbilityRows;
 }
 
 /** The build cannot answer: an unknown field or list, or a field of the wrong kind. Never read as empty or all. */
@@ -84,6 +89,7 @@ function unjudgedIn(node: Node, ctx: EvalContext, out: Set<number> = new Set()):
   if ("and" in node) node.and.forEach((c) => unjudgedIn(c, ctx, out));
   else if ("or" in node) node.or.forEach((c) => unjudgedIn(c, ctx, out));
   else if ("not" in node) unjudgedIn(node.not, ctx, out);
+  else if ("ability" in node) { for (const r of ctx.abilities?.unjudged ?? []) out.add(r); }
   else if ("field" in node) {
     const col = ctx.columns.get(node.field);
     if (col?.kind === "set") for (const r of col.unjudged ?? []) out.add(r);
@@ -91,9 +97,30 @@ function unjudgedIn(node: Node, ctx: EvalContext, out: Set<number> = new Set()):
   return out;
 }
 
+/** `ability( … )`: the inner tree over the ability rows, then the cards owning a matching ability. A term that is no ability field, a nested `ability(` or rows a caller supplied is a visible error, never a quiet empty answer. */
+function runAbility(inner: Node, ctx: EvalContext, out: Uint8Array): Uint8Array {
+  const ab = ctx.abilities;
+  if (!ab) throw new CannotAnswer(["the ability rows are not loaded"]);
+  const bad: string[] = [];
+  const check = (n: Node): void => {
+    if ("and" in n) n.and.forEach(check);
+    else if ("or" in n) n.or.forEach(check);
+    else if ("not" in n) check(n.not);
+    else if ("ability" in n) bad.push("ability( ) inside ability( )");
+    else if ("field" in n) { if (!ab.columns.has(n.field)) bad.push(`${n.field} is not an ability field`); }
+    else bad.push("rows that are not an ability's");
+  };
+  check(inner);
+  if (bad.length > 0) throw new CannotAnswer([...new Set(bad)].map((b) => `${b}, so it cannot be inside ability( )`));
+  const mask = run(inner, { rowCount: ab.count, columns: ab.columns, namedLists: ctx.namedLists });
+  for (let i = 0; i < ab.count; i++) if (mask[i]) out[ab.owner[i]!] = 1;
+  return out;
+}
+
 function run(node: Node, ctx: EvalContext): Uint8Array {
   const n = ctx.rowCount;
   const out = new Uint8Array(n);
+  if ("ability" in node) return runAbility(node.ability, ctx, out);
   if ("and" in node) {
     out.fill(1);
     for (const c of node.and) {

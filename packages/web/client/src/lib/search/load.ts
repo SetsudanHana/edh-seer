@@ -1,5 +1,6 @@
 // Loads the search catalogue and its group files on demand (#1782). The core fields come from rows the
 // page already holds; everything here is for the fields they cannot answer.
+import { decodeAbilityRows, type AbilityRows, type AbilityRowsPayload } from "./ability-rows.js";
 import { decodeGroup, type Catalogue, type GroupPayload } from "./catalogue.js";
 import type { EvalContext, Node } from "./evaluate.js";
 import type { Column } from "./walk.js";
@@ -10,6 +11,8 @@ export interface SearchLoader {
   catalogue(): Promise<Catalogue | null>;
   /** Fetches only the group files holding these fields (each once) and decodes them. Rejects when one failed. */
   columnsFor(fields: readonly string[]): Promise<Column[]>;
+  /** The ability rows (#1786), fetched once, only for a question with `ability( … )`. null = this build has none. Rejects when the read failed. */
+  abilityRows(): Promise<AbilityRows | null>;
 }
 
 /** Fields the page answers from name-index rows alone. */
@@ -23,8 +26,26 @@ export function fieldsOf(node: Node, out: Set<string> = new Set()): string[] {
   if ("and" in node) node.and.forEach((n) => fieldsOf(n, out));
   else if ("or" in node) node.or.forEach((n) => fieldsOf(n, out));
   else if ("not" in node) fieldsOf(node.not, out);
+  else if ("ability" in node) return [...out]; // its fields are ability rows, not group columns: `abilityFieldsOf`
   else if ("field" in node) out.add(node.field);
   return [...out];
+}
+
+/** The fields named inside `ability( … )`, which the ability rows answer. */
+export function abilityFieldsOf(node: Node, out: Set<string> = new Set(), inside = false): string[] {
+  if ("and" in node) node.and.forEach((n) => abilityFieldsOf(n, out, inside));
+  else if ("or" in node) node.or.forEach((n) => abilityFieldsOf(n, out, inside));
+  else if ("not" in node) abilityFieldsOf(node.not, out, inside);
+  else if ("ability" in node) abilityFieldsOf(node.ability, out, true);
+  else if ("field" in node && inside) out.add(node.field);
+  return [...out];
+}
+
+export function usesAbilityScope(node: Node): boolean {
+  if ("and" in node) return node.and.some(usesAbilityScope);
+  if ("or" in node) return node.or.some(usesAbilityScope);
+  if ("not" in node) return usesAbilityScope(node.not);
+  return "ability" in node;
 }
 
 /** Does this tree need anything the page's own rows cannot give: a catalogue field, or a named list? An op walk,
@@ -33,6 +54,7 @@ export function needsCatalogue(node: Node): boolean {
   if ("and" in node) return node.and.some(needsCatalogue);
   if ("or" in node) return node.or.some(needsCatalogue);
   if ("not" in node) return needsCatalogue(node.not);
+  if ("ability" in node) return true;
   if (!("field" in node)) return false;
   return node.op === "countIn" || !CORE_FIELDS.has(node.field);
 }
@@ -64,8 +86,23 @@ export function createSearchLoader(baseUrl: string, fetchImpl: typeof fetch = fe
     pinned = dir;
     return made;
   };
+  let rowsRead: { key: string; made: Promise<AbilityRows | null> } | null = null;
   return {
     catalogue: async () => (await resolve())?.catalogue ?? null,
+    async abilityRows() {
+      const b = await resolve();
+      const meta = b?.catalogue.abilityRows;
+      if (!b || !meta) return null;
+      const key = `${b.dir}/${meta.file}`;
+      if (!rowsRead || rowsRead.key !== key) {
+        const made = getJson<AbilityRowsPayload>(key).then(decodeAbilityRows);
+        const mine = { key, made };
+        // A FAILED READ LEAVES NOTHING BEHIND: the next question asks again.
+        made.catch(() => { if (rowsRead === mine) rowsRead = null; });
+        rowsRead = mine;
+      }
+      return await rowsRead.made;
+    },
     async columnsFor(fields) {
       const b = await resolve();
       if (!b) return [];
@@ -92,6 +129,7 @@ export function listsOf(node: Node, out: Set<string> = new Set()): string[] {
   if ("and" in node) node.and.forEach((n) => listsOf(n, out));
   else if ("or" in node) node.or.forEach((n) => listsOf(n, out));
   else if ("not" in node) listsOf(node.not, out);
+  else if ("ability" in node) listsOf(node.ability, out);
   else if ("field" in node && node.op === "countIn") out.add(node.list);
   return [...out];
 }
@@ -110,6 +148,7 @@ export async function resolveCatalogue(core: EvalContext, loader: SearchLoader, 
   if (!needsCatalogue(node)) return { state: "ready", ctx: core };
   const need = fieldsOf(node).filter((f) => !CORE_FIELDS.has(f));
   const lists = listsOf(node);
+  const inside = abilityFieldsOf(node);
   let cat: Catalogue | null;
   try {
     cat = await loader.catalogue();
@@ -125,8 +164,18 @@ export async function resolveCatalogue(core: EvalContext, loader: SearchLoader, 
     failed = true;
   }
   const ctx: EvalContext = { rowCount: core.rowCount, columns, namedLists: { ...cat.namedLists, ...core.namedLists } };
+  if (usesAbilityScope(node)) {
+    // The ability rows are the one file `ability( … )` needs: a read that failed says so, a build without them cannot answer.
+    try {
+      const rows = await loader.abilityRows();
+      if (rows) ctx.abilities = rows;
+    } catch {
+      return { state: "failed", ctx };
+    }
+  }
   if (failed) return { state: "failed", ctx };
-  const complete = need.every((f) => columns.has(f)) && lists.every((l) => l in ctx.namedLists);
+  const complete = need.every((f) => columns.has(f)) && lists.every((l) => l in ctx.namedLists)
+    && (!usesAbilityScope(node) || (ctx.abilities !== undefined && inside.every((f) => ctx.abilities!.columns.has(f))));
   return { state: complete ? "ready" : "incomplete", ctx };
 }
 

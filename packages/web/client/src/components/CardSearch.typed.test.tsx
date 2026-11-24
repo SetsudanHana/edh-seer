@@ -38,6 +38,7 @@ const BEST: Column = { kind: "set", path: "stBest", group: "faces", fallback: "s
 const loader = (): SearchLoader => ({
   catalogue: vi.fn(async () => CATALOGUE),
   columnsFor: vi.fn(async (fields: readonly string[]) => (fields.includes("stBest") ? [BEST] : [])),
+  abilityRows: vi.fn(async () => null),
 });
 const FREQ: EventFrequencyFile = { supply: { "mill|-|-|-": 2 }, consume: { "dies|creature|-|-": 1 }, byIdentity: { "mill|-|-|-": [] } } as unknown as EventFrequencyFile;
 const MEMBERS: Record<string, EventMembers> = {
