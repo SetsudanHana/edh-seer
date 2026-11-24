@@ -29,11 +29,15 @@ export interface NamedList {
 export interface DerivedSet {
   /** The payload group the column ships in; its file needs a budget like any other. */
   group: string;
-  /** value -> source "path=value" pairs. */
+  /** value -> source pairs: `path=value`, `path=*` (any value the path holds) or `path@list` (any value in that named list). Each is one path, so a value is a union of facts about single abilities. */
   values: Record<string, string[]>;
 }
 
 export interface SearchRegistry {
+  /** Prefix -> what a player types in its place (`tags.abilities.` -> `ab.`): `ab.count.floor` is `tags.abilities.count.floor`. A field's own `alias` wins. */
+  pathAliases?: Record<string, string>;
+  /** Path prefixes of per-ability data (`tags.abilities`). A field under one is judged ONE ABILITY AT A TIME by the engine and, until #1786, by card here: two terms on such fields match across the card's abilities. Such a walked path is also an Advanced field. */
+  abilityPrefixes?: string[];
   /** Max distinct values for a string/boolean path to stay a set column. Default 400. */
   threshold?: number;
   fields: Record<string, FieldEntry>;
@@ -104,4 +108,20 @@ export function groupOf(path: string, registry: SearchRegistry): string | undefi
     }
   }
   return best;
+}
+
+/** One source of a derived set: `path=value`, `path=*` (any value the path holds) or `path@list` (any value in the named list). A pair has no AND and no NOT: a union of single-path facts, so each term is true of ONE ability, never of two abilities at once. */
+export function termOf(pair: string): { path: string; value: string } | { path: string; list: string } {
+  const at = pair.lastIndexOf("@");
+  if (at > 0 && !pair.includes("=")) return { path: pair.slice(0, at), list: pair.slice(at + 1) };
+  const eq = pair.lastIndexOf("=");
+  return { path: pair.slice(0, eq), value: pair.slice(eq + 1) };
+}
+
+/** The path's own per-ability data: under an `abilityPrefixes` entry, or a computed field whose every source is. */
+export function isAbilityField(path: string, registry: SearchRegistry): boolean {
+  const under = (p: string): boolean => (registry.abilityPrefixes ?? []).some((a) => underPrefix(p, a));
+  const derived = registry.derivedSets?.[path];
+  if (derived) return Object.values(derived.values).flat().every((pair) => under(termOf(pair).path));
+  return under(path);
 }

@@ -6,6 +6,7 @@ import { matchNames, needleOf } from "../lib/name-match.js";
 import { coreContext, evaluateEventQuery, fromEventQuery, rowCountsOf, typeCountSpec, withEveryCreatureType } from "../lib/search/from-event-query.js";
 import { BESPOKE_FIELDS, createSearchLoader, fieldsOf, listsOf, needsCatalogue, resolveCatalogue, type CatalogueResolution, type SearchLoader } from "../lib/search/load.js";
 import type { Catalogue, CatalogueField } from "../lib/search/catalogue.js";
+import { ACROSS_ABILITIES_NOTE, abilityTermsOf, abilityTermsOfFilters, needsAcrossNote } from "../lib/search/ability-scope.js";
 import { evaluate, type EvalContext, type Node } from "../lib/search/evaluate.js";
 import { builderQuery } from "../lib/search/builder-text.js";
 import { eventsOf, fieldNames, keepChangelings as keepTyped, notSubtypesOf, parse, print, shapeNode, toNode, type Query, type QueryError } from "../lib/search/query.js";
@@ -312,8 +313,13 @@ export function CardSearch({
   const offeredFields = useMemo((): CatalogueField[] => [...catalogueFields.values()]
     .filter((f) => !BESPOKE_FIELDS.has(f.id) && !fieldRows.includes(f.id)), [catalogueFields, fieldRows]);
   const isLabelled = (f: CatalogueField): boolean => f.label !== undefined && f.label !== f.id;
-  const menuLabelled = useMemo(() => offeredFields.filter(isLabelled).sort((a, b) => a.label!.localeCompare(b.label!, "en")), [offeredFields]);
-  const menuUnlabelled = useMemo(() => offeredFields.filter((f) => !isLabelled(f)).sort((a, b) => a.id.localeCompare(b.id, "en")), [offeredFields]);
+  // A LABELLED FIELD IS A QUESTION A PLAYER ASKS, unless the catalogue says it is a path of the grammar (`advanced`, #1784): those wait behind the
+  // switch labelled or not, labelled ones first, by their words, then the bare paths by id.
+  const menuLabelled = useMemo(() => offeredFields.filter((f) => isLabelled(f) && !f.advanced).sort((a, b) => a.label!.localeCompare(b.label!, "en")), [offeredFields]);
+  const menuUnlabelled = useMemo(() => [
+    ...offeredFields.filter((f) => isLabelled(f) && f.advanced).sort((a, b) => a.label!.localeCompare(b.label!, "en")),
+    ...offeredFields.filter((f) => !isLabelled(f)).sort((a, b) => a.id.localeCompare(b.id, "en")),
+  ], [offeredFields]);
   useEffect(() => {
     let live = true;
     void load("/static").then((i) => { if (live) setIndex(i); });
@@ -352,6 +358,11 @@ export function CardSearch({
     return { status: "ok", ast: r.ast };
   }, [typedActive, index, catalogueInfo.state, xText, schema, freq]);
   const typedAst = typed?.status === "ok" ? typed.ast : null;
+  // THE ABILITY-SCOPE NOTE (#1784): two terms on the grammar's own fields are matched by card, not by ability, until #1786.
+  const abilityTerms = useMemo(() => {
+    const isAbility = (id: string): boolean => catalogueFields.get(id)?.ability === true;
+    return typedActive ? (typedAst ? abilityTermsOf(typedAst, isAbility) : 0) : abilityTermsOfFilters(fieldFilters, isAbility);
+  }, [typedActive, typedAst, fieldFilters, catalogueFields]);
   const typedShape = useMemo(() => (typedAst ? shapeNode(typedAst) : null), [typedAst]);
   const typedNeedsCatalogue = typedShape !== null && needsCatalogue(typedShape);
   const chosenKeys = useMemo(
@@ -1377,6 +1388,9 @@ export function CardSearch({
                 </p>
                 <button type="button" className="chip" onClick={() => setEvents({ ...eventQuery, keepChangelings: true })}>Show them</button>
               </div>
+            )}
+            {needsAcrossNote(abilityTerms) && (
+              <p className="text-(--muted) text-sm">{ACROSS_ABILITIES_NOTE}</p>
             )}
             {changelingsUnmatched && !blocking && (
               <p className="text-(--muted) text-sm">Changelings can&apos;t be matched on this build.</p>

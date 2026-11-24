@@ -152,3 +152,29 @@ test("a derived set is the union of its source pairs, and is NOT built when a so
   const old = walkRecords([rec(0, { a: [{ counts: "type" }] })], reg);
   expect(derivedSetColumn("cares", def, old.columns)).toEqual({ missing: ["tags.b.counts"] });
 });
+
+test("a derived set pair `path=*` is any value of the path, and `path@list` any value in the named list (#1784)", () => {
+  const reg = registry({ groups: { abilities: ["tags.a", "tags.b"] } });
+  const walk = walkRecords([rec(0, { a: [{ not: "borg" }] }), rec(1, { a: [{ not: "human" }], b: { named: "elf" } }), rec(2, { b: { named: "angel" } }), rec(3, { b: { named: "forest" } }), rec(4, {})], reg);
+  const def = { group: "abilities", values: { any: ["tags.a.not=*"], tribe: ["tags.b.named@creature"] } };
+  const lists = { creature: { label: "c", values: ["elf", "angel", "human"] } };
+  const { column, missing } = derivedSetColumn("x", def, walk.columns, lists);
+  expect(missing).toEqual([]);
+  expect([...column!.values]).toEqual([["any", [0, 1]], ["tribe", [1, 2]]]);
+  // a list this build does not hold is a source it cannot read: that value is not built (and says so), never built empty
+  const noList = derivedSetColumn("x", def, walk.columns, {});
+  expect([...noList.column!.values]).toEqual([["any", [0, 1]]]);
+  expect(noList.unbuilt).toEqual({ tribe: ["list creature"] });
+  expect(derivedSetColumn("x", { group: "abilities", values: { tribe: def.values.tribe } }, walk.columns, {})).toEqual({ missing: ["list creature"] });
+  // an existing pair keeps its meaning, and a value that spells `*` is still just a path=value on a path nobody wrote it to
+  expect([...derivedSetColumn("y", { group: "abilities", values: { v: ["tags.a.not=borg"] } }, walk.columns).column!.values]).toEqual([["v", [0]]]);
+});
+
+test("a derived value whose own sources are absent is left out and named, while its siblings are still built (#1784)", () => {
+  const reg = registry({ groups: { payoffs: ["tags.a.counts", "tags.c"] } });
+  const walk = walkRecords([rec(0, { a: [{ counts: "type" }] }), rec(1, { a: [{ counts: "name" }] })], reg);
+  const def = { group: "payoffs", values: { "card-types": ["tags.a.counts=type"], "one-type": ["tags.c.subtype=elf"] } };
+  const { column, unbuilt } = derivedSetColumn("cares", def, walk.columns);
+  expect([...column!.values]).toEqual([["card-types", [0]]]);
+  expect(unbuilt).toEqual({ "one-type": ["tags.c.subtype"] });
+});

@@ -1,4 +1,4 @@
-import { render, screen, waitFor, within } from "@testing-library/react";
+import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Route, Routes, useLocation } from "react-router";
 import { expect, test, vi } from "vitest";
@@ -44,13 +44,13 @@ const loaderOf = (cat: Catalogue | null = CAT, gate?: Promise<void>): SearchLoad
   columnsFor: vi.fn(async (fields: readonly string[]) => COLUMNS.filter((c) => fields.includes(c.path))),
 });
 
-const atUrl = (url: string, searchLoader: SearchLoader) => {
+const atUrl = (url: string, searchLoader: SearchLoader, extra: Record<string, unknown> = {}) => {
   const path = url.split("?")[0]!;
   function Spy() { const loc = useLocation(); (Spy as unknown as { search: string }).search = loc.search; return null; }
   render(
     <MemoryRouter initialEntries={[url]}>
       <Routes>
-        <Route path={path} element={<><CardSearch load={async () => INDEX} vocabulary={async () => VOCAB} searchLoader={searchLoader} /><Spy /></>} />
+        <Route path={path} element={<><CardSearch load={async () => INDEX} vocabulary={async () => VOCAB} searchLoader={searchLoader} {...extra} /><Spy /></>} />
       </Routes>
     </MemoryRouter>,
   );
@@ -328,4 +328,68 @@ test("one any-of chip has no connector, and neither does a must beside an any-of
 test("a field's description shows as one line under its label", async () => {
   atUrl("/cards?f=read:grammar", loaderOf());
   expect(await screen.findByText("Whether our own rules could read the card's text, a language model read it, or nobody has yet.")).toBeInTheDocument();
+});
+
+// #1784: the grammar's paths wait behind the Advanced switch whether or not they have a label, and two terms on them are matched across the card's abilities.
+const KIND = "tags.abilities.kind";
+const GRAMMAR_CAT: Catalogue = {
+  ...CAT,
+  groups: {
+    ...CAT.groups,
+    abilities: { file: "abilities.json", fields: [
+      { id: KIND, kind: "set", label: "Ability type", alias: "ab.kind", ability: true, advanced: true, values: [{ v: "static", n: 2 }, { v: "triggered", n: 2 }] },
+      { id: VERB, kind: "set", label: "Events it causes", alias: "ab.emits.verb", ability: true, advanced: true, values: [{ v: "draw", n: 2 }, { v: "mill", n: 2 }, { v: "gain-life", n: 1 }] },
+      { id: "grants", kind: "set", label: "Gives something a type", ability: true, values: [{ v: "creature-types", n: 1 }], valueLabels: { "creature-types": "a creature type" } },
+    ] },
+  },
+};
+const GRAMMAR_COLUMNS: Column[] = [
+  ...COLUMNS.filter((c) => c.path !== VERB),
+  set(KIND, { static: [0, 3], triggered: [1, 2] }),
+  set(VERB, { draw: [0, 1], mill: [1, 2], "gain-life": [3] }),
+  set("grants", { "creature-types": [4] }),
+];
+const grammarLoader = (): SearchLoader => ({
+  catalogue: vi.fn(async () => GRAMMAR_CAT),
+  columnsFor: vi.fn(async (fields: readonly string[]) => GRAMMAR_COLUMNS.filter((c) => fields.includes(c.path))),
+});
+const NOTE = /matched across the card's abilities/i;
+
+test("a LABELLED grammar path still waits behind Advanced; a named query about the grammar does not", async () => {
+  atUrl("/cards", grammarLoader());
+  await openMenu();
+  expect(await screen.findByRole("button", { name: "Gives something a type" })).toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "Our reading" })).toBeInTheDocument();
+  expect(screen.queryByRole("button", { name: "Ability type" })).toBeNull();
+  expect(screen.queryByRole("button", { name: "Events it causes" })).toBeNull();
+  await userEvent.click(screen.getByRole("checkbox", { name: "Advanced fields" }));
+  const labels = screen.getAllByRole("button").map((b) => b.textContent);
+  expect(labels).toEqual(expect.arrayContaining(["Ability type", "Events it causes"]));
+  await userEvent.click(screen.getByRole("checkbox", { name: "Advanced fields" }));
+  expect(screen.queryByRole("button", { name: "Ability type" })).toBeNull();
+});
+
+test("two grammar terms say they are matched across the card's abilities; one does not, and neither does a grammar term beside a plain one", async () => {
+  atUrl(`/cards?f=${KIND}:static&f=${VERB}:draw`, grammarLoader());
+  await waitFor(() => expect(names()).toEqual(["Card A"]));
+  expect(screen.getByText(NOTE)).toBeInTheDocument();
+  cleanup();
+  atUrl(`/cards?f=${VERB}:draw`, grammarLoader());
+  await waitFor(() => expect(names()).toEqual(["Card A", "Card B"]));
+  expect(screen.queryByText(NOTE)).toBeNull();
+  cleanup();
+  atUrl(`/cards?f=${VERB}:draw&f=read:grammar`, grammarLoader());
+  await waitFor(() => expect(names()).toEqual(["Card A", "Card B"]));
+  expect(screen.queryByText(NOTE)).toBeNull();
+});
+
+test("the typed form says it too, and `ab.` names the grammar path", async () => {
+  const typedExtra = { frequency: async () => ({ supply: {}, consume: {}, byIdentity: {} }), members: async () => null };
+  atUrl(`/cards?x=${encodeURIComponent("ab.kind:static ab.emits.verb:draw")}`, grammarLoader(), typedExtra);
+  await waitFor(() => expect(names()).toEqual(["Card A"]));
+  expect(screen.getByText(NOTE)).toBeInTheDocument();
+  cleanup();
+  atUrl(`/cards?x=${encodeURIComponent("ab.kind:static")}`, grammarLoader(), typedExtra);
+  await waitFor(() => expect(names()).toEqual(["Card A", "Card D"]));
+  expect(screen.queryByText(NOTE)).toBeNull();
 });

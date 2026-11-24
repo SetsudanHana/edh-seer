@@ -1,5 +1,5 @@
 import { decodePostings, encodePostings } from "./postings.js";
-import type { NamedList, SearchRegistry } from "./registry.js";
+import { isAbilityField, type NamedList, type SearchRegistry } from "./registry.js";
 import type { Column, WalkResult } from "./walk.js";
 
 export const FORMAT_VERSION = 1;
@@ -9,6 +9,10 @@ export interface CatalogueField {
   kind: "set" | "number";
   label?: string;
   alias?: string;
+  /** The field is about the card's ABILITIES, each judged on its own by the engine; here two terms on such fields are matched across the card (#1784, until #1786). */
+  ability?: true;
+  /** Shown only behind the "Advanced fields" switch, labelled or not: a path of the grammar rather than a question a player asks. */
+  advanced?: true;
   /** One plain-language line under the row's label, from the registry. */
   description?: string;
   /** Player words for values, from the registry; a value with none is shown as it is. */
@@ -38,7 +42,7 @@ export interface Catalogue {
 }
 
 export type FieldPayload =
-  | { kind: "set"; values: Record<string, string>; fallback?: string; overrides?: string }
+  | { kind: "set"; values: Record<string, string>; fallback?: string; overrides?: string; unjudged?: string }
   | { kind: "number"; rows: string; min: number[]; max: number[] };
 
 export interface GroupPayload {
@@ -54,11 +58,23 @@ export interface BuildInput {
   core?: Column[];
 }
 
+/** The short name a prefix gives a path (`tags.abilities.count.floor` -> `ab.count.floor`), the longest prefix first. */
+function aliasOf(path: string, registry: SearchRegistry): string | undefined {
+  const hit = Object.entries(registry.pathAliases ?? {}).filter(([p]) => path.startsWith(p) && path.length > p.length).sort((a, b) => b[0].length - a[0].length)[0];
+  return hit ? hit[1] + path.slice(hit[0].length) : undefined;
+}
+
 function describe(col: Column, registry: SearchRegistry): CatalogueField {
   const entry = registry.fields[col.path];
   const f: CatalogueField = { id: col.path, kind: col.kind };
   f.label = entry?.label ?? col.path;
-  if (entry?.alias) f.alias = entry.alias;
+  const alias = entry?.alias ?? aliasOf(col.path, registry);
+  if (alias) f.alias = alias;
+  if (isAbilityField(col.path, registry)) {
+    f.ability = true;
+    // a computed field (cares, grants, counts) is a question a player asks; a walked path of the grammar is not
+    if (!registry.derivedSets?.[col.path]) f.advanced = true;
+  }
   if (entry?.description) f.description = entry.description;
   if (entry?.valueLabels && col.kind === "set") f.valueLabels = entry.valueLabels;
   if (col.kind === "set") {
@@ -75,7 +91,8 @@ function payloadOf(col: Column): FieldPayload {
   if (col.kind === "set") {
     const values: Record<string, string> = {};
     for (const [v, rows] of col.values) values[v] = encodePostings(rows);
-    return col.fallback ? { kind: "set", values, fallback: col.fallback, overrides: encodePostings(col.overrides ?? []) } : { kind: "set", values };
+    const unjudged = col.unjudged && col.unjudged.length > 0 ? { unjudged: encodePostings(col.unjudged) } : {};
+    return col.fallback ? { kind: "set", values, fallback: col.fallback, overrides: encodePostings(col.overrides ?? []), ...unjudged } : { kind: "set", values, ...unjudged };
   }
   return { kind: "number", rows: encodePostings(col.rows), min: col.min, max: col.max };
 }
@@ -114,6 +131,7 @@ export function decodeGroup(group: CatalogueGroup, payload: GroupPayload): Colum
       const values = new Map<string, number[]>();
       for (const [v, b64] of Object.entries(p.values)) values.set(v, decodePostings(b64));
       const col: Column = { kind: "set", path: f.id, group: "", values };
+      if (p.unjudged) col.unjudged = decodePostings(p.unjudged);
       if (p.fallback) {
         col.fallback = p.fallback;
         col.overrides = decodePostings(p.overrides ?? "");

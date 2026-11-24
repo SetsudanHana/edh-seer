@@ -14,6 +14,8 @@ import { createHash } from "node:crypto";
 import { mkdirSync, readdirSync, readFileSync, renameSync, rmSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { gzipSync } from "node:zlib";
+import { POOL_CLASSES } from "@edh-seer/matcher";
+import { BUILD_CATEGORIES } from "@edh-seer/matcher/build";
 import { CREATURE_SUBTYPES, LAND_SUBTYPES } from "@edh-seer/tagger/subtypes";
 import { buildCatalogue, decodeGroup, type Catalogue, type GroupPayload } from "../client/src/lib/search/catalogue.ts";
 import { evaluate, type Node } from "../client/src/lib/search/evaluate.ts";
@@ -27,7 +29,7 @@ const source = resolve(arg("--static") ?? join(repo, "static-out"));
 const registryPath = arg("--registry") ?? join(import.meta.dirname, "search-registry.json");
 const manifestPath = join(source, "manifest.json");
 
-type Row = IndexRow & NumericRow & { name: string; k?: number[] };
+type Row = IndexRow & NumericRow & { name: string; k?: number[]; r?: number[]; a?: number[]; n?: number[] };
 interface NameIndex { types: string[]; subtypes: string[]; keywords: string[]; cards: Row[] }
 
 const manifest = JSON.parse(readFileSync(manifestPath, "utf8")) as { version: string; deriveVersion: number } & Record<string, unknown>;
@@ -107,12 +109,42 @@ function build(): void {
   for (const [k, v] of [...read]) if (v.length === 0) read.delete(k);
   const readColumn: SetColumn = { kind: "set", path: "read", group: "read", values: read };
   walk.columns.set("read", readColumn);
+  // UNKNOWN TRIGGERS: the card has a trigger whose wording the grammar did not read (`tags.unknownTriggers`, a list of the words). Only "present" is a field; the words are not searched. A row with no record is in neither this nor its absence.
+  const withGaps = records.filter((r) => Array.isArray((r.tags as { unknownTriggers?: unknown } | null)?.unknownTriggers) && ((r.tags as { unknownTriggers: unknown[] }).unknownTriggers).length > 0).map((r) => r.row).sort((x, y) => x - y);
+  // A row with no record, or whose tags are null, cannot say "all my triggers were read": the column is `unjudged` for it, so a NOT leaves it out.
+  const judged = new Set(records.filter((r) => r.tags !== null && r.tags !== undefined).map((r) => r.row));
+  const unjudged = index.cards.flatMap((_, i) => (judged.has(i) ? [] : [i]));
+  if (withGaps.length > 0) walk.columns.set("unknownTriggers", { kind: "set", path: "unknownTriggers", group: "read", values: new Map([["present", withGaps]]), unjudged });
+  // ROLES AND ANSWERS: the name-index rows' own codes (`r` into BUILD_CATEGORIES, `a` / `n` into POOL_CLASSES; both orders are wire formats), shipped by NAME so a client needs neither table.
+  for (const [path, names, pick] of [["r", BUILD_CATEGORIES, (c: Row) => c.r], ["a", POOL_CLASSES, (c: Row) => c.a], ["n", POOL_CLASSES, (c: Row) => c.n]] as const) {
+    const byName = new Map<string, number[]>();
+    index.cards.forEach((c, i) => { for (const code of pick(c) ?? []) { const n = names[code]; if (n !== undefined) (byName.get(n) ?? byName.set(n, []).get(n)!).push(i); } });
+    if (byName.size > 0) walk.columns.set(path, { kind: "set", path, group: "roles", values: new Map([...byName].sort((x, y) => (x[0] < y[0] ? -1 : 1))) });
+  }
+  // PRINTED TEXT IS NOT AN ENUM. The walker's only test is "at most `threshold` distinct values", which a field of printed costs or phrases passes (delayedBy shipped "{T}, Exile this artifact"; condition.choice "a choice you didn't vote for"). THE RULE: a string value of a walked set field may not hold a brace (a mana or cost symbol), a newline, or more than 4 space-separated words. Engine words are hyphen- or colon-joined, so none trips it; a path that does is added to `deny`, never allowed past.
+  const leaks: string[] = [];
+  for (const col of walk.columns.values()) {
+    if (col.kind !== "set") continue;
+    for (const v of col.values.keys()) if (v.includes("{") || v.includes("}") || v.includes("\n") || v.split(" ").filter(Boolean).length > 4) leaks.push(`${col.path} = ${JSON.stringify(v)}`);
+  }
+  if (leaks.length > 0) {
+    console.error(`printed text in an enum: ${leaks.slice(0, 12).join("; ")}${leaks.length > 12 ? ` (and ${leaks.length - 12} more)` : ""}. Deny the path in the registry. Nothing promoted.`);
+    process.exit(1);
+  }
+  // CEILING: `counts:excluding-a-type` reads only effect.scalingSubject.* and thresholdSubject.notType, which always carry a counting phrase. count.scalesWith.* also records the SET a mass effect covers (Blast Zone, Planar Cleansing, Crux of Fate: 90 of 163 members at 594), so a real count recorded ONLY there (Infinite Diversity's non-Borg creature types) is lost; the grammar cannot tell the two apart. The path stays searchable under Advanced.
+  // CEILING: `cares:one-type-count` drops count.scalesWith.subtype for the same reason ("destroy all Goblins", a lord, "cast Dragon spells" are recorded there), keeping scalingSubject.subtype and thresholdSubject.subtype.
+  // CEILING: `grants:creature-types` includes a card that gives only ITSELF a type (Metallic Mimic, Adaptive Automaton, Roaming Throne, Titan of Littjara; Ezio via grantsType): the record has no self marker.
   // THE COMPUTED SET FIELDS (`derivedSets`, #1785: `cares`). One whose source paths the shards do not carry is left out and SAID, never shipped empty.
   const notBuilt: string[] = [];
   for (const [path, def] of Object.entries(registry.derivedSets ?? {})) {
-    const { column, missing } = derivedSetColumn(path, def, walk.columns);
+    const { column, missing, unbuilt } = derivedSetColumn(path, def, walk.columns, registry.namedLists);
     if (column) walk.columns.set(path, column);
     else notBuilt.push(`${path} (no card holds ${missing.join(", ")})`);
+    // A VALUE THE BUILD COULD NOT MAKE IS NOT A KNOWN VALUE: its label goes too, or a question about it would answer with an empty list.
+    for (const [value, lacks] of Object.entries(unbuilt ?? {})) {
+      notBuilt.push(`${path}:${value} (no card holds ${lacks.join(", ")})`);
+      delete registry.fields[path]?.valueLabels?.[value];
+    }
   }
 
   // tFront is NOT served by name-index (no face data there): only the rows whose front differs from `t` ship, as `faces`.

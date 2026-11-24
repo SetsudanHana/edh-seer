@@ -80,6 +80,17 @@ export function rowCounts(ctx: EvalContext, field: string, list?: string): Uint3
   }
 }
 
+function unjudgedIn(node: Node, ctx: EvalContext, out: Set<number> = new Set()): Set<number> {
+  if ("and" in node) node.and.forEach((c) => unjudgedIn(c, ctx, out));
+  else if ("or" in node) node.or.forEach((c) => unjudgedIn(c, ctx, out));
+  else if ("not" in node) unjudgedIn(node.not, ctx, out);
+  else if ("field" in node) {
+    const col = ctx.columns.get(node.field);
+    if (col?.kind === "set") for (const r of col.unjudged ?? []) out.add(r);
+  }
+  return out;
+}
+
 function run(node: Node, ctx: EvalContext): Uint8Array {
   const n = ctx.rowCount;
   const out = new Uint8Array(n);
@@ -101,6 +112,8 @@ function run(node: Node, ctx: EvalContext): Uint8Array {
   if ("not" in node) {
     const m = run(node.not, ctx);
     for (let i = 0; i < n; i++) out[i] = m[i] ? 0 : 1;
+    // A COLUMN THAT CANNOT SPEAK FOR A ROW does not say "no" for it: the complement leaves those rows out.
+    for (const r of unjudgedIn(node.not, ctx)) if (r >= 0 && r < n) out[r] = 0;
     return out;
   }
   if (node.op === "rows") {
