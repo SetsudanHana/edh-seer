@@ -51,7 +51,7 @@ import crKeywords from "./cr-keywords.json" with { type: "json" };
 import { paymentOf } from "./payment.js";
 import { CRAFT_EFFECT_TEXT, craftOf } from "./craft.js";
 import { doubledVerbs, doublesOf } from "./doubles.js";
-import { stationThresholdFor, thresholdFor, thresholdSubjectFor } from "./threshold.js";
+import { stationThresholdFor, thresholdDistinctFor, thresholdFor, thresholdSubjectFor } from "./threshold.js";
 import { addsManaText, deriveMana, production } from "./mana-lines.js";
 import { eventAmountFor } from "./event-amount.js";
 import { SUBTYPES } from "./subtypes.js";
@@ -778,7 +778,8 @@ import { castClassFromPrint, castIsOnlyACondition, castsYourOwnCard } from "./ca
 // 591: #1616 -- The Prima Vista: the stored cast that is really its animate sentence now derives from the grammar (triage label)
 // 592: #1325 -- 'open an Attraction' (CR 701.51b, CR 717.1) is the put of an artifact Attraction you control (an enters, not a token): the model's `other | open an Attraction` (15 commander-legal cards, derived nothing) and `investigate | an Attraction` (Seasoned Buttoneer, Myra the Magnificent, The Most Dangerous Gamer, derived a Clue-shaped create-token and a token Attraction of any controller) both read it. `investigate` joins GUARDED_VERBS: of 142 commander-legal investigate actions only those 4 print no investigate/clue word anywhere on the card.
 // 593: #1354 -- a tapped-token creation's companion tap is silent, not unclaimed (CR 110.5b)
-export const DERIVE_VERSION = 593;
+// 594: #1785 -- distinct-type counts: Effect.distinctCount gains counts 'creature-type' (battlefield creature-type counts: Infinite Diversity, Valiant Changeling, Saavik, Captain Jonathan Archer, Jean-Luc) and is set BESIDE scalingSubject (changeling partner, graveyard class) instead of only when none; a graveyard card-type count (Tarmogoyf, Emrakul the Promised End) carries distinctCount type over its graveyard class; Ability.thresholdDistinct records a delirium-style diversity threshold's unit and class (Dragon's Rage Channeler, Traverse the Ulvenwald) with no thresholdSubject; a card that prints '<name> is every creature type' without the Changeling keyword (Mistform Ultimus, Dr. Julius Jumblemorph) has every creature subtype derive-impact vs 63f0f297 (--pair-sample 0): 93 rows changed, 0 added, 0 removed, 0 source flips, grammar complete 29,282 -> 29,282; pair reasons of the 93 rows +1,424 / -12, all 1,428 of them on Mistform Ultimus (+1,416 / -12) plus 7 gained pairs with Mistform on other rows (Altar of the Goyf, Demonic Counsel, Ishkanah, Jean-Luc Mon Capitaine, Pyrogoyf, Scuttletide, The Swarmweaver); the unit fields (distinctCount creature-type / graveyard type, thresholdDistinct) move no pair; loss-classify: 8 cards, lost 12 (LOST->CLASS 6: the non-Human / non-Gnome / non-Wall consumers Anim Pakal, Mob Mentality, Winota, Sage of the Falls, Uhura, Wildborn Preserver, which a Human / Gnome / Wall Mistform is no longer the class of; 6 unmatched: the same non-Angel / non-Wall / non-Human lords Glorious Protector, Keldon Warlord, Grumgully, Diligent Zookeeper and Mikaeus x2), gained 1,424 (GAINED->SELF 0, class 395, ambiguous 7, unmatched 1,022: each a creature-subtype consumer of a card that is every creature type); role-ratchet 0 / 0, dropped-clauses 4,627 -> 4,627.
+export const DERIVE_VERSION = 594;
 
 /** "a nonland card from target opponent's graveyard or hand" (#1592): the object of a stored hand-or-graveyard pick. */
 const GRAVEYARD_OR_HAND_PICK = /\bfrom (?:target opponent|target player|that player|that opponent|an opponent)'s (?:graveyard or hand|hand or graveyard)$/i;
@@ -5007,10 +5008,11 @@ export function deriveAbilities(
         : { kind: "" as const };
       const scaled = scaling ? { ...effect, scaling } : effect;
       // A colour / name / card-type count keeps its class for the type-grant reader alone (#1680).
-      const distinct = countedSubject ? undefined : distinctCountOf(action, text);
+      // ...and states its unit beside any class a graveyard or changeling count keeps (#1785).
+      const distinct = distinctCountOf(action, text);
       const ability: Ability = {
         kind,
-        effect: countedSubject ? { ...scaled, scalingSubject: countedSubject } : distinct ? { ...scaled, distinctCount: distinct } : scaled,
+        effect: { ...scaled, ...(countedSubject ? { scalingSubject: countedSubject } : {}), ...(distinct ? { distinctCount: distinct } : {}) },
       };
       if (replacement?.tokenMultiplier) ability.effect = { ...ability.effect, tokenMultiplier: replacement.tokenMultiplier };
       // HOW A DAMAGE MULTIPLIER CHANGES THE DAMAGE (#1345), off the clause the verb path and the template both sit in.
@@ -5370,6 +5372,8 @@ export function deriveAbilities(
     const printedThreshold = thresholdFor(text);
     const threshold = printedThreshold ?? stationThresholdFor(text, cardText);
     const thresholdSubject = printedThreshold ? thresholdSubjectFor(text) : undefined;
+    // A diversity threshold (delirium) states the unit it counts and stamps no ability of its own (#1785).
+    const thresholdDistinct = printedThreshold ? thresholdDistinctFor(text) : undefined;
     // A TYPED COUNT IS A DEMAND IN ITS OWN RIGHT, as a trigger is (recall v6 #77, v7 #79). Gadrak
     // "can't attack unless you control four or more artifacts" is a `cant` static whose action maps
     // to no kind, so the clause pushed nothing and the one thing the card asks of its deck --
@@ -5429,7 +5433,7 @@ export function deriveAbilities(
       const repeats = exhaust ? "once" : delayed?.repeats ?? untapDenialRepeats(abilities[i], text ?? "", cardText, repeatsFor(abilities[i], text, cost, rawTrigger, cardName), rawTrigger);
       if (repeats) abilities[i] = { ...abilities[i], repeats };
       if (delayed && abilities[i].trigger) abilities[i] = { ...abilities[i], delayedBy: delayed.delayedBy };
-      if (threshold) abilities[i] = { ...abilities[i], threshold, ...(thresholdSubject ? { thresholdSubject } : {}) };
+      if (threshold) abilities[i] = { ...abilities[i], threshold, ...(thresholdSubject ? { thresholdSubject } : {}), ...(thresholdDistinct ? { thresholdDistinct } : {}) };
       // A REFUSED trigger still says what the card needs around it (owner 2026-08-20): the cares
       // tags ride on every ability of a triggered clause, claimed or not.
       if (conditionCares.length > 0 && (abilities[i].trigger || clause.trigger?.event || activationIf)) {

@@ -1,0 +1,1304 @@
+{
+ "Infinite Diversity": {
+  "source": {
+   "name": "Infinite Diversity",
+   "typeLine": "Sorcery",
+   "oracleText": "Federation — Exile target instant or sorcery card from your graveyard. Copy that card X times, where X is the number of creature types among non-Borg creatures you control. You may cast the copies without paying their mana costs. Exile Infinite Diversity.",
+   "keywords": [
+    "Federation"
+   ],
+   "colors": [
+    "R"
+   ],
+   "manaValue": 9,
+   "colorIdentity": [
+    "R"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{7}{R}{R}",
+   "layout": "normal",
+   "_id": "c7d8ed66-d66e-42fd-9c3e-8c2d8194e009"
+  }
+ },
+ "Valiant Changeling": {
+  "source": {
+   "name": "Valiant Changeling",
+   "typeLine": "Creature — Shapeshifter",
+   "oracleText": "This spell costs {1} less to cast for each creature type among creatures you control. This effect can't reduce the amount of mana this spell costs by more than {5}.\nChangeling (This card is every creature type.)\nDouble strike",
+   "keywords": [
+    "Double strike",
+    "Changeling"
+   ],
+   "colors": [
+    "W"
+   ],
+   "manaValue": 7,
+   "colorIdentity": [
+    "W"
+   ],
+   "power": "3",
+   "toughness": "3",
+   "manaCost": "{5}{W}{W}",
+   "layout": "normal",
+   "_id": "65d9b8b6-5215-4037-8e50-e0ca80c5dc9e"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "cost-modify",
+      "object": "this spell costs {1} less for each creature type among creatures you control, with a maximum reduction of {5}",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Changeling",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Double strike",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   }
+  ],
+  "segmentHash": "2b6c8823eb9fa354624eac2f771be7dc126c38ab48467ada72604d93ce3414dd"
+ },
+ "Saavik, Stoic Student": {
+  "source": {
+   "name": "Saavik, Stoic Student",
+   "typeLine": "Legendary Creature — Vulcan Advisor",
+   "oracleText": "Flash\nFederation — When Saavik enters, she deals X damage to target attacking or blocking creature an opponent controls, where X is the number of creature types among non-Borg creatures you control.",
+   "keywords": [
+    "Federation",
+    "Flash"
+   ],
+   "colors": [
+    "W"
+   ],
+   "manaValue": 5,
+   "colorIdentity": [
+    "W"
+   ],
+   "power": "2",
+   "toughness": "2",
+   "manaCost": "{4}{W}",
+   "layout": "normal",
+   "_id": "53aaa919-d08f-4b76-8583-bc2d4635f991"
+  }
+ },
+ "Captain Jonathan Archer": {
+  "source": {
+   "name": "Captain Jonathan Archer",
+   "typeLine": "Legendary Creature — Human Officer",
+   "oracleText": "When Captain Archer enters, create Porthos, a legendary 1/1 green Dog creature token.\nFederation — {G}, {T}: Target creature you control gets +X/+X until end of turn, where X is the number of creature types among non-Borg creatures you control. Activate only as a sorcery.",
+   "keywords": [
+    "Federation"
+   ],
+   "colors": [
+    "G"
+   ],
+   "manaValue": 3,
+   "colorIdentity": [
+    "G"
+   ],
+   "power": "3",
+   "toughness": "3",
+   "manaCost": "{2}{G}",
+   "layout": "normal",
+   "_id": "85df3564-5134-4dc2-9021-40ec84ee6d08"
+  }
+ },
+ "Jean-Luc, Mon Capitaine": {
+  "source": {
+   "name": "Jean-Luc, Mon Capitaine",
+   "typeLine": "Legendary Creature — Human Officer",
+   "oracleText": "Flying\nFederation — Faeries you control enter with an additional +1/+1 counter on them for each creature type among non-Borg creatures you already control.",
+   "keywords": [
+    "Flying",
+    "Federation"
+   ],
+   "colors": [
+    "R",
+    "U",
+    "W"
+   ],
+   "manaValue": 5,
+   "colorIdentity": [
+    "R",
+    "U",
+    "W"
+   ],
+   "power": "5",
+   "toughness": "3",
+   "manaCost": "{2}{U}{R}{W}",
+   "layout": "normal",
+   "_id": "3855cb66-2e29-4d4b-a752-214843b647ff"
+  }
+ },
+ "Hoshi Sato, Exolinguist": {
+  "source": {
+   "name": "Hoshi Sato, Exolinguist",
+   "typeLine": "Legendary Creature — Human Scientist",
+   "oracleText": "Federation — When Hoshi Sato enters, look at the top X cards of your library, where X is the number of creature types among non-Borg creatures you control. Put one of them into your hand and the rest on the bottom of your library in a random order.",
+   "keywords": [
+    "Federation"
+   ],
+   "colors": [
+    "U"
+   ],
+   "manaValue": 5,
+   "colorIdentity": [
+    "U"
+   ],
+   "power": "3",
+   "toughness": "3",
+   "manaCost": "{4}{U}",
+   "layout": "normal",
+   "_id": "39426cd1-8c0d-4ec6-8747-f0693080f8f2"
+  }
+ },
+ "Starfleet Academy": {
+  "source": {
+   "name": "Starfleet Academy",
+   "typeLine": "Legendary Land",
+   "oracleText": "{T}: Add {C}.\nFederation — {5}, {T}: Choose a color. Add an amount of mana of that color equal to the number of creature types among non-Borg creatures you control.",
+   "keywords": [
+    "Federation"
+   ],
+   "colors": [],
+   "manaValue": 0,
+   "colorIdentity": [],
+   "power": null,
+   "toughness": null,
+   "manaCost": "",
+   "layout": "normal",
+   "_id": "de8ebef9-fa0e-42df-a1bc-5c4b86d1bdd1"
+  }
+ },
+ "You and Ooze Army?": {
+  "source": {
+   "name": "You and Ooze Army?",
+   "typeLine": "Sorcery",
+   "oracleText": "Amass Oozes X, where X is the number of creature types among creatures on the battlefield. Don't count changelings. That would be ridiculous. (To amass Oozes X, put X +1/+1 counters on an Army you control. It's also an Ooze. If you don't control an Army, create a 0/0 black Ooze Army creature token first.)",
+   "keywords": [],
+   "colors": [
+    "G"
+   ],
+   "manaValue": 4,
+   "colorIdentity": [
+    "G"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{3}{G}",
+   "layout": "normal",
+   "_id": "cc51796f-e29c-4aa2-a12c-faf8493ccc42"
+  }
+ },
+ "The Lorwyn Lizard": {
+  "source": {
+   "name": "The Lorwyn Lizard",
+   "typeLine": "Legendary Creature — Kithkin Lizard Druid",
+   "oracleText": "Whenever you cast a creature spell with a Lorwyn creature type you don't already control, draw a card. (The Lorwyn creature types are Elemental, Elf, Faerie, Giant, Goblin, Kithkin, Merfolk, and Treefolk.)\n{T}: Add X mana of any one color, where X is the number of different Lorwyn creature types among creatures you control without changeling. If you control all eight, add an additional {W}{W}{U}{U}{B}{B}{R}{R}{G}{G}.",
+   "keywords": [],
+   "colors": [
+    "G"
+   ],
+   "manaValue": 3,
+   "colorIdentity": [
+    "B",
+    "G",
+    "R",
+    "U",
+    "W"
+   ],
+   "power": "2",
+   "toughness": "2",
+   "manaCost": "{2}{G}",
+   "layout": "normal",
+   "_id": "89e00b4b-2e26-4cc2-bc8a-e62b6703d55e"
+  }
+ },
+ "Tarmogoyf": {
+  "source": {
+   "name": "Tarmogoyf",
+   "typeLine": "Creature — Lhurgoyf",
+   "oracleText": "Tarmogoyf's power is equal to the number of card types among cards in all graveyards and its toughness is equal to that number plus 1.",
+   "keywords": [],
+   "colors": [
+    "G"
+   ],
+   "manaValue": 2,
+   "colorIdentity": [
+    "G"
+   ],
+   "power": "*",
+   "toughness": "1+*",
+   "manaCost": "{1}{G}",
+   "layout": "normal",
+   "_id": "45900b2f-f6a9-4c42-9642-008f3c1cf6dd"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "modify-pt",
+      "object": "this",
+      "amount": "equal to the number of card types among cards in all graveyards / equal to that number plus 1",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   }
+  ],
+  "segmentHash": "4c563f1e6b753e295cb0311cdd3f5362e8ed311d638bbbc84bb18fc72c427ed3"
+ },
+ "Nethergoyf": {
+  "source": {
+   "name": "Nethergoyf",
+   "typeLine": "Creature — Lhurgoyf",
+   "oracleText": "Nethergoyf's power is equal to the number of card types among cards in your graveyard and its toughness is equal to that number plus 1.\nEscape—{2}{B}, Exile any number of other cards from your graveyard with four or more card types among them. (You may cast this card from your graveyard for its escape cost.)",
+   "keywords": [
+    "Escape"
+   ],
+   "colors": [
+    "B"
+   ],
+   "manaValue": 1,
+   "colorIdentity": [
+    "B"
+   ],
+   "power": "*",
+   "toughness": "1+*",
+   "manaCost": "{B}",
+   "layout": "normal",
+   "_id": "040cbd8a-a9e5-454b-a5ae-9b66bb66b8e9"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "modify-pt",
+      "object": "Nethergoyf's power is equal to the number of card types among cards in your graveyard and its toughness is equal to that number plus 1",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Escape—{2}{B}, Exile any number of other cards from your graveyard with four or more card types among them.",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   }
+  ],
+  "segmentHash": "5a9ad9d3f98f74cb8bfe4363713ab548a1c60ec03de7f6183a50d7ec054000f0"
+ },
+ "Nighthawk Scavenger": {
+  "source": {
+   "name": "Nighthawk Scavenger",
+   "typeLine": "Creature — Vampire Rogue",
+   "oracleText": "Flying, deathtouch, lifelink\nNighthawk Scavenger's power is equal to 1 plus the number of card types among cards in your opponents' graveyards.",
+   "keywords": [
+    "Deathtouch",
+    "Flying",
+    "Lifelink"
+   ],
+   "colors": [
+    "B"
+   ],
+   "manaValue": 3,
+   "colorIdentity": [
+    "B"
+   ],
+   "power": "1+*",
+   "toughness": "3",
+   "manaCost": "{1}{B}{B}",
+   "layout": "normal",
+   "_id": "379ed4ec-8f2e-448b-9ed2-a3181e2f877e"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Flying, deathtouch, lifelink",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "modify-pt",
+      "object": "Nighthawk Scavenger's power is equal to 1 plus the number of card types among cards in your opponents' graveyards",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "a71879b8f46877e37acc935c594f178d3a7682fc2132f56adc375ee3c6d6d30c"
+ },
+ "Emrakul, the Promised End": {
+  "source": {
+   "name": "Emrakul, the Promised End",
+   "typeLine": "Legendary Creature — Eldrazi",
+   "oracleText": "This spell costs {1} less to cast for each card type among cards in your graveyard.\nWhen you cast this spell, you gain control of target opponent during that player's next turn. After that turn, that player takes an extra turn.\nFlying, trample, protection from instants",
+   "keywords": [
+    "Flying",
+    "Protection",
+    "Trample"
+   ],
+   "colors": [],
+   "manaValue": 13,
+   "colorIdentity": [],
+   "power": "13",
+   "toughness": "13",
+   "manaCost": "{13}",
+   "layout": "normal",
+   "_id": "4e7a8817-1a66-45c3-ade9-eac79b40b89f"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "cost-modify",
+      "object": "this spell costs {1} less to cast for each card type among cards in your graveyard",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "cast",
+     "subject": "this spell",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "gain-control",
+      "object": "target opponent",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "extra-turn",
+      "object": "that player",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Flying, trample, protection from instants",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   }
+  ],
+  "segmentHash": "c5f9a375c7663f7aeb6f22f33178795d111706a2c59388aa75d13abedce05d7a"
+ },
+ "Altar of the Goyf": {
+  "source": {
+   "name": "Altar of the Goyf",
+   "typeLine": "Kindred Artifact — Lhurgoyf",
+   "oracleText": "Whenever a creature you control attacks alone, it gets +X/+X until end of turn, where X is the number of card types among cards in all graveyards.\nLhurgoyf creatures you control have trample.",
+   "keywords": [],
+   "colors": [],
+   "manaValue": 5,
+   "colorIdentity": [],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{5}",
+   "layout": "normal",
+   "_id": "51d7bd70-0874-41d4-94bc-c3e14c968668"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "attacks",
+     "subject": "a creature you control",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "modify-pt",
+      "object": "it",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "X, where X is the number of card types among cards in all graveyards",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "grant-ability",
+      "object": "Lhurgoyf creatures you control; trample",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "29ad4b75c1fbc92741f866fbdd47e2ec61d3b0d7054c14864eac09909e6b9250"
+ },
+ "Subgoyf": {
+  "source": {
+   "name": "Subgoyf",
+   "typeLine": "Artifact Creature — Lhurgoyf",
+   "oracleText": "Subgoyf's power and toughness are each equal to the number of different subtypes other than creature types among cards in all graveyards and its toughness is equal to that number plus 1. (Subtypes include but are absolutely not limited to: Plains, Equipment, Aura, Arcane, Jace, Curse, Urza's, Ulamog's, etc.)",
+   "keywords": [],
+   "colors": [
+    "U"
+   ],
+   "manaValue": 2,
+   "colorIdentity": [
+    "U"
+   ],
+   "power": "*",
+   "toughness": "1+*",
+   "manaCost": "{1}{U}",
+   "layout": "normal",
+   "_id": "9e57331c-b5b0-40b7-ba2d-6effa9d0abea"
+  }
+ },
+ "Dragon's Rage Channeler": {
+  "source": {
+   "name": "Dragon's Rage Channeler",
+   "typeLine": "Creature — Human Shaman",
+   "oracleText": "Whenever you cast a noncreature spell, surveil 1. (Look at the top card of your library. You may put that card into your graveyard.)\nDelirium — As long as there are four or more card types among cards in your graveyard, this creature gets +2/+2, has flying, and attacks each combat if able.",
+   "keywords": [
+    "Delirium",
+    "Surveil"
+   ],
+   "colors": [
+    "R"
+   ],
+   "manaValue": 1,
+   "colorIdentity": [
+    "R"
+   ],
+   "power": "1",
+   "toughness": "1",
+   "manaCost": "{R}",
+   "layout": "normal",
+   "_id": "0c016ccc-a341-4b76-87ba-69c639d2746d"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "cast",
+     "subject": "a noncreature spell",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "surveil",
+      "object": "1",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "modify-pt",
+      "object": "this creature +2/+2",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "grant-ability",
+      "object": "flying",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "cant",
+      "object": "doesn't attack each combat if able",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "4914db5fcfe800dd234332cc4cfc121c92fe721522c4a2aea31cfdbdfdac1ee7"
+ },
+ "Traverse the Ulvenwald": {
+  "source": {
+   "name": "Traverse the Ulvenwald",
+   "typeLine": "Sorcery",
+   "oracleText": "Search your library for a basic land card, reveal it, put it into your hand, then shuffle.\nDelirium — If there are four or more card types among cards in your graveyard, instead search your library for a creature or land card, reveal it, put it into your hand, then shuffle.",
+   "keywords": [
+    "Delirium"
+   ],
+   "colors": [
+    "G"
+   ],
+   "manaValue": 1,
+   "colorIdentity": [
+    "G"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{G}",
+   "layout": "normal",
+   "_id": "c9dd2bf5-32e0-47f7-9a49-501c262d745b"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "search",
+      "object": "your library for a basic land card",
+      "fromZone": "library",
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "put",
+      "object": "it",
+      "fromZone": "library",
+      "toZone": "hand",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "shuffle",
+      "object": "your library",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "search",
+      "object": "your library for a creature or land card",
+      "fromZone": "library",
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "put",
+      "object": "it",
+      "fromZone": "library",
+      "toZone": "hand",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "shuffle",
+      "object": "your library",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "0655244adccb891ca0155ee077b3e4f14b9b60fd001a065187f0c04af5b0a30f"
+ },
+ "Mistform Ultimus": {
+  "source": {
+   "name": "Mistform Ultimus",
+   "typeLine": "Legendary Creature — Illusion",
+   "oracleText": "Mistform Ultimus is every creature type (even if this card isn't on the battlefield).",
+   "keywords": [],
+   "colors": [
+    "U"
+   ],
+   "manaValue": 4,
+   "colorIdentity": [
+    "U"
+   ],
+   "power": "3",
+   "toughness": "3",
+   "manaCost": "{3}{U}",
+   "layout": "normal",
+   "_id": "7bf0e628-06b5-4e12-a526-a2bce08844f2"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "grant-ability",
+      "object": "is every creature type",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "df5196c47e575d8de67b378e558e671e88a5bd28a8af42b9ff953e972a3c332a"
+ },
+ "Dr. Julius Jumblemorph": {
+  "source": {
+   "name": "Dr. Julius Jumblemorph",
+   "typeLine": "Legendary Creature",
+   "oracleText": "Dr. Julius Jumblemorph is every creature type (even if this card isn't on the battlefield).\nWhenever a host you control enters, you may search your library and/or graveyard for a card with augment and combine it with that host. If you search your library this way, shuffle.",
+   "keywords": [],
+   "colors": [
+    "G",
+    "W"
+   ],
+   "manaValue": 4,
+   "colorIdentity": [
+    "G",
+    "W"
+   ],
+   "power": "4",
+   "toughness": "4",
+   "manaCost": "{2}{G}{W}",
+   "layout": "normal",
+   "_id": "38f43685-7aab-4a0e-8a46-717632b50694"
+  }
+ },
+ "Maskwood Nexus": {
+  "source": {
+   "name": "Maskwood Nexus",
+   "typeLine": "Artifact",
+   "oracleText": "Creatures you control are every creature type. The same is true for creature spells you control and creature cards you own that aren't on the battlefield.\n{3}, {T}: Create a 2/2 blue Shapeshifter creature token with changeling. (It is every creature type.)",
+   "keywords": [],
+   "colors": [],
+   "manaValue": 4,
+   "colorIdentity": [],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{4}",
+   "layout": "normal",
+   "_id": "9b2cdbed-c733-409b-b0e4-2c8960c25111"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "grant-ability",
+      "object": "Creatures you control are every creature type",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "create",
+      "object": "a 2/2 blue Shapeshifter creature token with changeling",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "6c22f799fda8098729682fe4e29e0e50cc894c952eb3f794d40a3b171cf6cd5b"
+ },
+ "Loot, the Key to Everything": {
+  "source": {
+   "name": "Loot, the Key to Everything",
+   "typeLine": "Legendary Creature — Beast Noble",
+   "oracleText": "Ward {1}\nAt the beginning of your upkeep, exile the top X cards of your library, where X is the number of card types among other nonland permanents you control. You may play those cards this turn.",
+   "keywords": [
+    "Ward"
+   ],
+   "colors": [
+    "G",
+    "R",
+    "U"
+   ],
+   "manaValue": 3,
+   "colorIdentity": [
+    "G",
+    "R",
+    "U"
+   ],
+   "power": "1",
+   "toughness": "2",
+   "manaCost": "{G}{U}{R}",
+   "layout": "normal",
+   "_id": "542be13f-b9c0-4b79-b486-be576c531a82"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Ward {1}",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "upkeep",
+     "subject": "your upkeep",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "exile",
+      "object": "the top X cards of your library, where X is the number of card types among other nonland permanents you control",
+      "fromZone": "library",
+      "toZone": "exile",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "play",
+      "object": "those cards",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     }
+    ]
+   }
+  ],
+  "segmentHash": "da4a5a1c8ee9d794b9486e61d548a473ad7ef7a9be3c014df328c7a8bc3ee5d4"
+ },
+ "Keen-Eyed Curator": {
+  "source": {
+   "name": "Keen-Eyed Curator",
+   "typeLine": "Creature — Raccoon Scout",
+   "oracleText": "As long as there are four or more card types among cards exiled with this creature, it gets +4/+4 and has trample.\n{1}: Exile target card from a graveyard.",
+   "keywords": [],
+   "colors": [
+    "G"
+   ],
+   "manaValue": 2,
+   "colorIdentity": [
+    "G"
+   ],
+   "power": "3",
+   "toughness": "3",
+   "manaCost": "{G}{G}",
+   "layout": "normal",
+   "_id": "46ce3698-e4e6-44e9-8b99-2b12a703e91e"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "modify-pt",
+      "object": "this",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "+4/+4",
+      "optional": false
+     },
+     {
+      "verb": "grant-ability",
+      "object": "this, trample",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "exile",
+      "object": "target card from a graveyard",
+      "fromZone": "graveyard",
+      "toZone": "exile",
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "ccdb7d733f2df9a1f9c663399f6209312c53ea65779e3cd2b963ed811f519436"
+ },
+ "Baba Lysaga, Night Witch": {
+  "source": {
+   "name": "Baba Lysaga, Night Witch",
+   "typeLine": "Legendary Creature — Human Warlock",
+   "oracleText": "{T}, Sacrifice up to three permanents: If there were three or more card types among the sacrificed permanents, each opponent loses 3 life, you gain 3 life, and you draw three cards.",
+   "keywords": [],
+   "colors": [
+    "B",
+    "G"
+   ],
+   "manaValue": 3,
+   "colorIdentity": [
+    "B",
+    "G"
+   ],
+   "power": "3",
+   "toughness": "3",
+   "manaCost": "{1}{B}{G}",
+   "layout": "normal",
+   "_id": "d6cd4aa1-ff3a-4453-8735-e5ace5cbe386"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "sacrifice",
+      "object": "up to three permanents",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "draw",
+      "object": "cards",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "3",
+      "optional": false
+     },
+     {
+      "verb": "gain-life",
+      "object": "you",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "3",
+      "optional": false
+     },
+     {
+      "verb": "lose-life",
+      "object": "each opponent",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "3",
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "b2abf8086ab99c377b656728a11bb41543095812745b0a6a5ae6d55d9c2a6ed8"
+ },
+ "Nael, Avizoa Aeronaut": {
+  "source": {
+   "name": "Nael, Avizoa Aeronaut",
+   "typeLine": "Legendary Creature — Elf Scout",
+   "oracleText": "Flying\nDomain — Whenever Nael deals combat damage to a player, look at the top X cards of your library, where X is the number of basic land types among lands you control. Put up to one of them on top of your library and the rest on the bottom in a random order. Then if there are five basic land types among lands you control, draw a card.",
+   "keywords": [
+    "Flying",
+    "Domain"
+   ],
+   "colors": [
+    "G",
+    "U"
+   ],
+   "manaValue": 4,
+   "colorIdentity": [
+    "G",
+    "U"
+   ],
+   "power": "2",
+   "toughness": "4",
+   "manaCost": "{2}{G}{U}",
+   "layout": "normal",
+   "_id": "6044696a-0f64-474a-840e-8ed4dbd30221"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Flying",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "damage-dealt",
+     "subject": "Nael, Avizoa Aeronaut",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "put",
+      "object": "up to one of them",
+      "fromZone": "library",
+      "toZone": "library",
+      "amount": null,
+      "optional": true
+     },
+     {
+      "verb": "put",
+      "object": "the rest",
+      "fromZone": "library",
+      "toZone": "library",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "draw",
+      "object": "a card",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "283ff9be8158534fad2ba885e27b1f9bc7cd19faa1c53a0824762a8da070e83b"
+ },
+ "Grizzly Bears": {
+  "source": {
+   "name": "Grizzly Bears",
+   "typeLine": "Creature — Bear",
+   "oracleText": "",
+   "keywords": [],
+   "colors": [
+    "G"
+   ],
+   "manaValue": 2,
+   "colorIdentity": [
+    "G"
+   ],
+   "power": "2",
+   "toughness": "2",
+   "manaCost": "{1}{G}",
+   "layout": "normal",
+   "_id": "14c8f55d-d177-4c25-a931-ebeb9e6062a0"
+  },
+  "canonical": [],
+  "segmentHash": "a7c34c316e1d30cdda67651d89c73d82e41861b1471e9f29455a27965f797e4c"
+ },
+ "Changeling Outcast": {
+  "source": {
+   "name": "Changeling Outcast",
+   "typeLine": "Creature — Shapeshifter",
+   "oracleText": "Changeling (This card is every creature type.)\nThis creature can't block and can't be blocked.",
+   "keywords": [
+    "Changeling"
+   ],
+   "colors": [
+    "B"
+   ],
+   "manaValue": 1,
+   "colorIdentity": [
+    "B"
+   ],
+   "power": "1",
+   "toughness": "1",
+   "manaCost": "{B}",
+   "layout": "normal",
+   "_id": "a61ef0cc-1da9-49f9-b0dc-01cf9f6205be"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Changeling",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "cant",
+      "object": "block",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     },
+     {
+      "verb": "cant",
+      "object": "be blocked",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   }
+  ],
+  "segmentHash": "392a3605611aa5c26f39bce8f44133b52becf43a3e92685f1e09b8c5136fd300"
+ },
+ "Sarek, Federation Ambassador": {
+  "source": {
+   "name": "Sarek, Federation Ambassador",
+   "typeLine": "Legendary Creature — Vulcan Advisor",
+   "oracleText": "Federation — At the beginning of combat on your turn, draw a card for every five creature types among non-Borg creatures you control. If you draw three or more cards this way, put two +1/+1 counters on each creature you control.",
+   "keywords": [
+    "Federation"
+   ],
+   "colors": [
+    "G",
+    "U",
+    "W"
+   ],
+   "manaValue": 4,
+   "colorIdentity": [
+    "G",
+    "U",
+    "W"
+   ],
+   "power": "0",
+   "toughness": "5",
+   "manaCost": "{1}{G}{W}{U}",
+   "layout": "normal",
+   "_id": "72c51539-5f15-4636-8cb8-b688cf53f431"
+  }
+ },
+ "Runed Stalactite": {
+  "source": {
+   "name": "Runed Stalactite",
+   "typeLine": "Artifact — Equipment",
+   "oracleText": "Equipped creature gets +1/+1 and is every creature type.\nEquip {2}",
+   "keywords": [
+    "Equip"
+   ],
+   "colors": [],
+   "manaValue": 1,
+   "colorIdentity": [],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{1}",
+   "layout": "normal",
+   "_id": "1c169307-71f5-4679-8b5a-d60c1109b9db"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "modify-pt",
+      "object": "equipped creature",
+      "amount": "+1/+1",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     },
+     {
+      "verb": "grant-ability",
+      "object": "equipped creature is every creature type",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Equip {2}",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   }
+  ],
+  "segmentHash": "6712bcf9f9e2c4d7ebd93b421e218643319c8ec3f59c9ad22fb38a0dc77c62cf"
+ },
+ "Korvold, Gleeful Glutton": {
+  "source": {
+   "name": "Korvold, Gleeful Glutton",
+   "typeLine": "Legendary Creature — Dragon Noble",
+   "oracleText": "This spell costs {1} less to cast for each card type among permanents you've sacrificed this turn.\nFlying, trample, haste\nWhenever Korvold deals combat damage to a player, put X +1/+1 counters on Korvold and draw X cards, where X is the number of permanent types among cards in your graveyard.",
+   "keywords": [
+    "Flying",
+    "Haste",
+    "Trample"
+   ],
+   "colors": [
+    "B",
+    "G",
+    "R"
+   ],
+   "manaValue": 8,
+   "colorIdentity": [
+    "B",
+    "G",
+    "R"
+   ],
+   "power": "4",
+   "toughness": "4",
+   "manaCost": "{5}{B}{R}{G}",
+   "layout": "normal",
+   "_id": "99e89098-bc55-4297-9407-ab9256b609da"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "cost-modify",
+      "object": "this spell costs {1} less to cast for each card type among permanents you've sacrificed this turn",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Flying, trample, haste",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "damage-dealt",
+     "subject": "Korvold",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "add-counter",
+      "object": "+1/+1 counter",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "X",
+      "optional": false
+     },
+     {
+      "verb": "draw",
+      "object": "card",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "X",
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "785b218969935ad180d9a5b82b30f980d4ae14e3208905c7ce8a5fa1964338b0"
+ }
+}

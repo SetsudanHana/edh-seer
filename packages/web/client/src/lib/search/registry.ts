@@ -23,6 +23,16 @@ export interface NamedList {
   values: string[];
 }
 
+/** A SET FIELD THE BUILD COMPUTES FROM OTHER WALKED FIELDS (#1785): one value per question a player asks, each the union of the rows holding any of its source `path=value` pairs.
+ *  `cares` has `card-types` = distinctCount.counts "type" OR thresholdDistinct.counts "type": a payoff that counts distinct card types, on the board, in a graveyard or as delirium.
+ *  A source path no card holds means the shards predate the grammar that writes it, so the field is NOT built (the catalogue lacks it and a question about it is cannot-answer), never built empty. */
+export interface DerivedSet {
+  /** The payload group the column ships in; its file needs a budget like any other. */
+  group: string;
+  /** value -> source "path=value" pairs. */
+  values: Record<string, string[]>;
+}
+
 export interface SearchRegistry {
   /** Max distinct values for a string/boolean path to stay a set column. Default 400. */
   threshold?: number;
@@ -30,6 +40,8 @@ export interface SearchRegistry {
   /** group name -> path prefixes it owns. */
   groups: Record<string, string[]>;
   namedLists: Record<string, NamedList>;
+  /** Computed set fields, keyed by their own path id (give them a `fields` entry for label, description and valueLabels). */
+  derivedSets?: Record<string, DerivedSet>;
   /** Gzip byte budgets per group, plus `catalogue`. The build fails on a breach. */
   budgets?: Record<string, number>;
   /** Path ids (exact or prefix) that never become fields. */

@@ -19,7 +19,7 @@ import { buildCatalogue, decodeGroup, type Catalogue, type GroupPayload } from "
 import { evaluate, type Node } from "../client/src/lib/search/evaluate.ts";
 import type { SearchRegistry } from "../client/src/lib/search/registry.ts";
 import { buildIdentityView, buildNumberViews, buildTypeViews, completeFaces, sparseBestFace, sparseFront, type IndexRow, type NumericRow } from "../client/src/lib/search/type-views.ts";
-import { walkRecords, type Column, type SetColumn, type WalkRecord } from "../client/src/lib/search/walk.ts";
+import { derivedSetColumn, walkRecords, type Column, type SetColumn, type WalkRecord } from "../client/src/lib/search/walk.ts";
 
 const arg = (name: string) => { const i = process.argv.indexOf(name); return i >= 0 ? process.argv[i + 1] : undefined; };
 const repo = resolve(import.meta.dirname, "..", "..", "..");
@@ -104,6 +104,13 @@ function build(): void {
   for (const [k, v] of [...read]) if (v.length === 0) read.delete(k);
   const readColumn: SetColumn = { kind: "set", path: "read", group: "read", values: read };
   walk.columns.set("read", readColumn);
+  // THE COMPUTED SET FIELDS (`derivedSets`, #1785: `cares`). One whose source paths the shards do not carry is left out and SAID, never shipped empty.
+  const notBuilt: string[] = [];
+  for (const [path, def] of Object.entries(registry.derivedSets ?? {})) {
+    const { column, missing } = derivedSetColumn(path, def, walk.columns);
+    if (column) walk.columns.set(path, column);
+    else notBuilt.push(`${path} (no card holds ${missing.join(", ")})`);
+  }
 
   // tFront is NOT served by name-index (no face data there): only the rows whose front differs from `t` ship, as `faces`.
   const all = coreColumns(frontTypes, creature);
@@ -137,12 +144,14 @@ function build(): void {
   console.log(`no record: ${noRecord.length ? noRecord.join(", ") : "none"}`);
   console.log(`multi-valued numeric paths (cmp reads their [min,max] range, see CEILING in evaluate.ts): ${walk.multiValued.length ? walk.multiValued.join(", ") : "none"}`);
   console.log(`mixed (numbers kept as set members): ${walk.mixed.length ? walk.mixed.join(", ") : "none"}`);
+  console.log(`computed fields not built: ${notBuilt.length ? notBuilt.join("; ") : "none"}`);
   console.log(`dropped (above threshold): ${walk.dropped.length ? walk.dropped.map((d) => `${d.path} (${d.distinct})`).join(", ") : "none"}`);
 
   // A BUDGET IS A CONTRACT BOTH WAYS: one naming no group is a typo, a group with a file and no budget is unbounded.
   const budgets = registry.budgets ?? {};
   const problems = [
-    ...Object.keys(budgets).filter((n) => !(n in sizes)).map((n) => `budget ${n} names no group (groups with a file: ${Object.keys(sizes).join(", ")})`),
+    // A budget for a group the registry DECLARES is no typo when this build has nothing in it yet (`payoffs` on shards derived before #1785): the group simply has no file.
+    ...Object.keys(budgets).filter((n) => !(n in sizes) && !(n in registry.groups)).map((n) => `budget ${n} names no group (groups with a file: ${Object.keys(sizes).join(", ")})`),
     ...Object.keys(sizes).filter((n) => !(n in budgets)).map((n) => `group ${n} has a file and no budget`),
   ];
   if (problems.length) {
@@ -158,7 +167,8 @@ function build(): void {
   // `--check`: a registry per-path entry that names a path the build did not produce is a stale label.
   if (process.argv.includes("--check")) {
     const produced = new Set(Object.values(catalogue.groups).flatMap((g) => g.fields.map((f) => f.id)));
-    const stale = Object.keys(registry.fields).filter((p) => !produced.has(p));
+    // A computed field the build did not make (its sources are absent) is reported above, not stale.
+    const stale = Object.keys(registry.fields).filter((p) => !produced.has(p) && !(p in (registry.derivedSets ?? {})));
     if (stale.length) {
       console.error(`stale registry entries (no such field in the build): ${stale.join(", ")}`);
       process.exit(1);
@@ -223,12 +233,17 @@ function verify(): void {
   const ranked = [...res.rows].sort((a, b) => (counts.get(b) ?? 0) - (counts.get(a) ?? 0) || a - b);
   const every = new Set((columns.get("everyCreatureType") as SetColumn).values.get("true") ?? []);
   const changelingKw = index.keywords.indexOf("changeling");
-  const kwRows = index.cards.filter((c) => changelingKw >= 0 && (c.k ?? []).includes(changelingKw)).length;
+  const kwSet = new Set(index.cards.flatMap((c, i) => (changelingKw >= 0 && (c.k ?? []).includes(changelingKw) ? [i] : [])));
+  const kwRows = kwSet.size;
   console.log(`query: t has creature AND NOT st has borg AND countIn(stBest, creature) >= 3 AND id within [W,U,G], sorted by countIn desc`);
   console.log(`results: ${res.rows.length}`);
   for (const r of ranked.slice(0, 10)) console.log(`  ${index.cards[r]!.name}  (${counts.get(r)} creature types)`);
   console.log(`changelings in result: ${res.rows.filter((r) => every.has(r)).length}`);
   console.log(`everyCreatureType: ${every.size} (keyword changeling: ${kwRows})`);
   if (res.rows.some((r) => every.has(r))) { console.error("a changeling is in the result"); process.exit(1); }
-  if (every.size !== kwRows) { console.error("everyCreatureType differs from the changeling keyword count"); process.exit(1); }
+  // A card that says it "is every creature type" without the keyword (Mistform Ultimus, #1785) has every creature subtype too, so the flag may name MORE than the keyword does; it may never name FEWER.
+  const byText = [...every].filter((r) => !kwSet.has(r));
+  console.log(`every creature type without the keyword (the card says so): ${byText.length}${byText.length ? ` (${byText.map((r) => index.cards[r]!.name).join(", ")})` : ""}`);
+  const missing = [...kwSet].filter((r) => !every.has(r));
+  if (missing.length > 0) { console.error(`a changeling is not everyCreatureType: ${missing.map((r) => index.cards[r]!.name).join(", ")}`); process.exit(1); }
 }

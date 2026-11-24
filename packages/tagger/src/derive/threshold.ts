@@ -12,7 +12,7 @@
  *  THE PARSE IS EASY AND THE GATES ARE THE WORK. 208 corpus sentences carry a numeric comparison
  *  inside a condition; only 81 are thresholds. See
  *  `docs/superpowers/specs/2026-08-14-resource-ledger-design.md` section 6. */
-import type { SubjectFilter } from "../schema.js";
+import type { DistinctCount, SubjectFilter } from "../schema.js";
 import { parseSubject } from "./subject.js";
 import { mentionsSelf } from "./self-reference.js";
 
@@ -239,6 +239,33 @@ export function thresholdSubjectFor(text: string): SubjectFilter | undefined {
   const subject = parseSubject(noun);
   const hasType = subject.type !== undefined || subject.subtype !== undefined;
   return hasType ? { ...subject, control } : undefined;
+}
+
+/** A DIVERSITY THRESHOLD'S UNIT (#1785): "four or more card types among cards in your graveyard" (delirium, 65 corpus), "creature types among creatures you control". `thresholdSubjectFor` refuses it on purpose, because a fill adds one card, not one type;
+ *  this says WHAT is counted and over WHICH cards instead, for a reader that asks "does this card care about card types". The counted cards must be in a graveyard (zone and owner, as `thresholdSubjectFor` reads them) or on a battlefield ("you control" /
+ *  "on the battlefield"); "among cards exiled with this creature" (Keen-Eyed Curator), "among the sacrificed permanents" (Baba Lysaga) and a basic land type count state none, and stay visible as a gap.
+ *  Anchored at the noun, string tests only: no pattern here has two quantified groups over one phrase. */
+const DIVERSITY_UNIT = /^(card|permanent|creature) types? among /i;
+export function thresholdDistinctFor(text: string): DistinctCount | undefined {
+  const m = selectThreshold(text);
+  if (!m) return undefined;
+  const nounMatch = /^\s+([^,.]+)/.exec(text.slice(m.end));
+  const noun = nounMatch?.[1]?.trim() ?? "";
+  const unit = DIVERSITY_UNIT.exec(noun);
+  if (!unit) return undefined;
+  const counts = unit[1]!.toLowerCase() === "creature" ? "creature-type" : "type";
+  const cls = noun.slice(unit[0].length);
+  if (GRAVEYARD_COUNT_NOUN.test(noun)) {
+    const before = text.slice(0, m.start);
+    const control: SubjectFilter["control"] = /\byour graveyard\b/i.test(noun) ? "you"
+      : /\b(?:their|an opponent's) graveyard/i.test(noun) && /\bopponent/i.test(`${before} ${noun}`) ? "opp"
+      : "any";
+    return { counts, class: { control, token: null, zone: "graveyard" } };
+  }
+  const yours = cls.includes(" you control");
+  if (!yours && !ON_THE_BATTLEFIELD.test(cls)) return undefined;
+  const subject = parseSubject(cls.split(/\s{1,4}(?:you control|on the battlefield)\b/i)[0]!);
+  return { counts, class: { ...subject, zone: "battlefield", control: yours ? "you" : "any" } };
 }
 
 /** Per-exclusion tallies for `ledger-coverage.ts`'s §8 breakdown. */
