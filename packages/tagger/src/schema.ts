@@ -1232,6 +1232,9 @@ export const SCALING_ALIASES: Readonly<Record<string, ScalingBasis>> = {
   infinite: "unbounded",
 };
 
+/** WHAT a count of distinct characteristics counts, and the class it ranges over (#1680, #1785). `type` is card types (and permanent types), `creature-type` creature types, `colour` and `name` as printed. */
+export interface DistinctCount { class: SubjectFilter; counts: "type" | "creature-type" | "colour" | "name" }
+
 export interface Effect {
   /** Normalized to the closed EFFECT_KINDS set at validation time. */
   kind: string;
@@ -1243,11 +1246,13 @@ export interface Effect {
    *  edge drawn off the basis would claim that milling anything feeds all three. Carries the zone
    *  and the owner too, so `graveyardFillMatches` can judge it like any other graveyard demand. */
   scalingSubject?: SubjectFilter;
-  /** A COUNT OF DISTINCT CHARACTERISTICS ("the number of colors among artifacts you control", "card types among other nonland permanents you control") is raised when a thing joins the class WITH a characteristic the class lacks, not by the
-   *  class growing, so no class is a `scalingSubject` (owner ruling 2026-11-22, #1680: that made every member a `scales` partner). The class is kept HERE, which only the type-grant reader (`usesGrantedType`, `usesCreatureType`) reads: a grant that makes
-   *  more things that class (Encroaching Mycosynth's artifacts for Karn, Maskwood Nexus's Allies for Earthen Ally) or adds a card type (The Flesh Is Weak's artifacts for Loot) really does raise the count. `counts` says which characteristic is
-   *  counted. Set for colour, name and card-type counts over a battlefield class; not for creature, planeswalker or basic land types, whose count no grant of members raises. */
-  distinctCount?: { class: SubjectFilter; counts: "type" | "colour" | "name" };
+  /** A COUNT OF DISTINCT CHARACTERISTICS ("the number of colors among artifacts you control", "card types among other nonland permanents you control", "creature types among non-Borg creatures you control", "card types among cards in all graveyards")
+   *  is raised when a thing joins the class WITH a characteristic the class lacks, not by the class growing, so a battlefield count names no class as a `scalingSubject` (owner ruling 2026-11-22, #1680: that made every member a `scales` partner). The UNIT it counts, and the
+   *  class it ranges over, are kept HERE: `counts` says which characteristic is counted (`creature-type` and `type` are what a payoff that cares about creature types or card types reads, #1785). The type-grant readers (`usesGrantedType`, `usesCreatureType`) read
+   *  the class: a grant that makes more things that class (Encroaching Mycosynth's artifacts for Karn, Maskwood Nexus's Allies for Earthen Ally) or adds a card type (The Flesh Is Weak's artifacts for Loot) really does raise the count.
+   *  Set BESIDE `scalingSubject` where one is set, never instead of it: a creature-type count over a class that excludes no type keeps the changeling partner (Valiant Changeling) and a graveyard count keeps its class (Tarmogoyf, a mill raises it; owner rulings).
+   *  Not set for planeswalker or basic land types, and a card-type count is read for "card types" and "permanent types" only. */
+  distinctCount?: DistinctCount;
   /** A recursion that takes the card ON THE WAY IN: a replacement exiles what would go to an
    *  opponent's graveyard and this card plays it from exile (Dauthi Voidwalker, Valgavoth). The card
    *  never reaches the graveyard, so the reason must not say "bring back". Edges are unchanged by
@@ -1616,6 +1621,10 @@ export interface Ability {
    *  under the board-count gate (`boardCountNarrows`): Sol Ring counts toward Gadrak's four
    *  artifacts; a whole-deck type, a basic land type and an opponent's board form nothing. */
   thresholdSubject?: SubjectFilter;
+  /** A DIVERSITY threshold: "four or more card types among cards in your graveyard" (delirium: Dragon's Rage Channeler, Traverse the Ulvenwald), "creature types among creatures you control". It counts DISTINCT types, not cards, so it is no `thresholdSubject`
+   *  (a fill adds one card, not one type; see `thresholdSubjectFor`) and no board count the matcher can judge a card's printed characteristics against. `counts` is the unit, `class` the cards it ranges over (zone and owner for a graveyard).
+   *  Present only alongside `threshold`, and only when the counted cards are in a graveyard or on a battlefield: "card types among cards exiled with this creature" (Keen-Eyed Curator) and "among the sacrificed permanents" (Baba Lysaga) state none (#1785). */
+  thresholdDistinct?: DistinctCount;
   /** An activated ability's activation cost, verbatim as `segment.ts` split it out of the body —
    *  "{X}{X}, {T}", "{T}, Sacrifice a creature". Unparsed on purpose: this records what the card
    *  says, and what a cost MEANS for a loop's economy is sub-project B's question.

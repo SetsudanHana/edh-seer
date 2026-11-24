@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import { thresholdFor, thresholdSubjectFor } from "./threshold.js";
+import { thresholdDistinctFor, thresholdFor, thresholdSubjectFor } from "./threshold.js";
 
 test("a counter threshold on a trigger is recorded", () => {
   // The Millennium Calendar: "When there are 1,000 or more time counters on The Millennium
@@ -239,4 +239,21 @@ test("an EVENT count is not a board count and refuses", () => {
   expect(thresholdSubjectFor("Gimli has indestructible as long as two or more creatures died under your control this turn.")).toBeUndefined();
   // And an attachment count (CEILING): an Aura in the deck is not one on this creature.
   expect(thresholdSubjectFor("As long as this creature is enchanted by three or more Auras, it has base power and toughness 10/10.")).toBeUndefined();
+});
+
+// #1785 -- A DIVERSITY THRESHOLD STATES ITS UNIT (delirium), and still states no board-count subject.
+test("a delirium threshold records card types over the graveyard, with its owner, and no thresholdSubject", () => {
+  const delirium = "Delirium — As long as there are four or more card types among cards in your graveyard, this creature gets +2/+2.";
+  expect(thresholdDistinctFor(delirium)).toEqual({ counts: "type", class: { control: "you", token: null, zone: "graveyard" } });
+  expect(thresholdSubjectFor(delirium)).toBeUndefined();
+  expect(thresholdDistinctFor("If an opponent has four or more card types among cards in their graveyard, draw a card.")).toMatchObject({ class: { control: "opp", zone: "graveyard" } });
+  expect(thresholdDistinctFor("If there are four or more card types among cards in all graveyards, draw a card.")).toMatchObject({ class: { control: "any", zone: "graveyard" } });
+});
+test("a creature-type or card-type threshold over a battlefield class states the class; a count of anything else states none", () => {
+  expect(thresholdDistinctFor("At the beginning of your upkeep, if there are five or more creature types among creatures you control, draw a card.")).toMatchObject({ counts: "creature-type", class: { type: "creature", control: "you", zone: "battlefield" } });
+  expect(thresholdDistinctFor("As long as there are four or more card types among cards exiled with this creature, it gets +4/+4.")).toBeUndefined();
+  expect(thresholdDistinctFor("If there were three or more card types among the sacrificed permanents, each opponent loses 3 life.")).toBeUndefined();
+  expect(thresholdDistinctFor("Then if there are five basic land types among lands you control, draw a card.")).toBeUndefined();
+  expect(thresholdDistinctFor("At the beginning of your upkeep, if you control four or more lands, draw a card.")).toBeUndefined();
+  expect(thresholdDistinctFor("Whenever you attack with one or more Rats, if there are seven or more cards in your graveyard, draw a card.")).toBeUndefined();
 });

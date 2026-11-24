@@ -1,4 +1,4 @@
-import { DEFAULT_THRESHOLD, groupOf, isDenied, type SearchRegistry } from "./registry.js";
+import { DEFAULT_THRESHOLD, groupOf, isDenied, type DerivedSet, type SearchRegistry } from "./registry.js";
 
 /** One entry of cards/*.json plus the card's row in name-index.json `cards`. `tags` may be null (underived). */
 export interface WalkRecord {
@@ -154,4 +154,23 @@ export function walkRecords(records: Iterable<WalkRecord>, registry: SearchRegis
     }
   }
   return { columns, dropped, mixed, multiValued };
+}
+
+/** A registry `derivedSets` entry as a column over the walked ones (#1785). `missing` names the source paths no card holds: the column is then NOT returned, because a union over a path the shards never carried is an empty answer standing in for "cannot
+ *  answer" (shards derived before the grammar that writes the path). A path that exists but holds none of a value's pairs contributes nothing, as it should; a value no row holds is left out of `values`, as in every set column. */
+export function derivedSetColumn(path: string, def: DerivedSet, columns: ReadonlyMap<string, Column>): { column?: SetColumn; missing: string[] } {
+  const sources = new Set(Object.values(def.values).flat().map((pair) => pair.slice(0, pair.lastIndexOf("="))));
+  const missing = [...sources].filter((p) => columns.get(p)?.kind !== "set").sort();
+  if (missing.length > 0) return { missing };
+  const values = new Map<string, number[]>();
+  for (const [value, pairs] of Object.entries(def.values)) {
+    const rows = new Set<number>();
+    for (const pair of pairs) {
+      const at = pair.lastIndexOf("=");
+      const col = columns.get(pair.slice(0, at)) as SetColumn;
+      for (const r of col.values.get(pair.slice(at + 1)) ?? []) rows.add(r);
+    }
+    if (rows.size > 0) values.set(value, [...rows].sort((a, b) => a - b));
+  }
+  return { column: { kind: "set", path, group: def.group, values }, missing };
 }

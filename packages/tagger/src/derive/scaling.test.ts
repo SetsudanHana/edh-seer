@@ -247,14 +247,22 @@ test("a count of DISTINCT characteristics (types / colors / names among a battle
   expect(scalingSubject({ verb: "modify-pt", amount: "the number of card types among cards in your graveyard" })).toMatchObject({ zone: "graveyard", control: "you" });
 });
 
-test("a colour / card-type / name count keeps its counted class for the type-grant reader only, in `distinctCountOf`, never as a scalingSubject (#1680)", () => {
+test("a colour / card-type / name count keeps its counted class for the type-grant reader in `distinctCountOf`, never as a battlefield scalingSubject (#1680), and every distinct count states its unit (#1785)", () => {
   expect(distinctCountOf({ verb: "draw", object: "a card", amount: "for each color among other artifacts you control" })).toMatchObject({ counts: "colour", class: { type: "artifact", control: "you" } });
   expect(distinctCountOf({ verb: "modify-pt", amount: "for each color among Allies you control" })).toMatchObject({ counts: "colour", class: { subtype: "ally" } });
   expect(distinctCountOf({ verb: "draw", amount: "the number of card types among other nonland permanents you control" })).toMatchObject({ counts: "type", class: { control: "you" } });
-  // a basic land type or a creature type or a planeswalker type is not raised by a type grant that adds members to the class
+  // a basic land type or a planeswalker type is not raised by a type grant that adds members to the class, and is no unit
   expect(distinctCountOf({ verb: "cost-modify", amount: "for each basic land type among lands you control" })).toBeUndefined();
-  expect(distinctCountOf({ verb: "cost-modify", amount: "for each creature type among creatures you control" })).toBeUndefined();
   expect(distinctCountOf({ verb: "proliferate", amount: "the number of planeswalker types among planeswalkers you control" })).toBeUndefined();
-  // a graveyard count is a scalingSubject, not this
-  expect(distinctCountOf({ verb: "modify-pt", amount: "the number of card types among cards in all graveyards" })).toBeUndefined();
+  // a creature-type count states its unit and class (#1785); the scales partner stays `scalingSubject`'s business
+  expect(distinctCountOf({ verb: "cost-modify", amount: "for each creature type among creatures you control" })).toMatchObject({ counts: "creature-type", class: { type: "creature", control: "you", zone: "battlefield" } });
+  expect(distinctCountOf({ verb: "deal-damage", object: "target creature", amount: "the number of creature types among non-Borg creatures you control" })).toMatchObject({ counts: "creature-type", class: { notSubtype: ["borg"] } });
+  expect(distinctCountOf({ verb: "add-counter", amount: "1 for each creature type among non-Borg creatures you already control" })).toMatchObject({ counts: "creature-type", class: { control: "you" } });
+  // a graveyard card-type count states `type` over the graveyard, with the owner its scalingSubject reads (#1785)
+  expect(distinctCountOf({ verb: "modify-pt", amount: "the number of card types among cards in all graveyards" })).toMatchObject({ counts: "type", class: { zone: "graveyard", control: "any" } });
+  expect(distinctCountOf({ verb: "modify-pt", amount: "the number of card types among cards in your graveyard" })).toMatchObject({ counts: "type", class: { zone: "graveyard", control: "you" } });
+  expect(distinctCountOf({ verb: "modify-pt", amount: "1 plus the number of card types among cards in your opponents' graveyards" })).toMatchObject({ counts: "type", class: { zone: "graveyard", control: "opp" } });
+  // ...but a graveyard count of something else is none (Subgoyf counts subtypes; a colour count in a graveyard states none)
+  expect(distinctCountOf({ verb: "modify-pt", amount: "the number of different subtypes other than creature types among cards in all graveyards" })).toBeUndefined();
+  expect(distinctCountOf({ verb: "modify-pt", amount: "the number of colors among cards in your graveyard" })).toBeUndefined();
 });

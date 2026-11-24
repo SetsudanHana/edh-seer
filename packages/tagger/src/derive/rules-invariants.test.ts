@@ -106,6 +106,7 @@ const TESTED: Record<string, string> = {
   "702.26d": "derive/meld-phasing.test.ts — a phase-out emits `phases-out` and no leave, exile or death; the real removal beside it stays (Divine Smite, Teferi's Protection, The Phasing of Zhalfir; #1582)",
   "702.26a": "grammar/action.test.ts — 'Simultaneously, all phased-out creatures phase in and all creatures with phasing phase out' (Time and Tide): a timing word, then two phasing actions (#1210)",
   "701.42a": "derive/meld-phasing.test.ts — 'exile them, then meld them' exiles the pair (a chosen set, no mass) and the melded permanent enters with no class read off its name (#1582)",
+  "702.73a": "derive/distinct-types-1785.test.ts — a card that prints '<name> is every creature type' without the Changeling keyword has every creature subtype, as a changeling does (Mistform Ultimus, Dr. Julius Jumblemorph; #1785)",
   "702.26c": "grammar/action.test.ts — 'target creature phases in' is the `phase-in` action, the twin of `phase-out` (#1210)",
   "106.12b": "derive/mana-lines.test.ts — a replacement on a basic land tapped for mana ('produces mana of a color of your choice', Pulse of Llanowar) is a basics static fixer and no mana line (#1210)",
   "702.95": "grammar/filter.test.ts — a soulbond pair is a status the filter can demand ('a creature paired with it') (#896)",

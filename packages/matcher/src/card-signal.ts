@@ -1,4 +1,5 @@
 import type { CardTags } from "@edh-seer/tagger";
+import { isEveryCreatureType } from "@edh-seer/tagger/characteristics";
 import type { CardSignal } from "./archetypes.js";
 import { cardCaresTags, cardThemeTags, isPolymorph, POLYMORPH_HIT_MV } from "./edges.js";
 
@@ -28,7 +29,7 @@ export function cardSignalOf(card: { name: string; oracleText: string }, tags: C
     keywords: (ch?.keywords ?? []).map((k) => k.toLowerCase()),
     lineWords: [...(ch?.types ?? []), ...(ch?.subtypes ?? [])].map((w) => w.toLowerCase()),
     creatureTypes: (ch?.types ?? []).some((t) => t.toLowerCase() === "creature")
-      ? ((ch?.keywords ?? []).some((k) => k.toLowerCase() === "changeling")
+      ? (isEveryCreatureType(ch)
         ? ["*"]
         : (ch?.subtypes ?? []).map((s) => s.toLowerCase()))
       : [],

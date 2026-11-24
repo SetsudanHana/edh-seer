@@ -3,13 +3,18 @@
   "budgets": {
     "read": 50000,
     "faces": 20000,
-    "catalogue": 100000
+    "catalogue": 100000,
+    "payoffs": 4000
   },
   "groups": {
     "types": [],
     "faces": [],
     "read": [
       "tags.clauseSource"
+    ],
+    "payoffs": [
+      "tags.abilities.effect.distinctCount.counts",
+      "tags.abilities.thresholdDistinct.counts"
     ]
   },
   "fields": {
@@ -55,6 +60,14 @@
     },
     "tags.clauseSource": {
       "label": "Clause source"
+    },
+    "cares": {
+      "label": "Cares about",
+      "description": "A payoff whose rules count how many different types you have, read from our own rules (a scaling count or a threshold such as delirium), not from the card's words. Not complete: six delirium cards whose condition our rules do not read yet are missing (Prophetic Titan, Let's Play a Game, Patchwork Beastie, Convert to Slime, both Winters).",
+      "valueLabels": {
+        "card-types": "how many card types",
+        "creature-types": "how many creature types"
+      }
     }
   },
   "namedLists": {
@@ -126,5 +139,20 @@
     "*.artCrop",
     "*.clause",
     "*.grantedBy"
-  ]
+  ],
+  "derivedSets": {
+    "cares": {
+      "group": "payoffs",
+      "values": {
+        "card-types": [
+          "tags.abilities.effect.distinctCount.counts=type",
+          "tags.abilities.thresholdDistinct.counts=type"
+        ],
+        "creature-types": [
+          "tags.abilities.effect.distinctCount.counts=creature-type",
+          "tags.abilities.thresholdDistinct.counts=creature-type"
+        ]
+      }
+    }
+  }
 }

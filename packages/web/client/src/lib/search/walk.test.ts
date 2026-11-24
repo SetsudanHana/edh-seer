@@ -2,7 +2,7 @@ import { expect, test } from "vitest";
 import { buildCatalogue } from "./catalogue.js";
 import { decodePostings } from "./postings.js";
 import { DEFAULT_DENY, type SearchRegistry } from "./registry.js";
-import { walkRecords, type SetColumn, type WalkRecord } from "./walk.js";
+import { derivedSetColumn, walkRecords, type SetColumn, type WalkRecord } from "./walk.js";
 
 const registry = (over: Partial<SearchRegistry> = {}): SearchRegistry => ({
   fields: {},
@@ -139,4 +139,16 @@ test("external, internal and build-state fields never become fields, nested or n
 test("multiValued lists numeric paths where one card holds more than one distinct value", () => {
   const recs = [rec(0, { amount: [2, 5], single: 1 }), rec(1, { amount: 3, single: 1 }), rec(2, { amount: [4, 4] })];
   expect(walkRecords(recs, registry()).multiValued).toEqual(["tags.amount"]);
+});
+
+test("a derived set is the union of its source pairs, and is NOT built when a source path is absent (#1785)", () => {
+  const reg = registry({ groups: { payoffs: ["tags.a.counts", "tags.b.counts"] } });
+  const walk = walkRecords([rec(0, { a: [{ counts: "type" }] }), rec(1, { b: { counts: "type" } }), rec(2, { a: [{ counts: "name" }], b: { counts: "creature-type" } }), rec(3, {})], reg);
+  const def = { group: "payoffs", values: { "card-types": ["tags.a.counts=type", "tags.b.counts=type"], "creature-types": ["tags.a.counts=creature-type", "tags.b.counts=creature-type"], none: ["tags.a.counts=nope", "tags.b.counts=nope"] } };
+  const { column, missing } = derivedSetColumn("cares", def, walk.columns);
+  expect(missing).toEqual([]);
+  expect([...column!.values]).toEqual([["card-types", [0, 1]], ["creature-types", [2]]]);
+  // a source no card holds: the shards never carried it, so no column rather than an empty one
+  const old = walkRecords([rec(0, { a: [{ counts: "type" }] })], reg);
+  expect(derivedSetColumn("cares", def, old.columns)).toEqual({ missing: ["tags.b.counts"] });
 });

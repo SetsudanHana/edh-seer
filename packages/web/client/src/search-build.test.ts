@@ -1,3 +1,4 @@
+// @vitest-environment node
 import { spawnSync } from "node:child_process";
 import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -156,4 +157,85 @@ test("--check passes on a clean registry and names a stale per-path entry; it pr
   expect(bad.status).not.toBe(0);
   expect(bad.stderr).toMatch(/stale.*tags\.gone/i);
   expect(manifest(root).search).toBeUndefined();
+});
+
+// #1785: the payoff field `cares`, built from the grammar's distinct-type fields. Production documents and stored clauses (DERIVE 593 tree, 2026-11-24), derived HERE with the real engine so the fixture cannot go stale.
+import fx from "./fixtures/payoff-1785.fixtures.json" with { type: "json" };
+import { deriveCardTags, deriveInputOf, grammarClauseRecords, type ClauseRecord } from "@edh-seer/tagger";
+
+type Fx = { source: Record<string, unknown>; canonical?: ClauseRecord[] };
+const PAYOFF_NAMES = Object.keys(fx);
+function payoffStatic(withDerived: boolean): string {
+  const root = mkdtempSync(join(tmpdir(), "search-payoff-"));
+  const v = join(root, "v-t");
+  mkdirSync(join(v, "cards"), { recursive: true });
+  writeFileSync(join(root, "manifest.json"), JSON.stringify({ version: "v-t", deriveVersion: 594 }));
+  writeFileSync(join(v, "name-index.json"), JSON.stringify({
+    types: ["creature"], subtypes: ["elf"], keywords: [],
+    cards: PAYOFF_NAMES.map((name) => ({ slug: name.toLowerCase(), name, identity: [], t: [0], s: [0] })),
+  }));
+  const shard: Record<string, unknown> = {};
+  for (const name of PAYOFF_NAMES) {
+    const f = (fx as unknown as Record<string, Fx>)[name]!;
+    const g = f.canonical === undefined ? grammarClauseRecords(f.source as never) : undefined;
+    const tags = deriveCardTags(deriveInputOf(f.source as never, name, name, g ? g.records : f.canonical!, undefined, g?.readings));
+    // `withDerived: false` is a corpus derived before #1785: the grammar's own fields are not in its rows.
+    const stripped = JSON.parse(JSON.stringify(tags, (k, val) => (k === "distinctCount" || k === "thresholdDistinct" ? undefined : val)));
+    shard[name.toLowerCase()] = { card: { name }, tags: withDerived ? tags : stripped };
+  }
+  writeFileSync(join(v, "cards", "0000.json"), JSON.stringify(shard));
+  return root;
+}
+const cares = (ctx: EvalContext, value: string): string[] => {
+  const r = evaluate({ field: "cares", op: "has", value }, ctx);
+  if (!r.ok) throw new Error(r.cannotAnswer.join("; "));
+  return r.rows.map((i) => PAYOFF_NAMES[i]!).sort();
+};
+
+test("cares:card-types and cares:creature-types come back from the BUILT artifact, over the grammar's fields (#1785)", () => {
+  const root = payoffStatic(true);
+  const built = run(["--static", root]);
+  expect(built.status, built.stderr + built.stdout).toBe(0);
+  const ctx = clientColumns(root);
+  const cardTypes = cares(ctx, "card-types");
+  // a graveyard scaling count, a delirium threshold, a battlefield card-type count; and none of the cards that count nothing
+  expect(cardTypes).toEqual(["Dragon's Rage Channeler", "Emrakul, the Promised End", "Loot, the Key to Everything", "Tarmogoyf", "Traverse the Ulvenwald"]);
+  expect(cares(ctx, "creature-types")).toEqual(["Infinite Diversity", "Valiant Changeling"]);
+  for (const bad of ["Grizzly Bears", "Mistform Ultimus", "Maskwood Nexus", "Keen-Eyed Curator", "Nael, Avizoa Aeronaut", "Subgoyf"]) {
+    expect(cardTypes, bad).not.toContain(bad);
+    expect(cares(ctx, "creature-types"), bad).not.toContain(bad);
+  }
+  const cat = JSON.parse(readFileSync(join(root, "v-t", "search", manifest(root).search, "catalogue.json"), "utf8")) as Catalogue;
+  const f = cat.groups["payoffs"]!.fields.find((x) => x.id === "cares")!;
+  expect(f.valueLabels).toMatchObject({ "card-types": "how many card types" });
+  expect(f.values).toEqual([{ v: "card-types", n: 5 }, { v: "creature-types", n: 2 }]);
+  expect(cat.groups["payoffs"]!.gzipBytes).toBeLessThan(JSON.parse(readFileSync(REGISTRY, "utf8")).budgets.payoffs);
+});
+
+test("shards derived before #1785 build no `cares` field: a question about it is cannot-answer, never an empty list", () => {
+  const root = payoffStatic(false);
+  const built = run(["--static", root]);
+  expect(built.status, built.stderr + built.stdout).toBe(0);
+  expect(built.stdout).toMatch(/computed fields not built: cares \(no card holds tags\.abilities\.effect\.distinctCount\.counts, tags\.abilities\.thresholdDistinct\.counts\)/);
+  const ctx = clientColumns(root);
+  expect(evaluate({ field: "cares", op: "has", value: "card-types" }, ctx)).toEqual({ ok: false, cannotAnswer: ["unknown field cares"] });
+});
+
+// #1785: the every-creature-type flag may name Mistform Ultimus beside the changelings, and nothing else.
+test("--verify passes with Mistform among the every-type cards and FAILS on a granter such as Omo", () => {
+  const withExtra = (name: string): string => {
+    const root = fakeStatic();
+    const file = join(root, "v-t", "name-index.json");
+    const idx = JSON.parse(readFileSync(file, "utf8"));
+    idx.cards.push({ slug: name.toLowerCase(), name, identity: ["W"], t: [0], s: [0, 1, 2, 3] });
+    writeFileSync(file, JSON.stringify(idx));
+    expect(run(["--static", root, "--creatures", "borg,elf,human,wizard", "--lands", "forest"]).status).toBe(0);
+    return root;
+  };
+  const ok = run(["--static", withExtra("Mistform Ultimus"), "--creatures", "borg,elf,human,wizard", "--verify"]);
+  expect(ok.status, ok.stderr + ok.stdout).toBe(0);
+  expect(ok.stdout).toMatch(/without the keyword \(the card says so\): 1 \(Mistform Ultimus\)/);
+  const bad = run(["--static", withExtra("Omo, Queen of Vesuva"), "--creatures", "borg,elf,human,wizard", "--verify"]);
+  expect(bad.status).toBe(1);
+  expect(bad.stderr).toMatch(/neither a changeling nor on the by-text list.*Omo, Queen of Vesuva/);
 });

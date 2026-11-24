@@ -6,6 +6,7 @@ import { fixtureDeckCard } from "./fixture-cards.js";
 import { FREE_TAP, mkLine } from "./mana-test-support.js";
 import type { Reason } from "@edh-seer/engine";
 import { deriveAbilities, deriveCardTags } from "@edh-seer/tagger";
+import { CREATURE_SUBTYPES } from "@edh-seer/tagger/subtypes";
 import type { CardTags, GameEvent, SubjectFilter } from "@edh-seer/tagger";
 import type { DeckCard, Hierarchy } from "./types.js";
 
@@ -3461,6 +3462,22 @@ test("a changeling advertises its printed type only, not all 350", () => {
     abilities: [],
   };
   expect([...cardThemeTags(changeling)]).toEqual(["enters:shapeshifter"]);
+});
+
+// #1785: A CARD THAT SAYS "IS EVERY CREATURE TYPE" WITHOUT THE KEYWORD (Mistform Ultimus) HAS EVERY SUBTYPE, and advertises its printed type exactly as a changeling does (CR 702.73a is one rule for both).
+test("a card that is every creature type without the keyword advertises its printed type only, as a changeling does", () => {
+  const mistform: CardTags = {
+    oracleId: "x", schemaVersion: 1, promptVersion: 1, model: "t",
+    characteristics: {
+      types: ["creature"], subtypes: ["illusion", ...CREATURE_SUBTYPES], colors: [], identity: [],
+      cmc: 4, power: null, toughness: null, token: false, keywords: [],
+    },
+    abilities: [],
+  };
+  expect([...cardThemeTags(mistform)]).toEqual(["enters:illusion"]);
+  // ...and the supply side has the same shape as a keyword changeling's, whatever else it holds
+  const changeling: CardTags = { ...mistform, characteristics: { ...mistform.characteristics, keywords: ["changeling"] } };
+  expect([...cardSupplyTags(mistform)].sort()).toEqual([...cardSupplyTags(changeling)].sort());
 });
 
 // A COST REDUCTION CANNOT TAKE GENERIC MANA BELOW ZERO (CR 118.7). Found by the OWNER, from two

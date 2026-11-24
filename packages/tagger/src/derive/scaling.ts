@@ -16,7 +16,7 @@
  *  A count the vocabulary cannot name (Dragonspark Reactor's charge counters) stays UNSET, which the
  *  engine already reads as "fixed". */
 import type { Action } from "../canonicalize.js";
-import type { ScalingBasis, SubjectFilter } from "../schema.js";
+import type { DistinctCount, ScalingBasis, SubjectFilter } from "../schema.js";
 import { parseSubject } from "./subject.js";
 
 /** A count OF A GRAVEYARD'S CONTENTS: "in your graveyard", "in all graveyards", "in each graveyard". */
@@ -198,7 +198,7 @@ export function scalingSubject(action: Action, clauseText?: string): SubjectFilt
   // A CREATURE-TYPE count keeps the one member that raises it by itself: a changeling is every creature type, read as the printed `changeling` keyword on the class.
   // Not when the class leaves out a type a changeling has ("non-Borg creatures": Saavik, Infinite Diversity, Captain Jonathan Archer, Starfleet Academy; a changeling is a Borg), nor when the clause leaves changelings out of the count
   // ("without changeling": The Lorwyn Lizard; "Don't count changelings": You and Ooze Army?).
-  // CEILING: the changeling partner is the printed keyword only; a card that "is every creature type" in its text without the keyword (Mistform Ultimus, Maskwood Nexus's grant) is not read as one.
+  // CEILING: the changeling partner is the printed keyword only; a card that "is every creature type" in its text without the keyword (Mistform Ultimus, Dr. Julius Jumblemorph: they have every creature subtype since #1785, but not the keyword this filter reads) is not a partner, nor is Maskwood Nexus's grant.
   // CEILING: "leaves changelings out" is read from the counted text and this clause, not from the rest of the card; a sentence outside the clause that does it is not seen.
   let countedNoun = noun;
   let changelingOnly = false;
@@ -268,19 +268,33 @@ export function actionScaling(action: Action, clauseText?: string): ScalingBasis
   return undefined;
 }
 
-/** THE CLASS A DISTINCT-CHARACTERISTICS COUNT RANGES OVER, for the type-grant reader only (`Effect.distinctCount`, #1680). A colour, name or card-type count over a battlefield class ("the number of colors among artifacts you control") is no `scalingSubject`
- *  (see there), but a grant that makes more things that class, or adds a card type, raises it, so `usesGrantedType` and `usesCreatureType` still read the class. A creature, planeswalker or basic land type count gets none: no grant of members
- *  raises it (Toph's lands add no basic land type). A graveyard count is a `scalingSubject`.
- *  CEILING: a card-type count is read for "card types" and "permanent types" only. */
-export function distinctCountOf(action: Action, clauseText?: string): { class: SubjectFilter; counts: "type" | "colour" | "name" } | undefined {
+/** THE UNIT A DISTINCT-CHARACTERISTICS COUNT COUNTS, AND THE CLASS IT RANGES OVER (`Effect.distinctCount`, #1680, #1785), beside `scalingSubject` where one is set (it never replaces it).
+ *  A colour, name or card-type count over a battlefield class ("the number of colors among artifacts you control") is no `scalingSubject` (see there), but a grant that makes more things that class, or adds a card type, raises it, so `usesGrantedType`
+ *  and `usesCreatureType` still read the class. A planeswalker or basic land type count gets none: no grant of members raises it (Toph's lands add no basic land type).
+ *  A CREATURE-TYPE count (#1785: Infinite Diversity, Valiant Changeling, Saavik) states its unit `creature-type` over the battlefield class; its `scalingSubject` is still the changeling partner or none. A graveyard card-type count (Tarmogoyf, Emrakul, the
+ *  Promised End) states `type` over the graveyard class its `scalingSubject` already names, with the same owner.
+ *  CEILING: a card-type count is read for "card types" and "permanent types" only.
+ *  CEILING: a creature-type count that leaves changelings out of the count ("without changeling": The Lorwyn Lizard; "Don't count changelings": You and Ooze Army?) states its unit and its class, not the exclusion: the class has no slot for it.
+ *  CEILING: a count "for every five creature types among ..." (Sarek) is not a `COUNTED` phrase, so it states no unit. */
+export function distinctCountOf(action: Action, clauseText?: string): DistinctCount | undefined {
   const text = countedText(action, clauseText);
   const counted = COUNTED.exec(text);
   if (!counted) return undefined;
   const noun = counted[1];
-  if (GRAVEYARD_COUNT.test(text) || !DISTINCT_CHARACTERISTICS.test(noun)) return undefined;
-  const counts = /\bcolou?rs?\s+among\b/i.test(noun) ? "colour" : /\bnames?\s+among\b/i.test(noun) ? "name" : /\b(?:card|permanent) types?\s+among\b/i.test(noun) ? "type" : undefined;
+  if (!DISTINCT_CHARACTERISTICS.test(noun)) return undefined;
+  const cardTypes = /\b(?:card|permanent) types?\s+among\b/i.test(noun);
+  const counts = /\bcolou?rs?\s+among\b/i.test(noun) ? "colour" : /\bnames?\s+among\b/i.test(noun) ? "name" : cardTypes ? "type" : /\bcreature types?\s+among\b/i.test(noun) ? "creature-type" : undefined;
   if (!counts) return undefined;
-  const cls = noun.slice(noun.search(/\bamong\b/i) + "among".length);
+  if (GRAVEYARD_COUNT.test(text)) {
+    // "different subtypes other than creature types among cards in all graveyards" (Subgoyf) counts subtypes, not the creature types its words mention.
+    if (!cardTypes) return undefined;
+    const subject = parseSubject(noun.slice(noun.search(/\bamong\b/i) + "among".length).split(/\s{1,4}in\s{1,4}/i)[0]!);
+    subject.zone = "graveyard";
+    subject.control = graveyardCountOwner(text, noun, clauseText);
+    return { class: subject, counts };
+  }
+  // "creatures you ALREADY control" (Jean-Luc, Mon Capitaine: "enter with an additional counter for each creature type among non-Borg creatures you already control") is yours too.
+  const cls = noun.slice(noun.search(/\bamong\b/i) + "among".length).replace(" you already control", " you control");
   if (!BATTLEFIELD_COUNT.test(cls)) return undefined;
   const [head = "", tail = ""] = cls.split(/\s{1,4}(?:you control|on the battlefield)\b/i);
   const qualifier = /\bthat(?:'s| is| are)\b[^.]*/i.exec(tail)?.[0];

@@ -73,6 +73,35 @@ function alsoTypes(card: Card): string[] {
     .filter((w) => known.has(w));
 }
 
+/** "<THIS CARD> IS EVERY CREATURE TYPE" AS A LINE OF ITS OWN TEXT (a characteristic-defining ability, CR 604.3; the same effect as the Changeling keyword, CR 702.73a "This object is every creature type"). Anchored on the card's own name or "This creature", as `alsoTypes` is,
+ *  with string tests rather than a wildcard prefix. A grant to other permanents ("Creatures you control are every creature type": Maskwood Nexus; "Equipped creature ... is every creature type": Runed Stalactite) names a different subject
+ *  and is not this card's type line, and reminder text "(It's every creature type.)" never starts a line with a name. 2 corpus cards, 2026-11-24 (Mistform Ultimus, Dr. Julius Jumblemorph; the second prints the part of its name after "Dr. ").
+ *  CEILING: a face of a multi-face card is matched by its own name, and the card is read as a whole (every face gets the types). */
+const EVERY_TYPE_LINE = " is every creature type";
+function isEveryType(card: Card): boolean {
+  const name = card.name ?? "";
+  const names = [name, ...name.split(" // "), "This creature", "This card"].filter(Boolean);
+  for (const line of (card.oracleText ?? "").split("\n")) {
+    const at = line.indexOf(EVERY_TYPE_LINE);
+    if (at <= 0) continue;
+    const subject = line.slice(0, at).trim();
+    // The part of a legendary's name before the comma, or after a title ("Dr. Julius Jumblemorph" prints "Julius Jumblemorph").
+    if (names.some((n) => n === subject || n.split(",")[0]!.trim() === subject || n.endsWith(` ${subject}`))) return true;
+  }
+  return false;
+}
+
+/** IS THIS CARD EVERY CREATURE TYPE (CR 702.73a)? The Changeling keyword, or the explicit subtype list `extractCharacteristics` gives a card whose own text says it (Mistform Ultimus, #1785). ONE predicate for the three places that treat an every-type card as
+ *  a special case (what it advertises as a theme, whether it is a body for any one tribe, whether a chosen type includes it): its explicit subtypes still let it meet tribal triggers and lords, which is right, but never fan it out as a theme or a tribe's body. */
+export function isEveryCreatureType(ch: { keywords?: readonly string[]; subtypes?: readonly string[] } | undefined): boolean {
+  if (ch === undefined) return false;
+  if ((ch.keywords ?? []).some((k) => k.toLowerCase() === "changeling")) return true;
+  const have = ch.subtypes ?? [];
+  if (have.length < CREATURE_SUBTYPES.length) return false;
+  const set = new Set(have);
+  return CREATURE_SUBTYPES.every((t) => set.has(t));
+}
+
 /** A CARD'S TEXT, ONE STRING PER FACE: the corpus joins a multi-face card's oracle text on a "//" line. */
 const faceTexts = (oracleText: string): string[] => oracleText.split("\n//\n");
 
@@ -110,7 +139,8 @@ export function extractCharacteristics(card: Card): Characteristics {
   // type, so any choice works and all typal edges are real") described behaviour the engine did not
   // have. Applies whatever the card's types: Crib Swap is a Kindred Instant and is still every
   // creature type wherever it sits. 66 corpus cards, 32 inside the normalized set.
-  const subtypes = keywords.includes("changeling")
+  // A CARD THAT SAYS IT IS EVERY CREATURE TYPE WITHOUT THE KEYWORD has them all the same, in every zone (Mistform Ultimus, Dr. Julius Jumblemorph: "<name> is every creature type (even if this card isn't on the battlefield)", #1785): see `isEveryType`.
+  const subtypes = keywords.includes("changeling") || isEveryType(card)
     ? [...new Set([...right, ...CREATURE_SUBTYPES])]
     : [...new Set([...right, ...alsoTypes(card)])];
   const enchants = right.includes("aura") ? enchantsOf(card.oracleText ?? "") : undefined;
