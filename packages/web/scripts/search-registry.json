@@ -7,7 +7,8 @@
     "payoffs": 4000,
     "abilities": 550000,
     "roles": 30000,
-    "abilityRows": 800000
+    "abilityRows": 800000,
+    "commander": 4000
   },
   "groups": {
     "types": [],
@@ -22,7 +23,8 @@
     "abilities": [
       "tags.abilities"
     ],
-    "roles": []
+    "roles": [],
+    "commander": []
   },
   "fields": {
     "t": {
@@ -240,6 +242,28 @@
     "tags.abilities.effect.scaling": {
       "label": "Scales per",
       "description": "What the effect grows with, such as per creature."
+    },
+    "is": {
+      "label": "Is a commander",
+      "description": "Whether the card can lead a deck, the same list the Commanders page shows: a legendary creature, a card that says it can be your commander, a Background.",
+      "valueLabels": {
+        "commander": "a commander"
+      }
+    },
+    "partner": {
+      "label": "Pairs as a second commander",
+      "description": "The ways a card can share the command zone, read from its printed text: Partner, Partner with a named card, a named group (Friends forever, Character select, Survivors, Father and son), Choose a Background, being a Background, and Doctor's companion.",
+      "valueLabels": {
+        "partner": "Partner",
+        "partner-with": "Partner with a named card",
+        "friends-forever": "Friends forever",
+        "character-select": "Character select",
+        "survivors": "Survivors",
+        "father-son": "Father and son",
+        "chooses-background": "Choose a Background",
+        "background": "is a Background",
+        "doctors-companion": "Doctor's companion"
+      }
     }
   },
   "namedLists": {

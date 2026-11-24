@@ -147,7 +147,14 @@ export interface EventQuery {
   /** Which end comes first. Absent means the order's own natural direction (`NATURAL_DIR`), so a
    *  link written before the control existed still reads the way it did. */
   dir?: "asc" | "desc";
+  /** THE SECOND AND LATER KEYS (#1787), each with its own end. Rows the first key ties are ordered by these in turn, then by the name.
+   *  Absent = one key, which is the whole of every link written before `sort=a:desc,b:asc` existed. */
+  thenBy?: { sort: SortKey; dir?: "asc" | "desc" }[];
+  /** WHAT A LINK'S `sort=` ASKED THAT NO ORDER ANSWERS (an unknown key, a key named twice, a direction that is neither): one line each, shown on the page. Never silently dropped. */
+  sortIssues?: string[];
 }
+
+export type SortKey = NonNullable<EventQuery["sort"]>;
 
 /** EACH ORDER'S NATURAL END. Connections, power and toughness read biggest first; mana value
  *  cheapest first; names A to Z. The URL carries `dir` only when the reader turned it round. */
@@ -171,7 +178,7 @@ export function orderOf(q: EventQuery): NonNullable<EventQuery["sort"]> {
  *
  *  `does` AND `theme` ARE NOT READ. An old link carrying them lands on an unfiltered page, which
  *  is a smaller lie than answering a question the vocabulary no longer has. */
-const SORTS = new Set(["effect", "partners", "mv", "name", "pow", "tou", "cardtypes", "fronttypes", "supertypes", "subtypes", "creaturetypes"]);
+export const SORT_KEYS = new Set(["effect", "partners", "mv", "name", "pow", "tou", "cardtypes", "fronttypes", "supertypes", "subtypes", "creaturetypes"]);
 
 /** ONE BOUND OUT OF THE URL. A BAD ONE IS NO FILTER, NOT ZERO: `?mvmax=abc` reading as "at most 0
  *  mana" would answer a question nobody asked with a confident empty list. Zero itself IS allowed,
@@ -221,9 +228,34 @@ const OPERATOR_PARAMS = [
   ["orProduce", "orproduce"], ["orConsume", "orconsume"], ["notProduce", "notproduce"], ["notConsume", "notconsume"],
 ] as const;
 
+/** `sort=mv` with `dir=desc` (every older link), or `sort=cardtypes:desc,mv:asc` (#1787): the first key is `sort`/`dir`, the rest are `thenBy`.
+ *  A key an order does not exist for, a key named twice and a direction that is neither asc nor desc are SAID in `issues`, and the rest still apply. */
+export function sortFromParams(raw: string | null, dirParam: string | null): Pick<EventQuery, "sort" | "dir" | "thenBy" | "sortIssues"> {
+  if (raw === null || raw === "") return dirParam === "asc" || dirParam === "desc" ? { dir: dirParam } : {};
+  const issues: string[] = [];
+  const keys: { sort: SortKey; dir?: "asc" | "desc" }[] = [];
+  for (const part of raw.split(",")) {
+    const colon = part.indexOf(":");
+    const key = (colon < 0 ? part : part.slice(0, colon)).trim();
+    const d = colon < 0 ? undefined : part.slice(colon + 1).trim();
+    if (key === "") continue;
+    if (!SORT_KEYS.has(key)) { issues.push(`There is no order called "${key}".`); continue; }
+    if (keys.some((k) => k.sort === key)) { issues.push(`"${key}" is named twice; the second is ignored.`); continue; }
+    if (d !== undefined && d !== "asc" && d !== "desc") { issues.push(`"${d}" is not a direction for "${key}" (asc or desc); its own end is used.`); keys.push({ sort: key as SortKey }); continue; }
+    keys.push({ sort: key as SortKey, ...(d ? { dir: d } : {}) });
+  }
+  const [first, ...rest] = keys;
+  // THE OLD `dir` PARAM STILL TURNS THE FIRST KEY ROUND when the key itself names no end.
+  const firstDir = first?.dir ?? (dirParam === "asc" || dirParam === "desc" ? dirParam : undefined);
+  return {
+    ...(first ? { sort: first.sort } : {}),
+    ...(firstDir ? { dir: firstDir } : {}),
+    ...(rest.length > 0 ? { thenBy: rest } : {}),
+    ...(issues.length > 0 ? { sortIssues: issues } : {}),
+  };
+}
+
 export function eventsFromParams(p: URLSearchParams): EventQuery {
-  const sort = p.get("sort") ?? "";
-  const dir = p.get("dir") ?? "";
   // THE OLD CEILING, STILL READ. `?mv=3` is live on the deployed site and in every link shared
   // since #423; it meant "3 or less" and it still does. `mvmax` wins where both are present.
   const legacyMv = bound(p.get("mv"));
@@ -256,8 +288,7 @@ export function eventsFromParams(p: URLSearchParams): EventQuery {
       .filter(([, v]) => v !== undefined)),
     ...(p.get("changelings") === "keep" ? { keepChangelings: true } : {}),
     ...(p.get("sameability") === "1" ? { sameAbility: true } : {}),
-    ...(SORTS.has(sort) ? { sort: sort as EventQuery["sort"] } : {}),
-    ...(dir === "asc" || dir === "desc" ? { dir } : {}),
+    ...sortFromParams(p.get("sort"), p.get("dir")),
     ...effectFromParams(p),
   };
 }
@@ -346,8 +377,15 @@ export function eventsToParams(q: EventQuery, p: URLSearchParams): URLSearchPara
   // pin the order against a future change of default. The default depends on the query (a cause
   // makes it `effect`), so it is compared against the query's own.
   const def = q.produce.length > 0 ? "effect" : "partners";
-  if (q.sort && q.sort !== def) out.set("sort", q.sort);
-  if (q.dir && q.dir !== NATURAL_DIR[orderOf(q)]) out.set("dir", q.dir);
+  if (q.thenBy && q.thenBy.length > 0) {
+    // MORE THAN ONE KEY: every key is written with its end, `sort=cardtypes:desc,mv:asc`, and `dir` is not written (it would say the same twice).
+    const first = orderOf(q);
+    const chain = [{ sort: first, dir: q.dir ?? NATURAL_DIR[first] }, ...q.thenBy.map((t) => ({ sort: t.sort, dir: t.dir ?? NATURAL_DIR[t.sort] }))];
+    out.set("sort", chain.map((k) => `${k.sort}:${k.dir}`).join(","));
+  } else {
+    if (q.sort && q.sort !== def) out.set("sort", q.sort);
+    if (q.dir && q.dir !== NATURAL_DIR[orderOf(q)]) out.set("dir", q.dir);
+  }
   return out;
 }
 

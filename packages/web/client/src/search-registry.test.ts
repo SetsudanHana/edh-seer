@@ -11,7 +11,7 @@ const registry = JSON.parse(readFileSync(join(import.meta.dirname, "../../script
 const rules = join(ROOT, "rules/MagicCompRules.txt");
 
 test("the registry owns the read state, the grammar's paths, roles and the distinct-type payoff fields: card.* is not walked", () => {
-  expect(Object.keys(registry.groups).sort()).toEqual(["abilities", "faces", "payoffs", "read", "roles", "types"]);
+  expect(Object.keys(registry.groups).sort()).toEqual(["abilities", "commander", "faces", "payoffs", "read", "roles", "types"]);
   expect(registry.groups["read"]).toEqual(["tags.clauseSource"]);
   // #1785: only the unit a distinct-type payoff counts. #1784's group owns the rest of `tags.abilities`, and the LONGER prefix wins (groupOf), so `payoffs` keeps these two paths and `cares` keeps working.
   expect(registry.groups["abilities"]).toEqual(["tags.abilities"]);
@@ -23,8 +23,8 @@ test("the registry owns the read state, the grammar's paths, roles and the disti
   expect(registry.deny).toEqual(expect.arrayContaining([...DEFAULT_DENY]));
 });
 
-test("budgets are gzip bytes for read, faces, payoffs, abilities, roles, the ability rows and the catalogue", () => {
-  expect(registry.budgets).toEqual({ read: 50_000, faces: 20_000, catalogue: 100_000, payoffs: 4_000, abilities: 550_000, roles: 30_000, abilityRows: 800_000 });
+test("budgets are gzip bytes for read, faces, payoffs, abilities, roles, commander, the ability rows and the catalogue", () => {
+  expect(registry.budgets).toEqual({ read: 50_000, faces: 20_000, catalogue: 100_000, payoffs: 4_000, abilities: 550_000, roles: 30_000, commander: 4_000, abilityRows: 800_000 });
 });
 
 test("creature and land are named, with values supplied at build time", () => {

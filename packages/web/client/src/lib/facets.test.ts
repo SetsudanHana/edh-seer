@@ -494,3 +494,52 @@ test("the skipped view round-trips, and any other value is dropped", () => {
   expect(eventsToParams(base, on).get("skipped")).toBeNull();
   for (const bad of ["0", "true", "2", ""]) expect(eventsFromParams(new URLSearchParams({ skipped: bad })).skipped).toBeUndefined();
 });
+
+// #1787: several sort keys in one `sort=` param
+describe("multi-key sort in the URL", () => {
+  const read = (q: string) => eventsFromParams(new URLSearchParams(q));
+  const write = (e: EventQuery) => eventsToParams(e, new URLSearchParams());
+
+  test("an old link, sort=x&dir=y, reads exactly as it did and writes back the same two params", () => {
+    const e = read("sort=mv&dir=desc");
+    expect(e.sort).toBe("mv");
+    expect(e.dir).toBe("desc");
+    expect(e.thenBy).toBeUndefined();
+    expect(e.sortIssues).toBeUndefined();
+    const out = write(e);
+    expect(out.get("sort")).toBe("mv");
+    expect(out.get("dir")).toBe("desc");
+    expect(read("dir=asc").dir).toBe("asc");
+    expect(read("sort=pow").dir).toBeUndefined();
+  });
+
+  test("sort=cardtypes:desc,mv:asc reads as a first key and one more, and writes back as the same text", () => {
+    const e = read("sort=cardtypes:desc,mv:asc");
+    expect(e).toMatchObject({ sort: "cardtypes", dir: "desc", thenBy: [{ sort: "mv", dir: "asc" }] });
+    expect(write(e).get("sort")).toBe("cardtypes:desc,mv:asc");
+    expect(write(e).has("dir")).toBe(false);
+  });
+
+  test("a key with no end takes its own natural end; the old dir param still turns the first key round", () => {
+    const e = read("sort=name,mv&dir=desc");
+    expect(e).toMatchObject({ sort: "name", dir: "desc", thenBy: [{ sort: "mv" }] });
+    expect(write(e).get("sort")).toBe("name:desc,mv:asc");
+  });
+
+  test("an unknown key, a repeated key and a bad direction are SAID, and the keys that are fine still apply", () => {
+    const e = read("sort=bogus:asc,mv:asc,mv:desc,pow:sideways");
+    expect(e.sort).toBe("mv");
+    expect(e.thenBy).toEqual([{ sort: "pow" }]);
+    expect(e.sortIssues).toHaveLength(3);
+    expect(e.sortIssues![0]).toMatch(/no order called "bogus"/);
+    expect(e.sortIssues![1]).toMatch(/"mv" is named twice/);
+    expect(e.sortIssues![2]).toMatch(/"sideways" is not a direction for "pow"/);
+    expect(read("sort=sideways").sort).toBeUndefined();
+    expect(read("sort=sideways").sortIssues).toHaveLength(1);
+  });
+
+  test("the default first key is written when a second key follows it, so the text stays positional", () => {
+    const e: EventQuery = { ...read(""), thenBy: [{ sort: "name" }] };
+    expect(write(e).get("sort")).toBe("partners:desc,name:asc");
+  });
+});

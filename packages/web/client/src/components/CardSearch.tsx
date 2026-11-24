@@ -15,7 +15,7 @@ import { TypedQuery } from "./TypedQuery.js";
 import { TypeCountRow } from "./TypeCountRow.js";
 import { FieldRow } from "./FieldRow.js";
 import { sharedEventFrequency, sharedEventMembers, sharedNameIndex, sharedNameIndexVocabulary, type EventFrequencyFile, type EventMembers, type NameIndexEntry } from "../lib/partners.js";
-import { eventsFromParams, eventsToParams, filterKindsOf, factFilterOf, orderOf, withoutFilterKind, EFFECT_KINDS, FILTER_KINDS, NATURAL_DIR, TYPE_COUNTS, type EventQuery, type FieldFilter, type FilterKind, type TypeCountSort } from "../lib/facets.js";
+import { eventsFromParams, eventsToParams, filterKindsOf, factFilterOf, orderOf, withoutFilterKind, EFFECT_KINDS, FILTER_KINDS, NATURAL_DIR, TYPE_COUNTS, type EventQuery, type FieldFilter, type FilterKind, type SortKey, type TypeCountSort } from "../lib/facets.js";
 import { BY_WHAT_IT_IS, TIMING_UNKNOWN, effectCaption } from "../lib/effect-caption.js";
 import { isEmptyFilter } from "@edh-seer/matcher/member-facts";
 import { membersPassing, unjudgedLeftOut } from "../lib/effect-filter.js";
@@ -65,6 +65,11 @@ function useGridColumns(): [(el: HTMLElement | null) => void, number] {
  *  was a wall of chips and a count). Asked in the engine's own events since AJ3, so the empty state
  *  shows the shape of a question rather than a vocabulary that no longer exists. The keys are real
  *  and were checked against the built artifact; an invented one would render an empty page. */
+/** How many keys the order rows offer (a link may carry more; they are all kept). */
+const MAX_ORDER_KEYS = 3;
+const ORDER_KEYS: readonly SortKey[] = ["effect", "partners", "mv", "pow", "tou", ...TYPE_COUNTS.map((c) => c.sort), "name"];
+const ORDER_LABEL: Partial<Record<SortKey, string>> = { effect: "How much it does", partners: "Connections", mv: "Mana value", pow: "Power", tou: "Toughness", name: "Name" };
+
 const EXAMPLES: Record<"cards" | "commanders", { label: string; q: EventQuery }[]> = {
   cards: [
     { label: "mills a card, in blue", q: { produce: ["mill|-|-|-"], consume: [], colours: ["U"], types: [], subtypes: [], keywords: [], cardColours: [] } },
@@ -223,6 +228,7 @@ export function CardSearch({
   const eventQuery = useMemo((): EventQuery => (typedActive
     ? { produce: [], consume: [], colours: [], types: [], subtypes: [], keywords: [], cardColours: [],
       ...(builderEvents.sort ? { sort: builderEvents.sort } : {}), ...(builderEvents.dir ? { dir: builderEvents.dir } : {}),
+      ...(builderEvents.thenBy ? { thenBy: builderEvents.thenBy } : {}), ...(builderEvents.sortIssues ? { sortIssues: builderEvents.sortIssues } : {}),
       // THE CHANGELING TOGGLE IS A WAY TO READ THE ANSWER, not part of the question, so it rides beside `x` as it does beside the rows.
       ...(builderEvents.keepChangelings ? { keepChangelings: true } : {}) }
     : builderEvents), [typedActive, builderEvents]);
@@ -230,7 +236,8 @@ export function CardSearch({
   // paused rows' own must not bring the old one back.
   const withOrder = (kept: EventQuery, next: EventQuery): EventQuery => {
     const { sort: _s, dir: _d, ...rest } = kept;
-    return { ...rest, ...(next.sort ? { sort: next.sort } : {}), ...(next.dir ? { dir: next.dir } : {}), keepChangelings: next.keepChangelings };
+    const { thenBy: _t, sortIssues: _i, ...restKept } = rest;
+    return { ...restKept, ...(next.sort ? { sort: next.sort } : {}), ...(next.dir ? { dir: next.dir } : {}), ...(next.thenBy ? { thenBy: next.thenBy } : {}), keepChangelings: next.keepChangelings };
   };
   const setEvents = (next: EventQuery) => setParams(
     eventsToParams(typedActive ? withOrder(builderEvents, next) : next, params),
@@ -238,6 +245,30 @@ export function CardSearch({
   // THE SKIPPED VIEW BELONGS TO ONE SET OF TERMS AND EFFECT ROWS: change either and it is dropped, or
   // it would stay armed and reopen on the skipped list when the filters next leave something out.
   const setEffects = (next: EventQuery) => { const { skipped: _s, ...rest } = next; setEvents(rest); };
+  // THE ORDER AS ROWS (#1787): the first key, each further key, and ONE empty row to add another while there is room. A key may be used once.
+  const effectiveKey = (k: SortKey): SortKey => (k === "effect" && eventQuery.produce.length === 0 ? "partners" : k);
+  const orderChain = useMemo(() => [{ sort: orderOf(eventQuery), dir: eventQuery.dir }, ...(eventQuery.thenBy ?? [])].map((k) => ({ sort: effectiveKey(k.sort), dir: k.dir })), [eventQuery]);
+  const usedKeys = orderChain.map((k) => k.sort);
+  const orderRows: { sort: SortKey | null; dir: "asc" | "desc" }[] = [
+    ...orderChain.map((k) => ({ sort: k.sort as SortKey | null, dir: k.dir ?? NATURAL_DIR[k.sort] })),
+    ...(orderChain.length < MAX_ORDER_KEYS ? [{ sort: null, dir: "desc" as const }] : []),
+  ];
+  const withChain = (chain: { sort: SortKey; dir?: "asc" | "desc" }[]): EventQuery => {
+    const { sort: _s, dir: _d, thenBy: _t, sortIssues: _i, ...rest } = eventQuery;
+    const [first, ...more] = chain;
+    return { ...rest, ...(first ? { sort: first.sort, ...(first.dir ? { dir: first.dir } : {}) } : {}), ...(more.length > 0 ? { thenBy: more } : {}) };
+  };
+  // CHANGING A KEY RESETS ITS OWN DIRECTION to that key's natural end (the first key's rule since #1783), and leaves the others alone.
+  const setOrderKey = (i: number, value: string): void => {
+    const chain = orderChain.map((k) => ({ ...k }));
+    if (value === "") chain.splice(i, 1);
+    else if (i >= chain.length) chain.push({ sort: value as SortKey, dir: undefined });
+    else chain[i] = { sort: value as SortKey, dir: undefined };
+    setEvents(withChain(chain.filter((k, j) => chain.findIndex((x) => x.sort === k.sort) === j).map((k) => ({ sort: k.sort, ...(k.dir ? { dir: k.dir } : {}) }))));
+  };
+  const setOrderDir = (i: number, dir: "asc" | "desc"): void => {
+    setEvents(withChain(orderChain.map((k, j) => ({ sort: k.sort, ...(j === i ? { dir } : k.dir ? { dir: k.dir } : {}) }))));
+  };
   const colours = eventQuery.colours;
   const setColours = (f: (cs: string[]) => string[]) => setEvents({ ...eventQuery, colours: f(colours) });
   const terms = useMemo(() => termsOf(eventQuery), [eventQuery]);
@@ -483,7 +514,12 @@ export function CardSearch({
   // shows its loading line, never an empty or an unfiltered list. A NOT creature type answers from the rows (the
   // changeling is simply a card with every type); the catalogue is read only to say how many changelings that hid.
   const orderKey = orderOf(eventQuery);
-  const countSort = TYPE_COUNTS.some((c) => c.sort === orderKey) ? (orderKey as TypeCountSort) : null;
+  // EVERY KEY OF THE ORDER THAT IS A TYPE COUNT needs the catalogue's lists, not just the first (#1787).
+  const countSorts = useMemo((): TypeCountSort[] => {
+    const keys: string[] = [orderKey, ...(eventQuery.thenBy ?? []).map((t) => t.sort)];
+    return [...new Set(keys.filter((k): k is TypeCountSort => TYPE_COUNTS.some((c) => c.sort === k)))];
+  }, [orderKey, eventQuery.thenBy]);
+  const countSort = countSorts[0] ?? null;
   const countsAsked = TYPE_COUNTS.some((c) => eventQuery[c.min] !== undefined || eventQuery[c.max] !== undefined);
   // THE NOT CREATURE TYPES: the rows' own, or the ones the typed text negates directly (`-st:borg`).
   const notSubtypes = useMemo((): readonly string[] => (typedAst ? notSubtypesOf(typedAst) : eventQuery.notSubtypes ?? []), [typedAst, eventQuery.notSubtypes]);
@@ -499,9 +535,9 @@ export function CardSearch({
     const abilityNeed = new Set(abilityFieldsOf(node));
     const fields = new Set(fieldsOf(node).filter((f) => f !== "everyCreatureType"));
     const lists = new Set([...(countsAsked || countSort !== null || notSubtypesAsked || subtypeAsked ? ["creature"] : []), ...(JSON.stringify(node).match(/"list":"(\w+)"/g) ?? []).map((m) => m.slice(8, -1))]);
-    if (countSort !== null) {
-      fields.add(typeCountSpec[countSort].field);
-      const l = typeCountSpec[countSort].list;
+    for (const cs of countSorts) {
+      fields.add(typeCountSpec[cs].field);
+      const l = typeCountSpec[cs].list;
       if (l) lists.add(l);
     }
     if (typedShape) {
@@ -510,7 +546,7 @@ export function CardSearch({
       for (const f of abilityFieldsOf(typedShape)) abilityNeed.add(f);
     }
     return `${[...fields].sort().join(",")}|${[...lists].sort().join(",")}|${[...abilityNeed].sort().join(",")}`;
-  }, [countsAsked, countSort, notSubtypesAsked, subtypeAsked, genericAsked, typedNeedsCatalogue, typedShape, eventQuery, mode, abilityFields]);
+  }, [countsAsked, countSort, countSorts, notSubtypesAsked, subtypeAsked, genericAsked, typedNeedsCatalogue, typedShape, eventQuery, mode, abilityFields]);
   const [resolved, setResolved] = useState<{ core: EvalContext; key: string; ctx: EvalContext; state: CatalogueResolution["state"] } | null>(null);
   // THE RETRY CHIP: bumping it runs the read again. A failed read is shown, and the loader keeps nothing of it.
   const [attempt, setAttempt] = useState(0);
@@ -677,12 +713,12 @@ export function CardSearch({
     if (catalogueCtx === null) return {};
     const out: Partial<Record<TypeCountSort, Uint32Array>> = {};
     for (const c of TYPE_COUNTS) {
-      const wanted = c.sort === countSort || (c.sort === "creaturetypes" && (eventQuery.creatureTypesMin !== undefined || eventQuery.creatureTypesMax !== undefined));
+      const wanted = countSorts.includes(c.sort) || (c.sort === "creaturetypes" && (eventQuery.creatureTypesMin !== undefined || eventQuery.creatureTypesMax !== undefined));
       const v = wanted ? rowCountsOf(catalogueCtx, c.sort) : null;
       if (v) out[c.sort] = v;
     }
     return out;
-  }, [catalogueCtx, countSort, eventQuery.creatureTypesMin, eventQuery.creatureTypesMax]);
+  }, [catalogueCtx, countSorts, eventQuery.creatureTypesMin, eventQuery.creatureTypesMax]);
   const everyCreatureType = useMemo(
     () => new Set(catalogueCtx?.columns.get("everyCreatureType") ? (catalogueCtx.columns.get("everyCreatureType") as { values: Map<string, number[]> }).values.get("true") ?? [] : []),
     [catalogueCtx]);
@@ -702,14 +738,17 @@ export function CardSearch({
     // already knowing their names and typing them in". A sort does not fix the ranking; it stops
     // the ranking being the only way through the list.
     const byName = (a: NameIndexEntry, b: NameIndexEntry): number => a.name.localeCompare(b.name, "en");
-    const order = orderOf(eventQuery);
-    const sign = (eventQuery.dir ?? NATURAL_DIR[order]) === "asc" ? 1 : -1;
+    // A CAUSE-LESS `effect` MEASURES NOTHING and reads as connections, in any place of the order (`orderOf` says it for the first key).
+    const effective = (k: SortKey): SortKey => (k === "effect" && eventQuery.produce.length === 0 ? "partners" : k);
+    // THE KEYS, FIRST TO LAST (#1787). Rows a key leaves tied go to the next; rows every key leaves tied go to the name, A to Z,
+    // which is also all a single key ever fell back to, so a link with one key orders as it always did.
+    const chain = [{ sort: orderOf(eventQuery), dir: eventQuery.dir }, ...(eventQuery.thenBy ?? [])].map((k) => ({ sort: effective(k.sort), dir: k.dir }));
     // HOW MUCH IT DOES (owner 2026-09-23, AN3): each cause's list ships best doer first
     // (`effectOrder` in the build), so a card's place in it IS the measurement. Asked two causes,
     // the WEAKER place governs -- a card has to do both, and doing one superbly does not make up
     // for doing the other badly. CEILING: a fraction of each list's length, so a long list and a
     // short one weigh alike; the upgrade path is shipping the order's own keys.
-    const place = order !== "effect" ? null : (() => {
+    const place = !chain.some((k) => k.sort === "effect") ? null : (() => {
       const at = eventQuery.produce.map((k) => {
         const p = lists.get(k)?.p ?? [];
         return new Map(p.map((id, i) => [id, i / p.length] as const));
@@ -718,24 +757,31 @@ export function CardSearch({
     })();
     // A MISSING NUMBER SORTS LAST IN EITHER DIRECTION: a card that prints no power (the index omits
     // `*` and `X` the same way) is not a zero, and turning the order round must not bring the
-    // unprinted to the top. Ties fall back to the name, A to Z, whichever way the order runs.
-    const byNumber = (v: (e: NameIndexEntry) => number | undefined) =>
+    // unprinted to the top. Two missing numbers are a tie, which the next key settles.
+    const byNumber = (sign: number, v: (e: NameIndexEntry) => number | undefined) =>
       (a: NameIndexEntry, b: NameIndexEntry): number => {
         const av = v(a); const bv = v(b);
-        if (av === undefined) return bv === undefined ? byName(a, b) : 1;
+        if (av === undefined) return bv === undefined ? 0 : 1;
         if (bv === undefined) return -1;
-        return sign * (av - bv) || byName(a, b);
+        return sign * (av - bv);
       };
-    return [...kept].sort(
-      place ? (a, b) => -sign * (place(a) - place(b)) || (b.partners ?? 0) - (a.partners ?? 0) || byName(a, b)
-        : order === "name" ? (a, b) => sign * byName(a, b)
-        : order === "mv" ? byNumber((e) => e.mv ?? 0)
-        : order === "pow" ? byNumber((e) => e.pow)
-        : order === "tou" ? byNumber((e) => e.tou)
-        : countSort !== null ? byNumber((e) => countsBy[countSort]?.[positionOf.get(e) ?? -1])
-        : byNumber((e) => e.partners ?? 0),
-    );
-  }, [index, typed, keptIds, asked, eventQuery, lists, positionOf, fitCard, baseEntries, countSort, countsBy, typeCountsBlocked, typeCountsMissing, typeCountsFailed, filtersUnanswerable, unknownLines]);
+    const cmpOf = (k: { sort: SortKey; dir?: "asc" | "desc" }): ((a: NameIndexEntry, b: NameIndexEntry) => number) => {
+      const sign = (k.dir ?? NATURAL_DIR[k.sort]) === "asc" ? 1 : -1;
+      if (k.sort === "effect" && place) return (a, b) => -sign * (place(a) - place(b)) || (b.partners ?? 0) - (a.partners ?? 0);
+      if (k.sort === "name") return (a, b) => sign * byName(a, b);
+      if (k.sort === "mv") return byNumber(sign, (e) => e.mv ?? 0);
+      if (k.sort === "pow") return byNumber(sign, (e) => e.pow);
+      if (k.sort === "tou") return byNumber(sign, (e) => e.tou);
+      const count = TYPE_COUNTS.some((c) => c.sort === k.sort) ? countsBy[k.sort as TypeCountSort] : undefined;
+      if (TYPE_COUNTS.some((c) => c.sort === k.sort)) return byNumber(sign, (e) => count?.[positionOf.get(e) ?? -1]);
+      return byNumber(sign, (e) => e.partners ?? 0);
+    };
+    const cmps = chain.map(cmpOf);
+    return [...kept].sort((a, b) => {
+      for (const c of cmps) { const r = c(a, b); if (r !== 0) return r; }
+      return byName(a, b);
+    });
+  }, [index, typed, keptIds, asked, eventQuery, lists, positionOf, fitCard, baseEntries, countsBy, typeCountsBlocked, typeCountsMissing, typeCountsFailed, filtersUnanswerable, unknownLines]);
   // WHAT "Back to the N matches" RETURNS TO: the normal list's size, without sorting it.
   const normalCount = useMemo((): number => {
     if (!showSkipped || index === null || keptIds === undefined || keptIds === null) return 0;
@@ -1085,6 +1131,12 @@ export function CardSearch({
         error={typed?.status === "error" ? typed.error : null}
         leftOut={builderLeavesOut}
       />
+      {/* A SORT THE LINK ASKED FOR AND NO ORDER ANSWERS IS SAID, not dropped (#1787). The keys that are known still apply. */}
+      {(eventQuery.sortIssues?.length ?? 0) > 0 && (
+        <ul role="status" aria-label="Problems with the order in this link" className="list-none p-0 m-0 flex flex-col gap-1 text-(--muted) text-sm">
+          {eventQuery.sortIssues!.map((m) => <li key={m}>{m}</li>)}
+        </ul>
+      )}
       {typedActive ? (
         <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
           <p className="text-(--muted) text-sm">The typed query is the question, so the filter rows are paused.</p>
@@ -1369,37 +1421,38 @@ export function CardSearch({
                 * "biggest first" did not say whether it meant power or toughness, and there was no
                 * way to turn any order round. Changing the axis resets the direction to its
                 * natural end rather than carrying "lowest first" from mana value into power. */}
-              <div className="flex flex-wrap items-center gap-2">
-                <label className="flex items-center gap-2">
-                  <span className="eyebrow">Order</span>
-                  <select
-                    className="field w-48"
-                    value={orderOf(eventQuery)}
-                    onChange={(e) => {
-                      const { dir: _dir, ...rest } = eventQuery;
-                      setEvents({ ...rest, sort: e.target.value as EventQuery["sort"] });
-                    }}
-                  >
-                    {/* OFFERED ONLY WHEN A CAUSE IS ASKED: there is nothing to measure otherwise. */}
-                    {eventQuery.produce.length > 0 && <option value="effect">How much it does</option>}
-                    <option value="partners">Connections</option>
-                    <option value="mv">Mana value</option>
-                    <option value="pow">Power</option>
-                    <option value="tou">Toughness</option>
-                    {TYPE_COUNTS.map((c) => <option key={c.sort} value={c.sort}>{c.label}</option>)}
-                    <option value="name">Name</option>
-                  </select>
-                </label>
-                {/* NO VISIBLE LABEL: the options read "Highest first" / "A to Z", which says it. */}
-                <select
-                  aria-label="Direction"
-                  className="field w-36"
-                  value={eventQuery.dir ?? NATURAL_DIR[orderOf(eventQuery)]}
-                  onChange={(e) => setEvents({ ...eventQuery, dir: e.target.value as EventQuery["dir"] })}
-                >
-                  <option value="desc">{{ name: "Z to A", effect: "Most first" }[orderOf(eventQuery) as string] ?? "Highest first"}</option>
-                  <option value="asc">{{ name: "A to Z", effect: "Least first" }[orderOf(eventQuery) as string] ?? "Lowest first"}</option>
-                </select>
+              <div className="flex flex-col gap-2">
+                {orderRows.map((row, i) => (
+                  <div key={i} className="flex flex-wrap items-center gap-2">
+                    <label className="flex items-center gap-2">
+                      <span className="eyebrow">{i === 0 ? "Order" : "Then by"}</span>
+                      <select
+                        className="field w-48 max-w-full"
+                        aria-label={i === 0 ? undefined : `Then by, key ${i + 1}`}
+                        value={row.sort ?? ""}
+                        onChange={(e) => setOrderKey(i, e.target.value)}
+                      >
+                        {row.sort === null && <option value="">None</option>}
+                        {i > 0 && row.sort !== null && <option value="">None (drop this one)</option>}
+                        {ORDER_KEYS.filter((k) => (k !== "effect" || eventQuery.produce.length > 0) && (k === row.sort || !usedKeys.includes(k))).map((k) => (
+                          <option key={k} value={k}>{ORDER_LABEL[k] ?? TYPE_COUNTS.find((c) => c.sort === k)?.label ?? k}</option>
+                        ))}
+                      </select>
+                    </label>
+                    {/* NO VISIBLE LABEL: the options read "Highest first" / "A to Z", which says it. */}
+                    {row.sort !== null && (
+                      <select
+                        aria-label={i === 0 ? "Direction" : `Direction of key ${i + 1}`}
+                        className="field w-36 max-w-full"
+                        value={row.dir}
+                        onChange={(e) => setOrderDir(i, e.target.value as "asc" | "desc")}
+                      >
+                        <option value="desc">{{ name: "Z to A", effect: "Most first" }[row.sort as string] ?? "Highest first"}</option>
+                        <option value="asc">{{ name: "A to Z", effect: "Least first" }[row.sort as string] ?? "Lowest first"}</option>
+                      </select>
+                    )}
+                  </div>
+                ))}
               </div>
             </div>
             {/* A CHANGELING IS EVERY CREATURE TYPE (CR 702.73a), so "not a Borg" hides it, and that is said, with the way
