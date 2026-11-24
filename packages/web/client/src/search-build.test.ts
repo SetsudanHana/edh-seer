@@ -151,7 +151,8 @@ test("a group with a file and no budget fails the build, and promotes nothing", 
 
 test("--check passes on a clean registry and names a stale per-path entry; it promotes nothing", () => {
   const root = fakeStatic();
-  const ok = run(["--static", root, "--check", ...withRegistry(root, () => {})]);
+  // the tiny fixture builds no grammar, roles or answers, so the labels that name those are not stale here, just absent from it
+  const ok = run(["--static", root, "--check", ...withRegistry(root, (g) => { for (const k of Object.keys(g.fields)) if (k.startsWith("tags.abilities.") || ["r", "a", "n", "unknownTriggers"].includes(k)) delete g.fields[k]; })]);
   expect(ok.status, ok.stderr + ok.stdout).toBe(0);
   const bad = run(["--static", root, "--check", ...withRegistry(root, (g) => { g.fields["tags.gone"] = { label: "Gone" }; })]);
   expect(bad.status).not.toBe(0);
@@ -216,7 +217,7 @@ test("shards derived before #1785 build no `cares` field: a question about it is
   const root = payoffStatic(false);
   const built = run(["--static", root]);
   expect(built.status, built.stderr + built.stdout).toBe(0);
-  expect(built.stdout).toMatch(/computed fields not built: cares \(no card holds tags\.abilities\.effect\.distinctCount\.counts, tags\.abilities\.thresholdDistinct\.counts\)/);
+  expect(built.stdout).toMatch(/computed fields not built: cares \(no card holds .*tags\.abilities\.effect\.distinctCount\.counts.*tags\.abilities\.thresholdDistinct\.counts/);
   const ctx = clientColumns(root);
   expect(evaluate({ field: "cares", op: "has", value: "card-types" }, ctx)).toEqual({ ok: false, cannotAnswer: ["unknown field cares"] });
 });
@@ -238,4 +239,113 @@ test("--verify passes with Mistform among the every-type cards and FAILS on a gr
   const bad = run(["--static", withExtra("Omo, Queen of Vesuva"), "--creatures", "borg,elf,human,wizard", "--verify"]);
   expect(bad.status).toBe(1);
   expect(bad.stderr).toMatch(/neither a changeling nor on the by-text list.*Omo, Queen of Vesuva/);
+});
+
+// #1784: the grammar's own paths, the read state, roles and answers, from production cards (DERIVE 594 tree, 2026-11-24), derived HERE with the real engine. Every card is one our grammar reads completely (a source document and nothing else) but Dragon's Rage Channeler, which carries its stored clauses.
+import abilityFx from "./fixtures/abilities-1784.fixtures.json" with { type: "json" };
+import { buildSchema } from "./lib/search/schema.js";
+import { parse, toNode } from "./lib/search/query.js";
+
+const ABILITY_NAMES = Object.keys(abilityFx);
+// the name-index rows' own codes: roles index BUILD_CATEGORIES (ramp 0, draw 1, ...), answers POOL_CLASSES (creature 0, ...)
+const ROW_CODES: Record<string, object> = { "Priest of Titania": { r: [0] }, "Blast Zone": { r: [12], a: [4], n: [4] }, "Valkyrie's Call": { r: [9], a: [5] }, "Necromancy": { r: [1] } };
+function abilityStatic(): string {
+  const root = mkdtempSync(join(tmpdir(), "search-abilities-"));
+  const v = join(root, "v-t");
+  mkdirSync(join(v, "cards"), { recursive: true });
+  writeFileSync(join(root, "manifest.json"), JSON.stringify({ version: "v-t", deriveVersion: 594 }));
+  // one row with no shard record at all, as the real artifact has
+  const rows = [...ABILITY_NAMES, "Ghost"].map((name) => ({ slug: name.toLowerCase(), name, identity: [], t: [0], s: [0], ...ROW_CODES[name] }));
+  writeFileSync(join(v, "name-index.json"), JSON.stringify({ types: ["creature"], subtypes: ["elf"], keywords: [], cards: rows }));
+  const shard: Record<string, unknown> = {};
+  for (const name of ABILITY_NAMES) {
+    const { source: src, canonical } = (abilityFx as unknown as Record<string, { source: Record<string, unknown>; canonical?: ClauseRecord[] }>)[name]!;
+    const g = canonical === undefined ? grammarClauseRecords(src as never) : undefined;
+    const tags = deriveCardTags(deriveInputOf(src as never, name, name, g ? g.records : canonical!, undefined, g?.readings));
+    // `clauseSource` is written by derive-corpus, not by the derivation: a card with stored clauses was read by the model
+    shard[name.toLowerCase()] = { card: { name }, tags: { ...tags, clauseSource: g ? "grammar" : "model" } };
+  }
+  writeFileSync(join(v, "cards", "0000.json"), JSON.stringify(shard));
+  return root;
+}
+const catalogueOf = (root: string): Catalogue => JSON.parse(readFileSync(join(root, "v-t", "search", manifest(root).search, "catalogue.json"), "utf8")) as Catalogue;
+const rowsOf = (ctx: EvalContext, node: Parameters<typeof evaluate>[0]): string[] => {
+  const r = evaluate(node, ctx);
+  if (!r.ok) throw new Error(r.cannotAnswer.join("; "));
+  return r.rows.map((i) => (i < ABILITY_NAMES.length ? ABILITY_NAMES[i]! : "Ghost")).sort();
+};
+
+test("the acceptance query, typed as `ab.count.scalesWith.notSubtype:borg`, returns Infinite Diversity from the BUILT artifact (#1784)", () => {
+  const root = abilityStatic();
+  const built = run(["--static", root]);
+  expect(built.status, built.stderr + built.stdout).toBe(0);
+  const cat = catalogueOf(root);
+  const f = cat.groups["abilities"]!.fields.find((x) => x.id === "tags.abilities.count.scalesWith.notSubtype")!;
+  expect(f.alias).toBe("ab.count.scalesWith.notSubtype");
+  expect(f).toMatchObject({ ability: true, advanced: true, label: "Grows with, leaving out a creature type" });
+  const schema = buildSchema({ vocabulary: { types: ["creature"], subtypes: ["elf"], keywords: [] }, catalogue: cat, hasCardColours: false, events: null });
+  const parsed = parse("ab.count.scalesWith.notSubtype:borg", schema);
+  expect(parsed.ok, JSON.stringify(parsed)).toBe(true);
+  if (!parsed.ok) return;
+  expect(rowsOf(clientColumns(root), toNode(parsed.ast!, () => [])!)).toEqual(["Infinite Diversity"]);
+  // the id spelled in full is the same field
+  expect(parse("tags.abilities.count.scalesWith.notSubtype:borg", schema).ok).toBe(true);
+  // an unknown path is a refusal that names it, never an empty list
+  const nope = parse("ab.count.scalesWith.nonesuch:borg", schema);
+  expect(nope.ok).toBe(false);
+  expect(evaluate({ field: "tags.abilities.nonesuch", op: "has", value: "x" }, clientColumns(root))).toEqual({ ok: false, cannotAnswer: ["unknown field tags.abilities.nonesuch"] });
+});
+
+test("the `read` values sum to the indexed total, and a row with no record is counted, not dropped (#1784)", () => {
+  const root = abilityStatic();
+  expect(run(["--static", root]).status).toBe(0);
+  const read = catalogueOf(root).groups["read"]!.fields.find((x) => x.id === "read")!;
+  const total = ABILITY_NAMES.length + 1;
+  expect(read.values!.reduce((n, v) => n + v.n, 0)).toBe(total);
+  expect(read.values).toEqual([{ v: "grammar", n: ABILITY_NAMES.length - 1 }, { v: "model", n: 1 }, { v: "no-record", n: 1 }]);
+  const ctx = clientColumns(root);
+  expect(rowsOf(ctx, { field: "read", op: "has", value: "no-record" })).toEqual(["Ghost"]);
+  // `unknownTriggers`: the cards whose trigger wording our rules did not read
+  expect(rowsOf(ctx, { field: "unknownTriggers", op: "has", value: "present" })).toEqual(["Betor, Kin to All", "Necromancy", "Path of Ancestry", "Witch's Cottage"]);
+});
+
+test("grants:creature-types, counts:excluding-a-type and cares:one-type-count each name a known card and leave a known non-member out (#1784)", () => {
+  const root = abilityStatic();
+  const built = run(["--static", root]);
+  expect(built.status, built.stderr + built.stdout).toBe(0);
+  const ctx = clientColumns(root);
+  const has = (field: string, value: string) => rowsOf(ctx, { field, op: "has", value });
+  // a chosen creature type, and a named one
+  expect(has("grants", "creature-types")).toEqual(["Valkyrie's Call", "Xenograft"]);
+  // a count that leaves a type out: non-Borg creatures, noncreature permanents; and not a TRIGGER that leaves one out (Valkyrie's Call)
+  expect(has("counts", "excluding-a-type")).toEqual(["Blast Zone", "Glorious Protector", "Hour of Revelation", "Infinite Diversity", "The Third Doctor"]);
+  // how many of ONE creature type; the distinct-type counters stay in `creature-types`, not here
+  // (Witch's Cottage counts Swamps: a land type, not a creature type)
+  expect(has("cares", "one-type-count")).toEqual(["Krenko, Mob Boss", "Priest of Titania"]);
+  expect(has("cares", "creature-types")).toEqual(["Infinite Diversity", "Valiant Changeling"]);
+  const cat = catalogueOf(root);
+  expect(cat.groups["abilities"]!.fields.find((x) => x.id === "grants")).toMatchObject({ label: "Gives something a type", ability: true });
+  expect(cat.groups["abilities"]!.fields.find((x) => x.id === "grants")!.advanced).toBeUndefined();
+});
+
+test("roles and answer classes are ordinary fields over the name-index row codes (#1784)", () => {
+  const root = abilityStatic();
+  expect(run(["--static", root]).status).toBe(0);
+  const ctx = clientColumns(root);
+  const has = (field: string, value: string) => rowsOf(ctx, { field, op: "has", value });
+  expect(has("r", "ramp")).toEqual(["Priest of Titania"]);
+  expect(has("r", "lands")).toEqual(["Blast Zone"]);
+  expect(has("a", "graveyard")).toEqual(["Valkyrie's Call"]);
+  expect(has("n", "land")).toEqual(["Blast Zone"]);
+  const cat = catalogueOf(root);
+  const r = cat.groups["roles"]!.fields.find((x) => x.id === "r")!;
+  expect(r).toMatchObject({ label: "Build role", alias: "role" });
+  expect(r.valueLabels!["targetedRemoval"]).toBe("targeted removal");
+});
+
+test("each group stays under its budget in the built artifact (#1784)", () => {
+  const root = abilityStatic();
+  expect(run(["--static", root]).status).toBe(0);
+  const budgets = JSON.parse(readFileSync(REGISTRY, "utf8")).budgets as Record<string, number>;
+  for (const [name, g] of Object.entries(catalogueOf(root).groups)) if (g.file) expect(g.gzipBytes!, name).toBeLessThan(budgets[name]!);
 });

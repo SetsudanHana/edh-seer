@@ -4,7 +4,9 @@
     "read": 50000,
     "faces": 20000,
     "catalogue": 100000,
-    "payoffs": 4000
+    "payoffs": 4000,
+    "abilities": 550000,
+    "roles": 30000
   },
   "groups": {
     "types": [],
@@ -15,7 +17,11 @@
     "payoffs": [
       "tags.abilities.effect.distinctCount.counts",
       "tags.abilities.thresholdDistinct.counts"
-    ]
+    ],
+    "abilities": [
+      "tags.abilities"
+    ],
+    "roles": []
   },
   "fields": {
     "t": {
@@ -63,11 +69,176 @@
     },
     "cares": {
       "label": "Cares about",
-      "description": "A payoff whose rules count how many different types you have, read from our own rules (a scaling count or a threshold such as delirium), not from the card's words. Not complete: six delirium cards whose condition our rules do not read yet are missing (Prophetic Titan, Let's Play a Game, Patchwork Beastie, Convert to Slime, both Winters).",
+      "description": "A payoff whose rules count types, read from our own rules and not from the card's words: how many different card types, how many different creature types, or how many of one creature type. Not complete: six delirium cards whose condition our rules do not read yet are missing (Prophetic Titan, Let's Play a Game, Patchwork Beastie, Convert to Slime, both Winters).",
       "valueLabels": {
         "card-types": "how many card types",
-        "creature-types": "how many creature types"
+        "creature-types": "how many creature types",
+        "one-type-count": "how many of one creature type"
       }
+    },
+    "r": {
+      "label": "Build role",
+      "description": "The jobs a deck builder would give the card: ramp, draw, removal and so on, from the same checks the deck report uses.",
+      "alias": "role",
+      "valueLabels": {
+        "ramp": "ramp",
+        "draw": "draw",
+        "cardSelection": "card selection",
+        "impulseDraw": "impulse draw",
+        "targetedRemoval": "targeted removal",
+        "stackInteraction": "counterspell or stack interaction",
+        "boardWipe": "board wipe",
+        "burn": "burn",
+        "stax": "stax",
+        "protection": "protection",
+        "tutor": "tutor",
+        "graveyardHate": "graveyard hate",
+        "lands": "land",
+        "handFill": "refills your hand"
+      }
+    },
+    "a": {
+      "label": "Answers",
+      "description": "The kinds of permanent the card can remove or answer: creatures, artifacts, enchantments, planeswalkers, lands, or cards in a graveyard.",
+      "alias": "answers",
+      "valueLabels": {
+        "creature": "creatures",
+        "artifact": "artifacts",
+        "enchantment": "enchantments",
+        "planeswalker": "planeswalkers",
+        "land": "lands",
+        "graveyard": "graveyards"
+      }
+    },
+    "n": {
+      "label": "Answers, only narrowly",
+      "description": "Of the answers above, the ones that come with a catch: a colour hoser, an Aura-only answer, a narrow noun.",
+      "alias": "narrow",
+      "valueLabels": {
+        "creature": "creatures",
+        "artifact": "artifacts",
+        "enchantment": "enchantments",
+        "planeswalker": "planeswalkers",
+        "land": "lands",
+        "graveyard": "graveyards"
+      }
+    },
+    "unknownTriggers": {
+      "label": "Triggers we could not read",
+      "description": "The card has a trigger whose wording our rules do not read yet, so what it does at that moment is not in the other fields.",
+      "valueLabels": {
+        "present": "has one"
+      }
+    },
+    "grants": {
+      "label": "Gives something a type",
+      "description": "A card that makes things a creature type, named or chosen as it comes in (Arcane Adaptation, Valkyrie's Call). Not complete: a card that makes things every creature type (Maskwood Nexus, Omo) names no one type, so it is not here.",
+      "valueLabels": {
+        "creature-types": "a creature type"
+      }
+    },
+    "counts": {
+      "label": "Counts something",
+      "description": "A count that leaves something out, such as the number of creature types among non-Borg creatures you control.",
+      "valueLabels": {
+        "excluding-a-type": "leaving out a type"
+      }
+    },
+    "tags.abilities.kind": {
+      "label": "Ability type",
+      "description": "Whether the ability is static, triggered, activated or a cast effect."
+    },
+    "tags.abilities.effect.kind": {
+      "label": "What it does",
+      "description": "The kind of effect the ability has, in our own words (token-generation, type-grant, copy-spell and so on)."
+    },
+    "tags.abilities.emits.verb": {
+      "label": "Events it causes",
+      "description": "What happens at the table when it resolves: dies, enters, draws, and so on."
+    },
+    "tags.abilities.emits.subject.type": {
+      "label": "Events: card type affected",
+      "description": "The card type of the things those events happen to."
+    },
+    "tags.abilities.emits.subject.subtype": {
+      "label": "Events: creature type affected",
+      "description": "The creature type of the things those events happen to."
+    },
+    "tags.abilities.trigger.verbs": {
+      "label": "Triggers when",
+      "description": "The event a triggered ability waits for."
+    },
+    "tags.abilities.trigger.subject.type": {
+      "label": "Triggers on a card type",
+      "description": "The card type of what the trigger watches."
+    },
+    "tags.abilities.trigger.subject.subtype": {
+      "label": "Triggers on a creature type",
+      "description": "The creature type of what the trigger watches."
+    },
+    "tags.abilities.repeats": {
+      "label": "How often it happens",
+      "description": "Once, every turn, every time it can, or for as long as the card is out."
+    },
+    "tags.abilities.count.floor": {
+      "label": "Fewest times",
+      "description": "The least number of times the ability does its thing."
+    },
+    "tags.abilities.count.ceiling": {
+      "label": "Most times",
+      "description": "The most times the ability does its thing."
+    },
+    "tags.abilities.count.scalesWith.type": {
+      "label": "Grows with a card type",
+      "description": "A count that grows with how many permanents of one card type there are."
+    },
+    "tags.abilities.count.scalesWith.subtype": {
+      "label": "Grows with a creature type",
+      "description": "A count that grows with how many of one creature type there are, like 'for each Elf'."
+    },
+    "tags.abilities.count.scalesWith.notSubtype": {
+      "label": "Grows with, leaving out a creature type",
+      "description": "A count that leaves one creature type out, such as 'non-Borg creatures you control'."
+    },
+    "tags.abilities.count.scalesWith.notType": {
+      "label": "Grows with, leaving out a card type",
+      "description": "A count that leaves one card type out, such as 'noncreature permanents'."
+    },
+    "tags.abilities.count.scalesWith.control": {
+      "label": "Grows with whose things",
+      "description": "Whether the count looks at your things, an opponent's, or anyone's."
+    },
+    "tags.abilities.payment.tap": {
+      "label": "Costs a tap",
+      "description": "The ability asks you to tap the card."
+    },
+    "tags.abilities.payment.sacrifice.subject.type": {
+      "label": "Costs a sacrifice of a card type",
+      "description": "The card type you have to sacrifice to pay."
+    },
+    "tags.abilities.payment.life": {
+      "label": "Costs life",
+      "description": "The ability asks you to pay life."
+    },
+    "tags.abilities.grants": {
+      "label": "Gives an ability",
+      "description": "The keyword abilities the ability hands out (flying, haste and so on)."
+    },
+    "tags.abilities.grantsType": {
+      "label": "Gives a type",
+      "description": "A type the ability adds to things, such as Angel or artifact."
+    },
+    "tags.abilities.gate.kind": {
+      "label": "Only if",
+      "description": "The kind of condition the ability waits on."
+    },
+    "tags.abilities.threshold.atLeast": {
+      "label": "Threshold, at least",
+      "description": "The number a threshold needs: seven cards, three counters, and so on."
+    },
+    "tags.abilities.effect.scaling": {
+      "label": "Scales per",
+      "description": "What the effect grows with, such as per creature."
     }
   },
   "namedLists": {
@@ -138,7 +309,14 @@
     "*.printingId",
     "*.artCrop",
     "*.clause",
-    "*.grantedBy"
+    "*.grantedBy",
+    "tags.abilities.amount",
+    "tags.abilities.cost",
+    "tags.abilities.gate.text",
+    "tags.abilities.payment.other",
+    "tags.abilities.unless.cost",
+    "*.named",
+    "*.notNamed"
   ],
   "derivedSets": {
     "cares": {
@@ -151,8 +329,40 @@
         "creature-types": [
           "tags.abilities.effect.distinctCount.counts=creature-type",
           "tags.abilities.thresholdDistinct.counts=creature-type"
+        ],
+        "one-type-count": [
+          "tags.abilities.count.scalesWith.subtype@creature",
+          "tags.abilities.effect.scalingSubject.subtype@creature",
+          "tags.abilities.thresholdSubject.subtype@creature"
+        ]
+      }
+    },
+    "grants": {
+      "group": "abilities",
+      "values": {
+        "creature-types": [
+          "tags.abilities.grantsChosen=creature-type",
+          "tags.abilities.grantsType@creature"
+        ]
+      }
+    },
+    "counts": {
+      "group": "abilities",
+      "values": {
+        "excluding-a-type": [
+          "tags.abilities.count.scalesWith.notSubtype=*",
+          "tags.abilities.count.scalesWith.notType=*",
+          "tags.abilities.effect.scalingSubject.notSubtype=*",
+          "tags.abilities.effect.scalingSubject.notType=*",
+          "tags.abilities.thresholdSubject.notType=*"
         ]
       }
     }
-  }
+  },
+  "pathAliases": {
+    "tags.abilities.": "ab."
+  },
+  "abilityPrefixes": [
+    "tags.abilities"
+  ]
 }
