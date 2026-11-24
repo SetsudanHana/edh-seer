@@ -51,6 +51,7 @@
     "./ratings-diff": "./src/ratings-diff.ts",
     "./types": "./src/types.ts",
     "./wincon": "./src/wincon.ts",
+    "./verbs": "./src/verbs.ts",
     "./zones": "./src/zones.ts",
     "./typeline": "./src/typeline.ts",
     "./eval-pairs-core": "./src/eval-pairs-core.ts",

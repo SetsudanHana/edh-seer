@@ -51,6 +51,13 @@ test("every static effect kind has a table entry, so a new kind fails here", () 
   expect(STATIC_KEYS.filter((k) => THEME_NAMES[k] === undefined)).toEqual([]);
 });
 
+/** #1170 PR 2: "<Subject> <verb>" ("Creature goad", "Dragon behold") is the template a row falls to when it
+ *  has no typed form. Every row has one now, so no census key and no vocabulary key reads that way. */
+test("no vocabulary key and no census key resolves through the default '<Subject> <verb>' template", () => {
+  const defaulted = [...VOCAB_KEYS, ...DECK_KEYS].filter((k) => tagNameSource(k) === "verb-default");
+  expect(defaulted.map((k) => `${k} -> ${tagName(k)}`)).toEqual([]);
+});
+
 test("no vocabulary key and no calibration key is named by the last-resort fallback", () => {
   const fallen = [...VOCAB_KEYS, ...DECK_KEYS].filter((k) => tagNameSource(k) === "fallback");
   expect(fallen).toEqual([]);

@@ -64,13 +64,9 @@ const plural = (n: number, one: string, many = `${one}s`): string => `${fmtCount
 // The demand vocabulary now lives in `lib/demand-sentence.ts` so `lib/findings.ts` can reach it
 // without a lib -> component import. Re-exported here because this file is where every existing
 // caller and the completeness test already look for it.
-/** `DEMAND_VERB`/`DEMAND_PHASE`/`DEMAND_SUBJECTLESS` are re-exported ONLY for the completeness test
- *  (`components.test.tsx`), which walks them against `@edh-seer/tagger`'s `VERB_VOCAB` and
- *  `@edh-seer/matcher`'s `PHASE_VERBS` — the two engine lists that define what a census key's verb half
- *  can ever be. Not a public API otherwise; read `demandSentence` if you want the rendering. */
-import { demandSentence, DEMAND_VERB, DEMAND_PHASE, DEMAND_SUBJECTLESS } from "../lib/demand-sentence.js";
+import { demandSentence } from "../lib/demand-sentence.js";
 import { colourRowLabel, lastingRamp, unreadNote } from "../lib/findings.js";
-export { demandSentence, DEMAND_VERB, DEMAND_PHASE, DEMAND_SUBJECTLESS };
+export { demandSentence };
 
 /** Stable ids for the four deck-math groups. The sub-tabs route these to three different panels,
  *  and they select by ID rather than by the visible title so a copy edit cannot silently unwire a

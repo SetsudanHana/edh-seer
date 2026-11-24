@@ -226,10 +226,11 @@ describe("CardInspector type line", () => {
   });
 });
 
-/** AND THE PANEL MUST ACTUALLY USE IT. `demand-sentence.test.ts` pins `tagLabel` itself, and
- *  mutating the inspector back to `{t}` left that test green -- the recorded trap in this repo:
- *  a probe that calls the inner function does not test the gate that selects it. This asserts the
- *  rendered CHIP, so the raw key cannot come back through the call site. */
+/** THE CHIP NAMES A TAG KEY, SO IT READS THE KEY'S ONE NAME (#1170 PR 2, owner: "one name per key
+ *  everywhere ... chips"): `tagName`, the same words as the headline, the theme bar and the orbit disc.
+ *  This asserts the rendered CHIP, so a mutation of the call site back to the raw key, or to a second
+ *  vocabulary, fails here. A card's DEMAND SENTENCE ("a creature entering the battlefield", in the
+ *  relationship rows below the chips) is a sentence about an event, not a key's name, and stays. */
 describe("CardInspector tag chips", () => {
   const node = {
     id: "Grim Haruspex", label: "Grim Haruspex", copies: 1,
@@ -244,7 +245,7 @@ describe("CardInspector tag chips", () => {
 
   it("labels a relationship's tags instead of printing the raw key", () => {
     render(<CardInspector node={node as never} edges={edges as never} onClose={() => {}} />);
-    expect(screen.getByText("Entering the battlefield · creature")).toBeInTheDocument();
+    expect(screen.getByText("Creature ETBs")).toBeInTheDocument();
     expect(screen.queryByText("enters:creature")).toBeNull();
   });
 });

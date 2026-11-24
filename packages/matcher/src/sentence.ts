@@ -5,6 +5,7 @@
  *
  *  The vocabulary this replaces was the ENGINE'S, not Magic's: "supplies it" appeared in both the
  *  precon player's and the deck tuner's unknown-word lists on the same day. */
+import { verbEntry } from "./verbs.js";
 
 /** kind -> [with amount, without amount]. A kind absent here yields null, which is rung 3 of the
  *  ladder: we say the payoff triggers and claim nothing about what it does. */
@@ -288,110 +289,9 @@ export function effectPhrase(
  *  `dedupeReasons` key on tag, so nothing collapses), and a reader does not need to be told which of
  *  Scrap Trawler's two typed triggers fired, only that Executioner's Capsule caused a death and
  *  Scrap Trawler responded to it. */
-// Exported only so a completeness test can walk it against @edh-seer/tagger's VERB_VOCAB -- this table
-// grows every time this project adds a verb, and the naive fallback below is wrong for every
-// noun-shaped one, so a forgotten entry must fail a test rather than ship silently.
-export const VERB_PHRASES: Record<string, string> = {
-  enters: "enters",
-  "enters-graveyard": "hits the graveyard",
-  unlock: "is fully unlocked",
-  dies: "dies",
-  leaves: "leaves the battlefield",
-  // A `leaves` demand whose subject names the graveyard (Desecrated Tomb, Fang) -- keyed apart from a
-  // battlefield leave by `zoneEventKey` so the sentence cannot say "battlefield" about a graveyard.
-  "leaves-graveyard": "leaves a graveyard",
-  cast: "is cast",
-  attacks: "attacks",
-  // CR 509.1a: only a creature blocks. #1373.
-  blocks: "blocks",
-  // CR 509.1h: an attacking creature with blockers declared for it becomes blocked. #1375.
-  "becomes-blocked": "becomes blocked",
-  taps: "becomes tapped",
-  untaps: "untaps",
-  "counter-added": "gets a counter",
-  "counter-removed": "loses a counter",
-  // AC11 batch 2, the object events.
-  shuffle: "shuffles a library",
-  transform: "transforms",
-  "turned-face-up": "is turned face up",
-  copy: "is copied",
-  reveal: "is revealed",
-  attached: "becomes attached",
-  unattached: "becomes unattached",
-  "gains-control": "changes control",
-  "phases-out": "phases out",
-  regenerate: "regenerates",
-  prevented: "has damage prevented",
-  exchange: "is exchanged",
-  double: "is doubled",
-  triple: "is tripled",
-  // AC11 batch 3, the keyword actions.
-  goad: "goads a creature",
-  exert: "exerts a creature",
-  detain: "detains something",
-  suspect: "suspects a creature",
-  harness: "harnesses something",
-  vote: "holds a vote",
-  clash: "clashes",
-  fateseal: "fateseals",
-  behold: "beholds",
-  heal: "heals",
-  convert: "converts",
-  explore: "explores",
-  endure: "endures",
-  learn: "learns",
-  forage: "forages",
-  "time-travel": "time travels",
-  "collect-evidence": "collects evidence",
-  "venture-into-the-dungeon": "ventures into the dungeon",
-  "face-a-villainous-choice": "poses a villainous choice",
-  airbend: "airbends",
-  waterbend: "waterbends",
-  foretell: "foretells",
-  // AC11 batch 4, the designations.
-  "flip-coin": "flips a coin",
-  monarch: "makes you the monarch",
-  initiative: "gives you the initiative",
-  "city-blessing": "gives you the city's blessing",
-  "ring-tempts": "has the Ring tempt you",
-  // CR 722.3a, Reality Fracture.
-  prepared: "becomes prepared",
-  // Star Trek (#1349): a modal spell or ability is the card that poses it.
-  "face-a-dilemma": "poses a dilemma",
-  "loses-game": "makes a player lose the game",
-  "gain-life": "gains life",
-  "lose-life": "makes a player lose life",
-  sacrifice: "sacrifices something",
-  "create-token": "makes a token",
-  proliferate: "proliferates",
-  // The rest of VERB_VOCAB: nouns wearing a verb's job, where "verb + s" reads as nonsense
-  // ("combat-damages", "land-plays", "dice-rolleds").
-  "combat-damage": "deals combat damage",
-  "non-combat-damage": "deals noncombat damage",
-  damaged: "is dealt damage",
-  exiled: "is exiled",
-  draw: "draws a card",
-  discard: "discards a card",
-  mill: "mills a card",
-  // CR 701.22 / 701.25 / 701.23, added 2026-09-07 with the verbs. The naive fallback below would
-  // have shipped "scrys" and "searchs" -- which is the exact silent defect the VERB_PHRASES
-  // coverage test exists to catch, and it caught these.
-  scry: "scries",
-  surveil: "surveils",
-  // Not "searches" alone: the sentence reads "When X searches a library, Y ...", and every consumer
-  // of this event names a library (three watch an opponent's, one your own).
-  search: "searches a library",
-  // CR 701.5, 2026-09-09: the consumer sentence reads "When X counters a spell, Y ...".
-  "counter-spell": "counters a spell",
-  "land-play": "plays a land",
-  "dice-rolled": "rolls a die",
-  // Phase triggers. Nothing in the corpus ever EMITS these (no card supplies your upkeep — see
-  // CLAUDE.md, VERB_VOCAB), so a producer's eventKey should never carry one; kept for completeness
-  // rather than left to the ungrammatical naive fallback below.
-  upkeep: "reaches its upkeep",
-  "begin-combat": "enters combat",
-  "end-step": "reaches the end step",
-};
+// THE VERB PHRASES LIVE IN `verbs.ts` (#1170 PR 2), one record over `VERB_VOCAB` that `tsc` checks.
+/** The phrase that follows a card's name for a verb ("enters", "is cast"); undefined for a verb the engine has not named. */
+const finite = (verb: string): string | undefined => verbEntry(verb)?.finite;
 
 /** Turn a zone-event key ("enters:creature", "dies:artifact") into the verb phrase that follows a
  *  card's name. Unlike `humanizeEvent`, the subject half is dropped: the sentence names the
@@ -415,7 +315,7 @@ export function eventVerbPhrase(key: string): string {
     const who = subject === "you" ? "you" : subject === "opp" ? "an opponent" : "a player";
     return `makes ${who} ${CARD_FLOW[verb]} a card`;
   }
-  return VERB_PHRASES[verb] ?? `${verb.replace(/-/g, " ")}s`;
+  return finite(verb) ?? `${verb.replace(/-/g, " ")}s`;
 }
 
 interface EmitLike { verb: string; conditional?: true; subject: { self?: boolean; ref?: "trigger" | "sentence"; control?: string; token?: boolean | null; subtype?: string | string[]; type?: string | string[]; fromZone?: string } }
@@ -489,7 +389,7 @@ export function emitPhrase(emits: readonly EmitLike[], triggerObject: "it" | "it
   if (lose && who(lose)) return `makes ${who(lose)} lose life`;
   if (has("non-combat-damage")) return "deals damage";
   for (const v of ["counter-spell", "monarch", "initiative", "ring-tempts", "city-blessing", "proliferate", "scry", "surveil", "dice-rolled", "flip-coin"]) {
-    if (has(v)) return VERB_PHRASES[v]!;
+    if (has(v)) return finite(v)!;
   }
   return null;
 }
@@ -827,7 +727,7 @@ export function typeGrantNoun(
  *  (dying) were indistinguishable before it — a sentence that dropped the event would reintroduce
  *  exactly the ambiguity the field was added to remove. */
 export function doublesSentence(producer: string, consumer: string, verb: string): string {
-  return `${producer} doubles ${consumer}'s ${VERB_PHRASES[verb] ?? verb} trigger`;
+  return `${producer} doubles ${consumer}'s ${finite(verb) ?? verb} trigger`;
 }
 
 /** The WHOSE axis: every trigger the consumer has, not one event's. */

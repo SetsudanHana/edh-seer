@@ -4,7 +4,7 @@ import type { CardGraph, DeckReport } from "../types.js";
 import { buildEngineModel } from "./engine-model.js";
 import { mainTheme } from "./main-theme.js";
 import { buildOrbit } from "./orbit-model.js";
-import { tagLabel } from "./demand-sentence.js";
+import { tagName } from "@edh-seer/engine";
 
 /** #1170, owner 2026-11-24: ONE NAME PER KEY. A deck whose theme is `tag` is called one thing by the
  *  headline (cohesion -> mainTheme), the Plan's theme group, and the orbit disc's sector. One deck of
@@ -42,6 +42,7 @@ describe("headline == group name == disc name", () => {
     expect(group?.name).toBe(name);
     const disc = buildOrbit(m, "Hub")!.sectors[0]!.name;
     expect(disc).toBe(name);
-    expect(tagLabel(tag)).not.toMatch(/:/);
+    // The card inspector's chip names the same key, so it reads the same name (#1170 PR 2).
+    expect(tagName(tag)).toBe(name);
   });
 });
