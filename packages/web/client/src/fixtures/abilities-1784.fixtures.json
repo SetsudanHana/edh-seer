@@ -446,5 +446,25 @@
    "layout": "normal",
    "_id": "a98c2d81-4add-4292-bbdd-e1b69ff936d4"
   }
+ },
+ "Soulless One": {
+  "source": {
+   "name": "Soulless One",
+   "typeLine": "Creature — Zombie Avatar",
+   "oracleText": "Soulless One's power and toughness are each equal to the number of Zombies on the battlefield plus the number of Zombie cards in all graveyards.",
+   "keywords": [],
+   "colors": [
+    "B"
+   ],
+   "manaValue": 4,
+   "colorIdentity": [
+    "B"
+   ],
+   "power": "*",
+   "toughness": "*",
+   "manaCost": "{3}{B}",
+   "layout": "normal",
+   "_id": "soulless-one-811"
+  }
  }
 }

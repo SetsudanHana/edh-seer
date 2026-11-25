@@ -1,6 +1,7 @@
 import type { CardTags, SubjectFilter } from "@edh-seer/tagger";
 import type { DeckCard, Hierarchy } from "./types.js";
 import { impliesType } from "./hierarchy.js";
+import { countedClassesOf } from "./counted-classes.js";
 import { CREATURE_SUBTYPES } from "@edh-seer/tagger/subtypes";
 import { isEveryCreatureType } from "@edh-seer/tagger/characteristics";
 import { withoutParentheses } from "@edh-seer/tagger/reminder";
@@ -302,7 +303,7 @@ function caresFromTags(tags: CardTags): boolean {
   if (isEveryCreatureType(tags.characteristics)) return true;
   // A TOKEN MAKER (token-generation, or any ability that emits a created token: "amass Orcs" is a counter-placement that creates an Army) names the type of what it makes, not one it cares about.
   const makesToken = (a: CardTags["abilities"][number]): boolean => a.effect.kind === "token-generation" || (a.emits ?? []).some((e) => e.verb === "create-token");
-  return tags.abilities.some((a) => names(a.trigger?.subject) || names(a.doublesOf) || names(a.effect.scalingSubject)
+  return tags.abilities.some((a) => names(a.trigger?.subject) || names(a.doublesOf) || countedClassesOf(a.effect).some(names)
     || (a.effect.kind !== "token-generation" && a.effect.kind !== "clone" && !makesToken(a) && names(a.effect.subject))
     // An EMIT names a type when the card does something to that class: a cost ("Tap five untapped Clerics": a `taps` emit), a sacrifice, a blank effect whose "dies" emit is the chosen type (Tsabo's Decree). Not the TOKEN it
     // makes (`create-token`, or any emit of a `token-generation` ability, or a token subject): an Elf that makes Elf tokens is a body, not a payoff.
@@ -352,7 +353,7 @@ export function refuseUnresolvedChosenTypes(tags: CardTags, oracleText: string |
     || (a.effect.subject === undefined && (a.emits ?? []).length > 0 && (a.emits ?? []).every(chosenEmit)));
   // A COUNT OF THE CHOSEN CLASS (Banner of Kinship, Kindred Charge, Pack's Disdain: "for each creature you control of the chosen type") is the same demand: the number grows with the type. Only the scaling goes; the effect and its
   // type-free emits stay (#1568 review).
-  const scaledChosen = (a: CardTags["abilities"][number]): boolean => chosenCreatureType(a.effect.scalingSubject, cue) || chosenCreatureType(typeof a.count?.scalesWith === "object" ? a.count.scalesWith : undefined, cue);
+  const scaledChosen = (a: CardTags["abilities"][number]): boolean => countedClassesOf(a.effect).some((s) => chosenCreatureType(s, cue)) || chosenCreatureType(typeof a.count?.scalesWith === "object" ? a.count.scalesWith : undefined, cue);
   const touches = (a: CardTags["abilities"][number]): boolean => watches(a) || effectChosen(a) || scaledChosen(a) || (a.emits ?? []).some(chosenEmit);
   const out = !tags.abilities.some(touches) ? tags : {
     ...tags,
@@ -366,7 +367,7 @@ export function refuseUnresolvedChosenTypes(tags: CardTags, oracleText: string |
       // A token maker keeps ALL its emits (the supply of the token, whatever its type) and only loses the trigger.
       const kept = a.effect.kind === "token-generation" ? (emits ?? []) : effectChosen(a) ? [] : (emits ?? []).filter((e) => !chosenEmit(e));
       const scaled = !effectChosen(a) && scaledChosen(a);
-      const { scalingSubject: _s, scaling: _sc, ...effectRest } = rest.effect;
+      const { scalingSubject: _s, scalingAlso: _sa, scaling: _sc, ...effectRest } = rest.effect;
       const { scalesWith: _w, ...countRest } = rest.count ?? {};
       return {
         ...rest,

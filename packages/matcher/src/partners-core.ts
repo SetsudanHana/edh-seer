@@ -1074,9 +1074,8 @@ export const abilityRowsOf = (d: DeckCard): AbilityRow[] => {
   const all = abilitiesOf(d);
   const clauseOf = keywordClauses(d, all);
   return all.map((a) => ({ ...a, ...(a.clause === undefined && clauseOf.has(a) ? { clause: clauseOf.get(a)! } : {}) })).map((a) => {
-    const counted = a.effect?.scalingSubject;
-    // EVERYTHING IT COUNTS. A party count names four types; the first alone read "counts Clerics".
-    const subtype = Array.isArray(counted?.subtype) ? counted?.subtype.join(", ") : counted?.subtype;
+    // EVERYTHING IT COUNTS. A party count names four types; the first alone read "counts Clerics". A summed count names every class (#811).
+    const subtype = [...new Set((a.effect ? countedClassesOf(a.effect) : []).flatMap((c) => Array.isArray(c.subtype) ? c.subtype : c.subtype ? [c.subtype] : []))].join(", ");
     const selfEmits = (a.emits ?? []).filter((e) => e.subject.self === true).map(eventKey);
     return {
       kind: a.kind,
