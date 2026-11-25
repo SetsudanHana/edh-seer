@@ -41,6 +41,12 @@ const OUTSIDE_SOURCE_RE = new RegExp(`^${OUTSIDE_SOURCE}$`);
 // "The owner of up to one target creature draws two cards" (Unification, #1676 review): the owner of a chosen target is anyone (it may be you), so the draw is `any`, not the controller default. Bounded words after "target", no run of spaces to backtrack.
 const GIVEN_TO = "(?:its|their) owners?|that [a-z]+['’]s (?:controller|owner)|the controllers? of each of those [a-z]+|the owners? of (?:up to \\w+|any number of) target [a-z]+(?: [a-z]+){0,3}";
 const GIVEN_TO_RE = new RegExp(`^(?:${GIVEN_TO})$`, "i");
+// THE ACTORS A SACRIFICE NAMES THAT OTHER VERBS DO NOT (#1808): "each foe" (Pir's Whim, Virtus's Maneuver: an opponent) and the controller of a permanent the clause points at ("that creature's controller sacrifices a land" Burning Sands, "target creature's
+// controller sacrifices it" Mercy Killing, "enchanted creature's controller" Parasitic Implant, "target permanent's controller" Reweave, Maarika). Unread they derived `you`: an edict read as your own cost. The controller of a permanent that may be anyone's is `any`
+// (`controlOf`, as "its controller" is after an untargeted trigger). Kept out of `WHO` so the other verbs' cues keep their reach (the draw and lifegain cues read "that creature's controller" through `GIVEN_TO`).
+const SACRIFICE_CONTROLLER = "(?:that|target|enchanted|the) [a-z]+['’]s controller";
+const SACRIFICE_CONTROLLER_RE = new RegExp(`^${SACRIFICE_CONTROLLER}$`, "i");
+const SACRIFICE_ACTORS = `each foe|${SACRIFICE_CONTROLLER}`;
 const WHO = `its controller|their controller|${OUTSIDE_SOURCE}|target opponent|each opponent|each other player|defending player|attacking player|that player|target player|each player|those players`;
 
 /** The actor must sit immediately against its OWN verb. "each opponent loses 1 life and you gain 1
@@ -82,7 +88,7 @@ const CUES: [string, RegExp][] = [
   // object is the opponent's creature, but it parses to `any` -- "of their choice" names no
   // controller the vocabulary knows -- and `any` matched every payoff for YOUR creatures dying.
   // ...AND A CHOOSER'S ", THEN SACRIFICES THE REST" (#1740): "Each player chooses ... , then sacrifices the rest" (Magus of the Balance, Balancing Act), "that player chooses up to two creatures they control, then sacrifices the rest" (Archfiend of Depravity).
-  ["sacrifice", new RegExp(`\\b(${WHO})\\s+${ADVERB}${CHOOSES_THEN}sacrifices?\\b`, "i")],
+  ["sacrifice", new RegExp(`\\b(${WHO}|${SACRIFICE_ACTORS})\\s+${ADVERB}${CHOOSES_THEN}sacrifices?\\b`, "i")],
   // THE DISCARDER IS NAMED BEFORE ITS VERB, NOT ALWAYS AGAINST IT (#1722): "Any number of target players EACH discard ..." (Cabal Conditioning: the players, any of them you) and a verb joined to an earlier one of the same player, "each opponent loses 4 life unless that
   // player sacrifices a nonland permanent of their choice OR DISCARDS a card" (Rottenmouth Viper), "target opponent loses 2 life AND discards a card". Unread, the discard fell to the object's "you control" or the controller default and was yours, which fed no counter of cards in an
   // OPPONENT's graveyard (Wight of Precinct Six, Detritivore). The joined form stops at a period or semicolon, and a "you discard" between is no match (the `yours` test in `actionRecipients`).
@@ -186,7 +192,8 @@ function controlOf(phrase: string, text: string, at: number, ctx: ActorContext, 
   // yours. A target or an opponent named first keeps the removal reading, as does a bare fragment.
   // GIVEN LIFE OR CARDS (#1591, `GIVEN_TO`): anyone, as a benefit to an outside source's controller is below -- Nin, the Pain Artist is aimed at your own creature to draw, and Solitude's life goes to whoever controlled the
   // exiled creature. An opponent only where the words before say one ("target creature an opponent controls"), you where the last target is one "you control".
-  if (GIVEN_TO_RE.test(p) && !OUTSIDE_SOURCE_RE.test(p)) {
+  if (p === "each foe") return "opp";
+  if ((GIVEN_TO_RE.test(p) || (verb === "sacrifice" && SACRIFICE_CONTROLLER_RE.test(p))) && !OUTSIDE_SOURCE_RE.test(p)) {
     const before = text.slice(0, at);
     const lastTarget = before.toLowerCase().lastIndexOf("target ");
     const since = lastTarget < 0 ? "" : before.slice(lastTarget).split(/\b(?:with|equal to|for each|where|the number of)\b/i)[0]!;
@@ -357,6 +364,17 @@ export function actionRecipients(printed: string, ctx: ActorContext = {}): Recor
     // Contested -- yours first, then an opponent's on the same verb (Braids) -- stays unstated.
     if (yours && m && yours.index < m.index) continue;
     if (yours && !m) { out[verb] = "you"; continue; }
+    // "UNLESS THEY SACRIFICE" (#1808, Torment of Venom): "they" is the player the clause named last before it ("Its controller loses 3 life unless they sacrifice ..."), so the sacrifice is that player's. CEILING: the nearest earlier actor phrase of `WHO`, read as for its own verb; none, or "you sacrifice", leaves it unread.
+    if (verb === "sacrifice" && !m) {
+      const they = /\bunless they sacrifices?\b/i.exec(clauseText);
+      if (they) {
+        let last: RegExpExecArray | null = null;
+        for (const w of clauseText.slice(0, they.index).matchAll(new RegExp(`\\b(${WHO}|${SACRIFICE_ACTORS})\\b`, "gi"))) last = w;
+        const control = last ? controlOf(last[1]!, clauseText, last.index, ctx, verb) : undefined;
+        if (control) out[verb] = control;
+      }
+      continue;
+    }
     if (!m) continue;
     const control = controlOf(m[1], clauseText, m.index, ctx, verb);
     // An exile cue speaks only when it states an opponent: "that player exiles the top card of one of their

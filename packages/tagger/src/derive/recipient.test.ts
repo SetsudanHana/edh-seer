@@ -210,8 +210,8 @@ test("the controller of an outside source who is GIVEN something is any; one who
   expect(actionRecipients("Whenever a source an opponent controls deals damage to this creature, that source's controller draws a card.")).toEqual({ draw: "opp" });
   expect(actionRecipients("Whenever a source deals damage to this creature, that source's controller loses 2 life.")).toEqual({ "lose-life": "opp" });
 });
-test("'that creature's controller' is a different referent and stays unread (Burning Sands: a creature of yours dying)", () => {
-  expect(actionRecipients("Whenever a creature dies, that creature's controller sacrifices a land of their choice.")).toEqual({});
+test("'that creature's controller' sacrifices is anyone's, yours included (Burning Sands: a creature of yours dying); it was unread, and the sacrifice derived `you` (#1808)", () => {
+  expect(actionRecipients("Whenever a creature dies, that creature's controller sacrifices a land of their choice.")).toEqual({ sacrifice: "any" });
 });
 /** WHO IS GIVEN LIFE OR CARDS, IN THE OTHER WORDS FOR "its controller" (#1591): "that creature's controller", "its owner", "that artifact's controller". Unread, the gain fell to the controller default and Solitude's
  *  exiled creature handed YOU the life. Anyone, unless the words before prove an opponent or "target ... you control" proves you. Gain-life and draw only. */
