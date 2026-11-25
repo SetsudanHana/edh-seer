@@ -74,6 +74,8 @@ const TESTED: Record<string, string> = {
   "502.3": "derive.test.ts — \"doesn't untap during its controller's untap step\" is `untap-denial` with its duration: continuous (Hold for Questioning, Choke), the next untap step (Frost Trickster), for as long as (Icefall Regent) (#1423)",
   "702.11": "derive.test.ts — hexproof's scoped printed form is `targeting-ban` by spells or abilities your opponents control (Shielding Plax, Canopy Cover, #1423)",
   "702.167a": "derive/craft.test.ts — a craft ability is an activated ability whose cost exiles its materials (#1500)",
+  "702.41a": "derive/artifact-cost-1804.test.ts — affinity for artifacts is a static cost reduction per artifact you control (#1804)",
+  "702.126a": "derive/artifact-cost-1804.test.ts — improvise reads as the same per-artifact cost reduction (#1804)",
   "702.165a": "matcher copy-source.test.ts — backup is a triggered ability: Mirror-Shield Hoplite copies it as copies:triggered, from a card printing the keyword (#1648)",
   "702.18": "derive.test.ts — shroud's scoped printed form is `targeting-ban` with no source restriction (Ground Seal's cards in graveyards, #1423)",
   "115.7": "derive.test.ts — an effect that changes the target(s) of / chooses new targets for a TARGET spell or ability is `retarget`; your own copy's new targets are not (#1266, #491)",

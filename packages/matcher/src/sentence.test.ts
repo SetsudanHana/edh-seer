@@ -340,6 +340,15 @@ test("a board count says what actually grows, and claims nothing where it cannot
   // An effect this map has never seen says the true weak thing rather than inventing a growth.
   expect(boardCountFeedsScaling("A", "B", "some-new-kind")).toContain("does more");
   expect(boardCountFeedsScaling("A", "B")).toContain("does more");
+  // A BLANKED KIND ("" after the live-kill blank of a FACT kind: Whirler Rogue, Scotty) is no growth either: never an empty phrase (#1804).
+  expect(boardCountFeedsScaling("Sol Ring", "Scotty, Chief Engineer", "")).toBe("While you control Sol Ring, Scotty, Chief Engineer counts it and does more");
+});
+
+test("a tap cost, an activation discount and a spell discount say what they do, not that the card grows (#1804)", () => {
+  expect(boardCountFeedsScaling("Sol Ring", "Network Terminal", "draw-card", false, false, "tap")).toBe("Network Terminal can tap Sol Ring to help pay for its ability");
+  expect(boardCountFeedsScaling("Sol Ring", "Etherium Pteramander", "cost-reduction", false, false, "ability-cost")).toBe("Sol Ring makes Etherium Pteramander's ability cheaper");
+  expect(boardCountFeedsScaling("Sol Ring", "Frogmite", "cost-reduction", false, false, "spell-cost")).toBe("Sol Ring makes Frogmite cheaper to cast");
+  expect(boardCountFeedsScaling("Goblin Welder", "Frogmite", "cost-reduction", true, false, "spell-cost")).toBe("Goblin Welder makes artifacts that make Frogmite cheaper to cast");
 });
 
 /** THE KINDS THE ENGINE READ AND THE SENTENCE REFUSED TO SAY. 27.7% of every partner row on the site

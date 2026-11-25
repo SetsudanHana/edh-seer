@@ -1,7 +1,7 @@
 import type { Reason } from "@edh-seer/engine";
 import type { Ability, CardTags, GameEvent, SubjectFilter } from "@edh-seer/tagger";
-import { countedClassesOf } from "./counted-classes.js";
-export { countedClassesOf };
+import { countedClassesOf, tapCostClassesOf } from "./counted-classes.js";
+export { countedClassesOf, tapCostClassesOf };
 import { CREATURE_SUBTYPES, LAND_SUBTYPES } from "@edh-seer/tagger/subtypes";
 import { isEveryCreatureType } from "@edh-seer/tagger/characteristics";
 import { tokenKindsWith } from "@edh-seer/tagger/token-kinds";
@@ -22,6 +22,7 @@ import {
   copySentence, costReductionSentence, temporaryCopySentence, counterPresenceSentence, createsSentence,
   enterAsCopySentence, entersAsCopyOfSentence, fetchSentence, proliferateSentence, counterCostSentence, effectPhrase, phraseKindOf, creatureConditionSentence,
   boardCountFeedsScaling,
+  type CountUse,
   lifeLostFeedsScaling,
   effectTargetNoun,
   emitSubjectNoun, graveyardEnablesRecursion, graveyardFeedsScaling, meldSentence, reasonSentence,
@@ -3387,7 +3388,10 @@ function lifeLostEdges({ p, c, pEvents, reasons }: PairScope): void {
 function boardCountEdges({ p, c, h, pEvents, reasons }: PairScope): void {
   // AN EMBLEM IS NO PERMANENT AND HAS NO TYPES (CR 114.3, 114.5): its printed characteristics (the Ajani emblem's subtype) meet no board count. What it MAKES still does: an emblem that creates creature tokens feeds a creature-token count (#811 review).
   const emblem = p.tags?.characteristics.emblem === true;
-  for (const a of c.tags.abilities) for (const counted of countedClassesOf(a.effect)) {
+  for (const a of c.tags.abilities) for (const [counted, use] of [
+    ...countedClassesOf(a.effect).map((k) => [k, a.effect.costOf === "spell" ? "spell-cost" : a.effect.costOf === "ability" ? "ability-cost" : undefined] as const),
+    ...tapCostClassesOf(a, c.tags.abilities).map((k) => [k, "tap"] as const),
+  ] as (readonly [SubjectFilter, CountUse | undefined])[]) {
     if (counted.zone !== "battlefield") continue;
     if (ROLE_NOT_SYNERGY.has(a.effect.kind)) continue;
     if (!boardCountNarrows(counted)) continue;
@@ -3422,7 +3426,7 @@ function boardCountEdges({ p, c, h, pEvents, reasons }: PairScope): void {
       tag: `scales:${themeSubjectKey(counted)}`,
       text: animatedKind !== undefined
         ? animatedCountSentence(p.card.name, c.card.name, animatedKind, a.effect.kind, whenCast)
-        : boardCountFeedsScaling(p.card.name, c.card.name, a.effect.kind, makes && !printedMeets, whenCast),
+        : boardCountFeedsScaling(p.card.name, c.card.name, a.effect.kind, makes && !printedMeets, whenCast, use),
       effectKind: a.effect.kind,
       // An on-cast count happens once (overview item 6c, see the sibling above).
       repeatability: whenCast ? "oneshot" : a.kind === "static" ? "static" : a.kind === "activated" ? "activated" : "triggered",
