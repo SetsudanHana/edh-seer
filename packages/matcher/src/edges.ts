@@ -1,5 +1,7 @@
 import type { Reason } from "@edh-seer/engine";
 import type { Ability, CardTags, GameEvent, SubjectFilter } from "@edh-seer/tagger";
+import { countedClassesOf } from "./counted-classes.js";
+export { countedClassesOf };
 import { CREATURE_SUBTYPES, LAND_SUBTYPES } from "@edh-seer/tagger/subtypes";
 import { isEveryCreatureType } from "@edh-seer/tagger/characteristics";
 import { tokenKindsWith } from "@edh-seer/tagger/token-kinds";
@@ -2264,7 +2266,7 @@ function withLiveKills<T extends DeckCard>(dc: T, opts: ReasonOptions): T {
       if (why === "self-loss") { const { trigger: _trigger, ...rest } = a; return { ...rest, kind: "static" as const, effect: { kind: "" as const } }; }
       // A `prevention` / `damage-change` that SCALES ("prevent X damage, where X is the number of creatures you control": Shield of the Avatar, Battlefield Medic) keeps the scaling it derived with as a blank (#1469), or the `scales` edges it always formed (20,681 on Shield of the Avatar) go with the kind.
       const blank = (e: Ability["effect"]) => (e.kind === "prevention" || e.kind === "damage-change") && (e.scaling || e.scalingSubject)
-        ? { kind: "" as const, ...(e.scaling ? { scaling: e.scaling } : {}), ...(e.scalingSubject ? { scalingSubject: e.scalingSubject } : {}) } : { kind: "" as const };
+        ? { kind: "" as const, ...(e.scaling ? { scaling: e.scaling } : {}), ...(e.scalingSubject ? { scalingSubject: e.scalingSubject } : {}), ...(e.scalingAlso ? { scalingAlso: e.scalingAlso } : {}) } : { kind: "" as const };
       const b = FACT_KINDS.has(a.effect.kind) ? { ...a, effect: blank(a.effect) } : a;
       return dead(b) ? { ...b, emits: (b.emits ?? []).filter((e) => e.verb !== "dies") } : b;
     }) };
@@ -2454,6 +2456,7 @@ function landPutFor(e: GameEvent, t: GameEvent, landTypes: LandTypes | undefined
   }
   return null;
 }
+
 
 /** The five basic land types, which a board count may name and which never form an edge -- see the
  *  board-count channel for why. */
@@ -3283,8 +3286,9 @@ function graveyardScalingEdges({ p, c, h, opts, pEvents, reasons }: PairScope): 
   for (const raw of selfFillsFirst(pEvents)) {
     if (!(raw.verb === "enters" && raw.subject.zone === "graveyard")) continue;
     const e = graveyardIdentity(p, raw);
-    for (const a of c.tags.abilities) {
-      if (a.effect.scaling !== "per-graveyard" || !a.effect.scalingSubject) continue;
+    for (const a of c.tags.abilities) for (const [i, counted] of countedClassesOf(a.effect).entries()) {
+      // The FIRST class is read under the basis, as before; a later class of a summed count (#811) is a graveyard count by its own zone, under whatever basis the first sets.
+      if (i === 0 ? a.effect.scaling !== "per-graveyard" : counted.zone !== "graveyard") continue;
       // AN UNTYPED COUNT IS A WILDCARD, and `graveyardFillMatches` passes an untyped demand on
       // purpose, so this is where it has to be refused. Rite of Flame counts "cards NAMED Rite of
       // Flame in each graveyard" — a name, which no SubjectFilter can express — and it parsed to
@@ -3300,7 +3304,6 @@ function graveyardScalingEdges({ p, c, h, opts, pEvents, reasons }: PairScope): 
       // Apostle, Rat Colony, Hare Apparent, Persistent Petitioners. A Dragon's Approach deck runs 30
       // copies and the engine cannot see the archetype at all. 35 cards count a name anywhere, 19 of
       // them in a graveyard. That is a roadmap item, not a line of code here.
-      const counted = a.effect.scalingSubject;
       // HISTORIC IS A NARROWING, and refusing it was the one wrong refusal here (roadmap C2b,
       // measured 2026-08-20). Artifact-legendary-or-Saga is a printed class, not a wildcard, so a
       // count restricted to it is not the Riverchurn shape. The population is EXACTLY THREE untyped
@@ -3325,8 +3328,8 @@ function graveyardScalingEdges({ p, c, h, opts, pEvents, reasons }: PairScope): 
       // subtype. The set is now {tax, win-game, extra-turn, extra-phase}.
       if (ROLE_NOT_SYNERGY.has(a.effect.kind)) continue;
       if (e.exiledAtOnce === true) continue; // exiled by the same ability: no card is left to count (#1523 part 2)
-      if (!graveyardFillMatches(e.subject, a.effect.scalingSubject, h, co)) continue;
-      const tag = `scales:${themeSubjectKey(keyedOn(a.effect.scalingSubject, e.subject))}`;
+      if (!graveyardFillMatches(e.subject, counted, h, co)) continue;
+      const tag = `scales:${themeSubjectKey(keyedOn(counted, e.subject))}`;
       if (said.has(tag)) continue;
       said.add(tag);
       reasons.push({
@@ -3382,9 +3385,10 @@ function lifeLostEdges({ p, c, pEvents, reasons }: PairScope): void {
 // `scalingSubject`, same `ROLE_NOT_SYNERGY` gate. What differs is what it compares the count
 // against -- a fill there, a type line here.
 function boardCountEdges({ p, c, h, pEvents, reasons }: PairScope): void {
-  for (const a of c.tags.abilities) {
-    const counted = a.effect.scalingSubject;
-    if (!counted || counted.zone !== "battlefield") continue;
+  // AN EMBLEM IS NO PERMANENT AND HAS NO TYPES (CR 114.3, 114.5): its printed characteristics (the Ajani emblem's subtype) meet no board count. What it MAKES still does: an emblem that creates creature tokens feeds a creature-token count (#811 review).
+  const emblem = p.tags?.characteristics.emblem === true;
+  for (const a of c.tags.abilities) for (const counted of countedClassesOf(a.effect)) {
+    if (counted.zone !== "battlefield") continue;
     if (ROLE_NOT_SYNERGY.has(a.effect.kind)) continue;
     if (!boardCountNarrows(counted)) continue;
     // `zone` IS DROPPED BEFORE THE COMPARISON and `control` IS KEPT, which is the opposite of what
@@ -3401,12 +3405,12 @@ function boardCountEdges({ p, c, h, pEvents, reasons }: PairScope): void {
     const makes = counted.token === true && !COPY_REPLACES_TYPE_CUE.test(p.card.oracleText ?? "") && pEvents.some((e) => e.verb === "create-token" && e.subject.token === true
       && subjectMatches((({ zone: _ez, scope: _sc, ...s }) => s)(e.subject) as SubjectFilter, printed, h));
     const pPrinted = characteristicsSubject(p.tags, p.card.name);
-    const printedMeets = subjectMatches(pPrinted, printed, h);
+    const printedMeets = !emblem && subjectMatches(pPrinted, printed, h);
     // WHAT P BECOMES (#1364 part 2): "for each Elemental you control" counts a land that P animates into an Elemental (Brave the Wilds, Omnath's count). A KINDRED count only (a bare type is the whole board),
     // of your own board, never a token count, and never a card counting itself.
     let animatedKind: string | undefined;
     if (!makes && !printedMeets) {
-      if (counted.token === true || counted.control !== "you" || !namesKindred(printed) || p.card.name === c.card.name) continue;
+      if (emblem || counted.token === true || counted.control !== "you" || !namesKindred(printed) || p.card.name === c.card.name) continue;
       for (const k of animatedKindreds(p.tags, pPrinted)) animatedKind ??= kindredReaching(k, printed, (shape, want) => subjectMatches(shape, want, h));
       if (animatedKind === undefined) continue;
     }
@@ -3637,12 +3641,13 @@ const OFF_BATTLEFIELD_EVENTS: ReadonlySet<string> = new Set(["discard", "draw", 
 /** THE CLASS A COUNT READS FOR A TYPE GRANT: a count that grows with its class (`scalingSubject`), or the class a colour / name / card-type count ranges over (`Effect.distinctCount`, #1680), which no `scales` edge reads.
  *  A granted CARD TYPE adds a type to a card-type count only when the class lacks it, and the granter is a member of the class (Loot counts "other nonland permanents you control": Enchanted Evening, an Enchantment, adds no type to its own count),
  *  so a card-type count is not fed by a granter that already is the type. */
-const countedClassOf = (a: Ability, granted: string, granter?: CardTags): SubjectFilter | undefined => {
-  if (a.effect.scalingSubject) return a.effect.scalingSubject;
+const countedClassOf = (a: Ability, granted: string, granter?: CardTags): SubjectFilter[] => {
+  // EVERY CLASS OF A SUMMED COUNT (#811): Dauntless Dourbark's Treefolk and War Report's artifacts are counted too.
+  if (a.effect.scalingSubject) return countedClassesOf(a.effect);
   const d = a.effect.distinctCount;
-  if (d === undefined) return undefined;
-  if (d.counts === "type" && granter !== undefined && (granter.characteristics.types ?? []).includes(granted)) return undefined;
-  return d.class;
+  if (d === undefined) return [];
+  if (d.counts === "type" && granter !== undefined && (granter.characteristics.types ?? []).includes(granted)) return [];
+  return [d.class];
 };
 
 /** Does the card USE the type `granted` ON THE BATTLEFIELD (derived data only; owner ruling 2026-11-08, #1568 review 2): a trigger on it ("Whenever you sacrifice a Clue", "Whenever an Equipment enters"), a cost or an effect that sacrifices
@@ -3656,7 +3661,7 @@ export function usesGrantedType(tags: CardTags, granted: string, granter?: CardT
     const typed = (s: Partial<SubjectFilter> | undefined): boolean => s !== undefined && s.self !== true && s.named === undefined && (s.zone === undefined || s.zone === "battlefield")
       && (Array.isArray(s.type) ? s.type : s.type ? [s.type] : []).includes(granted) && !(Array.isArray(s.type) ? s.type : [s.type]).includes("spell");
     return tags.abilities.some((a) => (a.trigger !== undefined && !a.trigger.verbs.includes("create-token") && !a.trigger.verbs.includes("cast") && typed(a.trigger.subject))
-      || typed(countedClassOf(a, granted, granter)) || typed(a.thresholdSubject) || a.payment?.sacrifice?.some((x) => typed(x.subject)) === true);
+      || countedClassOf(a, granted, granter).some(typed) || typed(a.thresholdSubject) || a.payment?.sacrifice?.some((x) => typed(x.subject)) === true);
   }
   const names = (s: Partial<SubjectFilter> | undefined): boolean => s !== undefined && s.self !== true && s.named === undefined
     && !(Array.isArray(s.type) ? s.type : [s.type]).includes("spell") && (s.zone === undefined || s.zone === "battlefield") && (s.fromZone === undefined || s.fromZone === "battlefield") && (Array.isArray(s.subtype) ? s.subtype : s.subtype ? [s.subtype] : []).includes(granted);
@@ -3670,7 +3675,7 @@ export function usesGrantedType(tags: CardTags, granted: string, granter?: CardT
     const events = a.trigger !== undefined && !a.trigger.verbs.includes("create-token") && !a.trigger.verbs.includes("cast") && !a.trigger.verbs.some((v) => OFF_BATTLEFIELD_EVENTS.has(v)) && names(a.trigger.subject);
     const lord = !maker && !granting.has(a.clause) && !isGranted && names(a.effect.subject);
     const emitted = !granting.has(a.clause) && !isGranted && a.effect.kind !== "search" && a.effect.kind !== "graveyard-recursion" && a.effect.kind !== "play-from-top" && a.emits?.some((e) => (e.verb === "sacrifice" || e.verb === "attached") && names(e.subject)) === true;
-    return events || lord || emitted || names(countedClassOf(a, granted, granter)) || names(a.thresholdSubject)
+    return events || lord || emitted || countedClassOf(a, granted, granter).some(names) || names(a.thresholdSubject)
       || a.payment?.sacrifice?.some((x) => names(x.subject)) === true
       // Forage (exile three cards from your graveyard or sacrifice a Food) is read from its derived verb, in a trigger ("Whenever you forage") or an effect ("you may forage").
       || (granted === "food" && (a.trigger?.verbs.includes("forage") === true || a.emits?.some((e) => e.verb === "forage") === true || /\bforage\b/i.test(a.cost ?? "")));
@@ -3707,7 +3712,7 @@ export function usesCreatureType(tags: CardTags, card: { name: string; oracleTex
   const out = tags.abilities.some((a) => {
     const maker = (offBattlefield ? OTHER_GRANTER_OR_MAKER : NOT_A_BATTLEFIELD_READER).has(a.effect.kind) || a.emits?.some((e) => e.verb === "create-token") === true;
     return (a.trigger !== undefined && !a.trigger.verbs.includes("create-token") && (offBattlefield || !a.trigger.verbs.includes("cast")) && names(a.trigger.subject))
-      || names(a.doublesOf) || names(a.effect.scalingSubject ?? a.effect.distinctCount?.class) || names(a.thresholdSubject)
+      || names(a.doublesOf) || (a.effect.scalingSubject ? countedClassesOf(a.effect) : a.effect.distinctCount ? [a.effect.distinctCount.class] : []).some(names) || names(a.thresholdSubject)
       || (!maker && names(a.effect.subject))
       || (!maker && (a.emits ?? []).some((e) => e.verb !== "create-token" && e.subject.token !== true && names(e.subject)))
       || a.payment?.sacrifice?.some((x) => names(x.subject)) === true;

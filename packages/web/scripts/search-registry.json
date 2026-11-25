@@ -362,6 +362,7 @@
         ],
         "one-type-count": [
           "tags.abilities.effect.scalingSubject.subtype@creature",
+          "tags.abilities.effect.scalingAlso.subtype@creature",
           "tags.abilities.thresholdSubject.subtype@creature"
         ]
       }

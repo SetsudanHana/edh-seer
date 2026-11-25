@@ -324,7 +324,7 @@ test("grants:creature-types, counts:excluding-a-type and cares:one-type-count ea
   // how many of ONE creature type; the distinct-type counters stay in `creature-types`, not here
   // (Witch's Cottage counts Swamps: a land type, not a creature type)
   // (Zombie Apocalypse and Tivadar's Crusade name a tribe they destroy or cast, which count.scalesWith records, so they are NOT members)
-  expect(has("cares", "one-type-count")).toEqual(["Krenko, Mob Boss", "Priest of Titania"]);
+  expect(has("cares", "one-type-count")).toEqual(["Krenko, Mob Boss", "Priest of Titania", "Soulless One"]); // Soulless One: Zombies on the battlefield plus Zombie cards in all graveyards, a summed count (#811)
   expect(has("cares", "creature-types")).toEqual(["Infinite Diversity", "Valiant Changeling"]);
   const cat = catalogueOf(root);
   expect(cat.groups["abilities"]!.fields.find((x) => x.id === "grants")).toMatchObject({ label: "Gives something a type", ability: true });

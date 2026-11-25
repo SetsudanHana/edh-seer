@@ -14,8 +14,7 @@ const rowOf = (name: string) => {
   return deriveAsCorpus({ doc: { oracleId: name, name, canonical: f.canonical ?? [], segmentHash: f.segmentHash } as never, source: f.source, isToken: false });
 };
 /** The control of each graveyard count (`effect.scalingSubject`), with its `count.scalesWith` control. */
-const scaling = (name: string) => rowOf(name).tags.abilities.filter((a) => a.effect.scalingSubject?.zone === "graveyard")
-  .map((a) => ({ ss: a.effect.scalingSubject!.control, sw: typeof a.count?.scalesWith === "object" ? a.count.scalesWith.control : undefined }));
+const scaling = (name: string) => rowOf(name).tags.abilities.flatMap((a) => [a.effect.scalingSubject, ...(a.effect.scalingAlso ?? [])].filter((s) => s?.zone === "graveyard").map((s) => ({ ss: s!.control, sw: typeof a.count?.scalesWith === "object" ? a.count.scalesWith.control : undefined })));
 /** The control of each recursion's graveyard (`effect.subject`), by clause. */
 const recursion = (name: string) => rowOf(name).tags.abilities.filter((a) => a.effect.kind === "graveyard-recursion" && a.effect.subject?.zone === "graveyard")
   .map((a) => [a.clause, a.effect.subject!.control] as const);
@@ -26,7 +25,7 @@ describe("a graveyard COUNT names whose graveyard it counts", () => {
     ["Detritivore", "opp"], // "nonbasic land cards in your opponents' graveyards"
     ["Nighthawk Scavenger", "opp"], // "card types among cards in your opponents' graveyards"
     ["Consuming Aberration", "opp"], // "the number of cards in your opponents' graveyards"
-    ["Soulless One", "any"], // "Zombies on the battlefield plus ... Zombie cards in all graveyards"
+    ["Soulless One", "any"], // "Zombies on the battlefield plus ... Zombie cards in all graveyards": the graveyard half, `scalingAlso` since #811
   ])("%s -> %s", (name, want) => expect(scaling(name).map((s) => s.ss)).toEqual([want]));
   test("the opponents' counts agree with count.scalesWith", () => {
     for (const n of ["Wight of Precinct Six", "Detritivore", "Nighthawk Scavenger", "Consuming Aberration"]) expect(scaling(n)).toEqual([{ ss: "opp", sw: "opp" }]);
