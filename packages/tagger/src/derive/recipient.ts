@@ -193,6 +193,8 @@ function controlOf(phrase: string, text: string, at: number, ctx: ActorContext, 
   // GIVEN LIFE OR CARDS (#1591, `GIVEN_TO`): anyone, as a benefit to an outside source's controller is below -- Nin, the Pain Artist is aimed at your own creature to draw, and Solitude's life goes to whoever controlled the
   // exiled creature. An opponent only where the words before say one ("target creature an opponent controls"), you where the last target is one "you control".
   if (p === "each foe") return "opp";
+  // "WHENEVER THIS CREATURE BECOMES BLOCKED BY A CREATURE, THAT CREATURE'S CONTROLLER SACRIFICES IT" (Basalt Golem, #1808 review) is the defending player's: a blocker is chosen by the defending player from the creatures THEY control (CR 509.1a), an opponent of the attacker's controller.
+  if (verb === "sacrifice" && SACRIFICE_CONTROLLER_RE.test(p) && /\bbecomes blocked by (?:a|an|another) [a-z ]{0,30}creature\b/i.test(text.slice(0, at))) return "opp";
   if ((GIVEN_TO_RE.test(p) || (verb === "sacrifice" && SACRIFICE_CONTROLLER_RE.test(p))) && !OUTSIDE_SOURCE_RE.test(p)) {
     const before = text.slice(0, at);
     const lastTarget = before.toLowerCase().lastIndexOf("target ");

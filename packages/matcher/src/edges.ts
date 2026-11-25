@@ -4280,7 +4280,7 @@ function fodderEdges({ p, c, h, opts, reasons }: PairScope): void {
   for (const a of c.tags?.abilities ?? []) {
     if (p === c) break;
     const eats = (a.emits ?? []).find((e) => (e.verb === "sacrifice" || (polymorph && REMOVES_OWN.has(e.verb))) && e.subject.self !== true
-      && (e.subject.control === "you" || (e.subject.control === "any" && EACH_PLAYER_SACRIFICES.test(c.card.oracleText ?? ""))));
+      && (e.subject.control === "you" || (polymorph && isPolymorphSwap(e.subject)) || (e.subject.control === "any" && EACH_PLAYER_SACRIFICES.test(c.card.oracleText ?? ""))));
     if (!eats) continue;
     const { zone: _z, scope: _s, ...wanted } = eats.subject;
     const isToken = p.tags?.characteristics.token === true;
@@ -4413,9 +4413,16 @@ const REMOVES_OWN = new Set(["exiled", "sacrifice", "dies", "leaves"]);
 export function isPolymorph(t: { card: { oracleText?: string }; tags?: CardTags | null }): boolean {
   if (/\bsearch/i.test(t.card.oracleText ?? "")) return false;
   const emits = (t.tags?.abilities ?? []).flatMap((a) => a.emits ?? []);
-  const creature = (e: (typeof emits)[number]) => e.subject.self !== true && e.subject.control === "you" && list(e.subject.type).includes("creature");
+  const creature = (e: (typeof emits)[number]) => e.subject.self !== true && (list(e.subject.type).includes("creature") && e.subject.control === "you" || isPolymorphSwap(e.subject));
   return emits.some((e) => e.verb === "enters" && e.subject.fromZone === "library" && creature(e))
     && emits.some((e) => REMOVES_OWN.has(e.verb) && creature(e));
+}
+
+/** THE SWAP OF A TARGETED PERMANENT OF ANY CONTROLLER (owner ruling #962 item 4, "a target-any card is read by its PRIMARY use"; #1808 review): Reweave's "Target permanent's controller sacrifices it. If the player does, they reveal cards ... put that card onto the battlefield". Derive reads
+ *  that controller as `any` (it may be you), so the sacrifice and the card put down are `permanent` / `any` / `target`. It is the polymorph shape widened to any permanent, played to upgrade your own permanent, so it reads as one (fodder, no removal role): Proteus Staff, the owner's own example.
+ *  Exactly that subject: `permanent`, `any`, `target`. Not Reality Scramble ("you") nor Chaos Warp (no card put down by a reveal). */
+export function isPolymorphSwap(s: { control?: string; scope?: string; type?: string | string[]; self?: boolean }): boolean {
+  return s.self !== true && s.control === "any" && s.scope === "target" && list(s.type as never).includes("permanent");
 }
 
 /** "If that card is an enchantment card, it enters tapped and attacking" (Summoner's Grimoire): the

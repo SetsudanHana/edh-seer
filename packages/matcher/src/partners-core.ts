@@ -14,7 +14,7 @@ import type { Card } from "@edh-seer/engine";
 import { ARCHETYPE_LABELS, type Archetype } from "./archetypes.js";
 import { MIN_INDEXABLE_PARTNERS, PARTNER_SHARD_COUNT, isIndexableCard, partnerShardOf } from "./partner-shard.js";
 import { ownSacrificeCost } from "./own-sacrifice.js";
-import { FACT_KINDS, POLYMORPH_HIT_MV, countedClassesOf, tapCostClassesOf, eventTagKey, ROLE_NOT_SYNERGY, WHOLE_DECK_TYPES, abilityIsKind, directedReasons, eventReasonTag, givesAPermanentAway, isPolymorph, meldReason, producerEvents, themeSubjectKey } from "./edges.js";
+import { FACT_KINDS, POLYMORPH_HIT_MV, isPolymorphSwap, countedClassesOf, tapCostClassesOf, eventTagKey, ROLE_NOT_SYNERGY, WHOLE_DECK_TYPES, abilityIsKind, directedReasons, eventReasonTag, givesAPermanentAway, isPolymorph, meldReason, producerEvents, themeSubjectKey } from "./edges.js";
 import { impliedCounterEvents, impliedGraveyardEvents, keywordAbilities, selfFillTypes, selfLeavesTypes } from "./implied.js";
 import { isReflexiveTrigger, isRefusedTrigger, isSelfLoss } from "./claims.js";
 import { parseSubject } from "@edh-seer/tagger/subject";
@@ -1313,7 +1313,7 @@ export const fodderDemandsOf = (d: DeckCard): { key: string; tag: string }[] => 
   return claimingAbilitiesOf(d).flatMap((a) => {
     // A POLYMORPH'S REMOVAL EATS LIKE A SACRIFICE, as in the engine's fodder pass (#964/#965).
     const eats = (a.emits ?? []).find((e) => (e.verb === "sacrifice" || (polymorph && POLYMORPH_EATS.has(e.verb)))
-      && e.subject.control === "you" && e.subject.self !== true);
+      && (e.subject.control === "you" || (polymorph && isPolymorphSwap(e.subject))) && e.subject.self !== true);
     if (!eats) return [];
     const { zone: _z, scope: _s, ...wanted } = eats.subject;
     const subtype = Array.isArray(wanted.subtype) ? wanted.subtype[0] : wanted.subtype;

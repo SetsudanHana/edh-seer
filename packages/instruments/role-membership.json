@@ -12847,7 +12847,6 @@
 "Reviving Vapors": ["role:cardSelection"],
 "Revoke Existence": ["answer:artifact","answer:enchantment","role:targetedRemoval"],
 "Revolutionary Rebuff": ["role:stackInteraction"],
-"Reweave": ["answer:artifact","answer:creature","answer:enchantment","answer:land","answer:planeswalker","role:targetedRemoval"],
 "Rewind": ["role:stackInteraction"],
 "Rewrite History": ["role:draw"],
 "Rex, Cyber-Hound": ["answer:graveyard","role:graveyardHate","wincon:mill"],

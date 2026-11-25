@@ -55,3 +55,9 @@ test("the cue reads the printed words: 'each foe', 'that creature's controller',
   expect(actionRecipients("At the beginning of your upkeep, sacrifice this creature unless you sacrifice a land.")).not.toHaveProperty("sacrifice", "opp");
   expect(actionRecipients("As an additional cost to cast this spell, sacrifice an artifact or creature.")).toEqual({});
 });
+
+// A blocker is the defending player's (CR 509.1a), an opponent of the attacker's controller: Basalt Golem's "that creature's controller" is `opp`, not the `any` of a creature that may be yours (Burning Sands).
+test("'becomes blocked by a creature, that creature's controller sacrifices it' is an opponent's (Basalt Golem)", () => {
+  expect(actionRecipients("Whenever this creature becomes blocked by a creature, that creature's controller sacrifices it at end of combat.")).toEqual({ sacrifice: "opp" });
+  expect(actionRecipients("Whenever a creature dies, that creature's controller sacrifices a land of their choice.")).toEqual({ sacrifice: "any" });
+});
