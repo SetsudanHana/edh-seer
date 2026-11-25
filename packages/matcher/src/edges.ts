@@ -1,6 +1,7 @@
 import type { Reason } from "@edh-seer/engine";
 import type { Ability, CardTags, GameEvent, SubjectFilter } from "@edh-seer/tagger";
 import { countedClassesOf, tapCostClassesOf } from "./counted-classes.js";
+import { ownSacrificeCost } from "./own-sacrifice.js";
 export { countedClassesOf, tapCostClassesOf };
 import { CREATURE_SUBTYPES, LAND_SUBTYPES } from "@edh-seer/tagger/subtypes";
 import { isEveryCreatureType } from "@edh-seer/tagger/characteristics";
@@ -4291,7 +4292,9 @@ function fodderEdges({ p, c, h, opts, reasons }: PairScope): void {
     // "sacrifice an artifact" takes and what a lone "sacrifice a creature" takes, and nothing wider. So a card is narrowed by a type of the list that is NOT the whole deck AND that it is itself (an artifact is fodder, a creature card is not: a token or a
     // card that comes back still is, below). A conjunction ("artifact creature", `allTypes`) is not this: not ruled, still refused. An edict (control not `you`) is an answer, not your cost, and stays out.
     const pTypes = p.tags.characteristics.types ?? [];
-    const disjunct = types.length > 1 && wanted.allTypes === undefined && eats.subject.control === "you" ? types.filter((t) => !WHOLE_DECK_TYPES.has(t) && pTypes.includes(t)) : [];
+    // YOUR OWN COST ONLY, read from the derive's payment and the printed words (see `ownSacrificeCost`): the derive's `control: "you"` also files an edict ("each foe sacrifices"), a victim's option and your own tokens. A "nonland permanent" (`notType`) is no named list.
+    const ownList = types.length > 1 && wanted.allTypes === undefined && ownSacrificeCost(a, eats, c.card.oracleText);
+    const disjunct = ownList ? types.filter((t) => !WHOLE_DECK_TYPES.has(t) && pTypes.includes(t)) : [];
     const narrowType = (types.length === 1 && !WHOLE_DECK_TYPES.has(types[0]!)) || disjunct.length > 0
       || (wanted.stats ?? []).some((st) => st.metric === "power");
     // ON A CARD PAGE NO TOKEN NODE EXISTS (`tokensMediate: false`), so the MAKER stands in for the
@@ -4299,7 +4302,9 @@ function fodderEdges({ p, c, h, opts, reasons }: PairScope): void {
     // report keeps the two-hop path through the node, exactly as the entry channel does.
     const made = (opts.tokensMediate ?? true) ? [] : (p.tags?.abilities ?? []).flatMap((pa) =>
       (pa.emits ?? []).filter((e) => e.verb === "create-token" && e.subject.token === true).map((e) => e.subject));
-    const makes = made.some((s) => subjectMatches({ ...s, token: null }, { ...wanted, token: null }, h));
+    const madeMatch = made.filter((s) => subjectMatches({ ...s, token: null }, { ...wanted, token: null }, h));
+    const makes = madeMatch.length > 0;
+    const madeTypes = madeMatch.flatMap((s) => (Array.isArray(s.type) ? s.type : s.type ? [s.type] : []));
     // FODDER IS WHAT YOU MAKE IN QUANTITY OR WOULD NOT MIND LOSING (owner ruling 2026-09-09, off
     // the debt sheet): "sacrifice fodder is something you can easily create in high quantity, like
     // a token, or something that is cheap and expendable; a 7-mana artifact that has an effect is
@@ -4335,7 +4340,8 @@ function fodderEdges({ p, c, h, opts, reasons }: PairScope): void {
     if (!is && !makes) continue;
     reasons.push({
       // The tag names the type of the list this card IS (the one each demand key of the outlet names), so an artifact is `fodder:artifact` for "artifact or creature" as for a lone artifact outlet.
-      tag: `fodder:${themeSubjectKey(types.length > 1 && wanted.allTypes === undefined && eats.subject.control === "you" ? { ...wanted, type: disjunct[0] ?? types.find((t) => pTypes.includes(t)) ?? types[0]! } : wanted)}`,
+      // A maker (`!is`) stands in for the token it makes, so its tag is that TOKEN's type: a Treasure maker is `fodder:artifact`, not the maker's own `creature`.
+      tag: `fodder:${themeSubjectKey(ownList ? { ...wanted, type: disjunct[0] ?? (is ? types.find((t) => pTypes.includes(t)) : types.find((t) => madeTypes.includes(t))) ?? types[0]! } : wanted)}`,
       text: !is ? `${p.card.name} makes fodder for ${c.card.name}`
         : comesBack && !isToken ? `${p.card.name} is fodder for ${c.card.name}, and ${comesBack} brings it back once`
         : `${p.card.name} is fodder for ${c.card.name}`,

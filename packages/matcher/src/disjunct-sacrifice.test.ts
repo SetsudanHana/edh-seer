@@ -62,3 +62,38 @@ test("a lone-type outlet is unchanged: Lobelia (sacrifice an artifact) still tak
   expect(fodder(dc("Sol Ring"), dc("Lobelia, Defender of Bag End")).map((r) => r.tag)).toEqual(["fodder:artifact"]);
   expect(fodder(dc("Llanowar Elves"), dc("Viscera Seer"))).toEqual([]);
 });
+
+// THE REVIEW'S PROBES (#1805): derive files these as `control: "you"`, but none is your own cost.
+test.each([
+  ["Pir's Whim", "Each foe sacrifices an artifact or enchantment of their choice."],
+  ["Torment of Venom", "Its controller loses 3 life unless they sacrifice another nonland permanent of their choice or discard a card."],
+  ["Maarika, Brutal Gladiator", "that creature's controller sacrifices a noncreature, nonland permanent."],
+  ["Devastating Onslaught", "Sacrifice them at the beginning of the next end step."],
+])("%s: not your own cost (an edict, a victim's choice, your own tokens), so it asks for no fodder and no artifact is fodder for it", (c, printed) => {
+  expect(F[c]!.source.oracleText).toContain(printed);
+  expect(keys(c), c).toEqual([]);
+  expect(fodder(dc("Sol Ring"), dc(c)), c).toEqual([]);
+});
+test("an optional sacrifice of your own is still a cost: Undercity Eliminator (you may sacrifice an artifact or creature)", () => {
+  expect(F["Undercity Eliminator"]!.source.oracleText).toContain("you may sacrifice an artifact or creature");
+  expect(keys("Undercity Eliminator")).toEqual(["fodder|-|artifact|-", "fodder|-|creature|-"]);
+  expect(fodder(dc("Sol Ring"), dc("Undercity Eliminator")).map((r) => r.tag)).toEqual(["fodder:artifact"]);
+});
+
+// "nonland permanent" (`notType: ["land"]`, five types derive expands it to) is no ruled "X or Y" list: Gluttonous Troll and Claws of Gix ("a permanent") agree.
+test("a 'nonland permanent' cost reads as a permanent cost does: Gluttonous Troll and Claws of Gix both refuse Sol Ring", () => {
+  expect(F["Gluttonous Troll"]!.source.oracleText).toContain("Sacrifice another nonland permanent:");
+  expect(F["Claws of Gix"]!.source.oracleText).toContain("Sacrifice a permanent:");
+  expect(fodder(dc("Sol Ring"), dc("Claws of Gix"))).toEqual([]);
+  expect(fodder(dc("Sol Ring"), dc("Gluttonous Troll"))).toEqual([]);
+  expect(keys("Gluttonous Troll")).toEqual([]);
+});
+
+// THE MAKER STANDS IN FOR ITS TOKEN on a card page (`tokensMediate: false`): its tag is the TOKEN's type (a Treasure is an artifact), or the page, which matches by the demand's tags, drops it.
+test("Pitiless Plunderer (makes a Treasure) is on Deadly Dispute's page under the artifact key", () => {
+  expect(F["Pitiless Plunderer"]!.source.oracleText).toContain("create a Treasure token");
+  const rs = pairReasons(dc("Pitiless Plunderer"), dc("Deadly Dispute"), loadHierarchy(), { tokensMediate: false }).filter((r) => r.tag.startsWith("fodder:") && r.producer === "Pitiless Plunderer");
+  expect(rs.map((r) => r.tag)).toEqual(["fodder:artifact"]);
+  expect(rs[0]!.text).toBe("Pitiless Plunderer makes fodder for Deadly Dispute");
+  expect(fodderDemandsOf(dc("Deadly Dispute")).map((k) => k.tag)).toContain(rs[0]!.tag);
+});
