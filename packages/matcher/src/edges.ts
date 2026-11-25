@@ -1,7 +1,7 @@
 import type { Reason } from "@edh-seer/engine";
 import type { Ability, CardTags, GameEvent, SubjectFilter } from "@edh-seer/tagger";
-import { countedClassesOf } from "./counted-classes.js";
-export { countedClassesOf };
+import { countedClassesOf, tapCostClassesOf } from "./counted-classes.js";
+export { countedClassesOf, tapCostClassesOf };
 import { CREATURE_SUBTYPES, LAND_SUBTYPES } from "@edh-seer/tagger/subtypes";
 import { isEveryCreatureType } from "@edh-seer/tagger/characteristics";
 import { tokenKindsWith } from "@edh-seer/tagger/token-kinds";
@@ -3387,7 +3387,7 @@ function lifeLostEdges({ p, c, pEvents, reasons }: PairScope): void {
 function boardCountEdges({ p, c, h, pEvents, reasons }: PairScope): void {
   // AN EMBLEM IS NO PERMANENT AND HAS NO TYPES (CR 114.3, 114.5): its printed characteristics (the Ajani emblem's subtype) meet no board count. What it MAKES still does: an emblem that creates creature tokens feeds a creature-token count (#811 review).
   const emblem = p.tags?.characteristics.emblem === true;
-  for (const a of c.tags.abilities) for (const counted of countedClassesOf(a.effect)) {
+  for (const a of c.tags.abilities) for (const counted of [...countedClassesOf(a.effect), ...tapCostClassesOf(a, c.tags.abilities)]) {
     if (counted.zone !== "battlefield") continue;
     if (ROLE_NOT_SYNERGY.has(a.effect.kind)) continue;
     if (!boardCountNarrows(counted)) continue;

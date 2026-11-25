@@ -13,7 +13,7 @@ import { segment } from "@edh-seer/tagger/segment";
 import type { Card } from "@edh-seer/engine";
 import { ARCHETYPE_LABELS, type Archetype } from "./archetypes.js";
 import { MIN_INDEXABLE_PARTNERS, PARTNER_SHARD_COUNT, isIndexableCard, partnerShardOf } from "./partner-shard.js";
-import { FACT_KINDS, POLYMORPH_HIT_MV, countedClassesOf, eventTagKey, ROLE_NOT_SYNERGY, WHOLE_DECK_TYPES, abilityIsKind, directedReasons, eventReasonTag, givesAPermanentAway, isPolymorph, meldReason, producerEvents, themeSubjectKey } from "./edges.js";
+import { FACT_KINDS, POLYMORPH_HIT_MV, countedClassesOf, tapCostClassesOf, eventTagKey, ROLE_NOT_SYNERGY, WHOLE_DECK_TYPES, abilityIsKind, directedReasons, eventReasonTag, givesAPermanentAway, isPolymorph, meldReason, producerEvents, themeSubjectKey } from "./edges.js";
 import { impliedCounterEvents, impliedGraveyardEvents, keywordAbilities, selfFillTypes, selfLeavesTypes } from "./implied.js";
 import { isReflexiveTrigger, isRefusedTrigger, isSelfLoss } from "./claims.js";
 import { parseSubject } from "@edh-seer/tagger/subject";
@@ -1334,7 +1334,7 @@ export const boardCountsOf = (d: DeckCard): { key: string; tag: string }[] =>
     // construction -- see `thresholdSubjectFor`). Same keys, each carrying the tag the engine writes.
     const counts: { counted: SubjectFilter; tag: string }[] = [];
     // EVERY CLASS OF A SUMMED COUNT (#811): Armix wants the artifacts on your board AND the artifact cards in your graveyard.
-    for (const scaled of a.effect ? countedClassesOf(a.effect) : []) if (scaled.zone === "battlefield") counts.push({ counted: scaled, tag: `scales:${themeSubjectKey(scaled)}` });
+    for (const scaled of [...(a.effect ? countedClassesOf(a.effect) : []), ...tapCostClassesOf(a, claimingAbilitiesOf(d))]) if (scaled.zone === "battlefield") counts.push({ counted: scaled, tag: `scales:${themeSubjectKey(scaled)}` });
     const gated = a.thresholdSubject;
     if (gated && a.threshold) counts.push({ counted: gated, tag: tagKey(a.effect?.kind === "win-game" ? "wincon" : "threshold", themeSubjectKey(gated)) });
     return counts.flatMap(({ counted, tag }) => {
