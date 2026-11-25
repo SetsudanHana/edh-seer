@@ -162,7 +162,7 @@ export type RuleClause =
        *  refused "you own"; the delayed-return ruling (2026-09-25) is about an OPPONENT's permanent, not yours. */
       notOwnedByYou?: true;
       /** Refuse an emit whose target is a card the SAME ability also takes out of a graveyard: another ability of the SAME `clause` has an emit that targets a card `fromZone: graveyard` with the SAME control and type
-       *  (Macabre Mockery reanimates an opponent's creature, then "sacrifices it"; Goblin Welder swaps an artifact for one in a graveyard). Derive reads the follow-up sacrifice as removal of a second target. A real
+       *  (Macabre Mockery reanimates an opponent's creature, then "sacrifices it"; Goblin Welder swaps an artifact for one in a graveyard). OR A LIBRARY (#1808, owner ruling #962 item 4: Reweave sacrifices a target permanent and puts a revealed card down in its place, a polymorph of any permanent, no removal). Derive reads the follow-up sacrifice as removal of a second target. A real
        *  kill that returns YOUR card (Lethal Protection: the graveyard card is `you`, the kill `opp`) is not refused. */
       notPairedTarget?: true;
       /** The emit is an EDICT (`SubjectFilter.edict`): the sacrifice or death is forced on a player the ability TARGETS ("Target player sacrifices a creature of their choice": Diabolic Edict, Chainer's Edict). The
@@ -777,7 +777,7 @@ function clauseHolds(clause: RuleClause, dc: DeckCard, set: RuleSet): boolean {
           && (clause.notOwnedByYou !== true || e.subject.owner !== "you")
           && (clause.notSelf !== true || e.subject.self !== true)
           && (clause.notPairedTarget !== true || !(dc.tags?.abilities ?? []).some((f) => f !== a && f.clause === a.clause
-            && (f.emits ?? []).some((g) => g.subject.scope === "target" && g.subject.fromZone === "graveyard" && g.subject.control === e.subject.control
+            && (f.emits ?? []).some((g) => g.subject.scope === "target" && (g.subject.fromZone === "graveyard" || g.subject.fromZone === "library") && g.subject.control === e.subject.control
               && JSON.stringify(g.subject.type) === JSON.stringify(e.subject.type))))
           && (clause.control === undefined || clause.control.includes(e.subject.control))
           && (clause.zone === undefined || clause.zone.includes(e.subject.zone ?? null))
