@@ -640,6 +640,12 @@ export function analyzeDeckStructured(
       )
     : { feeder: new Map<string, number>(), payoff: new Map<string, number>() };
 
+  // The companion reaches the hand once a game, so a combo it completes is a combo this deck can
+  // assemble -- and it is in the bracket's Game Changer and combo count for the same reason. (Computed before the pair loop since #827: the loop reads which pairs are pieces of one combo.)
+  const deckNames = new Set([...resolved.map((dc) => dc.card.name), ...companionSet]);
+  const foundCombos: Combo[] = combos?.combosContainedIn(deckNames) ?? [];
+  /** Two cards that are pieces of ONE combo found in this deck (#827 review): their direct entry stays first, see the reorder below. */
+  const inOneCombo = (a: string, b: string): boolean => foundCombos.some((cb) => cb.cards.includes(physicalName(a)) && cb.cards.includes(physicalName(b)));
   for (let i = 0; i < unique.length; i++) {
     for (let j = 0; j < unique.length; j++) {
       if (i === j) continue;
@@ -653,7 +659,20 @@ export function analyzeDeckStructured(
       // `distinctPartners` below dedupes the pair. Found 2026-09-05, the day `meldPartner` came back
       // onto the corpus (docs.ts) -- the month it was absent hid this.
       const direct = [...directedReasons(p, c, hierarchy, reasonOpts), ...meldReason(p, c)]; // p feeds c
-      const reasons = hop ? [...direct, ...hop] : direct;
+      // THE TOKEN'S REASON IS SAID BEFORE THE MAKER'S OWN SINGLE ENTRY (#827). Krenko is a creature, so "When Krenko enters, Impact Tremors deals 1 damage" is true -- but it is the card's own implied entry, once (`impliedProducer`, `oneshot`), the
+      // baseline every creature has, and the Goblins he makes every turn are what the pair is worth. The partner list prints its first reason, so the direct entry read first and named the wrong thing. WHAT THE CODE DOES: for each tag on which the direct
+      // list holds such a baseline entry AND a token hop states the same tag, the hop's reasons for that tag go FIRST (ahead of every other direct reason too, not only the baseline: Urza's Saga -> Altar of the Brood), then the other direct reasons, then the
+      // remaining hop reasons, and the baseline entry LAST. It is kept; a pair with no such hop keeps its order. Membership, score and weight are untouched (`edgeWeight` takes the max per tag).
+      // NOT FOR TWO PIECES OF ONE COMBO FOUND IN THE DECK: a maker whose own entry repeats (Acererak's "return Acererak to its owner's hand" re-enters it over and over; derive still labels that entry `oneshot`) keeps its direct entry first, since the combo is the pair's worth.
+      // CEILING: the rule assumes the token's repeated entry outweighs the maker's single entry. That fails for a payoff whose value depends on the ENTERING creature's power or toughness: Jaws of Defeat ("loses life equal to the difference between that
+      // creature's power and its toughness") is worth 2 for Hornet Nest (0/2) and 0 for the 1/1 Insects it makes, yet the Insect sentence leads (abzan-defenders). The same blind spot covers any payoff that counts the entering creature's own stats, and a self-bouncing
+      // or self-repeating ETB (Acererak) that derive mislabels `oneshot` and that no combo row lists.
+      const hopTags = new Set((hop ?? []).filter((r) => r.producerIsToken).map((r) => r.tag));
+      const baseline = (r: Reason): boolean => r.impliedProducer === true && r.repeatability === "oneshot" && hopTags.has(r.tag) && !inOneCombo(p.card.name, c.card.name);
+      const reasons = hop
+        ? [...hop.filter((r) => r.producerIsToken && hopTags.has(r.tag) && direct.some((d) => baseline(d) && d.tag === r.tag)), ...direct.filter((r) => !baseline(r)),
+          ...hop.filter((r) => !(r.producerIsToken && direct.some((d) => baseline(d) && d.tag === r.tag))), ...direct.filter(baseline)]
+        : direct;
       if (reasons.length === 0) continue;
       // Two weights, not one: the discount belongs to the crowded side. A supply-glutted tag cuts
       // what the FEEDER earns for supplying it and leaves the payoff's support alone; a
@@ -678,10 +697,6 @@ export function analyzeDeckStructured(
   for (const [name, d] of dir) authorityByName.set(name, Math.sqrt(d.support));
 
   const presentCommanders = resolved.map((dc) => dc.card.name).filter((n) => commanderSet.has(n));
-  // The companion reaches the hand once a game, so a combo it completes is a combo this deck can
-  // assemble -- and it is in the bracket's Game Changer and combo count for the same reason.
-  const deckNames = new Set([...resolved.map((dc) => dc.card.name), ...companionSet]);
-  const foundCombos: Combo[] = combos?.combosContainedIn(deckNames) ?? [];
   const comboCardNames = new Set(foundCombos.flatMap((c) => c.cards));
   // A LOOP'S PAYOFF IS ITS WIN CONDITION (owner, 2026-09-29): every card that eats what a known loop
   // repeats and reaches the opponents, beyond the loop's own pieces (`combo-payoffs.ts`).
