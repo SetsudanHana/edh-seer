@@ -34,7 +34,7 @@ test("the combo is found in this deck, and Acererak's text is what the issue rea
 });
 
 test.each(["Carnival of Souls", "Ayara, First of Locthwain"])("%s x Acererak: pieces of one combo found in the deck keep the maker's own entry first", (card) => {
-  expect(first(report(true), card, "Acererak the Archlich")).toMatch(new RegExp(`^When Acererak the Archlich enters, ${card.replace(/[,.]/g, "\\$&")}`));
+  expect(first(report(true), card, "Acererak the Archlich")?.startsWith(`When Acererak the Archlich enters, ${card}`)).toBe(true);
 });
 
 test("without the combo in the deck, the token's entry leads, as for any maker (Acererak x Carnival of Souls)", () => {
