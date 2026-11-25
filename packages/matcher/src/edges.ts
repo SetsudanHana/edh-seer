@@ -4287,7 +4287,12 @@ function fodderEdges({ p, c, h, opts, reasons }: PairScope): void {
     const types = Array.isArray(wanted.type) ? wanted.type : wanted.type ? [wanted.type] : [];
     // A POWER LINE NARROWS "a creature" THE WAY A SUBTYPE DOES (owner 2026-09-28, casualty): "in
     // deck like anhelo you need to have fodder with 2 power". `subjectMatches` checks the stat.
-    const narrowType = (types.length === 1 && !WHOLE_DECK_TYPES.has(types[0]!))
+    // A DISJUNCTION OF TYPES IN YOUR OWN COST IS EACH TYPE'S FODDER (owner ruling 2026-11-24, #1805: "it is not an answer it is part of the cost of the spell"): "sacrifice an artifact or creature" (Deadly Dispute) takes what a lone
+    // "sacrifice an artifact" takes and what a lone "sacrifice a creature" takes, and nothing wider. So a card is narrowed by a type of the list that is NOT the whole deck AND that it is itself (an artifact is fodder, a creature card is not: a token or a
+    // card that comes back still is, below). A conjunction ("artifact creature", `allTypes`) is not this: not ruled, still refused. An edict (control not `you`) is an answer, not your cost, and stays out.
+    const pTypes = p.tags.characteristics.types ?? [];
+    const disjunct = types.length > 1 && wanted.allTypes === undefined && eats.subject.control === "you" ? types.filter((t) => !WHOLE_DECK_TYPES.has(t) && pTypes.includes(t)) : [];
+    const narrowType = (types.length === 1 && !WHOLE_DECK_TYPES.has(types[0]!)) || disjunct.length > 0
       || (wanted.stats ?? []).some((st) => st.metric === "power");
     // ON A CARD PAGE NO TOKEN NODE EXISTS (`tokensMediate: false`), so the MAKER stands in for the
     // token it makes: Krenko's Goblins are fodder for Viscera Seer, said on Krenko's row. The deck
@@ -4329,7 +4334,8 @@ function fodderEdges({ p, c, h, opts, reasons }: PairScope): void {
       && subjectMatches(characteristicsSubject(p.tags, p.card.name), { ...wanted, token: null }, h);
     if (!is && !makes) continue;
     reasons.push({
-      tag: `fodder:${themeSubjectKey(wanted)}`,
+      // The tag names the type of the list this card IS (the one each demand key of the outlet names), so an artifact is `fodder:artifact` for "artifact or creature" as for a lone artifact outlet.
+      tag: `fodder:${themeSubjectKey(types.length > 1 && wanted.allTypes === undefined && eats.subject.control === "you" ? { ...wanted, type: disjunct[0] ?? types.find((t) => pTypes.includes(t)) ?? types[0]! } : wanted)}`,
       text: !is ? `${p.card.name} makes fodder for ${c.card.name}`
         : comesBack && !isToken ? `${p.card.name} is fodder for ${c.card.name}, and ${comesBack} brings it back once`
         : `${p.card.name} is fodder for ${c.card.name}`,
