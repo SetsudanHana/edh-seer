@@ -47,3 +47,9 @@ test("Basalt Golem's blocker is an opponent's: it is no fodder or death for Zula
   expect(F["Basalt Golem"]!.source.oracleText).toContain("Whenever this creature becomes blocked by a creature, that creature's controller sacrifices it");
   expect(reasons("Basalt Golem", "Zulaport Cutthroat")).toEqual([]);
 });
+
+// #1808 re-review: a polymorph swaps YOUR permanent (#962, primary use), so a token that goes to an OPPONENT is no fodder for it. Beast Within and Generous Gift give the
+// token to the destroyed permanent's controller; with `control: any` kept on the swap they read as "makes fodder for Reweave" (95 false pairs). A maker of your own tokens still is.
+test.each(["Beast Within", "Generous Gift"])("a token given to an opponent is no fodder for Reweave: %s", (p) => {
+  expect(reasons(p, "Reweave", { tokensMediate: false }).filter((x) => x.tag.startsWith("fodder:"))).toEqual([]);
+});

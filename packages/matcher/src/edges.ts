@@ -4283,6 +4283,8 @@ function fodderEdges({ p, c, h, opts, reasons }: PairScope): void {
       && (e.subject.control === "you" || (polymorph && isPolymorphSwap(e.subject)) || (e.subject.control === "any" && EACH_PLAYER_SACRIFICES.test(c.card.oracleText ?? ""))));
     if (!eats) continue;
     const { zone: _z, scope: _s, ...wanted } = eats.subject;
+    // A POLYMORPH SWAP EATS YOUR OWN PERMANENT (#962: read by primary use). Its derived `control: any` is the printed target, not what feeds it: an opponent's token (Beast Within's Beast) is no fodder (#1808 re-review).
+    if (eats.subject.control !== "you" && polymorph && isPolymorphSwap(eats.subject)) wanted.control = "you";
     const isToken = p.tags?.characteristics.token === true;
     const subtype = Array.isArray(wanted.subtype) ? wanted.subtype[0] : wanted.subtype;
     const types = Array.isArray(wanted.type) ? wanted.type : wanted.type ? [wanted.type] : [];
