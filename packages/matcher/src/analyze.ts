@@ -653,7 +653,15 @@ export function analyzeDeckStructured(
       // `distinctPartners` below dedupes the pair. Found 2026-09-05, the day `meldPartner` came back
       // onto the corpus (docs.ts) -- the month it was absent hid this.
       const direct = [...directedReasons(p, c, hierarchy, reasonOpts), ...meldReason(p, c)]; // p feeds c
-      const reasons = hop ? [...direct, ...hop] : direct;
+      // THE TOKEN'S REASON IS SAID BEFORE THE MAKER'S OWN SINGLE ENTRY (#827). Krenko is a creature, so "When Krenko enters, Impact Tremors deals 1 damage" is true -- but it is the card's own implied entry, once (`impliedProducer`, `oneshot`), the
+      // baseline every creature has, and the Goblins he makes every turn are what the pair is worth. The partner list prints its first reason, so the direct entry read first and named the wrong thing. A direct reason of that shape that a token hop
+      // also states under the SAME tag moves behind the hop's reasons for that tag; it is kept, and a pair with no such hop keeps its order. Membership, score and weight are untouched (`edgeWeight` takes the max per tag).
+      const hopTags = new Set((hop ?? []).filter((r) => r.producerIsToken).map((r) => r.tag));
+      const baseline = (r: Reason): boolean => r.impliedProducer === true && r.repeatability === "oneshot" && hopTags.has(r.tag);
+      const reasons = hop
+        ? [...hop.filter((r) => r.producerIsToken && hopTags.has(r.tag) && direct.some((d) => baseline(d) && d.tag === r.tag)), ...direct.filter((r) => !baseline(r)),
+          ...hop.filter((r) => !(r.producerIsToken && direct.some((d) => baseline(d) && d.tag === r.tag))), ...direct.filter(baseline)]
+        : direct;
       if (reasons.length === 0) continue;
       // Two weights, not one: the discount belongs to the crowded side. A supply-glutted tag cuts
       // what the FEEDER earns for supplying it and leaves the payoff's support alone; a
