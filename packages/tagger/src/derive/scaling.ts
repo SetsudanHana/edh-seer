@@ -187,12 +187,13 @@ export function scalingSubject(action: Action, clauseText?: string): SubjectFilt
  *  `scalingSubject` is the first, `scalingAlso` the rest, in printed order. Armix's two halves sit in two zones, so one subject could only keep the graveyard (the graveyard phrase is found anywhere in the text) under a per-permanent basis no reader accepted.
  *  A half that names no class a reader can judge (Seize the Storm's "cards with flashback you own in exile") is dropped, as a lone count of it would be. "plus one" is no second class.
  *  CEILING: only "plus (the) (total) number of" joins two counts; "and", "plus ... for each" and "X plus Y" without a `number of` are not read as sums. */
-const SUM_SPLIT = /\s+plus (?:the )?(?:total )?number of\s+/i;
+// One literal space each side, no `\s+`: an unanchored `\s+` before a literal runs polynomially on a run of spaces (CodeQL js/polynomial-redos).
+const SUM_SPLIT = / plus (?:the )?(?:total )?number of /i;
 function sumHalves(text: string): string[] {
   // The text is `${amount}; ${object}` and the object often repeats the amount: read the one segment that holds the sum, so a repeat is no third class.
   const segment = text.split(";").find((seg) => SUM_SPLIT.test(seg));
   if (segment === undefined) return [text];
-  const parts = segment.split(SUM_SPLIT);
+  const parts = segment.split(SUM_SPLIT).map((p) => p.trim());
   // A CONSTANT BEFORE THE PLUS ("1 plus the number of card types among cards in your opponents' graveyards", Nighthawk Scavenger) is no class: the count starts at the first half that has one.
   const halves = [parts[0]!, ...parts.slice(1).map((p) => `number of ${p}`)].filter((h) => COUNTED.test(h));
   return halves.length > 0 ? halves : [text];
