@@ -50,6 +50,7 @@
   "packages/matcher/src/mill-scope.ts": 1,
   "packages/matcher/src/mulligan.ts": 1,
   "packages/matcher/src/orchestrate.ts": 1,
+  "packages/matcher/src/own-sacrifice.ts": 1,
   "packages/matcher/src/partners-core.ts": 5,
   "packages/matcher/src/perspective.ts": 1,
   "packages/matcher/src/quality-fit.ts": 1,

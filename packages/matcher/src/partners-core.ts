@@ -13,6 +13,7 @@ import { segment } from "@edh-seer/tagger/segment";
 import type { Card } from "@edh-seer/engine";
 import { ARCHETYPE_LABELS, type Archetype } from "./archetypes.js";
 import { MIN_INDEXABLE_PARTNERS, PARTNER_SHARD_COUNT, isIndexableCard, partnerShardOf } from "./partner-shard.js";
+import { ownSacrificeCost } from "./own-sacrifice.js";
 import { FACT_KINDS, POLYMORPH_HIT_MV, countedClassesOf, tapCostClassesOf, eventTagKey, ROLE_NOT_SYNERGY, WHOLE_DECK_TYPES, abilityIsKind, directedReasons, eventReasonTag, givesAPermanentAway, isPolymorph, meldReason, producerEvents, themeSubjectKey } from "./edges.js";
 import { impliedCounterEvents, impliedGraveyardEvents, keywordAbilities, selfFillTypes, selfLeavesTypes } from "./implied.js";
 import { isReflexiveTrigger, isRefusedTrigger, isSelfLoss } from "./claims.js";
@@ -1318,6 +1319,9 @@ export const fodderDemandsOf = (d: DeckCard): { key: string; tag: string }[] => 
     const subtype = Array.isArray(wanted.subtype) ? wanted.subtype[0] : wanted.subtype;
     const types = Array.isArray(wanted.type) ? wanted.type : wanted.type ? [wanted.type] : [];
     const noun = subtype ?? (types.length === 1 ? types[0] : undefined);
+    // A DISJUNCTION OF TYPES IN YOUR OWN COST asks for each type (owner ruling 2026-11-24, #1805): Deadly Dispute's "sacrifice an artifact or creature" is the demand of a lone artifact outlet and of a lone creature outlet. A conjunction ("artifact creature",
+    // `allTypes`) is not ruled and still asks for nothing; an edict (`eats` is already own-control only, above) is no cost.
+    if (!noun && types.length > 1 && wanted.allTypes === undefined && ownSacrificeCost(a, eats, d.card.oracleText)) return types.map((t) => ({ key: `fodder|-|${t}|-`, tag: `fodder:${themeSubjectKey({ ...wanted, type: t })}` }));
     return noun ? [{ key: `fodder|-|${noun}|-`, tag: `fodder:${themeSubjectKey(wanted)}` }] : [];
   });
 };
