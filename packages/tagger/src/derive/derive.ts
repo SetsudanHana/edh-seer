@@ -50,7 +50,7 @@ import { reductionOf } from "./reduction.js";
 import crKeywords from "./cr-keywords.json" with { type: "json" };
 import { paymentOf } from "./payment.js";
 import { CRAFT_EFFECT_TEXT, craftOf } from "./craft.js";
-import { artifactCostClauses } from "./artifact-cost.js";
+import { artifactCostClauses, costOfSentence } from "./artifact-cost.js";
 import { doubledVerbs, doublesOf } from "./doubles.js";
 import { stationThresholdFor, thresholdDistinctFor, thresholdFor, thresholdSubjectFor } from "./threshold.js";
 import { addsManaText, deriveMana, production } from "./mana-lines.js";
@@ -783,7 +783,8 @@ import { castClassFromPrint, castIsOnlyACondition, castsYourOwnCard } from "./ca
 // 595: #1170 -- a stated cast-of-instant-and-sorcery condition cares about the one key cast:instant-sorcery (was cast:instant + cast:sorcery); matcher themeSubjectKey folds instant and sorcery to instant-sorcery (#543 moved from the page to the key). derive-impact vs 9c78505e in the PR.
 // 596: #811 -- a summed count ('the number of A plus the number of B') keeps every class it counts: scalingSubject is the first, the new Effect.scalingAlso the rest; the board-count and graveyard-scaling readers and the matcher's board-count and fill demand keys read them all (Armix, Soulless One, Abomination of Llanowar, Calamitous Cave-In, Gloom Ripper, Slash of Light, Hobbit's Sting ...)
 // 597: #1804 -- a cost that gets cheaper with, or is paid with, artifacts you control is an artifact demand (owner ruling 2026-11-24): 'Affinity for artifacts' and 'Improvise' (inert none lines in the store) and 'This ability costs {1} less to activate for each other artifact you control' (a sentence the store drops) derive a static cost-reduction per artifact you control, read as the board count counts|-|artifact|-; 'Tap X untapped artifacts you control' (payment.tapOther) is read as the same count by the matcher
-export const DERIVE_VERSION = 597;
+// 598: #1804 -- review fixes: the ability discount read from 'This ability costs {1} less to activate for each other artifact you control' is stamped with the id of the clause that prints it (it had a made-up id the card page never shows), and a cost reduction read from affinity, improvise or that sentence carries Effect.costOf (spell / ability) so a sentence can say what it makes cheaper
+export const DERIVE_VERSION = 598;
 
 /** "a nonland card from target opponent's graveyard or hand" (#1592): the object of a stored hand-or-graveyard pick. */
 const GRAVEYARD_OR_HAND_PICK = /\bfrom (?:target opponent|target player|that player|that opponent|an opponent)'s (?:graveyard or hand|hand or graveyard)$/i;
@@ -3347,11 +3348,11 @@ export function deriveAbilities(
   // A COST THAT GETS CHEAPER WITH, OR IS PAID WITH, ARTIFACTS YOU CONTROL (#1804, owner ruling 2026-11-24). The store files "Affinity for artifacts" and "Improvise" as inert `none` lines and drops the sentence "This ability costs {1} less
   // to activate for each other artifact you control" off the activated clause it follows; each is rewritten to the static cost-modify clause it means (CR 702.41a: "This spell costs {1} less to cast for each [text] you control"; 702.126a:
   // each artifact you tap pays for {1}), which the ordinary cost-modify path reads as a per-artifact cost reduction. See `artifact-cost.ts`.
-  {
-    const rewritten = artifactCostClauses(clauses, clauseTexts);
-    clauses = rewritten.clauses;
-    clauseTexts = rewritten.clauseTexts;
-  }
+  const rewritten = artifactCostClauses(clauses, clauseTexts);
+  clauses = rewritten.clauses;
+  clauseTexts = rewritten.clauseTexts;
+  /** The printed clause an added clause is read from (its ability is stamped with that id). */
+  const clauseSourceOf = rewritten.sourceOf;
   // The whole card's text, for the phantom-trigger guard below. CARD-scoped on purpose and never
   // per clause -- see `triggerHasCue`, where scoping it to the clause was measured and refuses 18
   // real modal triggers to catch 1 phantom. Absent `clauseTexts` disables the guard rather than
@@ -5025,7 +5026,7 @@ export function deriveAbilities(
       const distinct = distinctCountOf(action, text);
       const ability: Ability = {
         kind,
-        effect: { ...scaled, ...(countedSubject ? { scalingSubject: countedSubject } : {}), ...(countedSubject && countedAlso ? { scalingAlso: countedAlso } : {}), ...(distinct ? { distinctCount: distinct } : {}) },
+        effect: { ...scaled, ...(countedSubject ? { scalingSubject: countedSubject } : {}), ...(countedSubject && countedAlso ? { scalingAlso: countedAlso } : {}), ...(effectKind === "cost-reduction" && costOfSentence(action.object) ? { costOf: costOfSentence(action.object)! } : {}), ...(distinct ? { distinctCount: distinct } : {}) },
       };
       if (replacement?.tokenMultiplier) ability.effect = { ...ability.effect, tokenMultiplier: replacement.tokenMultiplier };
       // HOW A DAMAGE MULTIPLIER CHANGES THE DAMAGE (#1345), off the clause the verb path and the template both sit in.
@@ -5436,7 +5437,7 @@ export function deriveAbilities(
       // the card, and without this it could only ZIP the clause list against the ability list --
       // which is wrong on every row of any card whose first clause derives nothing (Samut: 4
       // clauses, 3 abilities, every zipped row a lie).
-      abilities[i] = { ...abilities[i], clause: clause.id };
+      abilities[i] = { ...abilities[i], clause: clauseSourceOf.get(clause.id as number) ?? clause.id };
       if (clauseTargets) abilities[i] = { ...abilities[i], targets: clauseTargets };
       // "THIS ABILITY CAN'T BE COPIED" (#1650 review: Gogo, Master of Mimicry; the one ability in the corpus that prints it): no copier reaches it.
       if (CANT_BE_COPIED.test(text ?? "")) abilities[i] = { ...abilities[i], uncopiable: true as const };

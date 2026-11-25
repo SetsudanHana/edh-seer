@@ -575,9 +575,21 @@ const COUNT_GROWS: Record<string, string> = {
   pump: "gets bigger",
 };
 
+/** WHAT THE COUNTED ARTIFACTS ARE FOR, where it is no growth (#1804): `tap` is a cost paid by tapping them ("Tap an untapped artifact you control": Network Terminal, Whirler Rogue), `ability-cost` an activation discount for each
+ *  ("This ability costs {1} less to activate for each other artifact you control": Etherium Pteramander) and `spell-cost` the card's own cast (affinity, improvise). None of them makes the card "do more": the loot taps one artifact once, and the
+ *  card itself costs the same. Absent for a real count, which keeps the "counts it and grows" sentence. */
+export type CountUse = "tap" | "ability-cost" | "spell-cost";
+
 export function boardCountFeedsScaling(
-  producer: string, consumer: string, effectKind?: string, makesTheCounted = false, countsWhenCast = false,
+  producer: string, consumer: string, effectKind?: string, makesTheCounted = false, countsWhenCast = false, use?: CountUse,
 ): string {
+  if (use !== undefined) {
+    // A MAKER IS NOT COUNTED, ITS ARTIFACTS ARE (as below).
+    const what = makesTheCounted ? `${producer} makes artifacts that` : `${producer}`;
+    if (use === "tap") return makesTheCounted ? `${producer} makes artifacts ${consumer} can tap to help pay for its ability` : `${consumer} can tap ${producer} to help pay for its ability`;
+    if (use === "ability-cost") return makesTheCounted ? `${what} make ${consumer}'s ability cheaper` : `${producer} makes ${consumer}'s ability cheaper`;
+    return makesTheCounted ? `${what} make ${consumer} cheaper to cast` : `${producer} makes ${consumer} cheaper to cast`;
+  }
   // "GETS BIGGER" WAS A WRONG CLAIM ON MOST OF THIS CHANNEL, reported by the precon reviewer against
   // the card printed beside it: Krenko's X counts Goblins to decide HOW MANY TOKENS he makes, and he
   // is a 3/3 either way. A reader who checks the sentence against the card -- which is the whole
@@ -585,7 +597,8 @@ export function boardCountFeedsScaling(
   //
   // The kind is what the count actually feeds, so the kind names the growth. An effect this map has
   // never seen says "does more", which is true of every scaling effect and claims nothing further.
-  const grows = (effectKind && COUNT_GROWS[effectKind]) ?? "does more";
+  // NEVER AN EMPTY PHRASE: a blanked effect kind ("") names no growth, and `??` let it through as an empty string.
+  const grows = (effectKind && COUNT_GROWS[effectKind]) || "does more";
   // "YOU CONTROL", NOT "ON THE BATTLEFIELD" -- the skeptic held the sentence against the card six
   // inches away: Krenko counts "the number of Goblins YOU CONTROL", and an opponent's Goblin is on
   // the battlefield and counts for nothing. The engine's gate is control-aware already (the count's
@@ -604,7 +617,7 @@ export function boardCountFeedsScaling(
  *  discount grows with the life you lost this turn, so Toxic Deluge's "pay X life" feeds it. */
 export function lifeLostFeedsScaling(producer: string, consumer: string, effectKind: string | undefined, whose: "you" | "opp"): string {
   // A discount on OTHER spells (Rowan) is not the card getting cheaper itself.
-  const grows = effectKind === "cost-reduction" ? "discounts more" : (effectKind && COUNT_GROWS[effectKind]) ?? "does more";
+  const grows = effectKind === "cost-reduction" ? "discounts more" : (effectKind && COUNT_GROWS[effectKind]) || "does more";
   return whose === "you"
     ? `${producer} makes you lose life, so ${consumer} ${grows}`
     : `${producer} makes your opponents lose life, so ${consumer} ${grows}`;
@@ -687,7 +700,8 @@ export function animatedKindredSentence(producer: string, consumer: string, kind
 /** A COUNT OF A KINDRED COUNTING WHAT A CARD ANIMATES INTO (#1364 part 2): "Omnath counts the Elementals you control", and Brave the Wilds makes a land one. */
 export function animatedCountSentence(producer: string, consumer: string, kind: string, effectKind?: string, countsWhenCast = false): string {
   const noun = kind.charAt(0).toUpperCase() + kind.slice(1);
-  const grows = (effectKind && COUNT_GROWS[effectKind]) ?? "does more";
+  // NEVER AN EMPTY PHRASE: a blanked effect kind ("") names no growth, and `??` let it through as an empty string.
+  const grows = (effectKind && COUNT_GROWS[effectKind]) || "does more";
   return countsWhenCast
     ? `When you cast ${consumer}, it counts the ${noun}s you control, and ${producer} can make one`
     : `${consumer} counts the ${noun}s you control and ${grows}; ${producer} can make one`;

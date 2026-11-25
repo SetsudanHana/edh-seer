@@ -10,10 +10,11 @@ import type { Action, ClauseRecord } from "../canonicalize.js";
 
 const AFFINITY_OR_IMPROVISE = /^\s*(?:affinity for artifacts|improvise)\b/i;
 const OWN_ABILITY = /\bThis ability costs (\{[^}]+\}) less to activate for each (other )?artifacts? you control\b/i;
-const SPELL_SENTENCE = "this spell costs {1} less to cast for each artifact you control";
+export const SPELL_SENTENCE = "this spell costs {1} less to cast for each artifact you control";
 
-export function artifactCostClauses(clauses: ClauseRecord[], clauseTexts: Record<number, string> | undefined): { clauses: ClauseRecord[]; clauseTexts: Record<number, string> | undefined } {
-  if (clauseTexts === undefined) return { clauses, clauseTexts };
+export function artifactCostClauses(clauses: ClauseRecord[], clauseTexts: Record<number, string> | undefined): { clauses: ClauseRecord[]; clauseTexts: Record<number, string> | undefined; sourceOf: Map<number, number> } {
+  const sourceOf = new Map<number, number>();
+  if (clauseTexts === undefined) return { clauses, clauseTexts, sourceOf };
   let texts = clauseTexts;
   let next = Math.max(0, ...clauses.map((c) => Number(c.id)).filter((n) => Number.isFinite(n))) + 1;
   const out: ClauseRecord[] = [];
@@ -30,8 +31,16 @@ export function artifactCostClauses(clauses: ClauseRecord[], clauseTexts: Record
       const sentence = `this ability costs ${own[1]} less to activate for each ${own[2] ?? ""}artifact you control`;
       texts = { ...texts, [next]: sentence };
       out.push({ id: next, abilityType: "static", actions: [{ verb: "cost-modify", object: sentence } as Action] } as ClauseRecord);
+      // THE ROW SITS UNDER THE CLAUSE THAT PRINTS THE SENTENCE (the card page joins rows to clauses by id, and `next` has no printed segment): derive keeps `next` apart so the clauses stay two, and stamps this id on the ability.
+      sourceOf.set(next, Number(c.id));
       next++;
     }
   }
-  return { clauses: out, clauseTexts: texts };
+  return { clauses: out, clauseTexts: texts, sourceOf };
+}
+
+/** What a cost-modify object derived from the lines above makes cheaper: the card's own cast, or one of its abilities. Undefined for any other cost-modify. */
+export function costOfSentence(object: string | undefined): "spell" | "ability" | undefined {
+  if (object === SPELL_SENTENCE) return "spell";
+  return /^this ability costs \{[^}]+\} less to activate for each (?:other )?artifact you control$/.test(object ?? "") ? "ability" : undefined;
 }
