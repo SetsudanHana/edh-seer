@@ -1044,10 +1044,10 @@ const REF: SubjectFilter = { control: "any", token: null, ref: "sentence" };
  *  requirements (CR 508.1d attack requirements, 509.1c block requirements), and the grammar filed them as `cant` with the opposite as its object ("not attack this turn if able"), the store's habit. A `cant` is a restriction, and every reader of one (restrictedActions, the
  *  cant-kinds) had to refuse the negation by hand. They are the store's inert `other` now: no ability, no emit, honestly unread in `unclaimed` until a consumer exists. Not goad (CR 701.15 adds "attacks a player other than the goading player"): no forced-attack emit.
  *  `must be blocked if able` (the attacker's requirement on its blockers, derived as `be unblocked`) is a different reading and is not touched here. */
-function requirementOf(object: SubjectFilter | undefined, stem: string, when: string | undefined, subject?: string): ActionReading {
+function requirementOf(object: SubjectFilter | undefined, stem: string, when: string | undefined, subject?: string, tail?: string): ActionReading {
   // A TARGETED SUBJECT LEADS THE WORDS: a later "Untap THAT CREATURE" (Mark for Death) resolves through the nearest earlier action's words, and the requirement is the action that named the target.
   const lead = subject !== undefined && /^(?:up to (?:one|two|three) )?(?:another )?targets? /i.test(subject) ? `${subject} ` : "";
-  return { verb: "other", ...(object ? { object } : {}), text: `${lead}must ${stem}${when ? ` ${when}` : ""} if able` } as ActionReading;
+  return { verb: "other", ...(object ? { object } : {}), text: `${lead}must ${stem}${when ? ` ${when}` : ""} if able${tail ? ` ${tail}` : ""}` } as ActionReading;
 }
 
 /** "<subject> enters tapped [unless ...]": tapped as it arrives, the store's `tap` on the card.
@@ -1142,6 +1142,11 @@ function restrictionOf(t: string): ActionReading[] | null {
     }
   }
   const word = m[2]!.toLowerCase();
+  // "attacks each combat if able AND ATTACKS A PLAYER OTHER THAN YOU IF ABLE" (Kardur, Maximum Carnage) is a requirement with a second requirement: no can't in it (#1334). A tail that holds a genuine can't (Alexios: ", can't be sacrificed, and can't attack its owner") keeps the cant.
+  if (/each combat if able/.test(word) && !/\bcan't|\bcannot/i.test(m[3]!)) {
+    lastSubject = m[1]!;
+    return [requirementOf(who.object, /^blocks?/.test(word) ? "block" : "attack", "each combat", undefined, m[3]!.trim() || undefined)];
+  }
   const what = /each combat if able/.test(word) ? `not ${word.replace(/s each/, " each")}${m[3] ? ` ${m[3]}` : ""}`
     : word === "can block only" ? `block ${m[3]!.replace(/^creatures with /, "creatures without ")}`
     : m[3]!;

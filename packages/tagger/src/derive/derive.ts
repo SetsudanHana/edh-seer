@@ -787,7 +787,8 @@ import { castClassFromPrint, castIsOnlyACondition, castsYourOwnCard } from "./ca
 // 599: #1808 -- a sacrifice's control follows the actor who sacrifices: 'each foe' is an opponent, 'that / target / enchanted creature's (permanent's) controller' is anyone, and 'unless they sacrifice' is whoever the clause named before it, so an edict stops reading as your own sacrifice cost (Pir's Whim, Virtus's Maneuver, Maarika, Mercy Killing, Parasitic Implant, Burning Sands, Reweave, Torment of Venom)
 // 600: #1808 -- review fixes: a blocker's controller is the defending player's (CR 509.1a), so 'becomes blocked by a creature, that creature's controller sacrifices it' (Basalt Golem) is an opponent's sacrifice, not anyone's
 // 601: #1334 -- a forced attack or block ('attacks this turn if able', 'blocks each combat if able'; CR 508.1d, 509.1c) is no cant: the grammar read it as a restriction with a negated object ('not attack this turn if able') and now files it as the inert other, parked unread in unclaimed with no emit (owner ruling 2026-11-26); a genuine can't keeps its cant
-export const DERIVE_VERSION = 601;
+// 602: #1334 -- review fixes: 'attacks each combat if able and attacks a player other than you if able' (Kardur, Maximum Carnage) is a requirement too, no cant; the ability's own subject keeps scope target when 'that creature' resolves through a parked requirement (Mark for Death)
+export const DERIVE_VERSION = 602;
 
 /** "a nonland card from target opponent's graveyard or hand" (#1592): the object of a stored hand-or-graveyard pick. */
 const GRAVEYARD_OR_HAND_PICK = /\bfrom (?:target opponent|target player|that player|that opponent|an opponent)'s (?:graveyard or hand|hand or graveyard)$/i;
@@ -4458,6 +4459,9 @@ export function deriveAbilities(
             if (types.length === 0 || (anteTypes.length > 0 && !types.some((t) => anteTypes.includes(t) || anteTypes.includes("permanent")))) continue;
             e.subject.scope = "target";
           }
+          // A TARGET NAMED BY A PARKED REQUIREMENT (#1334, Mark for Death: "Target creature an opponent controls blocks this turn if able. Untap THAT CREATURE.") is still the spell's target, and the ability's own subject carries the scope as Provoke's does,
+          // which `spellTargeting` and the removal rules read. Only through such a requirement (the antecedent's words end in "must attack|block ... if able"): every other pronoun keeps scope on its emits alone.
+          if (subject && subject.scope === undefined && subject.self !== true && /\bmust (?:attack|block)\b[^.]*\bif able\b/i.test(ante)) subject.scope = "target";
         }
       }
       // "REVEAL CARDS ... UNTIL YOU REVEAL A CREATURE CARD ... PUT THAT CARD ONTO THE BATTLEFIELD"

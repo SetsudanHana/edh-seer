@@ -25,6 +25,19 @@ describe("a forced attack or block is no cant", () => {
     expect(cants(name).filter((c) => /\bnot (?:attack|block)/i.test(c)), name).toEqual([]);
   });
 
+  test.each([
+    ["Kardur, Doomscourge", "creatures your opponents control attack each combat if able and attack a player other than you if able"],
+    ["Maximum Carnage", "each creature attacks each combat if able and attacks a player other than you if able"],
+  ])("%s: a requirement with a second requirement after 'and' has no can't in it, so no cant", (name, printed) => {
+    expect(String(F[name]!.source.oracleText)).toContain(printed);
+    expect(cants(name).filter((c) => /\bnot (?:attack|block)|if able/i.test(c)), name).toEqual([]);
+  });
+
+  test("Alexios keeps the genuine can'ts of 'attacks each combat if able, can't be sacrificed, and can't attack its owner'", () => {
+    expect(String(F["Alexios, Deimos of Kosmos"]!.source.oracleText)).toContain("Alexios attacks each combat if able, can't be sacrificed, and can't attack its owner.");
+    expect(cants("Alexios, Deimos of Kosmos").join(" | ")).toMatch(/can't be sacrificed|be sacrificed/);
+  });
+
   test("Dulcet Sirens, Gideon Jura and Siren's Call carry no forced-attack cant at all, and their other cants are untouched", () => {
     for (const n of ["Dulcet Sirens", "Gideon Jura", "Siren's Call"]) expect(cants(n).filter((c) => /if able|not (?:attack|block)/i.test(c)), n).toEqual([]);
     expect(String(F["Gideon Jura"]!.source.oracleText)).toContain("creatures that player controls attack Gideon Jura if able");
@@ -48,7 +61,7 @@ describe("a later 'that creature' still resolves through the requirement to its 
     expect(String(F["Mark for Death"]!.source.oracleText)).toContain("Target creature an opponent controls blocks this turn if able. Untap that creature.");
     const untap = derived("Mark for Death").abilities.find((a) => a.effect.kind === "untap")!;
     // the untap's own "that creature" is the opponent's creature; its emit is the targeted one (`scope: target`, as for every "that creature" after a target)
-    expect(untap.effect.subject).toMatchObject({ type: "creature", control: "opp" });
+    expect(untap.effect.subject).toMatchObject({ type: "creature", scope: "target", control: "opp" });
     expect(untap.emits?.find((e) => e.verb === "untaps")?.subject).toMatchObject({ type: "creature", scope: "target", control: "opp" });
     expect(untap.targets).toEqual([{ type: "creature", control: "opp" }]);
   });

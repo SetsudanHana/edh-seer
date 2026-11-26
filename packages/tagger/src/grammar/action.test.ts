@@ -596,9 +596,11 @@ test("fragments 16: triple, one of them, casts paid by a sacrifice", () => {
 // THE CENSUS IS PARSED ONCE FOR ALL NINE FAMILIES (docs/plans/2026-10-04-grammar-derive-review.md, T4):
 // each family used to gunzip and parse all 32k rows twice, 18 parses and ~15 s of a 15 s suite.
 // Determinism is still checked on every row, by a second parse compared against the first.
+/** A stored `cant` object that NEGATES an attack/block requirement (#1334): "not attack ...", "doesn't attack ...", "avoid attacking", "can't not attack", "can't fail to attack", "can't choose not to block". A genuine "can't attack you" is none of these. */
+const NEGATED_REQUIREMENT = /\b(?:not (?:attack|block)|(?:doesn't|does not|don't) (?:attack|block)|avoids? (?:attacking|blocking)|can't (?:not|fail to|choose not to|refrain from|do anything other than) (?:attack|block)|unable to (?:attack|block)|if able is false)|^(?:attacks?|blocks?)\b[^,]* if able$/i;
 /** A printed attack/block REQUIREMENT line (#1334). */
-const REQUIREMENT_LINE = /\b(?:attacks?|blocks?)(?: or blocks?)? (?:this turn|each combat) if able\b/i;
-type CensusRow = { effect: string; type: string | null; cost?: string; actions: { verb: string }[]; cards: number };
+const REQUIREMENT_LINE = /\b(?:attacks?|blocks?)\b[^.]*? (?:this turn|each combat) if able\b/i;
+type CensusRow = { effect: string; type: string | null; cost?: string; actions: { verb: string; object?: string }[]; cards: number };
 let parsedCensus: { r: CensusRow; a: ReturnType<typeof parseActions> }[] | undefined;
 function census() {
   if (parsedCensus) return parsedCensus;
@@ -632,8 +634,10 @@ test.each([
   let total = 0, got = 0;
   for (const { r, a } of census()) {
     const fam = (v: string) => FAMILY.has(v);
-    // #1334: the store files a REQUIREMENT ("attacks this turn if able", "blocks each combat if able") as `cant` and the grammar reads it as the inert `other` (owner ruling 2026-11-26), so that disagreement is the ruling's, not coverage lost: the stored `cant` of such a row is read as `other` for the alignment.
-    const storeVerb = (x: { verb: string }): string => (x.verb === "cant" && REQUIREMENT_LINE.test(r.effect) ? "other" : x.verb);
+    // #1334: the store files a REQUIREMENT ("attacks this turn if able", "blocks each combat if able") as `cant` and the grammar reads it as the inert `other` (owner ruling 2026-11-26), so that disagreement is the ruling's, not coverage lost. Remapped PER ACTION, by what the
+    // stored action's OBJECT says: only a `cant` whose object NEGATES the requirement (NEGATED_REQUIREMENT: "not attack each combat if able", "doesn't attack this turn", "avoid attacking", "can't not attack", "can't fail to attack") is read as `other`. Every other stored `cant`
+    // on the same row (Fealty to the Realm's "attack you", Xantcha's "attack its owner", Alexios's "be sacrificed", Mark for Death's "block this turn", Imaginary Threats' "don't untap") keeps its verb and is scored as before; "be unblocked" (`must be blocked`) is untouched.
+    const storeVerb = (x: { verb: string; object?: string }): string => (x.verb === "cant" && REQUIREMENT_LINE.test(r.effect) && NEGATED_REQUIREMENT.test(x.object ?? "") ? "other" : x.verb);
     const si = r.actions.flatMap((x, i) => (fam(storeVerb(x)) ? [i] : [])), ri = a.flatMap((x, j) => (fam(x.verb) ? [j] : []));
     const hit = new Set(alignVerbs(si.map((i) => storeVerb(r.actions[i]!)), ri.map((j) => a[j]!.verb)).map(([i]) => si[i]));
     r.actions.forEach((x, i) => { if (FAMILY.has(storeVerb(x))) { total += r.cards; if (hit.has(i)) got += r.cards; } });
