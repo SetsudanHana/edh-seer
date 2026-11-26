@@ -9,13 +9,13 @@ import type { Ability, SubjectFilter } from "@edh-seer/tagger";
  *     additional cost / Kicker. Third person ("sacrifices") is another player's, and a pronoun ("them", "it") is a thing already named.
  *  CEILING: the printed-words test is per card, not per sentence: a card with both an edict and a cost of the same types is read by its cost.
  *  The derive's control misread ("each foe sacrifices" as `you`) is the root cause and is NOT changed here. */
-const OWN_PRINTED = /\badditional cost[^.]{0,200}?\bsacrifice\b|\bkicker\s*—\s*sacrifice\b|\byou may sacrifice\b|\b(?:by|and) sacrificing (?:an?|another|one|two|three|x|any number of)\b|(?:^|\n|[.:,—]\s*|\bthen |\bunless you |\bor )sacrifice (?:an?|another|one|two|three|x|any number of)\b/i;
+const OWN_PRINTED = /\badditional cost[^.]{0,200}?\bsacrifice\b|\bkicker\s*—\s*sacrifice\b|\byou may sacrifice\b|\b(?:by|and) sacrificing (?:an?|another|one|two|three|x|any number of)\b|(?:^|\n|[.:,—]\s*|\bthen |\bunless you |\bor |\band )sacrifice (?:an?|another|one|two|three|x|any number of)\b/i;
 
 const typesOf = (s: Partial<SubjectFilter> | undefined): string[] => (Array.isArray(s?.type) ? [...s!.type] : s?.type ? [s.type] : []).sort();
 
-export function ownSacrificeCost(a: Ability, e: { subject: SubjectFilter; victimMay?: boolean }, oracleText: string | undefined): boolean {
+export function ownSacrificeCost(a: Ability, e: { subject: SubjectFilter; victimMay?: boolean }, oracleText: string | undefined, allowNotType = false): boolean {
   const s = e.subject;
-  if (s.control !== "you" || s.self === true || s.notType !== undefined || e.victimMay === true) return false;
+  if (s.control !== "you" || s.self === true || (s.notType !== undefined && !allowNotType) || e.victimMay === true) return false;
   const want = typesOf(s).join();
   if (a.payment?.sacrifice?.some((x) => typesOf(x.subject as SubjectFilter).join() === want)) return true;
   return OWN_PRINTED.test(oracleText ?? "");

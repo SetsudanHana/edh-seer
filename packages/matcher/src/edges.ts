@@ -4296,6 +4296,9 @@ function fodderEdges({ p, c, h, opts, reasons }: PairScope): void {
     const pTypes = p.tags.characteristics.types ?? [];
     // YOUR OWN COST ONLY, read from the derive's payment and the printed words (see `ownSacrificeCost`): the derive's `control: "you"` also files an edict ("each foe sacrifices"), a victim's option and your own tokens. A "nonland permanent" (`notType`) is no named list.
     const ownList = types.length > 1 && wanted.allTypes === undefined && ownSacrificeCost(a, eats, c.card.oracleText);
+    // "SACRIFICE (ANOTHER) NONLAND PERMANENT" IS A PERMANENT OUTLET (owner ruling 2026-11-26, #1814): derive expands it into five types with `notType: [land]`, but it is whole-deck as Claws of Gix's "Sacrifice a permanent" is. No type narrows it (`narrowType` stays false), only a token or a
+    // recursive card is fodder, and the reason carries the key a lone permanent outlet's does (`fodder:permanent`). The nonland match itself is kept: a land token is no fodder for it.
+    const nonlandPermanent = wanted.notType !== undefined && types.length > 1 && wanted.allTypes === undefined && ownSacrificeCost(a, eats, c.card.oracleText, true);
     const disjunct = ownList ? types.filter((t) => !WHOLE_DECK_TYPES.has(t) && pTypes.includes(t)) : [];
     const narrowType = (types.length === 1 && !WHOLE_DECK_TYPES.has(types[0]!)) || disjunct.length > 0
       || (wanted.stats ?? []).some((st) => st.metric === "power");
@@ -4343,7 +4346,7 @@ function fodderEdges({ p, c, h, opts, reasons }: PairScope): void {
     reasons.push({
       // The tag names the type of the list this card IS (the one each demand key of the outlet names), so an artifact is `fodder:artifact` for "artifact or creature" as for a lone artifact outlet.
       // A maker (`!is`) stands in for the token it makes, so its tag is that TOKEN's type: a Treasure maker is `fodder:artifact`, not the maker's own `creature`.
-      tag: `fodder:${themeSubjectKey(ownList ? { ...wanted, type: disjunct[0] ?? (is ? types.find((t) => pTypes.includes(t)) : types.find((t) => madeTypes.includes(t))) ?? types[0]! } : wanted)}`,
+      tag: `fodder:${themeSubjectKey(nonlandPermanent ? { type: "permanent" } : ownList ? { ...wanted, type: disjunct[0] ?? (is ? types.find((t) => pTypes.includes(t)) : types.find((t) => madeTypes.includes(t))) ?? types[0]! } : wanted)}`,
       text: !is ? `${p.card.name} makes fodder for ${c.card.name}`
         : comesBack && !isToken ? `${p.card.name} is fodder for ${c.card.name}, and ${comesBack} brings it back once`
         : `${p.card.name} is fodder for ${c.card.name}`,
