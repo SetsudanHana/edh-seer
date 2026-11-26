@@ -37,3 +37,35 @@ test("a payoff for YOUR creatures dying still pairs: Viscera Seer and Village Ri
   expect(grantedDies("Not Dead After All").every((x) => x === "you")).toBe(true);
   expect(pair("Viscera Seer", "Not Dead After All").length).toBeGreaterThan(0);
 });
+
+// #1256 REVIEW. The same step narrows EVERY trigger of the grant, the returned creature's emits, and the grants the stored clauses file as the card itself.
+const ASHNOD = "Ashnod's Intervention";
+test("Ashnod's Intervention ('dies or is put into exile from the battlefield'): the exile trigger is yours too, so Swords and Path no longer pair with it (Farewell, exile all creatures, hits yours too and keeps its pair, as a dies wipe does)", () => {
+  const ex = dc(ASHNOD).tags!.abilities.filter((a) => a.grantedBy !== undefined && a.trigger?.verbs.includes("exiled")).map((a) => a.trigger!.subject.control);
+  expect(ex.length).toBeGreaterThan(0);
+  expect(ex.every((x) => x === "you")).toBe(true);
+  for (const p of ["Swords to Plowshares", "Path to Exile"]) expect(pair(p, ASHNOD), p).toEqual([]);
+  expect(pair("Farewell", ASHNOD)).toEqual(["exiled:creature"]);
+});
+
+test.each(["Infuse with Vitality", "Return to Action", "Pain 101", "Kaya the Inexorable"])("%s: the granted trigger is stored as the card itself; a granter that is no creature grants it to the recipient, so a sacrifice outlet pairs", (n) => {
+  const t = dc(n).tags!.abilities.filter((a) => a.grantedBy !== undefined && a.trigger?.verbs.some((v) => v === "dies" || v === "exiled"));
+  expect(t.length, n).toBeGreaterThan(0);
+  for (const a of t) { expect(a.trigger!.subject.self, n).toBeUndefined(); expect(a.trigger!.subject.control, n).toBe("you"); }
+  expect(pair("Viscera Seer", n), n).toContain("dies:creature");
+});
+
+// CR 702.95a (title: Soulbond): the paired creature is "another unpaired creature you control".
+test("Breathkeeper Seraph (soulbond): its paired creatures are yours, so No Mercy no longer pairs and Viscera Seer still does", () => {
+  expect(String(F["Breathkeeper Seraph"]!.source.oracleText)).toContain("each of those creatures has \"When this creature dies, you may return it to the battlefield under its owner's control at the beginning of your next upkeep.\"");
+  expect(pair("No Mercy", "Breathkeeper Seraph")).toEqual([]);
+  expect(pair("Viscera Seer", "Breathkeeper Seraph")).toEqual(["dies:creature"]);
+});
+
+test("the returned creature is yours: 'a creature an opponent controls enters' (Blood Seeker, Authority of the Consuls) no longer hears Malakir Rebirth or Undying Malice", () => {
+  expect(pair(MALAKIR, "Blood Seeker")).toEqual([]);
+  expect(pair("Undying Malice", "Authority of the Consuls")).toEqual([]);
+  const enters = dc(MALAKIR).tags!.abilities.filter((a) => a.grantedBy !== undefined).flatMap((a) => (a.emits ?? []).filter((e) => e.subject.ref === "trigger").map((e) => e.subject.control));
+  expect(enters.length).toBeGreaterThan(0);
+  expect(enters.every((x) => x === "you")).toBe(true);
+});
