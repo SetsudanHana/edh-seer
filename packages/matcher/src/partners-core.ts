@@ -1321,6 +1321,8 @@ export const fodderDemandsOf = (d: DeckCard): { key: string; tag: string }[] => 
     const noun = subtype ?? (types.length === 1 ? types[0] : undefined);
     // A DISJUNCTION OF TYPES IN YOUR OWN COST asks for each type (owner ruling 2026-11-24, #1805): Deadly Dispute's "sacrifice an artifact or creature" is the demand of a lone artifact outlet and of a lone creature outlet. A conjunction ("artifact creature",
     // `allTypes`) is not ruled and still asks for nothing; an edict (`eats` is already own-control only, above) is no cost.
+    // A NONLAND PERMANENT asks for the permanent key a lone permanent outlet asks for (owner ruling 2026-11-26, #1814; see `fodderEdges`).
+    if (!noun && wanted.notType !== undefined && types.length > 1 && wanted.allTypes === undefined && ownSacrificeCost(a, eats, d.card.oracleText, true)) return [{ key: "fodder|-|permanent|-", tag: `fodder:${themeSubjectKey({ type: "permanent" })}` }];
     if (!noun && types.length > 1 && wanted.allTypes === undefined && ownSacrificeCost(a, eats, d.card.oracleText)) return types.map((t) => ({ key: `fodder|-|${t}|-`, tag: `fodder:${themeSubjectKey({ ...wanted, type: t })}` }));
     return noun ? [{ key: `fodder|-|${noun}|-`, tag: `fodder:${themeSubjectKey(wanted)}` }] : [];
   });

@@ -86,7 +86,7 @@ test("a 'nonland permanent' cost reads as a permanent cost does: Gluttonous Trol
   expect(F["Claws of Gix"]!.source.oracleText).toContain("Sacrifice a permanent:");
   expect(fodder(dc("Sol Ring"), dc("Claws of Gix"))).toEqual([]);
   expect(fodder(dc("Sol Ring"), dc("Gluttonous Troll"))).toEqual([]);
-  expect(keys("Gluttonous Troll")).toEqual([]);
+  expect(keys("Gluttonous Troll")).toEqual(["fodder|-|permanent|-"]); // #1814: asks for the permanent key, as Claws of Gix does
 });
 
 // THE MAKER STANDS IN FOR ITS TOKEN on a card page (`tokensMediate: false`): its tag is the TOKEN's type (a Treasure is an artifact), or the page, which matches by the demand's tags, drops it.
