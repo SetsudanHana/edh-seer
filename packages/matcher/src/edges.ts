@@ -1,8 +1,8 @@
 import type { Reason } from "@edh-seer/engine";
 import type { Ability, CardTags, GameEvent, SubjectFilter } from "@edh-seer/tagger";
-import { countedClassesOf, tapCostClassesOf } from "./counted-classes.js";
+import { conjunctionKey, countedClassesOf, tapCostClassesOf } from "./counted-classes.js";
 import { ownSacrificeCost } from "./own-sacrifice.js";
-export { countedClassesOf, tapCostClassesOf };
+export { conjunctionKey, countedClassesOf, tapCostClassesOf };
 import { CREATURE_SUBTYPES, LAND_SUBTYPES } from "@edh-seer/tagger/subtypes";
 import { isEveryCreatureType } from "@edh-seer/tagger/characteristics";
 import { tokenKindsWith } from "@edh-seer/tagger/token-kinds";
@@ -2504,6 +2504,8 @@ export const WHOLE_DECK_TYPES: ReadonlySet<string> = new Set(["creature", "perma
  *
  *  AN OPPONENT'S BOARD IS NOT FED BY YOUR CARD. */
 export function boardCountNarrows(counted: SubjectFilter): boolean {
+  // A CONJUNCTION ("artifact creatures you control", #1813, owner ruling 2026-11-26) is a minority of the deck whatever its parts: it narrows. An opponent's board is still no count of yours.
+  if (conjunctionKey(counted) !== undefined) return counted.control !== "opp";
   const subtype = Array.isArray(counted.subtype) ? counted.subtype[0] : counted.subtype;
   const types = Array.isArray(counted.type) ? counted.type : counted.type ? [counted.type] : [];
   // A TOKEN count narrows even a whole-deck type (issue #502): "creature tokens you control" is fed
@@ -3407,7 +3409,7 @@ function boardCountEdges({ p, c, h, pEvents, reasons }: PairScope): void {
     // "for each creature token you control" never heard of her. Her own create-token emit is typed.
     // Refused where the copy's types are rewritten (Espers to Magicite: "loses all other card types"),
     // the same cue `copySubject` refuses: the emit then names what was copied, not what was made.
-    const makes = counted.token === true && !COPY_REPLACES_TYPE_CUE.test(p.card.oracleText ?? "") && pEvents.some((e) => e.verb === "create-token" && e.subject.token === true
+    const makes = (counted.token === true || conjunctionKey(counted) !== undefined) && !COPY_REPLACES_TYPE_CUE.test(p.card.oracleText ?? "") && pEvents.some((e) => e.verb === "create-token" && e.subject.token === true
       && subjectMatches((({ zone: _ez, scope: _sc, ...s }) => s)(e.subject) as SubjectFilter, printed, h));
     const pPrinted = characteristicsSubject(p.tags, p.card.name);
     const printedMeets = !emblem && subjectMatches(pPrinted, printed, h);
@@ -3424,7 +3426,7 @@ function boardCountEdges({ p, c, h, pEvents, reasons }: PairScope): void {
     const cTypes = c.tags.characteristics.types ?? [];
     const whenCast = a.kind === "on-cast" || (cTypes.length > 0 && cTypes.every((t) => t === "instant" || t === "sorcery"));
     reasons.push({
-      tag: `scales:${themeSubjectKey(counted)}`,
+      tag: `scales:${conjunctionKey(counted) ?? themeSubjectKey(counted)}`,
       text: animatedKind !== undefined
         ? animatedCountSentence(p.card.name, c.card.name, animatedKind, a.effect.kind, whenCast)
         : boardCountFeedsScaling(p.card.name, c.card.name, a.effect.kind, makes && !printedMeets, whenCast, use),
@@ -4298,9 +4300,11 @@ function fodderEdges({ p, c, h, opts, reasons }: PairScope): void {
     const ownList = types.length > 1 && wanted.allTypes === undefined && ownSacrificeCost(a, eats, c.card.oracleText);
     // "SACRIFICE (ANOTHER) NONLAND PERMANENT" IS A PERMANENT OUTLET (owner ruling 2026-11-26, #1814): derive expands it into five types with `notType: [land]`, but it is whole-deck as Claws of Gix's "Sacrifice a permanent" is. No type narrows it (`narrowType` stays false), only a token or a
     // recursive card is fodder, and the reason carries the key a lone permanent outlet's does (`fodder:permanent`). The nonland match itself is kept: a land token is no fodder for it.
+    // AN OUTLET OVER A CONJUNCTION ("sacrifice an artifact creature", #1813) narrows by what the producer IS or MAKES (`subjectMatches` holds the conjunction), and keys on the conjunction.
+    const conj = conjunctionKey(wanted) !== undefined && ownSacrificeCost(a, eats, c.card.oracleText) ? conjunctionKey(wanted) : undefined;
     const nonlandPermanent = wanted.notType !== undefined && types.length > 1 && wanted.allTypes === undefined && ownSacrificeCost(a, eats, c.card.oracleText, true);
     const disjunct = ownList ? types.filter((t) => !WHOLE_DECK_TYPES.has(t) && pTypes.includes(t)) : [];
-    const narrowType = (types.length === 1 && !WHOLE_DECK_TYPES.has(types[0]!)) || disjunct.length > 0
+    const narrowType = (types.length === 1 && !WHOLE_DECK_TYPES.has(types[0]!)) || disjunct.length > 0 || conj !== undefined
       || (wanted.stats ?? []).some((st) => st.metric === "power");
     // ON A CARD PAGE NO TOKEN NODE EXISTS (`tokensMediate: false`), so the MAKER stands in for the
     // token it makes: Krenko's Goblins are fodder for Viscera Seer, said on Krenko's row. The deck
@@ -4346,7 +4350,7 @@ function fodderEdges({ p, c, h, opts, reasons }: PairScope): void {
     reasons.push({
       // The tag names the type of the list this card IS (the one each demand key of the outlet names), so an artifact is `fodder:artifact` for "artifact or creature" as for a lone artifact outlet.
       // A maker (`!is`) stands in for the token it makes, so its tag is that TOKEN's type: a Treasure maker is `fodder:artifact`, not the maker's own `creature`.
-      tag: `fodder:${themeSubjectKey(nonlandPermanent ? { type: "permanent" } : ownList ? { ...wanted, type: disjunct[0] ?? (is ? types.find((t) => pTypes.includes(t)) : types.find((t) => madeTypes.includes(t))) ?? types[0]! } : wanted)}`,
+      tag: conj !== undefined ? `fodder:${conj}` : `fodder:${themeSubjectKey(nonlandPermanent ? { type: "permanent" } : ownList ? { ...wanted, type: disjunct[0] ?? (is ? types.find((t) => pTypes.includes(t)) : types.find((t) => madeTypes.includes(t))) ?? types[0]! } : wanted)}`,
       text: !is ? `${p.card.name} makes fodder for ${c.card.name}`
         : comesBack && !isToken ? `${p.card.name} is fodder for ${c.card.name}, and ${comesBack} brings it back once`
         : `${p.card.name} is fodder for ${c.card.name}`,
