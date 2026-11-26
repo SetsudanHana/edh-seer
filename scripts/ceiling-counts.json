@@ -23,6 +23,7 @@
   "packages/matcher/src/chosen-type.ts": 8,
   "packages/matcher/src/colour-sources.ts": 1,
   "packages/matcher/src/conditional-fill.ts": 1,
+  "packages/matcher/src/counted-classes.ts": 1,
   "packages/matcher/src/deck-math.ts": 1,
   "packages/matcher/src/deck-rules.ts": 1,
   "packages/matcher/src/defender-enablers.ts": 2,

@@ -13,7 +13,7 @@ const DECK_KEYS: string[] = JSON.parse(readFileSync(new URL("./fixtures/calibrat
 
 /** Subjects every verb is tried with: no class, a card type, a negation, a creature type, a land type
  *  (CR 205.3i) and a possessive one. */
-const SUBJECTS = ["any", "creature", "-creature", "wizard", "gate", "urza's"];
+const SUBJECTS = ["any", "creature", "-creature", "wizard", "gate", "urza's", "artifact+creature"];
 /** Every family a name can be asked for: the trigger verbs, every row of the verb table (the pass
  *  literals and the flat engine's legacy `tribe:`/`token:`/`counter:`), and the families with a rule. */
 const FAMILIES = [...new Set([...VERB_VOCAB, ...TAG_VERB_ROWS, "scales", "creates", "create-token", "ramp-target", "graveyard-recursion"])];
@@ -26,6 +26,8 @@ function rawShape(tag: string, name: string): string | null {
   if (name.includes(":")) return "colon";
   if (/\bany\b/i.test(name)) return "any";
   if (name.includes("__")) return "placeholder";
+  // A conjunction key (#1813) is `artifact+creature` in the tag; a name says "artifact creature". A "+" between two WORDS is the key leaking ("+1/+1 counters" has digits and stays legal).
+  if (/[a-z]\+[a-z]/i.test(name)) return "plus between words";
   if (/^[a-z]/.test(name)) return "lowercase start";
   // The tag's own words handed back: "Draw any", "Land condition swamp", "Static clone".
   const slug = (s: string) => s.toLowerCase().replace(/[:\-_ ]+/g, " ").trim();
@@ -83,6 +85,10 @@ test("the owner's names, 2026-11-24", () => {
   expect(tagName("enters:artifact")).toBe("Artifact ETBs");
   expect(tagName("cast:artifact")).toBe("Artifact spells");
   expect(tagName("scales:artifact")).toBe("Artifacts matter");
+  // A conjunction (#1813): the narrow class "artifact creatures", not "Artifact+creatures".
+  expect(tagName("scales:artifact+creature")).toBe("Artifact creatures matter");
+  expect(tagName("fodder:artifact+creature")).toBe("Artifact creature fodder");
+  expect(tagName("scales:+1/+1")).not.toMatch(/[a-z]\+[a-z]/i);
   expect(tagName("enters:vehicle")).toBe("Vehicles");
   expect(tagName("enters:equipment")).toBe("Equipment");
   expect(tagName("enters:aura")).toBe("Auras");

@@ -13,7 +13,26 @@ export const tapCostClassesOf = (a: Ability, all: readonly Ability[]): SubjectFi
     if ("self" in s && s.self === true && !("type" in s)) return [];
     const f = s as SubjectFilter;
     const types = Array.isArray(f.type) ? f.type : f.type ? [f.type] : [];
+    // "Tap three untapped artifact creatures you control" (Collation Trimatrix, #1813): a CONJUNCTION is its own narrow class, read as such everywhere (`conjunctionKey`).
+    if (conjunctionKey(f) !== undefined && f.control === "you" && f.self !== true) return [{ ...f, zone: "battlefield" as const }];
     if (types.length !== 1 || types[0] !== "artifact" || f.control !== "you" || f.subtype !== undefined || f.self === true) return [];
     return [{ ...f, zone: "battlefield" as const }];
   });
 };
+
+/** A CONJUNCTION OF TYPES IS ITS OWN NARROW CLASS (owner ruling 2026-11-26, #1813): "artifact creatures you control" (`allTypes: [artifact, creature]`, both types at once) is a minority of the deck although "creature" alone is the whole deck, and it is satisfied
+ *  only by what IS, or MAKES, an artifact creature, never by a plain artifact or a plain creature. Its key is the sorted `allTypes` joined by "+" ("artifact+creature"; the comma already means a disjunction in a key slot). Undefined for anything else.
+ *  Only a bare conjunction: a subtype, a colour, a name, an alternative ("a black or artifact creature", Soldevi Adnate) or a negation makes it another subject, and a conjunction of whole-deck types alone (creature + land) names no minority.
+ *  CEILING: the corpus census (2026-11-26) finds counts, outlets and tap costs over `allTypes` for artifact + creature only; other pairs (creature + enchantment, creature + land, artifact + enchantment) occur only in effects, triggers and token makers, and would read the same way. */
+const WHOLE = new Set(["creature", "permanent", "card", "spell", "land"]);
+export function conjunctionKey(s: Partial<SubjectFilter> | undefined): string | undefined {
+  const all = s?.allTypes;
+  if (!s || !Array.isArray(all) || all.length < 2) return undefined;
+  if (s.subtype !== undefined || s.colors !== undefined || s.anyOf !== undefined || s.named !== undefined || (s.notType?.length ?? 0) > 0) return undefined;
+  if (all.every((t) => WHOLE.has(t))) return undefined;
+  return [...all].sort().join("+");
+}
+
+/** A MADE TOKEN IS A CONJUNCTION'S ONLY IF ITS OWN EMIT SAYS SO (#1813 review): the emit's `allTypes` holds every member of the counted class ("Thopter artifact creature token" carries `[artifact, creature]`). A Role token, a typeless copy and a copy of "artifact or creature" (a type LIST with no `allTypes`) are not artifact creatures, and `subjectMatches` is too loose to tell. */
+export const makesConjunction = (made: SubjectFilter, counted: SubjectFilter): boolean =>
+  (counted.allTypes ?? []).every((t) => (made.allTypes ?? []).includes(t));

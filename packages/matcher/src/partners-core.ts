@@ -14,7 +14,7 @@ import type { Card } from "@edh-seer/engine";
 import { ARCHETYPE_LABELS, type Archetype } from "./archetypes.js";
 import { MIN_INDEXABLE_PARTNERS, PARTNER_SHARD_COUNT, isIndexableCard, partnerShardOf } from "./partner-shard.js";
 import { ownSacrificeCost } from "./own-sacrifice.js";
-import { FACT_KINDS, POLYMORPH_HIT_MV, isPolymorphSwap, countedClassesOf, tapCostClassesOf, eventTagKey, ROLE_NOT_SYNERGY, WHOLE_DECK_TYPES, abilityIsKind, directedReasons, eventReasonTag, givesAPermanentAway, isPolymorph, meldReason, producerEvents, themeSubjectKey } from "./edges.js";
+import { FACT_KINDS, POLYMORPH_HIT_MV, isPolymorphSwap, conjunctionKey, countedClassesOf, tapCostClassesOf, eventTagKey, ROLE_NOT_SYNERGY, WHOLE_DECK_TYPES, abilityIsKind, directedReasons, eventReasonTag, givesAPermanentAway, isPolymorph, meldReason, producerEvents, themeSubjectKey } from "./edges.js";
 import { impliedCounterEvents, impliedGraveyardEvents, keywordAbilities, selfFillTypes, selfLeavesTypes } from "./implied.js";
 import { isReflexiveTrigger, isRefusedTrigger, isSelfLoss } from "./claims.js";
 import { parseSubject } from "@edh-seer/tagger/subject";
@@ -1321,6 +1321,9 @@ export const fodderDemandsOf = (d: DeckCard): { key: string; tag: string }[] => 
     const noun = subtype ?? (types.length === 1 ? types[0] : undefined);
     // A DISJUNCTION OF TYPES IN YOUR OWN COST asks for each type (owner ruling 2026-11-24, #1805): Deadly Dispute's "sacrifice an artifact or creature" is the demand of a lone artifact outlet and of a lone creature outlet. A conjunction ("artifact creature",
     // `allTypes`) is not ruled and still asks for nothing; an edict (`eats` is already own-control only, above) is no cost.
+    // A CONJUNCTION ("sacrifice an artifact creature", #1813) asks for its own narrow class.
+    const conj = conjunctionKey(wanted);
+    if (!noun && conj !== undefined && ownSacrificeCost(a, eats, d.card.oracleText)) return [{ key: `fodder|-|${conj}|-`, tag: `fodder:${conj}` }];
     // A NONLAND PERMANENT asks for the permanent key a lone permanent outlet asks for (owner ruling 2026-11-26, #1814; see `fodderEdges`).
     if (!noun && wanted.notType !== undefined && types.length > 1 && wanted.allTypes === undefined && ownSacrificeCost(a, eats, d.card.oracleText, true)) return [{ key: "fodder|-|permanent|-", tag: `fodder:${themeSubjectKey({ type: "permanent" })}` }];
     if (!noun && types.length > 1 && wanted.allTypes === undefined && ownSacrificeCost(a, eats, d.card.oracleText)) return types.map((t) => ({ key: `fodder|-|${t}|-`, tag: `fodder:${themeSubjectKey({ ...wanted, type: t })}` }));
@@ -1351,6 +1354,9 @@ export const boardCountsOf = (d: DeckCard): { key: string; tag: string }[] =>
       const subtypes = (Array.isArray(counted.subtype) ? counted.subtype : counted.subtype === undefined ? [] : [counted.subtype])
         .filter((st) => !BASIC_LAND_TYPE_SET.has(st));
       if (subtypes.length > 0) return subtypes.map((st) => ({ key: `counts|-|${st}|-`, tag }));
+      // A CONJUNCTION ("artifact creatures you control", #1813) is its own narrow class.
+      const conj = conjunctionKey(counted);
+      if (conj !== undefined) return [{ key: `counts|-|${conj}|-`, tag: `scales:${conj}` }];
       // A bare type count (Storm-Kiln Artist's artifacts), keyed on the type itself.
       const types = Array.isArray(counted.type) ? counted.type : counted.type === undefined ? [] : [counted.type];
       return types.length === 1 && !WHOLE_DECK_TYPES.has(types[0]!) ? [{ key: `counts|-|${types[0]}|-`, tag }] : [];
@@ -1373,6 +1379,8 @@ export const supplyKeysOf = perCard((d: DeckCard): string[] => [
   ...(d.tags?.characteristics.subtypes ?? [])
     .filter((t) => !BASIC_LAND_TYPE_SET.has(t))
     .map((t) => `counts|-|${t}|-`),
+  // WHAT A CARD IS, TWO TYPES AT ONCE (#1813): an artifact creature supplies "an artifact creature you control", never a plain artifact or a plain creature.
+  ...conjunctionKeysOf(d.tags?.characteristics.types ?? []).map((k) => `counts|-|${k}|-`),
   // An artifact supplies "an artifact you control" the way a Goblin supplies a Goblin (2026-09-09).
   ...(d.tags?.characteristics.types ?? [])
     .filter((t) => !WHOLE_DECK_TYPES.has(t))
@@ -1393,14 +1401,24 @@ export const supplyKeysOf = perCard((d: DeckCard): string[] => [
 ]);
 const DONATED_KEY = "counts|-|donated|-";
 
+/** EVERY PAIR OF A CARD'S TYPES THAT NAMES A MINORITY, as the conjunction key `conjunctionKey` writes it (#1813): artifact + creature, creature + enchantment ... (two whole-deck types alone, creature + land, name none). */
+const conjunctionKeysOf = (types: readonly string[]): string[] => {
+  const t = [...new Set(types)].filter((x) => !["token", "legendary", "basic", "snow", "tribal", "kindred"].includes(x)).sort();
+  const out: string[] = [];
+  for (let i = 0; i < t.length; i++) for (let j = i + 1; j < t.length; j++) if (!WHOLE_DECK_TYPES.has(t[i]!) || !WHOLE_DECK_TYPES.has(t[j]!)) out.push(`${t[i]}+${t[j]}`);
+  return out;
+};
+
 const fodderSupplyKeysOf = (d: DeckCard): string[] => {
   const nouns = new Set<string>();
+  for (const k of conjunctionKeysOf(d.tags?.characteristics.types ?? [])) nouns.add(k);
   for (const t of d.tags?.characteristics.subtypes ?? []) if (!BASIC_LAND_TYPE_SET.has(t)) nouns.add(t);
   for (const t of d.tags?.characteristics.types ?? []) if (!WHOLE_DECK_TYPES.has(t)) nouns.add(t);
   for (const a of claimingAbilitiesOf(d)) for (const e of a.emits ?? []) {
     if (e.verb !== "create-token" || e.subject.token !== true) continue;
     for (const t of asList(e.subject.type)) nouns.add(t);
     for (const t of asList(e.subject.subtype)) nouns.add(t);
+    for (const k of conjunctionKeysOf(asList(e.subject.allTypes))) nouns.add(k);
   }
   return [...nouns].map((n) => `fodder|-|${n}|-`);
 };
