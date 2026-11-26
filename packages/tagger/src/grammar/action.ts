@@ -1040,6 +1040,16 @@ function subjectAction(t: string): ActionReading[] | null {
 const THEY = /^(?:they|it|he|she|that creature|those creatures|that permanent|the next (?:[\w -]+? )?spell you cast this turn)$/i;
 const REF: SubjectFilter = { control: "any", token: null, ref: "sentence" };
 
+/** A REQUIREMENT TO ATTACK OR BLOCK IS NOT A RESTRICTION (#1334, owner ruling 2026-11-26: "fix the misread and park it"). "Target creature attacks this turn if able", "creatures you control attack each combat if able", "that creature blocks this turn if able" are
+ *  requirements (CR 508.1d attack requirements, 509.1c block requirements), and the grammar filed them as `cant` with the opposite as its object ("not attack this turn if able"), the store's habit. A `cant` is a restriction, and every reader of one (restrictedActions, the
+ *  cant-kinds) had to refuse the negation by hand. They are the store's inert `other` now: no ability, no emit, honestly unread in `unclaimed` until a consumer exists. Not goad (CR 701.15 adds "attacks a player other than the goading player"): no forced-attack emit.
+ *  `must be blocked if able` (the attacker's requirement on its blockers, derived as `be unblocked`) is a different reading and is not touched here. */
+function requirementOf(object: SubjectFilter | undefined, stem: string, when: string | undefined, subject?: string): ActionReading {
+  // A TARGETED SUBJECT LEADS THE WORDS: a later "Untap THAT CREATURE" (Mark for Death) resolves through the nearest earlier action's words, and the requirement is the action that named the target.
+  const lead = subject !== undefined && /^(?:up to (?:one|two|three) )?(?:another )?targets? /i.test(subject) ? `${subject} ` : "";
+  return { verb: "other", ...(object ? { object } : {}), text: `${lead}must ${stem}${when ? ` ${when}` : ""} if able` } as ActionReading;
+}
+
 /** "<subject> enters tapped [unless ...]": tapped as it arrives, the store's `tap` on the card.
  *  "<subject> can't block", "doesn't untap during ...", "attacks each combat if able": a
  *  restriction, the store's `cant` with the restricted thing as its object. */
@@ -1049,7 +1059,7 @@ function restrictionOf(t: string): ActionReading[] | null {
   const req2 = /^(.+?) (attacks?(?: or blocks?)?|blocks?) (this turn|each combat) if able$/i.exec(t);
   if (req2) {
     const who = objectOf(req2[1]!) ?? (THEY.test(req2[1]!) ? { object: REF } : null);
-    if (who) { lastSubject = req2[1]!; return [{ verb: "cant", object: who.object, text: `not ${req2[2]!.toLowerCase().replace(/s\b/g, "")} ${req2[3]!.toLowerCase()} if able` }]; }
+    if (who) { lastSubject = req2[1]!; return [requirementOf(who.object, req2[2]!.toLowerCase().replace(/s\b/g, ""), req2[3]!.toLowerCase(), req2[1]!)]; }
   }
   // "its activated abilities can't be activated [this turn]", "enchanted creature's activated abilities
   // can't be activated": the store's cant on activating them.
@@ -1083,7 +1093,7 @@ function restrictionOf(t: string): ActionReading[] | null {
   const req = blocked ?? blocks;
   if (req) {
     const who = objectOf(req[1]!) ?? (THEY.test(req[1]!) ? { object: REF } : null);
-    if (who) { lastSubject = req[1]!; return [{ verb: "cant", object: who.object, text: blocked ? `be unblocked${blocked[2] ?? ""}` : "not block this turn if able" }]; }
+    if (who) { lastSubject = req[1]!; return [blocked ? { verb: "cant", object: who.object, text: `be unblocked${blocked[2] ?? ""}` } : requirementOf(who.object, "block", "this turn", req[1]!)]; }
   }
   // "you may have this land enter tapped": optional.
   const mayTapped = /^you may have (~|this [a-z]+) enter tapped$/i.exec(t);
@@ -1472,7 +1482,7 @@ function predicateOf(pred: string, object: SubjectFilter, target: { object: Subj
   if (doesnt) return [{ verb: "cant", object, text: doesnt[1]! }];
   const cant = /^can't (.+)$/i.exec(pred);
   if (cant) return [{ verb: "cant", object, text: cant[1]! }];
-  if (/^attacks each combat if able$/i.test(pred)) return [{ verb: "cant", object, text: "not attack each combat if able" }];
+  if (/^attacks each combat if able$/i.test(pred)) return [requirementOf(object, "attack", "each combat")];
   const mustBlocked = /^must be blocked( this turn)? if able$/i.exec(pred);
   if (mustBlocked) return [{ verb: "cant", object, text: `be unblocked${mustBlocked[1] ?? ""}` }];
   // "becomes a 1/1 Elemental creature with vigilance and haste", "becomes a Dragon": animated or

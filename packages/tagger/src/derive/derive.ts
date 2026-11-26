@@ -786,7 +786,8 @@ import { castClassFromPrint, castIsOnlyACondition, castsYourOwnCard } from "./ca
 // 598: #1804 -- review fixes: the ability discount read from 'This ability costs {1} less to activate for each other artifact you control' is stamped with the id of the clause that prints it (it had a made-up id the card page never shows), and a cost reduction read from affinity, improvise or that sentence carries Effect.costOf (spell / ability) so a sentence can say what it makes cheaper
 // 599: #1808 -- a sacrifice's control follows the actor who sacrifices: 'each foe' is an opponent, 'that / target / enchanted creature's (permanent's) controller' is anyone, and 'unless they sacrifice' is whoever the clause named before it, so an edict stops reading as your own sacrifice cost (Pir's Whim, Virtus's Maneuver, Maarika, Mercy Killing, Parasitic Implant, Burning Sands, Reweave, Torment of Venom)
 // 600: #1808 -- review fixes: a blocker's controller is the defending player's (CR 509.1a), so 'becomes blocked by a creature, that creature's controller sacrifices it' (Basalt Golem) is an opponent's sacrifice, not anyone's
-export const DERIVE_VERSION = 600;
+// 601: #1334 -- a forced attack or block ('attacks this turn if able', 'blocks each combat if able'; CR 508.1d, 509.1c) is no cant: the grammar read it as a restriction with a negated object ('not attack this turn if able') and now files it as the inert other, parked unread in unclaimed with no emit (owner ruling 2026-11-26); a genuine can't keeps its cant
+export const DERIVE_VERSION = 601;
 
 /** "a nonland card from target opponent's graveyard or hand" (#1592): the object of a stored hand-or-graveyard pick. */
 const GRAVEYARD_OR_HAND_PICK = /\bfrom (?:target opponent|target player|that player|that opponent|an opponent)'s (?:graveyard or hand|hand or graveyard)$/i;

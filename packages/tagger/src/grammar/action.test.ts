@@ -195,7 +195,7 @@ test("mana, tapping and restrictions: the mana as printed, the restricted thing 
   expect(read("This land enters tapped unless you control two or fewer other lands.")).toMatchObject([{ verb: "tap", object: { self: true }, condition: "unless you control two or fewer other lands" }]);
   expect(read("Tap up to two target creatures.")).toMatchObject([{ verb: "tap", text: "up to two target creatures", optional: true }]);
   expect(read("This creature can't block.")).toMatchObject([{ verb: "cant", text: "block" }]);
-  expect(read("This creature attacks each combat if able.")).toMatchObject([{ verb: "cant", text: "not attack each combat if able" }]);
+  expect(read("This creature attacks each combat if able.")).toMatchObject([{ verb: "other", text: "must attack each combat if able" }]); // a requirement, no restriction (#1334)
   expect(read("This creature can block only creatures with flying.")).toMatchObject([{ verb: "cant", text: "block creatures without flying" }]);
   // A restriction's "unless" stays in it: the tax derive reads.
   expect(read("Creatures can't attack you unless their controller pays {2} for each creature they control that's attacking you.")[0]?.text)
@@ -350,11 +350,11 @@ test("fragments 4: redirections, requirements, animated hosts, moved counters", 
   expect(parseActions("The next 1 damage that would be dealt to this creature this turn is dealt to target creature you control instead.", "activated")[1])
     .toMatchObject({ verb: "deal-damage", amount: "1", text: "target creature you control" });
   expect(parseActions("This creature must be blocked if able.", "static")[0]).toMatchObject({ verb: "cant", text: "be unblocked" });
-  expect(verbs("Target creature blocks this creature this turn if able.")).toEqual(["cant"]);
+  expect(verbs("Target creature blocks this creature this turn if able.")).toEqual(["other"]); // a block requirement is no cant (#1334)
   expect(verbs("Skip your draw step.", "static")).toEqual(["cant"]);
   expect(verbs("Enchanted land is a 2/2 blue Elemental creature with flying.", "static")).toEqual(["animate", "grant-ability"]);
   expect(verbs("Enchanted creature loses all abilities and has base power and toughness 1/1.", "static")).toEqual(["cant", "modify-pt"]);
-  expect(verbs("enchanted creature gets +1/-1 and attacks each combat if able.", "static")).toEqual(["modify-pt", "cant"]);
+  expect(verbs("enchanted creature gets +1/-1 and attacks each combat if able.", "static")).toEqual(["modify-pt", "other"]);
   expect(verbs("Move a +1/+1 counter from target creature onto a second target creature.")).toEqual(["remove-counter", "add-counter"]);
   expect(parseActions("If one or more +1/+1 counters would be put on a creature you control, that many plus one +1/+1 counters are put on it instead.", "static")[0])
     .toMatchObject({ verb: "add-counter", counter: "+1/+1", amount: "that many plus one" });
@@ -501,8 +501,8 @@ test("fragments 11: pump and grant predicates", () => {
 // "either of them", counters moved off a card, puts of several objects, "the player puts".
 test("fragments 12: requirements, shut-off abilities, several puts", () => {
   const verbs = (t: string, type = "triggered") => parseActions(t, type).map((a) => a.verb);
-  expect(parseActions("target creature attacks this turn if able.", "spell")[0]).toMatchObject({ verb: "cant", text: "not attack this turn if able" });
-  expect(parseActions("~ attacks or blocks each combat if able.", "static")[0]).toMatchObject({ verb: "cant", text: "not attack or block each combat if able" });
+  expect(parseActions("target creature attacks this turn if able.", "spell")[0]).toMatchObject({ verb: "other", text: "target creature must attack this turn if able" }); // #1334: a requirement, parked unread; a targeted subject leads the words so a later "that creature" resolves to it
+  expect(parseActions("~ attacks or blocks each combat if able.", "static")[0]).toMatchObject({ verb: "other", text: "must attack or block each combat if able" });
   expect(parseActions("its activated abilities can't be activated this turn.", "spell")[0]).toMatchObject({ verb: "cant", text: "activate activated abilities" });
   expect(verbs("put a +1/+1 counter on that Hero and a +1/+1 counter on ~.")).toEqual(["add-counter", "add-counter"]);
   expect(parseActions("put those counters on target creature you control.", "triggered")[0]).toMatchObject({ verb: "add-counter", text: "target creature you control" });
@@ -596,6 +596,8 @@ test("fragments 16: triple, one of them, casts paid by a sacrifice", () => {
 // THE CENSUS IS PARSED ONCE FOR ALL NINE FAMILIES (docs/plans/2026-10-04-grammar-derive-review.md, T4):
 // each family used to gunzip and parse all 32k rows twice, 18 parses and ~15 s of a 15 s suite.
 // Determinism is still checked on every row, by a second parse compared against the first.
+/** A printed attack/block REQUIREMENT line (#1334). */
+const REQUIREMENT_LINE = /\b(?:attacks?|blocks?)(?: or blocks?)? (?:this turn|each combat) if able\b/i;
 type CensusRow = { effect: string; type: string | null; cost?: string; actions: { verb: string }[]; cards: number };
 let parsedCensus: { r: CensusRow; a: ReturnType<typeof parseActions> }[] | undefined;
 function census() {
@@ -630,9 +632,11 @@ test.each([
   let total = 0, got = 0;
   for (const { r, a } of census()) {
     const fam = (v: string) => FAMILY.has(v);
-    const si = r.actions.flatMap((x, i) => (fam(x.verb) ? [i] : [])), ri = a.flatMap((x, j) => (fam(x.verb) ? [j] : []));
-    const hit = new Set(alignVerbs(si.map((i) => r.actions[i]!.verb), ri.map((j) => a[j]!.verb)).map(([i]) => si[i]));
-    r.actions.forEach((x, i) => { if (FAMILY.has(x.verb)) { total += r.cards; if (hit.has(i)) got += r.cards; } });
+    // #1334: the store files a REQUIREMENT ("attacks this turn if able", "blocks each combat if able") as `cant` and the grammar reads it as the inert `other` (owner ruling 2026-11-26), so that disagreement is the ruling's, not coverage lost: the stored `cant` of such a row is read as `other` for the alignment.
+    const storeVerb = (x: { verb: string }): string => (x.verb === "cant" && REQUIREMENT_LINE.test(r.effect) ? "other" : x.verb);
+    const si = r.actions.flatMap((x, i) => (fam(storeVerb(x)) ? [i] : [])), ri = a.flatMap((x, j) => (fam(x.verb) ? [j] : []));
+    const hit = new Set(alignVerbs(si.map((i) => storeVerb(r.actions[i]!)), ri.map((j) => a[j]!.verb)).map(([i]) => si[i]));
+    r.actions.forEach((x, i) => { if (FAMILY.has(storeVerb(x))) { total += r.cards; if (hit.has(i)) got += r.cards; } });
   }
   // A RATCHET per family, raised as coverage grows. 2.0% of stored draw/search actions print no such
   // verb in their clause text at all (an empty text, or an action filed under the wrong clause).

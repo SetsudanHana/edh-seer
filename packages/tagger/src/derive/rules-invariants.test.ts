@@ -76,6 +76,7 @@ const TESTED: Record<string, string> = {
   "702.167a": "derive/craft.test.ts — a craft ability is an activated ability whose cost exiles its materials (#1500)",
   "702.41a": "derive/artifact-cost-1804.test.ts — affinity for artifacts is a static cost reduction per artifact you control (#1804)",
   "702.126a": "derive/artifact-cost-1804.test.ts — improvise reads as the same per-artifact cost reduction (#1804)",
+  "508.1d": "derive/forced-attack-1334.test.ts — an attack requirement (\"attacks this turn if able\") is no cant: the grammar reads it as the inert `other`, parked unread (#1334)",
   "702.165a": "matcher copy-source.test.ts — backup is a triggered ability: Mirror-Shield Hoplite copies it as copies:triggered, from a card printing the keyword (#1648)",
   "702.18": "derive.test.ts — shroud's scoped printed form is `targeting-ban` with no source restriction (Ground Seal's cards in graveyards, #1423)",
   "115.7": "derive.test.ts — an effect that changes the target(s) of / chooses new targets for a TARGET spell or ability is `retarget`; your own copy's new targets are not (#1266, #491)",
