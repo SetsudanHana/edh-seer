@@ -788,7 +788,10 @@ import { castClassFromPrint, castIsOnlyACondition, castsYourOwnCard } from "./ca
 // 600: #1808 -- review fixes: a blocker's controller is the defending player's (CR 509.1a), so 'becomes blocked by a creature, that creature's controller sacrifices it' (Basalt Golem) is an opponent's sacrifice, not anyone's
 // 601: #1334 -- a forced attack or block ('attacks this turn if able', 'blocks each combat if able'; CR 508.1d, 509.1c) is no cant: the grammar read it as a restriction with a negated object ('not attack this turn if able') and now files it as the inert other, parked unread in unclaimed with no emit (owner ruling 2026-11-26); a genuine can't keeps its cant
 // 602: #1334 -- review fixes: 'attacks each combat if able and attacks a player other than you if able' (Kardur, Maximum Carnage) is a requirement too, no cant; the ability's own subject keeps scope target when 'that creature' resolves through a parked requirement (Mark for Death)
-export const DERIVE_VERSION = 602;
+// 603: #1256 -- a protective self-return granted to a bare 'target creature' (Malakir Rebirth, Demonic Gifts, Undying Malice and eight more) reads a creature you control (owner ruling 2026-11-26, as #962), not any, so opponent-death engines stop pairing with it
+// 604: #1256 -- review fixes: every trigger of the granted self-return is yours (the exile trigger of 'dies or is put into exile', Ashnod's Intervention), the returned creature's own events too ('a creature an opponent controls enters'), a soulbond pair (Breathkeeper Seraph, CR 702.95a) and a grant the stored clauses file as the card itself when the granter is no creature (Infuse with Vitality, Return to Action, Pain 101, Kaya the Inexorable)
+// 605: #1256 -- re-review: the narrowed exile trigger of a granted self-return reads from the battlefield (CR 113.6), so a graveyard exile no longer pairs with Kaya the Inexorable ('is put into exile')
+export const DERIVE_VERSION = 605;
 
 /** "a nonland card from target opponent's graveyard or hand" (#1592): the object of a stored hand-or-graveyard pick. */
 const GRAVEYARD_OR_HAND_PICK = /\bfrom (?:target opponent|target player|that player|that opponent|an opponent)'s (?:graveyard or hand|hand or graveyard)$/i;
@@ -1188,6 +1191,32 @@ function claimedAsDestination(action: Action, actions: readonly Action[], source
   }
   return unclaimed && DIG_REMAINDER.test(object) && action.fromZone === "library" && action.toZone === "library"
     && actions.some((o) => o !== action && o.fromZone === "library" && !DIG_REMAINDER.test((o.object ?? "").trim()));
+}
+
+/** A GRANTED PROTECTIVE SELF-RETURN IS ABOUT A CREATURE YOU CONTROL (#1256, owner ruling 2026-11-26, as #962: a target-any card is read by its PRIMARY use). Read off the granted clause's own words ("When this creature dies [or is put into exile [from the battlefield]],
+ *  [you may] return it to the battlefield / to its owner's hand"). Malakir Rebirth's grant read `dies {control: any}` because "target creature" names no controller, so No Mercy and Mikaeus (deaths of an opponent's creatures) paired with it. Three readings, each narrowing EVERY trigger of the
+ *  granted clause (the dies and the exile one: Ashnod's Intervention) and the returned creature's own events (`ref: trigger`, so "a creature an opponent controls enters" does not hear it):
+ *   - a bare "target creature" / "that creature" recipient read `any` (Malakir Rebirth, Demonic Gifts, Undying Malice ...);
+ *   - a SOULBOND pair (Breathkeeper Seraph: "each of those creatures has ..."), which CR 702.95a defines as "another unpaired creature you control";
+ *   - a grant the stored clauses file as the CARD ITSELF (`self: true`, control you) when the granter is no creature (Infuse with Vitality, Return to Action, Pain 101, Kaya the Inexorable): the words are about the recipient, so `self` goes.
+ *  Removal, mass grants ("creatures you control"), enchanted and equipped creatures are not this.
+ *  CEILING: the printed words of the granted clause and of the card: "target creature" / "that creature" with no "you control", "an opponent", "enchanted" or "each" in the card's own text; a soulbond grant is read off "soulbond" and "each of those creatures has" in the text. */
+function protectiveGrantIsYours(a: Ability, oracleText: string, clauseText: string | undefined, granterIsCreature: boolean): Ability {
+  const t = a.trigger;
+  if (a.grantedBy === undefined || !t || t.verbs.length !== 1 || (t.verbs[0] !== "dies" && t.verbs[0] !== "exiled")) return a;
+  if (!/^\s*when this creature dies(?: or is put into exile(?: from the battlefield)?)?, (?:you may )?return it (?:to the battlefield|to its owner's hand)\b/i.test(clauseText ?? "")) return a;
+  const bareTarget = /\b(?:target|that) creature\b/i.test(oracleText) && !/\b(?:target creature (?:you control|an opponent controls)|enchanted creature|equipped creature|each creature|creatures you control)\b/i.test(oracleText);
+  const soulbond = /\bsoulbond\b/i.test(oracleText) && /\beach of those creatures has\b/i.test(oracleText);
+  const readsAny = t.subject.control === "any" && t.subject.self !== true && (bareTarget || soulbond);
+  const readsSelf = t.subject.control === "you" && t.subject.self === true && !granterIsCreature;
+  if (!readsAny && !readsSelf) return a;
+  const { self: _self, ...subject } = t.subject;
+  return {
+    ...a,
+    // A GRANTED ABILITY WORKS ONLY WHILE ITS CREATURE IS ON THE BATTLEFIELD (CR 113.6): the exile trigger reads from the battlefield even where the words omit it (Kaya's "is put into exile"), so a graveyard exile never hears it.
+    trigger: { ...t, subject: { ...subject, control: "you", ...(t.verbs[0] === "exiled" && subject.fromZone === undefined ? { fromZone: "battlefield" as const } : {}) } },
+    ...(a.emits ? { emits: a.emits.map((e) => (e.subject.ref === "trigger" && e.subject.control === "any" ? { ...e, subject: { ...e.subject, control: "you" } } : e)) } : {}),
+  };
 }
 
 /** Verbs that state no action at all; they are inert, not unclaimed. */
@@ -6074,6 +6103,9 @@ export function deriveCardTags(input: DeriveInput, opts: { foldGrantTwins?: bool
     .map((a, _i, all) => stampManaRider(a, all, input.clauseTexts))
     // THE CLAUSE THAT GRANTS A QUOTED ABILITY (#1315): `segment()`'s granted clause and its parent, from `DeriveInput.clauseGrants` (both clause sources).
     .map((a) => { const by = a.clause !== undefined ? input.clauseGrants?.[a.clause as number] : undefined; return by === undefined ? a : { ...a, grantedBy: by }; })
+    // A PROTECTIVE SELF-RETURN GRANTED TO "TARGET CREATURE" IS A CREATURE YOU CONTROL (#1256, owner ruling 2026-11-26, as #962: a target-any card is read by its PRIMARY use). Malakir Rebirth's granted "When this creature dies, return it to the battlefield tapped under its
+    // owner's control" read `dies {control: any}` because "target creature" names no controller, so No Mercy and Mikaeus (deaths of an opponent's creatures) paired with it. See `protectiveGrantIsYours`.
+    .map((a) => protectiveGrantIsYours(a, input.oracleText ?? "", a.clause !== undefined ? input.clauseTexts?.[a.clause as number] : undefined, (chars.faces ? chars.faces[a.face ?? 0]?.types ?? [] : chars.types).some((ty) => ty.toLowerCase() === "creature")))
     // THE CARD'S OWN TYPE ON A NAMED-SELF ENTERS TRIGGER (#1698), after `grantedBy` is known.
     .map((a) => typeSelfEntry(a, chars))
     // WHAT ONLY A CAST CARD HAS, AND WHAT AN AURA'S LEAVE TRIGGER CANNOT REACH (#1513): see cast-only.ts.
