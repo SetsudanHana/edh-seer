@@ -82,7 +82,7 @@
   "packages/tagger/src/derive-input.ts": 3,
   "packages/tagger/src/derive-worker.ts": 2,
   "packages/tagger/src/derive/animate-result.ts": 1,
-  "packages/tagger/src/derive/artifact-cost.ts": 1,
+  "packages/tagger/src/derive/artifact-cost.ts": 2,
   "packages/tagger/src/derive/base-set.ts": 1,
   "packages/tagger/src/derive/cant-kinds.ts": 4,
   "packages/tagger/src/derive/cast-class.ts": 5,

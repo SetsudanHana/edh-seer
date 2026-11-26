@@ -1250,7 +1250,7 @@ export interface Effect {
   scalingAlso?: SubjectFilter[];
   /** WHAT A `cost-reduction` BY ARTIFACTS YOU CONTROL MAKES CHEAPER (#1804): `spell` is the card's own cast (affinity, improvise, CR 702.41a, 702.126a), `ability` one of its activated abilities ("This ability costs {1} less to activate for each other artifact you control"), so a sentence can say so
    *  instead of "gets bigger". Set only on the cost reductions derive itself reads from those printed lines. */
-  costOf?: "spell" | "ability";
+  costOf?: "spell" | "ability" | "waterbend";
   /** A COUNT OF DISTINCT CHARACTERISTICS ("the number of colors among artifacts you control", "card types among other nonland permanents you control", "creature types among non-Borg creatures you control", "card types among cards in all graveyards")
    *  is raised when a thing joins the class WITH a characteristic the class lacks, not by the class growing, so a battlefield count names no class as a `scalingSubject` (owner ruling 2026-11-22, #1680: that made every member a `scales` partner). The UNIT it counts, and the
    *  class it ranges over, are kept HERE: `counts` says which characteristic is counted (`creature-type` and `type` are what a payoff that cares about creature types or card types reads, #1785). The type-grant readers (`usesGrantedType`, `usesCreatureType`) read

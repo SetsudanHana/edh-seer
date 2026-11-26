@@ -3391,12 +3391,14 @@ function lifeLostEdges({ p, c, pEvents, reasons }: PairScope): void {
 function boardCountEdges({ p, c, h, pEvents, reasons }: PairScope): void {
   // AN EMBLEM IS NO PERMANENT AND HAS NO TYPES (CR 114.3, 114.5): its printed characteristics (the Ajani emblem's subtype) meet no board count. What it MAKES still does: an emblem that creates creature tokens feeds a creature-token count (#811 review).
   const emblem = p.tags?.characteristics.emblem === true;
-  for (const a of c.tags.abilities) for (const [counted, use] of [
-    ...countedClassesOf(a.effect).map((k) => [k, a.effect.costOf === "spell" ? "spell-cost" : a.effect.costOf === "ability" ? "ability-cost" : undefined] as const),
+  for (const a of c.tags.abilities) for (const [counted0, use] of [
+    ...countedClassesOf(a.effect).map((k) => [k, a.effect.costOf === "spell" ? "spell-cost" : a.effect.costOf === "ability" ? "ability-cost" : a.effect.costOf === "waterbend" ? "waterbend" : undefined] as const),
     ...tapCostClassesOf(a, c.tags.abilities).map((k) => [k, "tap"] as const),
   ] as (readonly [SubjectFilter, CountUse | undefined])[]) {
-    if (counted.zone !== "battlefield") continue;
+    if (counted0.zone !== "battlefield") continue;
     if (ROLE_NOT_SYNERGY.has(a.effect.kind)) continue;
+    // WATERBEND TAPS CREATURES TOO, AS A CREATURE OUTLET EATS THEM (#1815, owner ruling 2026-11-26): the creature half is fed by creature TOKENS and what makes them, never by every creature (a bare creature count is the go-wide board, #561, and would pair all of them).
+    const counted = use === "waterbend" && counted0.token !== true && counted0.type === "creature" && counted0.subtype === undefined && conjunctionKey(counted0) === undefined ? { ...counted0, token: true } : counted0;
     if (!boardCountNarrows(counted)) continue;
     // `zone` IS DROPPED BEFORE THE COMPARISON and `control` IS KEPT, which is the opposite of what
     // the first cut did. A type line sits in no zone -- the fifth time this file records that
