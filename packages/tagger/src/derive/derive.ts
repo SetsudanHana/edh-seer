@@ -790,7 +790,8 @@ import { castClassFromPrint, castIsOnlyACondition, castsYourOwnCard } from "./ca
 // 602: #1334 -- review fixes: 'attacks each combat if able and attacks a player other than you if able' (Kardur, Maximum Carnage) is a requirement too, no cant; the ability's own subject keeps scope target when 'that creature' resolves through a parked requirement (Mark for Death)
 // 603: #1256 -- a protective self-return granted to a bare 'target creature' (Malakir Rebirth, Demonic Gifts, Undying Malice and eight more) reads a creature you control (owner ruling 2026-11-26, as #962), not any, so opponent-death engines stop pairing with it
 // 604: #1256 -- review fixes: every trigger of the granted self-return is yours (the exile trigger of 'dies or is put into exile', Ashnod's Intervention), the returned creature's own events too ('a creature an opponent controls enters'), a soulbond pair (Breathkeeper Seraph, CR 702.95a) and a grant the stored clauses file as the card itself when the granter is no creature (Infuse with Vitality, Return to Action, Pain 101, Kaya the Inexorable)
-export const DERIVE_VERSION = 604;
+// 605: #1256 -- re-review: the narrowed exile trigger of a granted self-return reads from the battlefield (CR 113.6), so a graveyard exile no longer pairs with Kaya the Inexorable ('is put into exile')
+export const DERIVE_VERSION = 605;
 
 /** "a nonland card from target opponent's graveyard or hand" (#1592): the object of a stored hand-or-graveyard pick. */
 const GRAVEYARD_OR_HAND_PICK = /\bfrom (?:target opponent|target player|that player|that opponent|an opponent)'s (?:graveyard or hand|hand or graveyard)$/i;
@@ -1212,7 +1213,8 @@ function protectiveGrantIsYours(a: Ability, oracleText: string, clauseText: stri
   const { self: _self, ...subject } = t.subject;
   return {
     ...a,
-    trigger: { ...t, subject: { ...subject, control: "you" } },
+    // A GRANTED ABILITY WORKS ONLY WHILE ITS CREATURE IS ON THE BATTLEFIELD (CR 113.6): the exile trigger reads from the battlefield even where the words omit it (Kaya's "is put into exile"), so a graveyard exile never hears it.
+    trigger: { ...t, subject: { ...subject, control: "you", ...(t.verbs[0] === "exiled" && subject.fromZone === undefined ? { fromZone: "battlefield" as const } : {}) } },
     ...(a.emits ? { emits: a.emits.map((e) => (e.subject.ref === "trigger" && e.subject.control === "any" ? { ...e, subject: { ...e.subject, control: "you" } } : e)) } : {}),
   };
 }

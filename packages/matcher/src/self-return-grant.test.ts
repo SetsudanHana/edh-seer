@@ -69,3 +69,19 @@ test("the returned creature is yours: 'a creature an opponent controls enters' (
   expect(enters.length).toBeGreaterThan(0);
   expect(enters.every((x) => x === "you")).toBe(true);
 });
+
+// #1256 RE-REVIEW. Kaya prints "is put into exile" with no "from the battlefield", and a granted ability works only while its creature is on the battlefield (CR 113.6, title: Abilities): the exile trigger reads from the battlefield, so a graveyard exile
+// (Rotwidow Pack, Academy Rector) never pairs with it, and an exile of your creature from the battlefield (Swords to Plowshares is an opponent's: not a producer of yours) is unchanged.
+test("the granted exile trigger reads from the battlefield: Kaya and Ashnod's Intervention", () => {
+  for (const n of ["Kaya the Inexorable", ASHNOD]) {
+    const ex = dc(n).tags!.abilities.filter((a) => a.grantedBy !== undefined && a.trigger?.verbs.includes("exiled"));
+    expect(ex.length, n).toBeGreaterThan(0);
+    for (const a of ex) expect(a.trigger!.subject.fromZone, n).toBe("battlefield");
+  }
+  for (const p of ["Rotwidow Pack", "Academy Rector"]) expect(pair(p, "Kaya the Inexorable"), p).toEqual([]);
+  expect(pair("Swords to Plowshares", "Kaya the Inexorable")).toEqual([]);
+});
+test("Farewell (exile all creatures, yours included) pairs with Kaya and with Ashnod's Intervention in the same way", () => {
+  expect(pair("Farewell", ASHNOD)).toEqual(["exiled:creature"]);
+  expect(pair("Farewell", "Kaya the Inexorable")).toEqual(["exiled:creature"]);
+});
