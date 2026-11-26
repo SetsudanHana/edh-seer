@@ -1,8 +1,8 @@
 import type { Reason } from "@edh-seer/engine";
 import type { Ability, CardTags, GameEvent, SubjectFilter } from "@edh-seer/tagger";
-import { conjunctionKey, countedClassesOf, tapCostClassesOf } from "./counted-classes.js";
+import { conjunctionKey, countedClassesOf, makesConjunction, tapCostClassesOf } from "./counted-classes.js";
 import { ownSacrificeCost } from "./own-sacrifice.js";
-export { conjunctionKey, countedClassesOf, tapCostClassesOf };
+export { conjunctionKey, countedClassesOf, makesConjunction, tapCostClassesOf };
 import { CREATURE_SUBTYPES, LAND_SUBTYPES } from "@edh-seer/tagger/subtypes";
 import { isEveryCreatureType } from "@edh-seer/tagger/characteristics";
 import { tokenKindsWith } from "@edh-seer/tagger/token-kinds";
@@ -3410,6 +3410,7 @@ function boardCountEdges({ p, c, h, pEvents, reasons }: PairScope): void {
     // Refused where the copy's types are rewritten (Espers to Magicite: "loses all other card types"),
     // the same cue `copySubject` refuses: the emit then names what was copied, not what was made.
     const makes = (counted.token === true || conjunctionKey(counted) !== undefined) && !COPY_REPLACES_TYPE_CUE.test(p.card.oracleText ?? "") && pEvents.some((e) => e.verb === "create-token" && e.subject.token === true
+      && (conjunctionKey(counted) === undefined || makesConjunction(e.subject, counted))
       && subjectMatches((({ zone: _ez, scope: _sc, ...s }) => s)(e.subject) as SubjectFilter, printed, h));
     const pPrinted = characteristicsSubject(p.tags, p.card.name);
     const printedMeets = !emblem && subjectMatches(pPrinted, printed, h);
@@ -4311,7 +4312,7 @@ function fodderEdges({ p, c, h, opts, reasons }: PairScope): void {
     // report keeps the two-hop path through the node, exactly as the entry channel does.
     const made = (opts.tokensMediate ?? true) ? [] : (p.tags?.abilities ?? []).flatMap((pa) =>
       (pa.emits ?? []).filter((e) => e.verb === "create-token" && e.subject.token === true).map((e) => e.subject));
-    const madeMatch = made.filter((s) => subjectMatches({ ...s, token: null }, { ...wanted, token: null }, h));
+    const madeMatch = made.filter((s) => (conj === undefined || makesConjunction(s, wanted)) && subjectMatches({ ...s, token: null }, { ...wanted, token: null }, h));
     const makes = madeMatch.length > 0;
     const madeTypes = madeMatch.flatMap((s) => (Array.isArray(s.type) ? s.type : s.type ? [s.type] : []));
     // FODDER IS WHAT YOU MAKE IN QUANTITY OR WOULD NOT MIND LOSING (owner ruling 2026-09-09, off

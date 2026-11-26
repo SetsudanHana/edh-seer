@@ -68,3 +68,35 @@ test("keys: the conjunction is asked for under its own key, and supplied by what
   }
   expect(supplyKeysOf(dc("Harried Dronesmith"))).toContain(`fodder|-|${CLASS}|-`);
 });
+
+// REVIEW OF #1813: a token emit that is not an artifact creature must not stand in for one. The maker test reused the loose token-count one, so a Role token (Cut In), a copy of "artifact or creature" (Stolen Identity) and a typeless copy all paired. Only an emit whose `allTypes` holds EVERY member of the counted conjunction is a maker.
+test.each(["Cut In", "Unassuming Sage", "Stolen Identity", "Vesuvan Duplimancy", "Relm's Sketching"])("%s makes no artifact creature: it pairs with neither the count, the tap cost nor the outlet", (maker) => {
+  for (const c of ["Collective Drone", "Collation Trimatrix", "Battle of Wolf 359", "Reclamation Specialist", "Jan Jansen, Chaos Crafter"]) {
+    for (const opts of [{}, { tokensMediate: false }]) {
+      expect(tags(dc(maker), dc(c), opts).filter((t) => t.includes(CLASS)), `${maker} -> ${c} ${JSON.stringify(opts)}`).toEqual([]);
+    }
+  }
+});
+
+test("a copier of an artifact OR a creature supplies no conjunction key (and not artifact+land either)", () => {
+  for (const n of ["Stolen Identity", "Vesuvan Duplimancy", "Relm's Sketching", "Cut In"]) {
+    expect(supplyKeysOf(dc(n)).filter((k) => k.includes("+")), n).toEqual([]);
+  }
+});
+
+test("Robobrain War Mind counts artifact creatures: an Ornithopter and a Thopter feed it, Sol Ring and Grizzly Bears do not", () => {
+  expect(tags(dc("Ornithopter"), dc("Robobrain War Mind"))).toContain(`scales:${CLASS}`);
+  expect(tags(thopter(), dc("Robobrain War Mind"))).toContain(`scales:${CLASS}`);
+  for (const p of ["Sol Ring", "Grizzly Bears"]) expect(tags(dc(p), dc("Robobrain War Mind")).filter((t) => t.includes(CLASS)), p).toEqual([]);
+});
+
+test("an edict (Arcum Dagsson, Perilous Predicament) is no outlet of the card's own: no fodder key", () => {
+  for (const c of ["Arcum Dagsson", "Perilous Predicament"]) {
+    expect(fodderDemandsOf(dc(c)).filter((k) => k.key.includes("+")), c).toEqual([]);
+    expect(tags(dc("Ornithopter"), dc(c)).filter((t) => t.includes(CLASS)), `Ornithopter -> ${c}`).toEqual([]);
+  }
+});
+
+test("PROBE (reported, pre-existing): Saheeli, the Sun's Brilliance sacrifices its own token copies and keeps its fodder:creature tag", () => {
+  expect(tags(dc("Grizzly Bears"), dc("Saheeli, the Sun's Brilliance")).filter((t) => t.includes(CLASS))).toEqual([]);
+});

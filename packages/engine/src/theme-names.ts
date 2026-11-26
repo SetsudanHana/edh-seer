@@ -193,6 +193,12 @@ const isCreatureType = (sub: string): boolean => SUBTYPE_TYPES[sub]?.includes("c
 function subjectOf(sub: string): Subj {
   const none = sub === "" || sub === "any";
   if (sub === "__none__") return { none: false, tribe: false, S: "Unchosen type", p: "unchosen types", P: "Unchosen types" };
+  // A CONJUNCTION (`artifact+creature`, #1813) is read as the words it says: "Artifact creature" / "artifact creatures", the plural on the last word.
+  if (/^[a-z]+(\+[a-z]+)+$/.test(sub)) {
+    const w = sub.split("+");
+    const p = [...w.slice(0, -1), pluralSubject(w[w.length - 1]!)].join(" ");
+    return { none: false, tribe: false, S: capital(w.join(" ")), p, P: capital(p) };
+  }
   const S = sub === "instant-sorcery" ? "Instant and sorcery" : sub.startsWith("-") ? `Non${sub.slice(1)}` : titleCase(sub);
   const p = pluralSubject(sub);
   return { none, tribe: isCreatureType(sub), S, p, P: capital(p) };

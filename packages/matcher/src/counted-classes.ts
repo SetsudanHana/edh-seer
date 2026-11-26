@@ -32,3 +32,7 @@ export function conjunctionKey(s: Partial<SubjectFilter> | undefined): string | 
   if (all.every((t) => WHOLE.has(t))) return undefined;
   return [...all].sort().join("+");
 }
+
+/** A MADE TOKEN IS A CONJUNCTION'S ONLY IF ITS OWN EMIT SAYS SO (#1813 review): the emit's `allTypes` holds every member of the counted class ("Thopter artifact creature token" carries `[artifact, creature]`). A Role token, a typeless copy and a copy of "artifact or creature" (a type LIST with no `allTypes`) are not artifact creatures, and `subjectMatches` is too loose to tell. */
+export const makesConjunction = (made: SubjectFilter, counted: SubjectFilter): boolean =>
+  (counted.allTypes ?? []).every((t) => (made.allTypes ?? []).includes(t));

@@ -1418,7 +1418,7 @@ const fodderSupplyKeysOf = (d: DeckCard): string[] => {
     if (e.verb !== "create-token" || e.subject.token !== true) continue;
     for (const t of asList(e.subject.type)) nouns.add(t);
     for (const t of asList(e.subject.subtype)) nouns.add(t);
-    for (const k of conjunctionKeysOf(asList(e.subject.type))) nouns.add(k);
+    for (const k of conjunctionKeysOf(asList(e.subject.allTypes))) nouns.add(k);
   }
   return [...nouns].map((n) => `fodder|-|${n}|-`);
 };
