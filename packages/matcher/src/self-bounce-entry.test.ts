@@ -18,13 +18,13 @@ test("the cards print the self-bounce", () => {
   expect(String(F["Mulldrifter"]!.source.oracleText)).not.toMatch(/owner's hand/);
 });
 
-test.each(["Acererak the Archlich", "Glitch Interpreter", "Wild Wurm", "Greenbelt Rampager"])("%s: its own entry is repeatable for an ETB payoff (Impact Tremors)", (p) => {
+test.each(["Acererak the Archlich", "Wild Wurm"])("%s: its own entry is repeatable for an ETB payoff (Impact Tremors)", (p) => {
   const r = entry(p);
   expect(r.length, `${p} has an implied entry reason`).toBeGreaterThan(0);
   for (const x of r) expect(x.repeatability, `${p}: ${x.text}`).not.toBe("oneshot");
 });
 
-test.each(["Mulldrifter", "Whitemane Lion", "Cactuar", "Timid Drake"])("%s bounces nothing of its own at its ETB: its own entry stays oneshot", (p) => {
+test.each(["Mulldrifter", "Whitemane Lion", "Cactuar", "Timid Drake", "Glitch Interpreter", "Greenbelt Rampager"])("%s bounces nothing of its own at its ETB, or its bounce defeats its own condition (owner 2026-11-27: Glitch Interpreter manifests the face-down permanent, Greenbelt Rampager gets the energy): its own entry stays oneshot", (p) => {
   const r = entry(p);
   expect(r.length, `${p} has an implied entry reason`).toBeGreaterThan(0);
   for (const x of r) expect(x.repeatability, `${p}: ${x.text}`).toBe("oneshot");

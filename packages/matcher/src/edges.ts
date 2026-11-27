@@ -1658,7 +1658,8 @@ function recastsItself(p: DeckCard): boolean {
 
 /** A CARD WHOSE OWN ENTRY BOUNCES IT ENTERS AGAIN AND AGAIN (owner ruling 2026-11-26, #1811): "When Acererak enters, if you haven't completed Tomb of Annihilation, return Acererak to its owner's hand and venture into the dungeon." The next cast enters it once more, so its single implied entry is
  *  a repeatable one, as a card that recasts itself is (`recastsItself`). Only the card's OWN enters trigger returning ITSELF to its owner's hand counts: a trigger of another permanent's entry ("When a Dragon you control enters, return this enchantment": the Dragonstorms), a bounce at another time (Cactuar's end
- *  step), and "return a creature you control" (Whitemane Lion), which names no card, do not. A condition ("if you haven't completed...", Glitch Interpreter, Wild Wurm's coin flip, Greenbelt Rampager's energy) does not stop it: the ruling's own example is conditional. No stored card has an unconditional one, or a "may".
+ *  step), and "return a creature you control" (Whitemane Lion), which names no card, do not. A condition that does not run out by itself does not stop it (Acererak's dungeon, Wild Wurm's coin flip). A condition the bounce itself defeats does (owner 2026-11-27): Glitch Interpreter's bounce manifests a face-down permanent,
+ *  so "if you control no face-down permanents" fails on the next cast; Greenbelt Rampager's gives the energy it could not pay. Those two stay oneshot. No stored card has an unconditional one, or a "may".
  *  The text is the cue, with a derived own-leaves emit beside it (the effect kind is blanked on a producer, bounce being no payoff kind, so the emit is what is read).
  *  CEILING: read from the printed text (the enters line, the card's own name or "this <type>", no quoted ability), as `recastsItself` is. */
 function bouncesItselfOnEntry(p: DeckCard): boolean {
@@ -1667,7 +1668,9 @@ function bouncesItselfOnEntry(p: DeckCard): boolean {
   const names = [...new Set([face, face.split(",")[0]!, face.replace(/ the .*/, "")])].filter((n) => n.length > 2).map((n) => n.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
   const self = `(?:this [a-z]+|${names.join("|")})`;
   const line = new RegExp(`^(?:when|whenever) ${self} enters(?: the battlefield)?\\b[^"\\n]*\\breturn ${self} to (?:its|his|her|their) owner's hand`, "i");
-  return (p.card.oracleText ?? "").split("\n").some((l) => line.test(l));
+  // The bounce feeds its own condition: it makes the face-down permanent or the energy whose absence returned it.
+  const selfDefeating = /\breturn [^"\n]*owner's hand and (?:manifest|you get \{E\})/i;
+  return (p.card.oracleText ?? "").split("\n").some((l) => line.test(l) && !selfDefeating.test(l));
 }
 
 /** WHAT A SAC OUTLET'S COST TAKES, when this event is the one that cost pays (#799): Carrion Feeder's

@@ -42,3 +42,21 @@ test.each(["Carnival of Souls", "Ayara, First of Locthwain"])("%s x Acererak: pi
 test("without the combo in the deck, Acererak's own entry still leads: it is repeatable, so no baseline to demote (Acererak x Carnival of Souls, #1811)", () => {
   expect(first(report(false), "Carnival of Souls", "Acererak the Archlich")).toMatch(/^When Acererak the Archlich enters, Carnival of Souls/);
 });
+
+// THE COMBO GUARD STILL BITES for a maker whose own entry stays oneshot (#1811 review): with Acererak's printed self-bounce taken out of
+// its text (so `bouncesItselfOnEntry` is false and its own entry is the oneshot baseline again), the combo keeps the maker's entry first,
+// and without the combo the token's entry leads. Deleting `!inOneCombo(...)` in analyze.ts fails the first assertion.
+test("a oneshot maker in a found combo keeps its own entry first; without the combo the token leads (the #827 guard, exercised)", () => {
+  const plain = (name: string): DeckCard => {
+    const d = dc(name);
+    if (name !== "Acererak the Archlich") return d;
+    const text = String((d.card as { oracleText?: string }).oracleText).replace(/return Acererak to its owner's hand and /, "");
+    return { ...d, card: { ...d.card, oracleText: text } as DeckCard["card"] };
+  };
+  const run = (withCombos: boolean) => analyzeDeckStructured(
+    [...DECK.map(plain), ...Array.from({ length: 20 }, () => MOUNTAIN)], ["Acererak the Archlich"], loadHierarchy(), undefined, new ComboIndex(withCombos ? combos : []), undefined,
+    (ref) => tokens[ref.printingId ?? ""] ?? null, undefined, [], [], { skipSimulation: true },
+  );
+  expect(first(run(true), "Carnival of Souls", "Acererak the Archlich")).toMatch(/^When Acererak the Archlich enters, Carnival of Souls/);
+  expect(first(run(false), "Carnival of Souls", "Acererak the Archlich")).toMatch(/^When Zombie enters, /);
+});
