@@ -79,7 +79,7 @@
     "@edh-seer/data": "*",
     "@edh-seer/engine": "*",
     "@edh-seer/tagger": "*",
-    "mongodb": "^7.8.0"
+    "mongodb": "^7.9.1"
   },
   "devDependencies": {
     "@types/node": "^26.6.6",
