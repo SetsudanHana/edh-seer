@@ -419,7 +419,8 @@ function themeTags(tags: CardTags, keepRockEntry: boolean): Set<string> {
     // the 71 calibration decks that stripped derived decks of their static themes, letting whatever
     // tag had the most raw volume win the axis instead.
     // An intercepted graveyard fill is exile-processing, not recursion (owner 2026-10-08, #1083).
-    if (a.kind === "static" && a.effect.kind) {
+    // A WATERBEND COUNT (#1815) is a payment for the card's OWN cost, not a discount on spells: it is no `cost-reduction` theme.
+    if (a.kind === "static" && a.effect.kind && a.effect.costOf !== "waterbend") {
       out.add(`static:${a.effect.kind === "graveyard-recursion" && a.effect.intercepted === true ? "exile-processing" : a.effect.kind}`);
     }
   }
@@ -3391,12 +3392,14 @@ function lifeLostEdges({ p, c, pEvents, reasons }: PairScope): void {
 function boardCountEdges({ p, c, h, pEvents, reasons }: PairScope): void {
   // AN EMBLEM IS NO PERMANENT AND HAS NO TYPES (CR 114.3, 114.5): its printed characteristics (the Ajani emblem's subtype) meet no board count. What it MAKES still does: an emblem that creates creature tokens feeds a creature-token count (#811 review).
   const emblem = p.tags?.characteristics.emblem === true;
-  for (const a of c.tags.abilities) for (const [counted, use] of [
-    ...countedClassesOf(a.effect).map((k) => [k, a.effect.costOf === "spell" ? "spell-cost" : a.effect.costOf === "ability" ? "ability-cost" : undefined] as const),
+  for (const a of c.tags.abilities) for (const [counted0, use] of [
+    ...countedClassesOf(a.effect).map((k) => [k, a.effect.costOf === "spell" ? "spell-cost" : a.effect.costOf === "ability" ? "ability-cost" : a.effect.costOf === "waterbend" ? "waterbend" : undefined] as const),
     ...tapCostClassesOf(a, c.tags.abilities).map((k) => [k, "tap"] as const),
   ] as (readonly [SubjectFilter, CountUse | undefined])[]) {
-    if (counted.zone !== "battlefield") continue;
+    if (counted0.zone !== "battlefield") continue;
     if (ROLE_NOT_SYNERGY.has(a.effect.kind)) continue;
+    // WATERBEND TAPS CREATURES TOO, AS A CREATURE OUTLET EATS THEM (#1815, owner ruling 2026-11-26): the creature half is fed by creature TOKENS and what makes them, never by every creature (a bare creature count is the go-wide board, #561, and would pair all of them).
+    const counted = use === "waterbend" && counted0.token !== true && counted0.type === "creature" && counted0.subtype === undefined && conjunctionKey(counted0) === undefined ? { ...counted0, token: true } : counted0;
     if (!boardCountNarrows(counted)) continue;
     // `zone` IS DROPPED BEFORE THE COMPARISON and `control` IS KEPT, which is the opposite of what
     // the first cut did. A type line sits in no zone -- the fifth time this file records that
@@ -3409,8 +3412,12 @@ function boardCountEdges({ p, c, h, pEvents, reasons }: PairScope): void {
     // "for each creature token you control" never heard of her. Her own create-token emit is typed.
     // Refused where the copy's types are rewritten (Espers to Magicite: "loses all other card types"),
     // the same cue `copySubject` refuses: the emit then names what was copied, not what was made.
+    // A ROLE IS AN AURA, NOT A CREATURE (CR 303.7: "Some Aura enchantments also have the subtype Role."): its create-token emit names no type and its subtype is the Role's own name ("sorcerer", "hero": also creature types), so `subjectMatches` let it stand in for a creature token (Unassuming Sage, Cut In, Gylwain ... fed Magnus the Red's count). A typeless COPY (Loki, the Deceiver: a copy of a Villain) is still a creature token; only the Role subtype is refused.
+    // CEILING: only the Role subtype is refused; another typeless emit whose subtype is a creature type would still pass.
+    const creatureTokenCount = counted.token === true && (Array.isArray(counted.type) ? counted.type : counted.type ? [counted.type] : []).includes("creature");
     const makes = (counted.token === true || conjunctionKey(counted) !== undefined) && !COPY_REPLACES_TYPE_CUE.test(p.card.oracleText ?? "") && pEvents.some((e) => e.verb === "create-token" && e.subject.token === true
       && (conjunctionKey(counted) === undefined || makesConjunction(e.subject, counted))
+      && !(creatureTokenCount && (Array.isArray(e.subject.subtype) ? e.subject.subtype : e.subject.subtype ? [e.subject.subtype] : []).includes("role"))
       && subjectMatches((({ zone: _ez, scope: _sc, ...s }) => s)(e.subject) as SubjectFilter, printed, h));
     const pPrinted = characteristicsSubject(p.tags, p.card.name);
     const printedMeets = !emblem && subjectMatches(pPrinted, printed, h);
@@ -3431,7 +3438,8 @@ function boardCountEdges({ p, c, h, pEvents, reasons }: PairScope): void {
       text: animatedKind !== undefined
         ? animatedCountSentence(p.card.name, c.card.name, animatedKind, a.effect.kind, whenCast)
         : boardCountFeedsScaling(p.card.name, c.card.name, a.effect.kind, makes && !printedMeets, whenCast, use),
-      effectKind: a.effect.kind,
+      // A waterbend count names no growth and is no cost reducer of other spells (#1815): the reason carries no kind, so the Ramp Payoff archetype does not take it.
+      effectKind: a.effect.costOf === "waterbend" ? undefined : a.effect.kind,
       // An on-cast count happens once (overview item 6c, see the sibling above).
       repeatability: whenCast ? "oneshot" : a.kind === "static" ? "static" : a.kind === "activated" ? "activated" : "triggered",
       scaling: a.effect.scaling,

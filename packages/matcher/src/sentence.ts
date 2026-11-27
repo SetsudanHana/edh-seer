@@ -576,9 +576,9 @@ const COUNT_GROWS: Record<string, string> = {
 };
 
 /** WHAT THE COUNTED ARTIFACTS ARE FOR, where it is no growth (#1804): `tap` is a cost paid by tapping them ("Tap an untapped artifact you control": Network Terminal, Whirler Rogue), `ability-cost` an activation discount for each
- *  ("This ability costs {1} less to activate for each other artifact you control": Etherium Pteramander) and `spell-cost` the card's own cast (affinity, improvise). None of them makes the card "do more": the loot taps one artifact once, and the
+ *  ("This ability costs {1} less to activate for each other artifact you control": Etherium Pteramander) and `spell-cost` the card's own cast (affinity, improvise); `waterbend` is a waterbend cost, paid by tapping artifacts AND creatures (#1815). None of them makes the card "do more": the loot taps one artifact once, and the
  *  card itself costs the same. Absent for a real count, which keeps the "counts it and grows" sentence. */
-export type CountUse = "tap" | "ability-cost" | "spell-cost";
+export type CountUse = "tap" | "ability-cost" | "spell-cost" | "waterbend";
 
 export function boardCountFeedsScaling(
   producer: string, consumer: string, effectKind?: string, makesTheCounted = false, countsWhenCast = false, use?: CountUse,
@@ -586,6 +586,8 @@ export function boardCountFeedsScaling(
   if (use !== undefined) {
     // A MAKER IS NOT COUNTED, ITS ARTIFACTS ARE (as below).
     const what = makesTheCounted ? `${producer} makes artifacts that` : `${producer}`;
+    // WATERBEND (#1815, CR 701.67a): each artifact or creature tapped pays for {1} of the waterbend cost. A maker's tokens are what is tapped.
+    if (use === "waterbend") return makesTheCounted ? `${producer} makes tokens ${consumer} can tap to help pay for its waterbend cost` : `${consumer} can tap ${producer} to help pay for its waterbend cost`;
     if (use === "tap") return makesTheCounted ? `${producer} makes artifacts ${consumer} can tap to help pay for its ability` : `${consumer} can tap ${producer} to help pay for its ability`;
     if (use === "ability-cost") return makesTheCounted ? `${what} make ${consumer}'s ability cheaper` : `${producer} makes ${consumer}'s ability cheaper`;
     return makesTheCounted ? `${what} make ${consumer} cheaper to cast` : `${producer} makes ${consumer} cheaper to cast`;

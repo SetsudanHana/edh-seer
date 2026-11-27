@@ -791,7 +791,8 @@ import { castClassFromPrint, castIsOnlyACondition, castsYourOwnCard } from "./ca
 // 603: #1256 -- a protective self-return granted to a bare 'target creature' (Malakir Rebirth, Demonic Gifts, Undying Malice and eight more) reads a creature you control (owner ruling 2026-11-26, as #962), not any, so opponent-death engines stop pairing with it
 // 604: #1256 -- review fixes: every trigger of the granted self-return is yours (the exile trigger of 'dies or is put into exile', Ashnod's Intervention), the returned creature's own events too ('a creature an opponent controls enters'), a soulbond pair (Breathkeeper Seraph, CR 702.95a) and a grant the stored clauses file as the card itself when the granter is no creature (Infuse with Vitality, Return to Action, Pain 101, Kaya the Inexorable)
 // 605: #1256 -- re-review: the narrowed exile trigger of a granted self-return reads from the battlefield (CR 113.6), so a graveyard exile no longer pairs with Kaya the Inexorable ('is put into exile')
-export const DERIVE_VERSION = 605;
+// 606: #1815 -- waterbend (CR 701.67a) is both an artifact demand (like improvise) and a creature demand: a waterbend cost the card pays itself derives a cost-reduction counting artifacts you control plus creatures you control (costOf waterbend); 27 of the 29 waterbend cards (Avatar Aang's trigger and The Unagi's ward pay nothing)
+export const DERIVE_VERSION = 606;
 
 /** "a nonland card from target opponent's graveyard or hand" (#1592): the object of a stored hand-or-graveyard pick. */
 const GRAVEYARD_OR_HAND_PICK = /\bfrom (?:target opponent|target player|that player|that opponent|an opponent)'s (?:graveyard or hand|hand or graveyard)$/i;

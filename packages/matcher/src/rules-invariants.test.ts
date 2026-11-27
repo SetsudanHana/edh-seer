@@ -13,6 +13,8 @@ import type { DeckCard, Hierarchy } from "./types.js";
 
 const ASSERTED = new Set(["111.7", "114.1", "903.3", "712.8d"]);
 const TESTED: Record<string, string> = {
+  "303.7": "waterbend-count.test.ts — a Role is an Aura, not a creature, so a Role token maker feeds no creature-token count (Unassuming Sage, Cut In; #1815)",
+  "701.67a": "waterbend-count.test.ts — waterbend is paid by tapping artifacts AND creatures: an artifact demand, and a creature demand fed by tokens and their makers (#1815)",
   "114.3": "summed-count.test.ts — an emblem has no types, so no planeswalker or creature count counts it: the Ajani emblem feeds no board count (#811)",
   "704.5g": "damage-fill-1734.test.ts — lethal damage destroys the creature: damage at creatures records a death flagged conditional, and a reason built on it weighs below a certain one (#1734)",
   "708.3": "face-down-1682.test.ts — a card put onto the battlefield face down is turned face down before it enters, so it satisfies no 'When this creature enters'; a class trigger still hears the 2/2 (#1682)",
