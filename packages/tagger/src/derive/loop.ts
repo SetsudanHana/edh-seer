@@ -14,8 +14,8 @@ import { VERB_WORDS } from "./verb-words.js";
  *  - the repeat sentence leans on its ONE previous sentence when it states no action of its own, so a process spread over two sentences without a connective keeps only the nearer: Mana Clash's coin flip (the damage sentence is marked, the flip is not), Calamity, Galloping Inferno's token (the sacrifice is marked), Ad Nauseam's
  *    reveal sentence, Tainted Pact's exile, Zimone and Dina's draw, the first two of Rally the Horde's three exiles; a looped sentence whose action makes no ability marks nothing (Plague of Vermin's payment, Tainted Pact);
  *  - a looped sentence that leans on an earlier one through "it", "that card" or "the exiled cards" is marked when it opens with a subject of its own (Thieves' Auction's "Starting with you, each player chooses one of the exiled cards") and refused when it opens with an anaphor (below).
- *  REFUSED, MARKING NOTHING: a head sentence that opens with an anaphor ("The player who exiled ...", "That player exiles ...", "Those ...", "It ...") leans on an EARLIER sentence for what it acts on, so the true start of the process is unknown, and marking it marks the outcome (Timesifter's extra turn, which is granted once, while the
- *  exile before it is what repeats). Struggle for Sanity ("That player exiles a card from it") is refused by the same rule: unlabelled beats mislabelled.
+ *  REFUSED, MARKING NOTHING: a head sentence that names its actor by the RESULT of an earlier sentence ("The player who exiled the card with the greatest mana value takes an extra turn") states the loop's outcome, not its process, so marking it marks the outcome (Timesifter's extra turn, granted
+ *  once, while the exile before it is what repeats). A head that merely leans on the setup through a pronoun is still the process and is marked (Struggle for Sanity's "That player exiles a card from it, then you exile a card from it"). Only the "The <noun> who/whose/with" shape is refused.
  *  AN UNROLLED LOOP IS MARKED ONCE: where the store already wrote the passes out (Research // Development's three token makers for "two more times", Equipoise, Invoke Despair, Firemind's Foresight, Kathril, Claim Jumper's two searches), as many actions of a verb as the repeat states passes ("once" is 2, "two more times" 3, "for A and B" 3) are
  *  the passes themselves, so only the first of each verb carries the `fixed` marker: marking every copy would state the repetition twice. A repeat that states no countable number ("X more times") is not read as unrolled. *  Unlabelled beats mislabelled. */
 export type Loop = "conditional" | "unbounded" | "fixed";
@@ -35,7 +35,9 @@ export function loopOf(clauseText: string | undefined): Loop | undefined {
 }
 
 const CONNECT = /^\s*(?:then\b|if\b|otherwise\b|when you do\b|unless\b)/i;
-const ANAPHORIC_HEAD = /^\s*(?:the|that|those|these|it|its|they|them|he|she)\b/i;
+// An OUTCOME head names its actor by the result of an earlier sentence ("The player who exiled the card with the greatest mana value"); one literal space each on a trimmed sentence.
+const OUTCOME_HEAD_RE = /^the \w+ (?:who|whose|with) /i;
+const OUTCOME_HEAD = { test: (s: string): boolean => OUTCOME_HEAD_RE.test(s.trim().replace(/\s+/g, " ")) };
 // One literal space each, applied to a trimmed sentence (no `\s+` beside an optional group: CodeQL js/polynomial-redos).
 const PURE_REPEAT_RE = /^(?:then )?(?:(?:you|they|that \w+) may )?repeat\b/i;
 const PURE_REPEAT = { test: (s: string): boolean => PURE_REPEAT_RE.test(s.trim().replace(/\s+/g, " ")) };
@@ -51,8 +53,8 @@ export function loopedActions(clauseText: string | undefined, actions: readonly 
   let start = PURE_REPEAT.test(sentences[r]!) ? r - 1 : r;
   while (start > 0 && CONNECT.test(sentences[start]!)) start--;
   start = Math.max(start, 0);
-  // A head that opens with an anaphor leans on an earlier sentence: refuse the clause (see the CEILING above).
-  if (ANAPHORIC_HEAD.test(sentences[start]!)) return none;
+  // A head that states the OUTCOME of an earlier sentence is not the process: refuse the clause (see the CEILING above).
+  if (OUTCOME_HEAD.test(sentences[start]!)) return none;
   // The k-th action of a verb is the k-th printing of that verb's words (a sentence that prints it twice holds two); past the last printing it stays where the verb was last placed.
   const printings = new Map<string, number[]>();
   const taken = new Map<string, number>();

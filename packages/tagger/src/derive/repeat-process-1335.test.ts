@@ -63,8 +63,8 @@ describe("only the abilities of the looped sentences carry loop", () => {
   test("Thieves' Auction: the exile-all before the loop is not looped, the put onto the battlefield is", () => {
     expect(marks("Thieves' Auction")).toEqual(["-", "flicker*"]);
   });
-  test("Struggle for Sanity: 'That player exiles a card from it' leans on the reveal before it, so the loop refuses the clause (nothing marked) rather than mark a guess", () => {
-    expect(marks("Struggle for Sanity").some((x) => x.endsWith("*"))).toBe(false);
+  test("Struggle for Sanity: 'That player exiles a card from it, then you exile a card from it' IS the process (it leans on the reveal through a pronoun, it is no outcome): both exiles are marked", () => {
+    expect(marks("Struggle for Sanity").filter((x) => x.endsWith("*")).length).toBeGreaterThanOrEqual(2);
   });
   test("what stays: Sphinx's Tutelage's mill, both of Primal Surge's abilities, Cultivator Colossus's put and draw, Ad Nauseam's loss of life", () => {
     expect(marks("Sphinx's Tutelage")[0]).toBe("mill*");
