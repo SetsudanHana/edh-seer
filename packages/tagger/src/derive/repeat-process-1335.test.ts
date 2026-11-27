@@ -45,23 +45,26 @@ describe("only the abilities of the looped sentences carry loop", () => {
     expect(marks("Rally the Horde").at(-1)).toBe("token-generation");
     expect(marks("Demonlord Belzenlok").at(-1)).toBe("damage");
   });
-  test("Claim Jumper: the loop is the search (twice: the first and the repeat), its trailing shuffle is not", () => {
-    const m = marks("Claim Jumper");
-    expect(m.at(-1)).not.toContain("*");
-    expect(m.some((x) => x.endsWith("*"))).toBe(true);
+  test("Claim Jumper: 'search ..., repeat this process once' is unrolled by the store (search, put, tap, search, put, tap, shuffle): the first pass carries the loop, the copy and the trailing shuffle do not", () => {
+    // "search" prints again in the shuffle sentence ("If you search your library this way, shuffle"); that must not move the second search past the repeat.
+    expect(marks("Claim Jumper")).toEqual(["search*", "-*", "search", "-", "-"]);
   });
-  test("Firemind's Foresight: the searches loop, the trailing shuffle does not", () => {
-    const m = marks("Firemind's Foresight");
-    expect(m.at(-1)).toBe("-");
-    expect(m.filter((x) => x === "search*").length).toBeGreaterThan(0);
+  test("Firemind's Foresight: three unrolled searches, the first carries the loop; the trailing shuffle does not", () => {
+    expect(marks("Firemind's Foresight")).toEqual(["search*", "search", "search", "-"]);
+  });
+  test("an unrolled loop is marked once, on its first pass: the copies ARE the passes (Research // Development 'two more times', Equipoise 'for artifacts and creatures', Invoke Despair 'for an enchantment and a planeswalker')", () => {
+    expect(marks("Research // Development")).toEqual(["-", "token-generation*", "token-generation", "token-generation"]);
+    expect(marks("Equipoise")).toEqual(["-*", "-", "-"]);
+    expect(marks("Invoke Despair")).toEqual(["-*", "player-life-loss*", "draw-card*", "-", "player-life-loss", "draw-card", "-", "player-life-loss", "draw-card"]);
+  });
+  test("Timesifter: the extra turn is granted once, whatever the tie does; the sentence it sits in leans on the exile before it ('The player who exiled ...'), so the loop refuses the clause", () => {
+    expect(marks("Timesifter")).toEqual(["-", "extra-turn"]);
   });
   test("Thieves' Auction: the exile-all before the loop is not looped, the put onto the battlefield is", () => {
     expect(marks("Thieves' Auction")).toEqual(["-", "flicker*"]);
   });
-  test("Struggle for Sanity: the exiles are looped, the return after the loop is not", () => {
-    const m = marks("Struggle for Sanity");
-    expect(m.at(-1)).not.toContain("*");
-    expect(m.some((x) => x.endsWith("*"))).toBe(true);
+  test("Struggle for Sanity: 'That player exiles a card from it' leans on the reveal before it, so the loop refuses the clause (nothing marked) rather than mark a guess", () => {
+    expect(marks("Struggle for Sanity").some((x) => x.endsWith("*"))).toBe(false);
   });
   test("what stays: Sphinx's Tutelage's mill, both of Primal Surge's abilities, Cultivator Colossus's put and draw, Ad Nauseam's loss of life", () => {
     expect(marks("Sphinx's Tutelage")[0]).toBe("mill*");
