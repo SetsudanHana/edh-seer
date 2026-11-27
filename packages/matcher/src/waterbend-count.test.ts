@@ -1,9 +1,10 @@
 import { expect, test } from "vitest";
-import { ComboIndex } from "@edh-seer/engine";
+import { ComboIndex, loadImpactWeights } from "@edh-seer/engine";
 import { deriveCardTags, deriveInputOf, grammarClauseRecords } from "@edh-seer/tagger";
 import type { CardTags, ClauseRecord } from "@edh-seer/tagger";
 import { analyzeDeckStructured } from "./analyze.js";
 import { loadHierarchy, pairReasons } from "./index.js";
+import { computeCardBuckets } from "./buckets.js";
 import type { DeckCard } from "./types.js";
 import fixtures from "./fixtures/waterbend-1815.json" with { type: "json" };
 
@@ -56,4 +57,34 @@ test("in a deck, Sol Ring is a partner of Geyser Leaper with the waterbend sente
   const partner = (name: string) => r.cards.find((c) => c.name === "Geyser Leaper")!.topPartners!.find((p) => p.name === name);
   expect(partner("Sol Ring")?.reasons.map((x) => x.text)).toContain("Geyser Leaper can tap Sol Ring to help pay for its waterbend cost");
   expect(partner("Grizzly Bears")?.reasons.some((x) => /waterbend/.test(x.text)) ?? false).toBe(false);
+});
+
+// REVIEW OF #1815. A Role is an Aura, not a creature (CR 303.7: "Some Aura enchantments also have the subtype Role."): its create-token emit has no `type`, and the loose token-count maker test let it stand in for a creature token.
+test.each(["Unassuming Sage", "Cut In"])("%s makes a Role token, which no creature-token count counts (waterbend, Magnus the Red)", (maker) => {
+  for (const c of [...CONSUMERS, "Magnus the Red"]) {
+    for (const opts of [{}, { tokensMediate: false }]) {
+      expect(reasons(dc(maker), dc(c), opts).filter((x) => x.tag === "scales:creature"), `${maker} -> ${c} ${JSON.stringify(opts)}`).toEqual([]);
+    }
+  }
+});
+
+test("a real creature-token maker still feeds Magnus the Red's count (Harried Dronesmith)", () => {
+  expect(reasons(dc("Harried Dronesmith"), dc("Magnus the Red"), { tokensMediate: false }).map((x) => x.tag)).toContain("scales:creature");
+});
+
+// A waterbend count pays for ITS OWN card's cost, never for other spells: the deck-level readers (theme tags, the Ramp Payoff archetype, the "fueled by" line, the efficiency bucket) read `cost-reduction` as a discount on spells and must skip it.
+test("a deck of waterbend cards has no Cost reducers theme, no Ramp Payoff archetype, no cost-reduction engine line and no efficiency", () => {
+  const MOUNTAIN = { card: { name: "Mountain", typeLine: "Basic Land — Mountain", oracleText: "{T}: Add {R}.", keywords: [], colors: [], manaValue: 0 }, tags: null } as unknown as DeckCard;
+  const names = ["Geyser Leaper", "Water Whip", "Waterbending Lesson", "Hama, the Bloodbender", "Katara, Water Tribe's Hope", "Giant Koi", "Grizzly Bears"];
+  const r = analyzeDeckStructured([...names.map(dc), ...Array.from({ length: 12 }, () => MOUNTAIN)], [], loadHierarchy(), undefined, new ComboIndex([]), undefined,
+    (ref) => tokens[ref.printingId ?? ""]?.tags ?? null, undefined, [], [], { skipSimulation: true });
+  expect(r.themes.map((t) => t.tag)).not.toContain("static:cost-reduction");
+  expect((r.archetypes ?? []).map((a) => a.category)).not.toContain("mana-ramp-payoff");
+  expect(r.identity?.engine ?? "").not.toMatch(/cost reduction/);
+  expect(computeCardBuckets(dc("Geyser Leaper").tags!, loadImpactWeights()).efficiency).toBe(0);
+});
+
+test("only the Role subtype is refused: Loki, the Deceiver's typeless token COPY of a Villain is still a creature token for the count; Living Lectern (a Role maker) is not", () => {
+  expect(reasons(dc("Loki, the Deceiver"), dc("Geyser Leaper"), { tokensMediate: false }).map((x) => x.tag)).toContain("scales:creature");
+  expect(reasons(dc("Living Lectern"), dc("Geyser Leaper"), { tokensMediate: false }).filter((x) => x.tag === "scales:creature")).toEqual([]);
 });

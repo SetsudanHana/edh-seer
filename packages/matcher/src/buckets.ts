@@ -61,6 +61,8 @@ export function computeCardBuckets(
   let winCondition = 0;
   for (const a of tags.abilities) {
     const kind = a.effect.kind;
+    // A waterbend count (#1815) pays for the card's own cost: no efficiency.
+    if (a.effect.costOf === "waterbend") continue;
     if (CONSISTENCY_KINDS.has(kind)) consistency += abilityWeight(a, weights);
     if (EFFICIENCY_KINDS.has(kind)) efficiency += abilityWeight(a, weights);
     if (WIN_CONDITION_KINDS.has(kind)) winCondition += abilityWeight(a, weights);
