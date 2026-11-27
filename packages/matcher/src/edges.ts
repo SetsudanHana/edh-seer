@@ -1656,6 +1656,23 @@ function recastsItself(p: DeckCard): boolean {
     || text.includes(`cast ${name.split(",")[0]} from your graveyard`);
 }
 
+/** A CARD WHOSE OWN ENTRY BOUNCES IT ENTERS AGAIN AND AGAIN (owner ruling 2026-11-26, #1811): "When Acererak enters, if you haven't completed Tomb of Annihilation, return Acererak to its owner's hand and venture into the dungeon." The next cast enters it once more, so its single implied entry is
+ *  a repeatable one, as a card that recasts itself is (`recastsItself`). Only the card's OWN enters trigger returning ITSELF to its owner's hand counts: a trigger of another permanent's entry ("When a Dragon you control enters, return this enchantment": the Dragonstorms), a bounce at another time (Cactuar's end
+ *  step), and "return a creature you control" (Whitemane Lion), which names no card, do not. A condition that does not run out by itself does not stop it (Acererak's dungeon, Wild Wurm's coin flip). A condition the bounce itself defeats does (owner 2026-11-27): Glitch Interpreter's bounce manifests a face-down permanent,
+ *  so "if you control no face-down permanents" fails on the next cast; Greenbelt Rampager's gives the energy it could not pay. Those two stay oneshot. No stored card has an unconditional one, or a "may".
+ *  The text is the cue, with a derived own-leaves emit beside it (the effect kind is blanked on a producer, bounce being no payoff kind, so the emit is what is read).
+ *  CEILING: read from the printed text (the enters line, the card's own name or "this <type>", no quoted ability), as `recastsItself` is. */
+function bouncesItselfOnEntry(p: DeckCard): boolean {
+  if (!(p.tags?.abilities ?? []).some((a) => (a.emits ?? []).some((e) => e.verb === "leaves" && e.subject.self === true))) return false;
+  const face = (p.card.name.split(" // ")[0] ?? "").toLowerCase();
+  const names = [...new Set([face, face.split(",")[0]!, face.replace(/ the .*/, "")])].filter((n) => n.length > 2).map((n) => n.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
+  const self = `(?:this [a-z]+|${names.join("|")})`;
+  const line = new RegExp(`^(?:when|whenever) ${self} enters(?: the battlefield)?\\b[^"\\n]*\\breturn ${self} to (?:its|his|her|their) owner's hand`, "i");
+  // The bounce feeds its own condition: it makes the face-down permanent or the energy whose absence returned it.
+  const selfDefeating = /\breturn [^"\n]*owner's hand and (?:manifest|you get \{E\})/i;
+  return (p.card.oracleText ?? "").split("\n").some((l) => line.test(l) && !selfDefeating.test(l));
+}
+
 /** WHAT A SAC OUTLET'S COST TAKES, when this event is the one that cost pays (#799): Carrion Feeder's
  *  "Sacrifice a creature: Put a +1/+1 counter on this creature" emits a death of YOUR creature from
  *  its cost, and the sentence read "When Carrion Feeder dies" -- about the outlet, which never died.
@@ -3067,7 +3084,7 @@ function eventEdges({ p, c, h, opts, pEvents, reasons, replacementOnly, cAbiliti
             // NOT A TOKEN NODE'S: a maker re-supplies its tokens (Krenko, Bitterblossom), so the token
             // "entering" is every time the maker makes one.
             : oneShotProducer(p, origin) || (e.implied === true && !recastsItself(p)
-              && (t.verb === "cast" || (t.verb === "enters" && p.tags?.characteristics.token !== true)))
+              && (t.verb === "cast" || (t.verb === "enters" && p.tags?.characteristics.token !== true && !bouncesItselfOnEntry(p))))
               || sacrificesItself(c, a) ? "oneshot"
             : triggerRepeatability(t.subject),
           scaling: a.effect.scaling,

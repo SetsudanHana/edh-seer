@@ -663,10 +663,10 @@ export function analyzeDeckStructured(
       // baseline every creature has, and the Goblins he makes every turn are what the pair is worth. The partner list prints its first reason, so the direct entry read first and named the wrong thing. WHAT THE CODE DOES: for each tag on which the direct
       // list holds such a baseline entry AND a token hop states the same tag, the hop's reasons for that tag go FIRST (ahead of every other direct reason too, not only the baseline: Urza's Saga -> Altar of the Brood), then the other direct reasons, then the
       // remaining hop reasons, and the baseline entry LAST. It is kept; a pair with no such hop keeps its order. Membership, score and weight are untouched (`edgeWeight` takes the max per tag).
-      // NOT FOR TWO PIECES OF ONE COMBO FOUND IN THE DECK: a maker whose own entry repeats (Acererak's "return Acererak to its owner's hand" re-enters it over and over; derive still labels that entry `oneshot`) keeps its direct entry first, since the combo is the pair's worth.
+      // NOT FOR TWO PIECES OF ONE COMBO FOUND IN THE DECK: a maker whose own entry repeats keeps its direct entry first, since the combo is (Acererak's "return Acererak to its owner's hand" re-enters it over and over; since #1811 that entry is labelled repeatable, so the guard no longer decides for the four self-bouncing cards and stays for any other maker still labelled `oneshot`) the pair's worth.
       // CEILING: the rule assumes the token's repeated entry outweighs the maker's single entry. That fails for a payoff whose value depends on the ENTERING creature's power or toughness: Jaws of Defeat ("loses life equal to the difference between that
       // creature's power and its toughness") is worth 2 for Hornet Nest (0/2) and 0 for the 1/1 Insects it makes, yet the Insect sentence leads (abzan-defenders). The same blind spot covers any payoff that counts the entering creature's own stats, and a self-bouncing
-      // or self-repeating ETB (Acererak) that derive mislabels `oneshot` and that no combo row lists.
+      // or a self-repeating ETB that is still labelled `oneshot` (the four self-bouncing cards of #1811 are not) and that no combo row lists.
       const hopTags = new Set((hop ?? []).filter((r) => r.producerIsToken).map((r) => r.tag));
       const baseline = (r: Reason): boolean => r.impliedProducer === true && r.repeatability === "oneshot" && hopTags.has(r.tag) && !inOneCombo(p.card.name, c.card.name);
       const reasons = hop
