@@ -225,6 +225,12 @@ test("the rest of the ramp role is named by class, short, and a land or a cost r
   expect(lastingOf(9, 16, { land: 2, "cost-reducer": 3, "trigger-mana": 2 }))
     .toBe("9 of your 16 ramp cards that keep producing mana (rocks, dorks and land ramp; the other 7 count for little: lands the land count already holds; cost reducers, which save mana rather than make it and replace no land; mana made only once or under a condition, like trigger mana)");
   expect(lastingOf(9, 10, { "trigger-mana": 1 })).toBe("9 of your 10 ramp cards that keep producing mana (rocks, dorks and land ramp; the other one counts for little: mana made only once or under a condition, like trigger mana)");
+  // #1237: a net-0 colour filter taps every turn and adds no mana, so it is not "mana made only once or under a condition"
+  expect(lastingOf(9, 16, { "colour-filter": 7 })).toBe("9 of your 16 ramp cards that keep producing mana (rocks, dorks and land ramp; the other 7 count for little: colour filters, which fix colours but add no mana)");
+  expect(lastingOf(9, 10, { "colour-filter": 1 })).toBe("9 of your 10 ramp cards that keep producing mana (rocks, dorks and land ramp; the other one counts for little: colour filters, which fix colours but add no mana)");
+  expect(lastingOf(9, 16, { land: 2, "cost-reducer": 1, "colour-filter": 2, "trigger-mana": 2 }))
+    .toBe("9 of your 16 ramp cards that keep producing mana (rocks, dorks and land ramp; the other 7 count for little: lands the land count already holds; cost reducers, which save mana rather than make it and replace no land; colour filters, which fix colours but add no mana; mana made only once or under a condition, like trigger mana)");
+  expect(lastingOf(9, 16, { "colour-filter": 2, "one-shot": 1 })).not.toMatch(/colour filters[^;]*only once/);
   // no rest: the short form
   expect(lastingOf(9, 9, {})).toBe("9 rocks, dorks and land ramp");
 });

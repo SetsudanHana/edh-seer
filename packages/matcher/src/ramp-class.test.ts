@@ -2,7 +2,7 @@ import { describe, expect, test } from "vitest";
 import goldfish from "./fixtures/goldfish-cards.json" with { type: "json" };
 import { classifyAccelerant } from "./goldfish.js";
 import { RAMP_RESILIENCE } from "./mana-base.js";
-import { NON_ACCELERANT_WEIGHT, nonAccelerantRamp } from "./ramp-class.js";
+import { NON_ACCELERANT_WEIGHT, isColourFilter, nonAccelerantRamp } from "./ramp-class.js";
 import type { DeckCard } from "./types.js";
 
 // #1190: every Ramp-role card the goldfish does not play as an accelerant was weighted 0.15 as "a one-shot", and the report called it "a ritual or a Treasure". Birgi and Phyrexian Altar are
@@ -46,11 +46,38 @@ describe("the class of a Ramp-role card that is not an accelerant", () => {
     expect(nonAccelerantRamp(medallion, [medallion])).toBe("cost-reducer");
   });
 
-  test("the weight per class is the one every non-accelerant has had (0.15); a land is no ramp piece, a cost reducer weighs 0 (owner 2026-10-14)", () => {
-    for (const [cls, w] of Object.entries(NON_ACCELERANT_WEIGHT)) {
-      if (cls === "land") expect(w, cls).toBeNull();
-      else if (cls === "cost-reducer") expect(w, cls).toBe(0);
-      else expect(w, cls).toBe(RAMP_RESILIENCE.oneShot);
+  test("the weight per class is pinned: a land is no ramp piece (null), a cost reducer and a colour filter weigh 0 (owner 2026-10-14, 2026-11-27), every other class 0.15", () => {
+    const want: Record<string, number | null> = {
+      land: null, "land-drop": RAMP_RESILIENCE.oneShot, "cost-reducer": 0, "colour-filter": 0, "one-shot": RAMP_RESILIENCE.oneShot, sacrifice: RAMP_RESILIENCE.oneShot,
+      "trigger-mana": RAMP_RESILIENCE.oneShot, "gated-off": RAMP_RESILIENCE.oneShot, restricted: RAMP_RESILIENCE.oneShot, paid: RAMP_RESILIENCE.oneShot, other: RAMP_RESILIENCE.oneShot,
+    };
+    expect(NON_ACCELERANT_WEIGHT).toEqual(want);
+  });
+});
+
+// #1237 (owner ruling 2026-11-26, weight 0 on 2026-11-27): a NET-0 COLOUR FILTER fixes colours and adds no mana. The goldfish refuses it as acceleration since #1184 (`classifyAccelerant`'s net bar); the land count now names it its own class.
+// The 13 cards of the issue, as stored (Mongo, 2026-11-27).
+const THIRTEEN = ["Prophetic Prism", "Arcum's Astrolabe", "Celestial Prism", "Mana Cylix", "Viridian Acolyte", "Giant's Boulder", "Helionaut", "Fire Sprites", "Ceta Disciple", "Necra Disciple", "Standing Stones",
+  "Jenson Carthalion, Druid Exile", "Pyramid of the Pantheon"];
+describe("a net-0 colour filter is a class of its own", () => {
+  for (const name of THIRTEEN) {
+    // Asked of the card alone (no deck): Pyramid of the Pantheon's three-mana line waits on counters on the card itself, which the goldfish admits by the turn in a deck that can meet it (`ManaOutput.estimated`), so there it is played as an accelerant.
+    test(`${name} is a colour filter: an accelerant until the net bar, none after it`, () => {
+      const dc = real(name);
+      expect(classifyAccelerant(dc, undefined, false, false), "a rock or a dork without the bar").not.toBeNull();
+      expect(classifyAccelerant(dc, undefined, false, true), "none with the bar").toBeNull();
+      expect(isColourFilter(dc)).toBe(true);
+      expect(nonAccelerantRamp(dc)).toBe("colour-filter");
+    });
+  }
+  test("Sol Ring, Mind Stone, Chromatic Lantern and a net +1 dork (Llanowar Elves) are not", () => {
+    for (const name of ["Sol Ring", "Mind Stone", "Chromatic Lantern", "Llanowar Elves"]) {
+      const dc = real(name);
+      expect(isColourFilter(dc, [dc]), name).toBe(false);
+      expect(nonAccelerantRamp(dc, [dc]), name).not.toBe("colour-filter");
     }
+  });
+  test("a one-shot and a land are not (they were never accelerants)", () => {
+    for (const name of ["Dark Ritual", "Myriad Landscape"]) expect(isColourFilter(real(name), [real(name)]), name).toBe(false);
   });
 });

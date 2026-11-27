@@ -1,3 +1,4 @@
+import { classifyAccelerant } from "./goldfish.js";
 import { discountsOtherSpells, loadRules, ruleMatches } from "./rules.js";
 import { RAMP_RESILIENCE } from "./mana-base.js";
 import { cardLines, paidWithResource } from "./mana-lines.js";
@@ -18,22 +19,30 @@ import type { DeckCard } from "./types.js";
  *  - `paid`: mana bought with a counter, a tapped permanent or another resource (Cryptic Trilobite, Springleaf Drum).
  *  - `other`: what none of those names (Mox Tantalite: suspend only).
  *
+ *  - `colour-filter`: a NET-0 FILTER (owner 2026-11-26, weight 0 on 2026-11-27, #1237): it fixes colours and adds no mana (Prophetic Prism, Mana Cylix, Arcum's Astrolabe, Viridian Acolyte, Helionaut; Celestial Prism and Pyramid of the Pantheon net -1). It taps every turn, so it is not "mana made once", and it replaces no land, so the
+ *    land count weighs it 0; the colours it fixes are credited to the mana base's colour part (it is a colour source there), and a card it draws is the draw role's. 13 cards of the corpus.
  *  - `cost-reducer`: a discount for OTHER spells (Sapphire Medallion, owner 2026-08-06 and 2026-10-13: cost reduction is ramp). It makes no mana and replaces no land: a discount is worth what the deck has to reduce, so the land target weighs it 0 (owner 2026-10-14; Heartstone and Training Grounds, which reduce activated abilities, are cost reducers too).
  *
  *  ASK ONLY OF A RAMP-ROLE CARD THAT `classifyAccelerant` returned null for. The first match wins, in the order below: a card with two reasons is named by the more telling one. */
-export type NonAccelerantRamp = "land" | "land-drop" | "cost-reducer" | "one-shot" | "sacrifice" | "trigger-mana" | "gated-off" | "restricted" | "paid" | "other";
+export type NonAccelerantRamp = "land" | "land-drop" | "cost-reducer" | "colour-filter" | "one-shot" | "sacrifice" | "trigger-mana" | "gated-off" | "restricted" | "paid" | "other";
 
 /** THE WEIGHT EACH CLASS CARRIES IN THE LAND TARGET: 0.15 for every one that is a piece (`RAMP_RESILIENCE.oneShot`), exactly what every non-accelerant has carried, EXCEPT the cost reducer: 0 (owner 2026-10-14, "it is worth more if you have
- *  something to reduce"; it is still a ramp piece, it replaces no land). No other ruling has priced the classes apart, so the rest share a number and a land is no piece (`null`, as the fallback always skipped a land). A weight change needs an owner ruling. */
+ *  something to reduce"; it is still a ramp piece, it replaces no land) and the colour filter: 0 (owner 2026-11-27, #1237: measured at 0.003 of a rock's lands in the goldfish sweep; it fixes colours, which the mana base's colour part credits, and adds no mana). No other ruling has priced the classes apart, so the rest share a number and a land is no piece (`null`, as the fallback always skipped a land). A weight change needs an owner ruling. */
 export const NON_ACCELERANT_WEIGHT: Record<NonAccelerantRamp, number | null> = {
-  land: null, "land-drop": RAMP_RESILIENCE.oneShot, "cost-reducer": 0, "one-shot": RAMP_RESILIENCE.oneShot, sacrifice: RAMP_RESILIENCE.oneShot, "trigger-mana": RAMP_RESILIENCE.oneShot,
+  land: null, "land-drop": RAMP_RESILIENCE.oneShot, "cost-reducer": 0, "colour-filter": 0, "one-shot": RAMP_RESILIENCE.oneShot, sacrifice: RAMP_RESILIENCE.oneShot, "trigger-mana": RAMP_RESILIENCE.oneShot,
   "gated-off": RAMP_RESILIENCE.oneShot, restricted: RAMP_RESILIENCE.oneShot, paid: RAMP_RESILIENCE.oneShot, other: RAMP_RESILIENCE.oneShot,
 };
 
 const landPutRule = () => loadRules().rules.find((r) => r.id === "ramp.landPut")!;
 
-export function nonAccelerantRamp(dc: DeckCard, _deck?: readonly DeckCard[]): NonAccelerantRamp {
+/** A NET-0 COLOUR FILTER (#1237): the card is an accelerant to `classifyAccelerant` until the net bar (a line must net at least one mana, #1184) and none after it. A card the goldfish plays as an accelerant (a net +1 line, a scaling line) is not one. */
+export function isColourFilter(dc: DeckCard, deck?: readonly DeckCard[]): boolean {
+  return classifyAccelerant(dc, deck) !== null && classifyAccelerant(dc, deck, false, true) === null;
+}
+
+export function nonAccelerantRamp(dc: DeckCard, deck?: readonly DeckCard[]): NonAccelerantRamp {
   if (countsAsLand(dc.card)) return "land";
+  if (isColourFilter(dc, deck)) return "colour-filter";
   const tags = dc.tags;
   const lines = cardLines(dc, true);
   // "Puts a land from hand / from among the cards looked at / from a graveyard" (Growth Spiral, Planar Genesis) is the `ramp.landPut` rule: a derived `enters` emit of a land from a zone other than play

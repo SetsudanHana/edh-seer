@@ -218,8 +218,8 @@ export function classifyAccelerant(dc: DeckCard, deck?: readonly DeckCard[], per
   if (lines.length === 0) return null;
   // A LINE THAT RETURNS LESS THAN IT COSTS IS NOT ACCELERATION (#1184), IN THE SIMULATION (`netBar`): Pyramid of the Pantheon's "{2}, {T}: Add one mana of any color" nets -1, and its three-mana
   // line waits on counters on the card itself, which is admitted by the turn (`ManaOutput.estimated`). The bar is a line that nets AT LEAST ONE, as `rampGrade`'s coloured bit does (owner 2026-10-13); a net-0 filter (Prophetic
-  // Prism, Mana Cylix) adds no mana. The land count, the commander-ramp core and mana-base-fit do NOT pass the bar: their weights are owner rulings (the land count's class of a net-0 filter is a
-  // question for the owner), so they keep the answer they gave.
+  // Prism, Mana Cylix) adds no mana. The commander-ramp core and mana-base-fit do NOT pass the bar: their weights are owner rulings, so they keep the answer they gave. The land count asks the bar only for the
+  // CLASS of a net-0 filter (`isColourFilter`: its own class, weight 0, owner 2026-11-26/27, #1237); it still reads the card through the default answer.
   // CEILING: a net-0 filter's COLOUR CONVERSION is no longer modelled in the goldfish (an under-claim; it used to be priced as a free +1 rock, an over-claim).
   // A SCALING LINE'S NET IS A CEILING, NOT A MEASURE (derive nets "{G}, {T}: Add X mana" and "{2}, {T}: Add {B} for each Swamp" at 1 less the cost): Selvala and Magus of the Coffers make more than
   // they cost in the decks that scale them, so a scaling line is not judged by its net.
