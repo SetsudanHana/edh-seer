@@ -7,6 +7,7 @@
  *  sat in the corpus as a vanilla bear. */
 import { graveyardOwner, selfGraveyardOwner } from "./graveyard-owner.js";
 import { lifeSetRewrite } from "./life-set.js";
+import { loopOf, loopedActions } from "./loop.js";
 import { GUARDED_VERBS, attractionOpeningRewrite, energyRewrite, guardExempt, phaseOutFiledAsPut, playerKeywordFiledAsOther, verbPrint } from "./verb-words.js";
 import type { Action, ClauseRecord } from "../canonicalize.js";
 import type { Ability, UnclaimedAction, Requirement, AbilityKind, CardTags, Characteristics, Control, SubjectFilter, Verb, EventCount } from "../schema.js";
@@ -792,7 +793,8 @@ import { castClassFromPrint, castIsOnlyACondition, castsYourOwnCard } from "./ca
 // 604: #1256 -- review fixes: every trigger of the granted self-return is yours (the exile trigger of 'dies or is put into exile', Ashnod's Intervention), the returned creature's own events too ('a creature an opponent controls enters'), a soulbond pair (Breathkeeper Seraph, CR 702.95a) and a grant the stored clauses file as the card itself when the granter is no creature (Infuse with Vitality, Return to Action, Pain 101, Kaya the Inexorable)
 // 605: #1256 -- re-review: the narrowed exile trigger of a granted self-return reads from the battlefield (CR 113.6), so a graveyard exile no longer pairs with Kaya the Inexorable ('is put into exile')
 // 606: #1815 -- waterbend (CR 701.67a) is both an artifact demand (like improvise) and a creature demand: a waterbend cost the card pays itself derives a cost-reduction counting artifacts you control plus creatures you control (costOf waterbend); 27 of the 29 waterbend cards (Avatar Aang's trigger and The Unagi's ward pay nothing)
-export const DERIVE_VERSION = 606;
+// 607: #1335 -- 'repeat this process' is a loop: the clause's abilities carry the new Ability.loop (conditional / unbounded / fixed), and the misfiled trigger-again of the 13 cards is claimed by it instead of dropped (vocabulary only; no matcher reads it)
+export const DERIVE_VERSION = 607;
 
 /** "a nonland card from target opponent's graveyard or hand" (#1592): the object of a stored hand-or-graveyard pick. */
 const GRAVEYARD_OR_HAND_PICK = /\bfrom (?:target opponent|target player|that player|that opponent|an opponent)'s (?:graveyard or hand|hand or graveyard)$/i;
@@ -3998,6 +4000,8 @@ export function deriveAbilities(
       }
       // Inert: states no action (`INERT_VERBS`), so there is nothing to report. A printed casualty line above has its own ability.
       if (INERT_VERBS.has(action.verb ?? "")) continue;
+      // "REPEAT THIS PROCESS" FILED AS `trigger-again` IS THE LOOP THE CLAUSE STATES (#1335), whether the guard drops it or keeps it (Sin, Spira's Punishment and The Tale of Tamiyo print "copy" elsewhere and derived `trigger-doubling`): the loop marker stamped below claims it.
+      if (action.verb === "trigger-again" && loopOf(text) !== undefined) continue;
       if (misfiled.has(action) || refusedPlural.has(action)) { unclaimed.push(action); continue; }
       if (keywordActionOnStaticClause(kind, action.verb)) { unclaimed.push(action); continue; }
       // ...BUT ONE THAT REDUCES, HALVES, CAPS, FIXES, RAISES OR REDIRECTS THE DAMAGE IS A `damage-change` (#1469): the clause's first action carries the ability, the others are its words and claim nothing.
@@ -5468,6 +5472,8 @@ export function deriveAbilities(
     if (opensTrigger) reflexiveModalEvent = isReflexiveText(text ?? "") && /[\u2014:]\s*$/.test((text ?? "").trim()) ? clause.trigger?.event : undefined;
     const reflexiveMode = !opensTrigger && reflexiveModalEvent !== undefined && clause.trigger?.event === reflexiveModalEvent;
     const clauseTargets = targetSlotsOf([text], cardName, parseFilter, selfAsTilde);
+    const loopOfClause = loopOf(text);
+    const loopedAction = loopOfClause !== undefined ? loopedActions(text, clause.actions ?? []) : [];
     for (let i = before; i < abilities.length; i++) {
       // WHICH CLAUSE PRINTED IT (roadmap AJ4, spec C2). Stamped in the same one place as the rest,
       // for the same reason: a fourth push site cannot silently skip it. The card page reads down
@@ -5483,6 +5489,9 @@ export function deriveAbilities(
       else if (inherits && headerRefused.length > 0 && abilities[i].trigger) { const { trigger: _t, ...untriggered } = abilities[i]; abilities[i] = untriggered; }
       const repeats = exhaust ? "once" : delayed?.repeats ?? untapDenialRepeats(abilities[i], text ?? "", cardText, repeatsFor(abilities[i], text, cost, rawTrigger, cardName), rawTrigger);
       if (repeats) abilities[i] = { ...abilities[i], repeats };
+      // THE LOOP A CLAUSE STATES ("repeat this process", #1335): vocabulary only, see `Ability.loop`.
+      // ONLY THE ABILITIES OF THE LOOPED SENTENCES (`loopedActions`): not the setup before the repeat sentence nor what follows it.
+      if (loopOfClause !== undefined && i < actionsEnd && loopedAction[actionStarts.filter((start) => start <= i).length - 1] === true) abilities[i] = { ...abilities[i], loop: loopOfClause };
       if (delayed && abilities[i].trigger) abilities[i] = { ...abilities[i], delayedBy: delayed.delayedBy };
       if (threshold) abilities[i] = { ...abilities[i], threshold, ...(thresholdSubject ? { thresholdSubject } : {}), ...(thresholdDistinct ? { thresholdDistinct } : {}) };
       // A REFUSED trigger still says what the card needs around it (owner 2026-08-20): the cares
