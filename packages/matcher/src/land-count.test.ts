@@ -326,7 +326,7 @@ test("a cost reducer contributes nothing to the land target", () => {
 });
 
 // #1237 (owner ruling 2026-11-26; weight 0, 2026-11-27): A NET-0 COLOUR FILTER FIXES COLOURS AND ADDS NO MANA, so it replaces no land: Mana Cylix in the deck leaves the target where it was. It was priced as a rock (0.7 of 0.57 of a land each), which took a land off the target
-// for two of them in four of four sample decks, though the goldfish measures a pure filter at 0.003 of a rock's lands.
+// for two of them in three of four sample decks (the fourth's drop is the swap's lower mana value: two blank 1-drops drop it the same), though the goldfish measures a pure filter at 0.003 of a rock's lands.
 describe("a colour filter replaces no land (#1237)", () => {
   const filler = Array.from({ length: 50 }, (_, i) => mk(`Spell-${i}`, 3, "", "Sorcery"));
   const lands = Array.from({ length: 36 }, (_, i) => land(`Swamp-${i}`));

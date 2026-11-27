@@ -19,8 +19,8 @@ import type { DeckCard } from "./types.js";
  *  - `paid`: mana bought with a counter, a tapped permanent or another resource (Cryptic Trilobite, Springleaf Drum).
  *  - `other`: what none of those names (Mox Tantalite: suspend only).
  *
- *  - `colour-filter`: a NET-0 FILTER (owner 2026-11-26, weight 0 on 2026-11-27, #1237): it fixes colours and adds no mana (Prophetic Prism, Mana Cylix, Arcum's Astrolabe, Viridian Acolyte, Helionaut; Celestial Prism and Pyramid of the Pantheon net -1). It taps every turn, so it is not "mana made once", and it replaces no land, so the
- *    land count weighs it 0; the colours it fixes are credited to the mana base's colour part (it is a colour source there), and a card it draws is the draw role's. 13 cards of the corpus.
+ *  - `colour-filter`: a NET-0 FILTER (owner 2026-11-26, weight 0 on 2026-11-27, #1237): it fixes colours and adds no mana (Prophetic Prism, Mana Cylix, Arcum's Astrolabe, Viridian Acolyte, Helionaut; Celestial Prism nets -1). It taps every turn, so it is not "mana made once", and it replaces no land, so the
+ *    land count weighs it 0; the colours it fixes are credited to the mana base's colour part (it is a colour source there), and a card it draws is the draw role's. 12 cards of the corpus in any deck. Pyramid of the Pantheon is one only when asked with no deck: in a deck its brick-counter line is admitted by the turn, so the land count keeps it a rock, as before.
  *  - `cost-reducer`: a discount for OTHER spells (Sapphire Medallion, owner 2026-08-06 and 2026-10-13: cost reduction is ramp). It makes no mana and replaces no land: a discount is worth what the deck has to reduce, so the land target weighs it 0 (owner 2026-10-14; Heartstone and Training Grounds, which reduce activated abilities, are cost reducers too).
  *
  *  ASK ONLY OF A RAMP-ROLE CARD THAT `classifyAccelerant` returned null for. The first match wins, in the order below: a card with two reasons is named by the more telling one. */

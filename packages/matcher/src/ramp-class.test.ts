@@ -56,7 +56,7 @@ describe("the class of a Ramp-role card that is not an accelerant", () => {
 });
 
 // #1237 (owner ruling 2026-11-26, weight 0 on 2026-11-27): a NET-0 COLOUR FILTER fixes colours and adds no mana. The goldfish refuses it as acceleration since #1184 (`classifyAccelerant`'s net bar); the land count now names it its own class.
-// The 13 cards of the issue, as stored (Mongo, 2026-11-27).
+// The 13 cards of the issue, as stored (Mongo, 2026-11-27), each asked with no deck. In a deck, 12 stay filters: Pyramid of the Pantheon's counter line is admitted there (test below).
 const THIRTEEN = ["Prophetic Prism", "Arcum's Astrolabe", "Celestial Prism", "Mana Cylix", "Viridian Acolyte", "Giant's Boulder", "Helionaut", "Fire Sprites", "Ceta Disciple", "Necra Disciple", "Standing Stones",
   "Jenson Carthalion, Druid Exile", "Pyramid of the Pantheon"];
 describe("a net-0 colour filter is a class of its own", () => {
@@ -80,4 +80,14 @@ describe("a net-0 colour filter is a class of its own", () => {
   test("a one-shot and a land are not (they were never accelerants)", () => {
     for (const name of ["Dark Ritual", "Myriad Landscape"]) expect(isColourFilter(real(name), [real(name)]), name).toBe(false);
   });
+});
+
+// #1237 review: in a deck, Pyramid of the Pantheon is no colour filter. Its brick-counter line is admitted by the turn there, so the land count keeps
+// it a rock, as on main. Mana Cylix in the same deck is still a filter.
+test("in a deck, Pyramid of the Pantheon stays an accelerant; Mana Cylix stays a colour filter", () => {
+  const pyramid = real("Pyramid of the Pantheon");
+  const cylix = real("Mana Cylix");
+  const deck = [pyramid, cylix, real("Sol Ring")];
+  expect(isColourFilter(pyramid, deck)).toBe(false);
+  expect(isColourFilter(cylix, deck)).toBe(true);
 });
