@@ -37,6 +37,8 @@ test.each(["Carnival of Souls", "Ayara, First of Locthwain"])("%s x Acererak: pi
   expect(first(report(true), card, "Acererak the Archlich")?.startsWith(`When Acererak the Archlich enters, ${card}`)).toBe(true);
 });
 
-test("without the combo in the deck, the token's entry leads, as for any maker (Acererak x Carnival of Souls)", () => {
-  expect(first(report(false), "Carnival of Souls", "Acererak the Archlich")).toMatch(/^When Zombie enters, /);
+// #1811 (owner ruling 2026-11-26): Acererak's own entry is repeatable (its enters trigger returns it to its owner's hand), so it is no oneshot baseline for the token-first order to demote; the entry leads with or without the combo. The combo guard in analyze.ts is redundant for this card now
+// and stays for any maker whose own entry derive still labels oneshot.
+test("without the combo in the deck, Acererak's own entry still leads: it is repeatable, so no baseline to demote (Acererak x Carnival of Souls, #1811)", () => {
+  expect(first(report(false), "Carnival of Souls", "Acererak the Archlich")).toMatch(/^When Acererak the Archlich enters, Carnival of Souls/);
 });
