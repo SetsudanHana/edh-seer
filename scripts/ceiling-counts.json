@@ -107,6 +107,7 @@
   "packages/tagger/src/derive/intervening-if.ts": 2,
   "packages/tagger/src/derive/library-search.ts": 1,
   "packages/tagger/src/derive/life-set.ts": 1,
+  "packages/tagger/src/derive/loop.ts": 1,
   "packages/tagger/src/derive/mana-lines.ts": 29,
   "packages/tagger/src/derive/meld-pair.ts": 1,
   "packages/tagger/src/derive/mill-owner.ts": 3,

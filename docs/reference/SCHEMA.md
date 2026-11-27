@@ -25,7 +25,7 @@ one of these re-buys the corpus and the rest are free.
 | `NORMALIZE_MIN_COMPATIBLE` | **3** | The oldest prompt whose answers are still valid. `needsNormalize` re-queues a card only when its stored version is BELOW this, so a mixed-version corpus is a stated condition rather than an accident. |
 | `VOCAB_VERSION` | **24** | The NORMALIZE_VERSION at which the closed VOCABULARIES (VERBS, TRIGGERS, ZONES) last changed. **Bump this ONLY when one of those lists changes** — never for a prose rule. |
 | `TRIGGER_VOCAB_VERSION` | **24** | The NORMALIZE_VERSION at which **TRIGGERS** last changed, tracked apart from VOCAB_VERSION. |
-| `DERIVE_VERSION` | **606** | Bump when derivation semantics change — a new effect kind, a changed emit, a new guard. Unlike NORMALIZE_VERSION this is FREE to bump: it only re-runs `derive-corpus`, which reads the stored clauses and calls no model. That asymmetry is the whole point of storing clauses separately. |
+| `DERIVE_VERSION` | **607** | Bump when derivation semantics change — a new effect kind, a changed emit, a new guard. Unlike NORMALIZE_VERSION this is FREE to bump: it only re-runs `derive-corpus`, which reads the stored clauses and calls no model. That asymmetry is the whole point of storing clauses separately. |
 
 See [`docs/RUNBOOK.md`](../RUNBOOK.md) for the procedure behind each bump.
 
@@ -320,6 +320,7 @@ Defined in [`Ability`](../../packages/tagger/src/schema.ts).
 | `change` | `ReplacementChange` | optional | HOW THIS REPLACEMENT CHANGES THE EVENT IT HEARS, when the sentence states a number (owner, 2026-10-24): Torbran's "plus 2", Fiery Emancipation's "triple". Set only beside `replacement`; absent when the change is not a stated number ("plus that many Squirrels"). |
 | `requires` | `Requirement` | optional | A GAME-STATE MARKER THE ABILITY NEEDS, evaluable against a state the owner supplies (roadmap W18). "Max speed —" abilities need the player's speed at 4 (CR 702.179). Unlike `conditionCares` this IS evaluated: with no state, or one that falls short, the ability is silent; with one that meets it, the ability is on. The marker is the player's, never a card's. |
 | `repeats` | `Repeats` | optional | How often this ability can fire — see `docs/superpowers/specs/2026-08-11-repeatability-taxonomy-design.md`. |
+| `loop` | `"conditional" \| "unbounded" \| "fixed"` | optional | THE EFFECT LOOPS WITHIN ONE RESOLUTION (#1335, owner ruling 2026-11-26): the clause that made this ability says "repeat this process". `conditional`: it repeats while a condition holds ("If you do, repeat this process", "...until all cards exiled this way have been chosen"); `unbounded`: the player chooses how often ("You may repeat this process any number of times"); `fixed`: a stated count ("repeat this process once", "two more times", "for first strike, ..."). Reminder text does not count (Jadelight Ranger's explore). A DIFFERENT axis from `repeats`, which says how often the ABILITY fires. Vocabulary for future goldfish and score readers: no matcher pairing, score or bucket reads it. |
 | `effect` | `Effect` | **required** |  |
 | `emits` | `GameEvent[]` | optional | Events this ability emits for others to trigger on. |
 

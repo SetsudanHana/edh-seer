@@ -1821,6 +1821,10 @@ export interface Ability {
    *  a consumer can see an absent label and decline to weight it, but cannot see through a wrong
    *  one. */
   repeats?: Repeats;
+  /** THE EFFECT LOOPS WITHIN ONE RESOLUTION (#1335, owner ruling 2026-11-26): the clause that made this ability says "repeat this process". `conditional`: it repeats while a condition holds ("If you do, repeat this process", "...until all cards exiled this way have been chosen"); `unbounded`: the player
+   *  chooses how often ("You may repeat this process any number of times"); `fixed`: a stated count ("repeat this process once", "two more times", "for first strike, ..."). Reminder text does not count (Jadelight Ranger's explore). A DIFFERENT axis from `repeats`, which says how often the ABILITY fires.
+   *  Vocabulary for future goldfish and score readers: no matcher pairing, score or bucket reads it. */
+  loop?: "conditional" | "unbounded" | "fixed";
   effect: Effect;
   /** Events this ability emits for others to trigger on. */
   emits?: GameEvent[];
