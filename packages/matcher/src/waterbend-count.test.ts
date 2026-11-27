@@ -88,3 +88,15 @@ test("only the Role subtype is refused: Loki, the Deceiver's typeless token COPY
   expect(reasons(dc("Loki, the Deceiver"), dc("Geyser Leaper"), { tokensMediate: false }).map((x) => x.tag)).toContain("scales:creature");
   expect(reasons(dc("Living Lectern"), dc("Geyser Leaper"), { tokensMediate: false }).filter((x) => x.tag === "scales:creature")).toEqual([]);
 });
+
+// #1815 re-review: the similar-cards comparison read the waterbend count as a "cost reduction" effect (an emit-less ability's effect kind
+// rides along as a pseudo-output). It is the card's own cost, not an effect it has: Geyser Leaper compares with its waterbend count removed
+// exactly as with it in.
+test("similar cards: the waterbend count is no effect of the card (Geyser Leaper compares the same with or without it)", async () => {
+  const { compareCards } = await import("./similar.js");
+  const leaper = dc("Geyser Leaper");
+  const stripped: DeckCard = { ...leaper, tags: { ...leaper.tags!, abilities: leaper.tags!.abilities.filter((a) => a.effect?.costOf !== "waterbend") } };
+  const other = dc("Merfolk Looter");
+  expect(compareCards(leaper as never, other as never)).not.toBeNull();
+  expect(compareCards(leaper as never, other as never)).toEqual(compareCards(stripped as never, other as never));
+});

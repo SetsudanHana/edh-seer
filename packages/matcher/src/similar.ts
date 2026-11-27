@@ -249,6 +249,8 @@ function sigOf(card: SimilarCard): CardSig {
     // A death damage may cause (#1734, `GameEvent.conditional`) is no output of the card: two burn spells are alike by their damage.
     const sure = (a.emits ?? []).filter((e) => e.conditional !== true);
     if (sure.length === 0) {
+      // A WATERBEND COUNT IS THE CARD'S OWN COST (#1815), not an effect it has: it is no "cost reduction" a similar card shares or lacks.
+      if (a.effect?.costOf === "waterbend") continue;
       const kind = a.effect?.kind;
       if (kind && !EMITTED_ELSEWHERE.has(kind)) { const k = `${EFFECT_PREFIX}${kind}`; if (!outputs.has(k)) outputs.set(k, { verb: k, subject: { control: "any", token: null } } as unknown as GameEvent); }
       continue;
