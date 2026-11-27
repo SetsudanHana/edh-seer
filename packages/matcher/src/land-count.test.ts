@@ -7,7 +7,7 @@ import { detectBuildCategories } from "./build.js";
 import { landInputs, rampWeight, recommendedLands } from "./land-count.js";
 import { classifyAccelerant } from "./goldfish.js";
 import { boardGateOf, boardGateProbability } from "./gate.js";
-import { RAMP_RESILIENCE, landTarget } from "./mana-base.js";
+import { RAMP_RESILIENCE, drawCredit, landTarget } from "./mana-base.js";
 import type { DeckCard } from "./types.js";
 import { fetchTags, manaTags, tapFor, withLines, withTap } from "./mana-test-support.js";
 
@@ -323,6 +323,48 @@ test("a cost reducer contributes nothing to the land target", () => {
   // ten of them, so that 0.15 each (a land and a half) would show through the rounding
   const ten = recommendedLands([...filler, ...lands, ...Array.from({ length: 10 }, () => medallion)]);
   expect(ten.target).toBe(without.target);
+});
+
+// #1237 (owner ruling 2026-11-26; weight 0, 2026-11-27): A NET-0 COLOUR FILTER FIXES COLOURS AND ADDS NO MANA, so it replaces no land: Mana Cylix in the deck leaves the target where it was. It was priced as a rock (0.7 of 0.57 of a land each), which took a land off the target
+// for two of them in three of four sample decks (the fourth's drop is the swap's lower mana value: two blank 1-drops drop it the same), though the goldfish measures a pure filter at 0.003 of a rock's lands.
+describe("a colour filter replaces no land (#1237)", () => {
+  const filler = Array.from({ length: 50 }, (_, i) => mk(`Spell-${i}`, 3, "", "Sorcery"));
+  const lands = Array.from({ length: 36 }, (_, i) => land(`Swamp-${i}`));
+  const pad = (n: number) => Array.from({ length: n }, (_, i) => mk(`Padding-${i}`, 3, "", "Sorcery"));
+  const base = recommendedLands([...filler, ...lands, ...pad(2)]);
+  test("two Mana Cylix leave the target and the weighted ramp where they were; they are no accelerants; the class is named", () => {
+    const cylix = real("Mana Cylix");
+    const deck = [...filler, ...lands, cylix, cylix];
+    expect(rampWeight(cylix, deck)).toBeNull();
+    const rec = recommendedLands(deck);
+    expect(rec.accelerants).toBe(0);
+    expect(rec.rampOther).toEqual({ "colour-filter": 1 });
+    expect(rec.target).toBe(base.target);
+    expect(rec.target).toBe(landTarget({ avgManaValue: rec.avgManaValue, commanderManaValue: 0, accelerants: 0, drawCredit: 0 }));
+  });
+  test("two different filters are two in the class; ten copies still leave the target (a rock's 0.4 each would show through the rounding)", () => {
+    const two = recommendedLands([...filler, ...lands, real("Mana Cylix"), real("Helionaut")]);
+    expect(two.rampOther).toEqual({ "colour-filter": 2 });
+    expect(two.accelerants).toBe(0);
+    const ten = recommendedLands([...filler, ...lands, ...Array.from({ length: 10 }, () => real("Mana Cylix"))]);
+    expect(ten.accelerants).toBe(0);
+    // their own cheap mana value moves the average, so the yardstick is the formula with no ramp at all, not the padded deck
+    expect(ten.target).toBe(landTarget({ avgManaValue: ten.avgManaValue, commanderManaValue: 0, accelerants: 0, drawCredit: 0 }));
+  });
+  test("a filter beside a rock: the rock still weighs, the filter does not (Sol Ring + Mana Cylix reads as Sol Ring alone)", () => {
+    const alone = recommendedLands([...filler, ...lands, real("Sol Ring"), mk("Padding", 3, "", "Sorcery")]);
+    const both = recommendedLands([...filler, ...lands, real("Sol Ring"), real("Mana Cylix")]);
+    expect(both.accelerants).toBe(1);
+    expect(both.target).toBe(alone.target);
+  });
+  test("Prophetic Prism's drawn card is still counted: its draw credit is in the target, its mana is not", () => {
+    const prism = real("Prophetic Prism");
+    const rec = recommendedLands([...filler, ...lands, prism]);
+    expect(rec.accelerants).toBe(0);
+    expect(rec.rampOther).toEqual({ "colour-filter": 1 });
+    expect(rec.drawPieces).toBe(1);
+    expect(rec.target).toBe(landTarget({ avgManaValue: rec.avgManaValue, commanderManaValue: 0, accelerants: 0, drawCredit: drawCredit(prism.card.manaValue) }));
+  });
 });
 
 // A GATED SOURCE IS FAST MANA ONLY IF ITS GATE CAN BE MET ON TURN 1 OR 2 (owner 2026-10-13, #1169 2b-2: board-count gates are timed turn by turn). Mox Jasper costs nothing, but a

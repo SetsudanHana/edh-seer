@@ -8,7 +8,6 @@ import { FREE_TAP, fetchTags, manaTags, mkLine, ritualLine, tapFor, triggerLine,
 import { cardLines, colourSourceColours, isColourSource, isFetchSource } from "./mana-lines.js";
 import { gateMetBy, gateVerdict } from "./gate.js";
 import { rampWeight } from "./land-count.js";
-import { RAMP_RESILIENCE } from "./mana-base.js";
 import { classifyAccelerant, playableLines, colourMaskOf, tapBonusOf, fetchesLand, ritualAdds, opponentHandSize, keepsHand, colorMask, fetchMaskOf, isEveryLandType, landfallOf, manaAvailability, manaOutput, parseCost, produced, payable, pAtLeastMana, quantiles, rng, simulate, takeRandomLand, pickLand} from "./goldfish.js";
 
 const card = (name: string, typeLine: string, manaValue = 0, oracleText = "", producedMana?: string[]): DeckCard => ({
@@ -209,15 +208,15 @@ test("#1184 / #1267: Pyramid of the Pantheon's put line nets -1 and is no accele
   expect(playableLines(pyramid, deck, true).map((l) => l.net)).toEqual([-1, 3]);
 });
 
-// #1184 STAYS IN THE GOLDFISH: the land count (`land-count.ts`) reads `classifyAccelerant` without the bar, so its answer is what main gave (the weight of a net-0 filter is an owner ruling).
-test("#1184: the net bar is the simulation's; the land count keeps its class and weight for Prophetic Prism", () => {
+// #1184 STAYS IN THE GOLDFISH: `classifyAccelerant`'s default answer has no bar, and the land count reads it so (#1237: it asks the bar only for the CLASS of a net-0 filter, `colour-filter`, owner 2026-11-27: weight 0).
+test("#1184: the net bar is the simulation's; the land count weighs Prophetic Prism as a colour filter (#1237), not as a rock", () => {
   const prism = real("Prophetic Prism");
   expect(playableLines(prism).map((l) => l.net)).toEqual([0]);
   expect(classifyAccelerant(prism)?.kind).toBe("rock");
   expect(classifyAccelerant(prism, undefined, false, true)).toBeNull();
   expect(classifyAccelerant(real("Magus of the Coffers"), undefined, false, true)?.kind).toBe("dork");
   const deck = [prism, ...basics(37), ...spells(61, 3)];
-  expect(rampWeight(prism, deck)).toBe(RAMP_RESILIENCE.rock);
+  expect(rampWeight(prism, deck)).toBeNull();
 });
 
 // #1183: SCEPTRE OF ETERNAL GLORY makes one mana of any colour from the turn it is cast, and three once three lands with the SAME NAME are out.

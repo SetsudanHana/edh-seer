@@ -5,7 +5,7 @@ import { classifyAccelerant, manaOutput, playableLines } from "./goldfish.js";
 import { boardGateProbability, lineGateMetBy } from "./gate.js";
 import { isManaSource } from "./mana-audit.js";
 import { RAMP_RESILIENCE, drawCredit, landTarget } from "./mana-base.js";
-import { NON_ACCELERANT_WEIGHT, nonAccelerantRamp, type NonAccelerantRamp } from "./ramp-class.js";
+import { NON_ACCELERANT_WEIGHT, isColourFilter, nonAccelerantRamp, type NonAccelerantRamp } from "./ramp-class.js";
 import type { DeckCard } from "./types.js";
 import { countsAsLand, transformsIntoLand } from "./typeline.js";
 
@@ -191,7 +191,8 @@ export interface RoleTargets { ramp?: number; consistency?: number }
  *  table prices; one that lasts longer ("+1", or five turns of a "-1") keeps its kind's. The count of accelerants (`LandRecommendation.accelerants`) is unchanged. */
 export function rampWeight(dc: DeckCard, deck?: readonly DeckCard[]): number | null {
   const a = classifyAccelerant(dc, deck);
-  if (!a) return null;
+  // A NET-0 COLOUR FILTER IS NO ACCELERANT HERE (#1237, owner 2026-11-27): its class carries its own weight (`NON_ACCELERANT_WEIGHT`, 0).
+  if (!a || isColourFilter(dc, deck)) return null;
   const out = manaOutput(dc, deck);
   const weight = out.turns === 1 ? RAMP_RESILIENCE.oneShot : RAMP_RESILIENCE[a.kind];
   // A SOURCE THAT MAKES MANA ONLY ONCE A BOARD-COUNT GATE IS MET (Mox Jasper: a Dragon; `amount` 0 until then) keeps producing for the share of the first eight turns the deck has the gate
@@ -225,7 +226,7 @@ export function recommendedLands(
   const commanders = new Set(opts.commanderNames ?? []);
   const library = deck.filter((dc) => !commanders.has(dc.card.name));
   const commanderManaValue = Math.max(0, ...deck.filter((dc) => commanders.has(dc.card.name)).map((dc) => dc.card.manaValue));
-  const accelerants = library.filter((dc) => classifyAccelerant(dc, deck) !== null).length;
+  const accelerants = library.filter((dc) => classifyAccelerant(dc, deck) !== null && !isColourFilter(dc, deck)).length;
   const drawCards = detectBuildCategories([...library]).get("draw") ?? new Set<string>();
   // A GATED EFFECT COUNTS AT ITS WEIGHT (#1357 task 2), the weights the build panel's counts carry, so "Ramp 16 of 10" here is still the panel's 16.
   const roleWeights: RoleWeights = opts.gates ? detectBuildWeights(deck, opts.gates) : new Map();
@@ -266,7 +267,7 @@ export function recommendedLands(
   for (const dc of deck) {
     if (!rampRoleNames.has(dc.card.name) || seenRamp.has(dc.card.name)) continue;
     seenRamp.add(dc.card.name);
-    if (classifyAccelerant(dc, deck) !== null) continue;
+    if (classifyAccelerant(dc, deck) !== null && !isColourFilter(dc, deck)) continue;
     const cls = nonAccelerantRamp(dc, deck);
     rampOther[cls] = (rampOther[cls] ?? 0) + 1;
   }
