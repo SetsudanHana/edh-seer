@@ -1,4 +1,4 @@
-import { expect, test } from "vitest";
+import { describe, expect, test } from "vitest";
 import { actionRecipients, pronounActs, sacrificeFallsOnEveryone, sentenceNamesAPlayer } from "./recipient.js";
 
 test("a permanent's controller getting the payout is an opponent", () => {
@@ -247,4 +247,31 @@ test("#1691: a cast speaks only for an opponent named as its caster, and never a
   expect(actionRecipients("Whenever you cast a spell, that opponent may cast the exiled card.")).not.toHaveProperty("cast");
   // An opponent acts, then YOU cast (Fevered Suspicion's shape): no opponent cast.
   expect(actionRecipients("Each opponent exiles the top card of their library. You may cast spells from among those cards.")).not.toHaveProperty("cast");
+});
+
+// #1824 review: the create cue's two new readings, pinned at the unit.
+describe("a create by the exiled card's owner, and a Bramble-shaped copy you pay for (#1824)", () => {
+  const LEAVES = "When this creature leaves the battlefield, the exiled card's owner creates an X/X blue Illusion creature token, where X is the mana value of the exiled card.";
+  test("the exiled card's owner is an opponent only where the WHOLE card text says so: with a card text that names no opponent it is any", () => {
+    expect(actionRecipients(LEAVES, { cardText: "When this creature enters, exile up to one target nonland permanent. " + LEAVES })).toEqual({ create: "any" });
+    expect(actionRecipients(LEAVES, { cardText: "When this creature enters, exile up to one target nonland permanent you don't control. " + LEAVES })).toEqual({ create: "opp" });
+    expect(actionRecipients(LEAVES, { cardText: "When this creature enters, target opponent reveals their hand. " + LEAVES })).toEqual({ create: "opp" });
+  });
+  test("with no card text the clause itself is read (the fallback): an opponent-less clause is any, one that says so is an opponent's", () => {
+    expect(actionRecipients(LEAVES)).toEqual({ create: "any" });
+    expect(actionRecipients("Exile target permanent you don't control. Later, the exiled card's owner creates a 1/1 token.")).toEqual({ create: "opp" });
+  });
+  const BRAMBLE = "Whenever another nontoken creature enters, you may pay {1}{G}. If you do, that creature's controller creates a token that's a copy of that creature.";
+  test("Bramble-shaped: you pay for a copy of another creature entering, so the copy is yours", () => {
+    expect(actionRecipients(BRAMBLE)).toEqual({ create: "you" });
+  });
+  test("an explicit target before the phrase names someone else's creature: an opponent's", () => {
+    expect(actionRecipients("Whenever another nontoken creature enters, you may pay {1}{G}. If you do, target creature's controller creates a token that's a copy of that creature.")).toEqual({ create: "opp" });
+  });
+  test("without 'another' it is anyone's (Genesis Chamber's shape), not yours", () => {
+    expect(actionRecipients(BRAMBLE.replace("another nontoken", "a nontoken")).create).not.toBe("you");
+  });
+  test("a long qualifier between 'another' and 'creature' is not the shape (30 characters at most), so not yours", () => {
+    expect(actionRecipients(BRAMBLE.replace("another nontoken", "another nontoken legendary multicolored artifact enchantment")).create).not.toBe("you");
+  });
 });

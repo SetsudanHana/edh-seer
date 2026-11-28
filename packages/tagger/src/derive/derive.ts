@@ -794,7 +794,8 @@ import { castClassFromPrint, castIsOnlyACondition, castsYourOwnCard } from "./ca
 // 605: #1256 -- re-review: the narrowed exile trigger of a granted self-return reads from the battlefield (CR 113.6), so a graveyard exile no longer pairs with Kaya the Inexorable ('is put into exile')
 // 606: #1815 -- waterbend (CR 701.67a) is both an artifact demand (like improvise) and a creature demand: a waterbend cost the card pays itself derives a cost-reduction counting artifacts you control plus creatures you control (costOf waterbend); 27 of the 29 waterbend cards (Avatar Aang's trigger and The Unagi's ward pay nothing)
 // 607: #1335 -- 'repeat this process' is a loop: the clause's abilities carry the new Ability.loop (conditional / unbounded / fixed), and the misfiled trigger-again of the 13 cards is claimed by it instead of dropped (vocabulary only; no matcher reads it)
-export const DERIVE_VERSION = 607;
+// 608: #1824 -- a token created by 'that creature's controller' or 'its owner' (the #1808 sibling) belongs to that player: the create cue reads the phrases (Rapid Hybridization, Amphin Mutineer, Ovinomancer, Incubation // Incongruity read an opponent's; Genesis Chamber, Bramble Sovereign, Funeral Pyre, Pharika read any); nine corpus cards
+export const DERIVE_VERSION = 608;
 
 /** "a nonland card from target opponent's graveyard or hand" (#1592): the object of a stored hand-or-graveyard pick. */
 const GRAVEYARD_OR_HAND_PICK = /\bfrom (?:target opponent|target player|that player|that opponent|an opponent)'s (?:graveyard or hand|hand or graveyard)$/i;
@@ -3618,7 +3619,7 @@ export function deriveAbilities(
       // #1269: two actions of one verb that the card's damaged player does every time (Sabertooth Cobra's two poison counters) are both that player's.
       const damagedEach = several && storedOfVerb > 1 && verb !== undefined && damagedPlayerActsEveryTime(clauseText, verb, storedOfVerb, { triggerIsSelf: trigger?.subject.self === true, cardName });
       if (several && !damagedEach && !(repeated && verb === "sacrifice" && (oneSacrificer(clauseText) || everyPlayerChoosesThenSacrifices(clauseText)))) return undefined;
-      actors ??= clauseText ? actionRecipients(clauseText, { triggerIsSelf: trigger?.subject.self === true, cardName }) : {};
+      actors ??= clauseText ? actionRecipients(clauseText, { triggerIsSelf: trigger?.subject.self === true, cardName, cardText: oracleText }) : {};
       const who = actors[verb ?? ""];
       // ...AND "each player chooses ..., then sacrifices the rest" is everyone's whatever the object says (#1740, Magus of the Balance).
       return several && !damagedEach && who !== "opp" && !(repeated && verb === "sacrifice" && who === "any" && everyPlayerChoosesThenSacrifices(clauseText)) ? undefined : who;
