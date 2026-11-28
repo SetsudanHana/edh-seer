@@ -176,8 +176,9 @@ function controlOf(phrase: string, text: string, at: number, ctx: ActorContext, 
   // entering creature is yours and so is the copy. A DECISION, not a reading, as "its controller" is `opp`: the rule is an untargeted "whenever another ... creature enters" with a "you may pay" before the phrase; Genesis Chamber (no payment) stays `any`.
   if (verb === "create" && SACRIFICE_CONTROLLER_RE.test(p)) {
     const before = text.slice(0, at);
-    if (/^\s*whenever another [a-z -]{0,30}creature enters\b/i.test(before) && /\byou may pay\b/i.test(before) && !/\btarget\b/i.test(before)) return "you";
-    return controlOf("its controller", text, at, ctx, verb);
+    if (!p.startsWith("target ") && /^\s*whenever another [a-z -]{0,30}creature enters\b/i.test(before) && /\byou may pay\b/i.test(before) && !/\btarget\b/i.test(before)) return "you";
+    // "target creature's controller" names a target itself: read as "its controller" AFTER that target, so it is an opponent's like any single target's controller.
+    return controlOf("its controller", text, p.startsWith("target ") ? at + p.length : at, ctx, verb);
   }
   // "OTHER THAN ITS CONTROLLER" IS NOT ITS CONTROLLER (#1666 review): "each player other than its controller creates a token that's a copy of it" (Fractured Identity) and "target player other than its controller create a token" (Lucy MacLean) name the players
   // who are NOT the controller, which is any of them, you included.
@@ -218,6 +219,8 @@ function controlOf(phrase: string, text: string, at: number, ctx: ActorContext, 
     const ownTrigger = ctx.triggerIsSelf === true || /^\s*when(?:ever)? this [a-z]+ /i.test(text) || (ctx.cardName !== undefined && text.trimStart().toLowerCase().startsWith(`when ${ctx.cardName.toLowerCase()} `));
     if (p === "its owner" && ownTrigger && lastTarget < 0) return "you";
     // The exiled card sits in another clause of the card (Skyclave Apparition's enters clause names "a permanent you don't control", Severance Priest's "target opponent reveals their hand"): read the whole text.
+    // CEILING: this scans the WHOLE printed text (every face) for "opponent" / "you don't control", not the exile clause that names the card. It is right for every corpus card today: only Skyclave Apparition and Severance Priest match, and both exile only an opponent's
+    // card. A future card whose exile target can be yours and that says "opponent" elsewhere would bank a false `opp`.
     const named = verb === "create" && EXILED_CARD_OWNER_RE.test(p) ? ctx.cardText ?? before : before;
     return /\bopponents?\b|\byou don'?t control\b/i.test(named) ? "opp" : "any";
   }
