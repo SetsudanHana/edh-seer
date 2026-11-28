@@ -36,7 +36,7 @@ const OUTSIDE_SOURCE_RE = new RegExp(`^${OUTSIDE_SOURCE}$`);
 // THE SAME PLAYER IN OTHER WORDS, FOR WHAT A CARD GIVES (#1591): "That creature's controller gains life equal to its power" (Solitude, Captain Marvel), "Its owner gains 4 life" (Path of Peace, Misfortune's Gain), "That artifact's
 // controller gains life" (Crumble), "that creature's controller draws X cards" (Nin, the Pain Artist; Nessian Boar; Fecundity), "The controller of each of those artifacts gains life" (Seeds of Innocence). Unread, the gain fell to
 // the controller default: your removal gained YOU the life. Read as anyone (`controlOf`), an opponent only where the words before the phrase say one. "Its controller" itself keeps its older `opp` reading (Swords to Plowshares).
-// CEILING: the gain-life and draw cues only. The same words before "creates" (Rapid Hybridization, Genesis Chamber), "sacrifices" (Burning Sands, Animate Dead), "searches" (Verdant Succession) or "mills" (Mesmeric Orb) are
+// CEILING: the gain-life and draw cues only (and, since #1824, "creates": Rapid Hybridization, Genesis Chamber, Funeral Pyre). The same words before "sacrifices" (Burning Sands, Animate Dead), "searches" (Verdant Succession) or "mills" (Mesmeric Orb) are
 // still unread and default to you; "that creature's controller sacrifices" is pinned unread in recipient.test.ts.
 // "The owner of up to one target creature draws two cards" (Unification, #1676 review): the owner of a chosen target is anyone (it may be you), so the draw is `any`, not the controller default. Bounded words after "target", no run of spaces to backtrack.
 const GIVEN_TO = "(?:its|their) owners?|that [a-z]+['’]s (?:controller|owner)|the controllers? of each of those [a-z]+|the owners? of (?:up to \\w+|any number of) target [a-z]+(?: [a-z]+){0,3}";
@@ -66,7 +66,10 @@ const CHOOSES_THEN = `(?:chooses?\\b[^.;]{0,200}?,\\s+then\\s+${ADVERB})?`;
  *  (Tempt with Bunnies, three creates) are not joined (`actionRecipients` also requires exactly one printed create). CEILING: one create per clause and the player is the subject of the earlier verb; "target creature's controller sacrifices it, then creates" (Mercy Killing) names its player by a phrase `WHO` does not hold. */
 const CREATE_JOINED = new RegExp(`(?<=^|[.;:,]\\s*|\\b(?:then|and|if)\\s)(${WHO})\\s+${ADVERB}(?!(?:who|whose|controls?)\\b)\\w+(?=[\\s,])(?:(?!\\b(?:you|each|target|that player|its controller|their controller)\\b)[^.;]){0,100}?(?:\\s(?:and|or)\\s+|,\\s+then\\s+)${ADVERB}creates?\\b`, "i");
 const CUES: [string, RegExp][] = [
-  ["create", new RegExp(`\\b(${WHO})\\s+${ADVERB}creates?\\b`, "i")],
+  // THE PLAYER A CREATE NAMES BY HER PERMANENT OR CARD (#1824, the #1808 sibling): "Destroy target creature. THAT CREATURE'S CONTROLLER creates a 3/3 Frog Lizard" (Rapid Hybridization, Amphin Mutineer, Ovinomancer, Incubation // Incongruity) and "Exile target card from a graveyard. ITS OWNER
+  // creates a 1/1 Spirit" (Funeral Pyre, Pharika) read `you` while "Its controller creates" (Beast Within, Pongify) read an opponent's, because only the latter was a create cue. `controlOf` reads the first as it reads "its controller" (a single target is an opponent's, an untargeted
+  // entering creature's controller is anyone: Genesis Chamber, Bramble Sovereign) and the second through `GIVEN_TO` (the owner of a card from any graveyard is anyone; a card's own owner after its own trigger is you: Yes Man).
+  ["create", new RegExp(`\\b(${WHO}|${SACRIFICE_CONTROLLER}|${GIVEN_TO})\\s+${ADVERB}creates?\\b`, "i")],
   ["draw", new RegExp(`\\b(${WHO}|${GIVEN_TO})\\s+${ADVERB}${JOINED}draws?\\b`, "i")],
   ["search", new RegExp(`\\b(${WHO})\\s+${ADVERB}searc(?:h|hes)\\b`, "i")],
   ["mill", new RegExp(`\\b(${WHO})\\s+${ADVERB}mills?\\b`, "i")],
@@ -165,6 +168,8 @@ export function thatPlayerIsOpponent(clauseText: string, triggerIsSelf: boolean,
  *  only removing one, so a wipe that hands a token to every controller (untargeted "destroy all", "for each player") reads `any` below. */
 function controlOf(phrase: string, text: string, at: number, ctx: ActorContext, verb = ""): Control | undefined {
   const p = phrase.toLowerCase();
+  // "THAT CREATURE'S CONTROLLER CREATES" (#1824) IS "ITS CONTROLLER CREATES": the same removal decision, the same wipe and trigger exceptions.
+  if (verb === "create" && SACRIFICE_CONTROLLER_RE.test(p)) return controlOf("its controller", text, at, ctx, verb);
   // "OTHER THAN ITS CONTROLLER" IS NOT ITS CONTROLLER (#1666 review): "each player other than its controller creates a token that's a copy of it" (Fractured Identity) and "target player other than its controller create a token" (Lucy MacLean) name the players
   // who are NOT the controller, which is any of them, you included.
   if ((p === "its controller" || p === "their controller") && /\bother than\s*$/i.test(text.slice(0, at))) return "any";
