@@ -46,6 +46,9 @@ const GIVEN_TO_RE = new RegExp(`^(?:${GIVEN_TO})$`, "i");
 // (`controlOf`, as "its controller" is after an untargeted trigger). Kept out of `WHO` so the other verbs' cues keep their reach (the draw and lifegain cues read "that creature's controller" through `GIVEN_TO`).
 const SACRIFICE_CONTROLLER = "(?:that|target|enchanted|the) [a-z]+['’]s controller";
 const SACRIFICE_CONTROLLER_RE = new RegExp(`^${SACRIFICE_CONTROLLER}$`, "i");
+// "THE EXILED CARD'S OWNER CREATES" (#1824 review: Skyclave Apparition, Severance Priest) is the owner of the card the exile named: an opponent's where the exile says "you don't control" or names an opponent, otherwise anyone (read through the `GIVEN_TO` branch of `controlOf`, for a create only).
+const EXILED_CARD_OWNER = "the [a-z]+ card['’]s owner";
+const EXILED_CARD_OWNER_RE = new RegExp(`^${EXILED_CARD_OWNER}$`, "i");
 const SACRIFICE_ACTORS = `each foe|${SACRIFICE_CONTROLLER}`;
 const WHO = `its controller|their controller|${OUTSIDE_SOURCE}|target opponent|each opponent|each other player|defending player|attacking player|that player|target player|each player|those players`;
 
@@ -69,7 +72,7 @@ const CUES: [string, RegExp][] = [
   // THE PLAYER A CREATE NAMES BY HER PERMANENT OR CARD (#1824, the #1808 sibling): "Destroy target creature. THAT CREATURE'S CONTROLLER creates a 3/3 Frog Lizard" (Rapid Hybridization, Amphin Mutineer, Ovinomancer, Incubation // Incongruity) and "Exile target card from a graveyard. ITS OWNER
   // creates a 1/1 Spirit" (Funeral Pyre, Pharika) read `you` while "Its controller creates" (Beast Within, Pongify) read an opponent's, because only the latter was a create cue. `controlOf` reads the first as it reads "its controller" (a single target is an opponent's, an untargeted
   // entering creature's controller is anyone: Genesis Chamber, Bramble Sovereign) and the second through `GIVEN_TO` (the owner of a card from any graveyard is anyone; a card's own owner after its own trigger is you: Yes Man).
-  ["create", new RegExp(`\\b(${WHO}|${SACRIFICE_CONTROLLER}|${GIVEN_TO})\\s+${ADVERB}creates?\\b`, "i")],
+  ["create", new RegExp(`\\b(${WHO}|${SACRIFICE_CONTROLLER}|${GIVEN_TO}|${EXILED_CARD_OWNER})\\s+${ADVERB}creates?\\b`, "i")],
   ["draw", new RegExp(`\\b(${WHO}|${GIVEN_TO})\\s+${ADVERB}${JOINED}draws?\\b`, "i")],
   ["search", new RegExp(`\\b(${WHO})\\s+${ADVERB}searc(?:h|hes)\\b`, "i")],
   ["mill", new RegExp(`\\b(${WHO})\\s+${ADVERB}mills?\\b`, "i")],
@@ -169,7 +172,13 @@ export function thatPlayerIsOpponent(clauseText: string, triggerIsSelf: boolean,
 function controlOf(phrase: string, text: string, at: number, ctx: ActorContext, verb = ""): Control | undefined {
   const p = phrase.toLowerCase();
   // "THAT CREATURE'S CONTROLLER CREATES" (#1824) IS "ITS CONTROLLER CREATES": the same removal decision, the same wipe and trigger exceptions.
-  if (verb === "create" && SACRIFICE_CONTROLLER_RE.test(p)) return controlOf("its controller", text, at, ctx, verb);
+  // ...EXCEPT WHERE YOU PAY TO COPY (#1824 review, Bramble Sovereign: "Whenever another nontoken creature enters, you may pay {1}{G}. If you do, that creature's controller creates a token that's a copy of that creature"): nobody pays to copy an opponent's creature, so by primary use the
+  // entering creature is yours and so is the copy. A DECISION, not a reading, as "its controller" is `opp`: the rule is an untargeted "whenever another ... creature enters" with a "you may pay" before the phrase; Genesis Chamber (no payment) stays `any`.
+  if (verb === "create" && SACRIFICE_CONTROLLER_RE.test(p)) {
+    const before = text.slice(0, at);
+    if (/^\s*whenever another [a-z -]{0,30}creature enters\b/i.test(before) && /\byou may pay\b/i.test(before) && !/\btarget\b/i.test(before)) return "you";
+    return controlOf("its controller", text, at, ctx, verb);
+  }
   // "OTHER THAN ITS CONTROLLER" IS NOT ITS CONTROLLER (#1666 review): "each player other than its controller creates a token that's a copy of it" (Fractured Identity) and "target player other than its controller create a token" (Lucy MacLean) name the players
   // who are NOT the controller, which is any of them, you included.
   if ((p === "its controller" || p === "their controller") && /\bother than\s*$/i.test(text.slice(0, at))) return "any";
@@ -200,7 +209,7 @@ function controlOf(phrase: string, text: string, at: number, ctx: ActorContext, 
   if (p === "each foe") return "opp";
   // "WHENEVER THIS CREATURE BECOMES BLOCKED BY A CREATURE, THAT CREATURE'S CONTROLLER SACRIFICES IT" (Basalt Golem, #1808 review) is the defending player's: a blocker is chosen by the defending player from the creatures THEY control (CR 509.1a), an opponent of the attacker's controller.
   if (verb === "sacrifice" && SACRIFICE_CONTROLLER_RE.test(p) && /\bbecomes blocked by (?:a|an|another) [a-z ]{0,30}creature\b/i.test(text.slice(0, at))) return "opp";
-  if ((GIVEN_TO_RE.test(p) || (verb === "sacrifice" && SACRIFICE_CONTROLLER_RE.test(p))) && !OUTSIDE_SOURCE_RE.test(p)) {
+  if ((GIVEN_TO_RE.test(p) || (verb === "create" && EXILED_CARD_OWNER_RE.test(p)) || (verb === "sacrifice" && SACRIFICE_CONTROLLER_RE.test(p))) && !OUTSIDE_SOURCE_RE.test(p)) {
     const before = text.slice(0, at);
     const lastTarget = before.toLowerCase().lastIndexOf("target ");
     const since = lastTarget < 0 ? "" : before.slice(lastTarget).split(/\b(?:with|equal to|for each|where|the number of)\b/i)[0]!;
@@ -208,7 +217,9 @@ function controlOf(phrase: string, text: string, at: number, ctx: ActorContext, 
     // THE CARD'S OWN OWNER IS YOU: "When this creature dies, ... its owner draws that many cards" (Oft-Nabbed Goat) is a card of your deck, whoever controls it when it dies (#1395).
     const ownTrigger = ctx.triggerIsSelf === true || /^\s*when(?:ever)? this [a-z]+ /i.test(text) || (ctx.cardName !== undefined && text.trimStart().toLowerCase().startsWith(`when ${ctx.cardName.toLowerCase()} `));
     if (p === "its owner" && ownTrigger && lastTarget < 0) return "you";
-    return /\bopponents?\b|\byou don'?t control\b/i.test(before) ? "opp" : "any";
+    // The exiled card sits in another clause of the card (Skyclave Apparition's enters clause names "a permanent you don't control", Severance Priest's "target opponent reveals their hand"): read the whole text.
+    const named = verb === "create" && EXILED_CARD_OWNER_RE.test(p) ? ctx.cardText ?? before : before;
+    return /\bopponents?\b|\byou don'?t control\b/i.test(named) ? "opp" : "any";
   }
   if (p === "its controller" || p === "their controller") {
     const before = text.slice(0, at);
@@ -304,7 +315,8 @@ export function pronounActs(clauseText: string, verb: string): boolean {
 }
 
 /** What the caller knows about the clause's trigger, for "that player" after damage (#1263). */
-export interface ActorContext { triggerIsSelf?: boolean; cardName?: string }
+/** `cardText`: the card's whole printed text, for an actor whose antecedent sits in ANOTHER clause ("When this creature leaves the battlefield, the exiled card's owner creates": the exile is the enters clause, #1824 review). */
+export interface ActorContext { triggerIsSelf?: boolean; cardName?: string; cardText?: string }
 
 /** THE DAMAGED PLAYER BY ANOTHER NAME (#1269): after the card's own damage to a player, "they lose half their life" (Unstoppable Slasher, Glowing One, Infesting Radroach, Rex) and "The player gets another poison counter" (Sabertooth Cobra) name the
  *  same player "that player" does. Returns the clause text with those words written "that player", so every cue and `controlOf` read them as they read #1263's: an opponent. Unchanged unless the clause is a damage trigger of ours (`damagedPlayerIsOpponent`):

@@ -25,7 +25,7 @@ test.each(["Rapid Hybridization", "Amphin Mutineer", "Ovinomancer", "Incubation 
 
 test.each(["Beast Within", "Pongify", "Forbidden Orchard"])("%s stays an opponent's token", (n) => { expect(creates(n)).toEqual(["opp"]); });
 
-test.each(["Genesis Chamber", "Bramble Sovereign", "Funeral Pyre", "Pharika, God of Affliction"])("%s: a player who may be you (an untargeted entering creature's controller, the owner of a card from any graveyard) reads `any`", (n) => {
+test.each(["Genesis Chamber", "Funeral Pyre", "Pharika, God of Affliction"])("%s: a player who may be you (an untargeted entering creature's controller, the owner of a card from any graveyard) reads `any`", (n) => {
   expect(creates(n)).toEqual(["any"]);
 });
 
@@ -45,4 +45,19 @@ test.each(["Magnus the Red", "Geyser Leaper"])("Rapid Hybridization gives %s's c
     expect(tagsOf("Rapid Hybridization", c, opts).filter((t) => t === "scales:creature"), `Rapid Hybridization -> ${c} ${JSON.stringify(opts)}`).toEqual([]);
     expect(tagsOf("Raise the Alarm", c, opts), `Raise the Alarm -> ${c}`).toContain("scales:creature");
   }
+});
+
+// REVIEW OF #1824. "THE EXILED CARD'S OWNER CREATES" (Skyclave Apparition, Severance Priest) is the owner of a card the exile named: an opponent's where the exile says "you don't control" or names a target opponent. It read `you`.
+test.each(["Skyclave Apparition", "Severance Priest"])("%s: the exiled card's owner is an opponent, so the Illusion or Spirit is not yours", (n) => {
+  expect(creates(n)).toEqual(["opp"]);
+});
+test("Skyclave Apparition's token feeds no creature-token count of yours (Magnus the Red)", () => {
+  for (const opts of [{}, { tokensMediate: false }]) expect(tagsOf("Skyclave Apparition", "Magnus the Red", opts).filter((t) => t === "scales:creature"), JSON.stringify(opts)).toEqual([]);
+});
+
+// BRAMBLE SOVEREIGN IS READ `you` BY PRIMARY USE: "Whenever another nontoken creature enters, you may pay {1}{G}. If you do, that creature's controller creates a token that's a copy of that creature" is a payment YOU make, and nobody pays to copy an opponent's creature. An untargeted entering creature's controller with no payment (Genesis Chamber) is anyone.
+test("Bramble Sovereign copies your own creatures (you pay); Genesis Chamber, with no payment, stays any", () => {
+  expect(creates("Bramble Sovereign")).toEqual(["you"]);
+  expect(creates("Genesis Chamber")).toEqual(["any"]);
+  for (const c of ["Blood Seeker", "Authority of the Consuls"]) expect(tagsOf("Bramble Sovereign", c).filter((t) => t.startsWith("enters:")), `Bramble Sovereign -> ${c}`).toEqual([]);
 });

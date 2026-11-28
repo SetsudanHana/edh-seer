@@ -3619,7 +3619,7 @@ export function deriveAbilities(
       // #1269: two actions of one verb that the card's damaged player does every time (Sabertooth Cobra's two poison counters) are both that player's.
       const damagedEach = several && storedOfVerb > 1 && verb !== undefined && damagedPlayerActsEveryTime(clauseText, verb, storedOfVerb, { triggerIsSelf: trigger?.subject.self === true, cardName });
       if (several && !damagedEach && !(repeated && verb === "sacrifice" && (oneSacrificer(clauseText) || everyPlayerChoosesThenSacrifices(clauseText)))) return undefined;
-      actors ??= clauseText ? actionRecipients(clauseText, { triggerIsSelf: trigger?.subject.self === true, cardName }) : {};
+      actors ??= clauseText ? actionRecipients(clauseText, { triggerIsSelf: trigger?.subject.self === true, cardName, cardText: oracleText }) : {};
       const who = actors[verb ?? ""];
       // ...AND "each player chooses ..., then sacrifices the rest" is everyone's whatever the object says (#1740, Magus of the Balance).
       return several && !damagedEach && who !== "opp" && !(repeated && verb === "sacrifice" && who === "any" && everyPlayerChoosesThenSacrifices(clauseText)) ? undefined : who;
